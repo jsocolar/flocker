@@ -1,1 +1,1 @@
-# flockers: FLexible OCupancy Estimation in R using Stan
+# flocker: **fl**exible **oc**upancy **e**stimation in **r**
