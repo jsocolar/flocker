@@ -1,1 +1,1 @@
-# flocker: **fl**exible **oc**upancy **e**stimation in **r**
+# flocker: **fl**exible **occ**upancy **e**stimation in **r**
