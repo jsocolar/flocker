@@ -1,1 +1,1 @@
-# flocker: **fl**exible **occ**upancy **e**stimation in **r**
+# flocker: FLexible OCupancy Estimation in R
