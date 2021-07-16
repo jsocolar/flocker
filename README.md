@@ -7,7 +7,7 @@ format data for occupancy modeling.
 
 Compared to existing packages for fitting occupancy models, `flocker`
 distinguishes itself by virtue of its flexibility. Via `brms`, `flocker` 
-supports all manner of random terms, including 
+supports all manner of models, including 
 * random effects with arbitrary covariance structures spanning both the 
 occupancy and detection sub-models
 * phylogenetic models
