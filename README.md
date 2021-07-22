@@ -1,4 +1,4 @@
-# flocker: FLexible OCupancy Estimation in R
+# flocker: flexible ockupancy estimation in R
 
 This package uses `brms` to generate Stan code for the linear predictors in
 an single-season occupancy models (including multi-species models), then fits 
