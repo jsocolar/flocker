@@ -12,8 +12,7 @@ supports all manner of models, including
 occupancy and detection sub-models
 * phylogenetic models
 * generalized additive models
-* autoregressive models (ARMA)
-* spatial autoregressive models (CAR)
+* autoregressive models
 * measurement error in the predictors
 * and more!
 
@@ -23,4 +22,4 @@ returned that is compatible with additional packages in the Stan ecosystem just
 like any other `brmsfit`. When the model does involve visit-specific covariates, 
 `brms` is used only to generate Stan code for the linear predictor, which is then
 combined with the appropriate likelihood term to yield the desired model. The 
-model is fit directly via `cmdstanr` or `rstan`.
+model is fit directly via `cmdstanr`.
