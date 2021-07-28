@@ -81,12 +81,12 @@ make_flocker_data <- function(obs, constant_covs = NULL, visit_covs = NULL) {
     
     
     .indices <- matrix(data = -99, nrow = n_site, ncol = n_visit)
-    for (i in 1:nsite) {
+    for (i in 1:n_site) {
       .indices[i, 1:n_trial[i]] <- which(data2$.site == i)
     }
     
     out <- list(flocker_data = data2, .nsite = n_site, .nvisit = n_trial, .indices = .indices, .type = "V")
   }
-  class(out <- c("list", "flocker_data"))
+  class(out) <- c("list", "flocker_data")
   out
 }
