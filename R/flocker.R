@@ -41,8 +41,8 @@
 #' }
 #' fd <- make_flocker_data(obs, site_covs, visit_covs)
 #' f_det <- 
-#' flocker(f_occ = occ ~ sc1 + s(sc2) + (1|grp), 
-#'         f_det = det ~ sc1 + vc1 + s(vc2) + (1|grp), 
+#' flocker(f_occ = ~ sc1 + s(sc2) + (1|grp), 
+#'         f_det = ~ sc1 + vc1 + s(vc2) + (1|grp), 
 #'         flocker_data = fd, 
 #'         refresh = 1, chains = 1, iter_warmup = 5, iter_sampling = 5)
 #' @import cmdstanr
@@ -78,7 +78,6 @@ flocker <- function(f_occ, f_det, flocker_data, data2 = NULL, visit_constant = F
     
     # sample model
     flocker_fit <- flocker_model$sample(data = flocker_standata, ...)
-    flocker_fit
   } else if (flocker_data$.type == "N") {
     f_occ_use <- as.formula(paste0("n_suc | trials(n_trial) ", f_occ_txt))
     f_det_use <- as.formula(paste0("zi ", f_det_txt))
@@ -88,4 +87,6 @@ flocker <- function(f_occ, f_det, flocker_data, data2 = NULL, visit_constant = F
                              family = brms::zero_inflated_binomial(),
                              backend = 'cmdstanr', ...)
   }
+  
+  flocker_fit
 }
