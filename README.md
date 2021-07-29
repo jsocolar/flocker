@@ -1,4 +1,4 @@
-# flocker: flexible ockupancy estimation in R
+# flocker: flexible ocꓘupancy estimation in R
 
 The `flocker` R package enables users to fit flexible single-season occupancy
 models using the same extended `lme4` formula syntax employed by R package
