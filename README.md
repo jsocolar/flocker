@@ -1,18 +1,17 @@
 # flocker: flexible ocʞupancy estimation in R
 
-The `flocker` R package enables users to fit flexible single-season occupancy
-models using the same extended `lme4` formula syntax employed by R package
-`brms`. Also included are functions to format data for occupancy modeling and 
-to extract estimates and predictions from fitted occupancy models.
+The `flocker` R package enables users to fit flexible occupancy models using 
+the same extended `lme4` formula syntax employed by R package `brms`. Also 
+included are functions to format data for occupancy modeling and to extract 
+estimates and predictions from fitted occupancy models.
 
 Compared to existing R packages for fitting occupancy models, `flocker` is 
-substantially more flexible in the variety of single-season models that can
-be fit, including 
+substantially more flexible in the variety of models that can be fit, including 
 * random effects, optionally with sophisticated covariance structures spanning 
 both the occupancy and detection sub-models
 * phylogenetic models
 * generalized additive models
-* autoregressive models
+* autoregressive models (therefore including multi-season models)
 * measurement error in the predictors
 * and more!
 
