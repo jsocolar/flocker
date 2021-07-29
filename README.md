@@ -1,25 +1,45 @@
 # flocker: flexible ockupancy estimation in R
 
-This package uses `brms` to generate Stan code for the linear predictors in
-an single-season occupancy models (including multi-species models), then fits 
-the model using an appropriate likelihood term. Also included are functions to 
-format data for occupancy modeling.
+The `flocker` R package enables users to fit flexible single-season occupancy
+models using the same extended `lme4` formula syntax employed by R package
+`brms`. Also included are functions to format data for occupancy modeling and 
+to extract estimates and predictions from fitted occupancy models.
 
-Compared to existing packages for fitting occupancy models, `flocker`
-distinguishes itself by virtue of its flexibility. Via `brms`, `flocker` 
-supports all manner of models, including 
-* random effects with arbitrary covariance structures spanning both the 
-occupancy and detection sub-models
+Compared to existing R packages for fitting occupancy models, `flocker` is 
+substantially more flexible in the variety of single-season models that can
+be fit, including 
+* random effects, optionally with sophisticated covariance structures spanning 
+both the occupancy and detection sub-models
 * phylogenetic models
 * generalized additive models
 * autoregressive models
 * measurement error in the predictors
 * and more!
 
-When the model does not involve visit-specific detection covariates, it is fit 
-natively in `brms` as a zero-inflated binomial regression. A `brmsfit` object is
-returned that is compatible with additional packages in the Stan ecosystem just 
-like any other `brmsfit`. When the model does involve visit-specific covariates, 
-`brms` is used only to generate Stan code for the linear predictor, which is then
-combined with the appropriate likelihood term to yield the desired model. The 
-model is fit directly via `cmdstanr`.
+### Installation
+Install `flocker` directly from GitHub with 
+```
+# install.packages("remotes")
+remotes::install_github("jsocolar/flocker")
+```
+`flocker` requires a working installation of cmdstan, an interface to the 
+probabilistic programming language Stan. We recommend installing cmdstan from 
+R with
+```
+# install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+cmdstanr::install_cmdstan()
+```
+Occasionally users encounter difficulties in installing cmdstan. To 
+troubleshoot, consult https://mc-stan.org/cmdstanr/articles/cmdstanr.html. 
+For more about Stan and cmdstan, see https://mc-stan.org/. If you really 
+can't figure out installation, feel free to ask for help at 
+https://discourse.mc-stan.org/.
+
+### Getting started
+This vignette shows how to fit several classes of model in flocker.  For 
+additional classes of model, consult the relevant `brms` vignettes.
+
+**add vignette links to a flocker vignette and to relevant brms vignettes**
+
+### Citing flocker
+Include citation details and suggestion to also cite `brms` and Stan.
