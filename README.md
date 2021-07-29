@@ -12,6 +12,7 @@ both the occupancy and detection sub-models
 * phylogenetic models
 * generalized additive models
 * autoregressive models (therefore including multi-season models)
+* spatially autoregressive models
 * measurement error in the predictors
 * and more!
 
