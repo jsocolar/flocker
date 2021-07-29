@@ -17,7 +17,7 @@ both the occupancy and detection sub-models
 * and more!
 
 ### Installation
-Install `flocker` directly from GitHub with 
+Install `flocker` with 
 ```
 # install.packages("remotes")
 remotes::install_github("jsocolar/flocker")
