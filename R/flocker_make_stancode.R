@@ -1,7 +1,6 @@
 #' Make Stan code for a flocker model with visit-specific detection covariates.
 #' Primarily for internal use in `flocker()`
-#' @param f_occ_use Occupancy formula
-#' @param f_det_use Detection formula
+#' @param model_formula Model formula (occupancy + detection)
 #' @param flocker_data data, generally the output of `make_flocker_data()`.
 #' @param data2 additional data (e.g. a covariance matrix for a phylogenetic effect)
 #' @return A character string giving a Stan model.

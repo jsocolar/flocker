@@ -5,12 +5,10 @@
 \title{Make Stan code for a flocker model with visit-specific detection covariates.
 Primarily for internal use in `flocker()`}
 \usage{
-flocker_make_stancode(f_occ_use, f_det_use, flocker_data, data2)
+flocker_make_stancode(model_formula, flocker_data, data2)
 }
 \arguments{
-\item{f_occ_use}{Occupancy formula}
-
-\item{f_det_use}{Detection formula}
+\item{model_formula}{Model formula (occupancy + detection)}
 
 \item{flocker_data}{data, generally the output of `make_flocker_data()`.}
 

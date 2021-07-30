@@ -27,13 +27,33 @@ be FALSE.}
 or to brms::brm() if visit_constant is TRUE}
 }
 \value{
-the fitted occupancy model. If visit_constant = F, a cmdstan_fit object from cmdstanr.
-        If visit_constant = T, a brmsfit object from brms.
-        # Important
-        If visit_constant = T, then the occupancy sub-model gives the probability
-        of NON-occupancy. Negate the terms associated with this sub-model to recover covariate
-        effects on occupancy.
+the fitted occupancy model. 
+
+If visit_constant = F, a three element list. 
+        The first element, $draws is a draws_df object from package `posterior`. This
+        element uses meaningful parameter names.
+        The second element, $stan_fit, is a CmdStanFit object from package `cmdstanr`. This
+        element uses the non-informative parameter names that are used internally by brms.
+        The third element, $summary, is a character vector useful for viewing a summary
+        of the output.
+
+If visit_constant = T, a brmsfit object from brms.
+# Important
+If visit_constant = T, then the occupancy sub-model gives the probability
+of NON-occupancy. Negate the terms associated with this sub-model to recover covariate
+effects on occupancy.
 }
 \description{
 Fit an occupancy model
+}
+\examples{
+\dontrun{
+example_data <- example_flocker_data()
+fd <- make_flocker_data(example_data$obs, example_data$site_covs, example_data$visit_covs)
+flocker(f_occ = ~ sc1 + s(sc2) + (1|grp),
+          f_det = ~ sc1 + vc1 + s(vc2) + (1|grp),
+          flocker_data = fd,
+          refresh = 50, chains = 1, iter_warmup = 5, iter_sampling = 200,
+          adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123)
+}
 }
