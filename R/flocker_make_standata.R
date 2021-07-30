@@ -8,7 +8,6 @@
 #' @export
 flocker_make_standata <- function(model_formula, flocker_data, data2) {
   data <- flocker_data$flocker_data
-  model_formula <- brms::brmsformula(f_occ_use) + brms::brmsformula(f_det_use)
   flocker_standata <- brms::make_standata(model_formula, 
                                           data = data, data2 = data2,
                                           family = brms::bernoulli(link = "logit"))
