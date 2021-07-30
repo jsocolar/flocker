@@ -1,4 +1,4 @@
-#' Create example data for use with `make_flocker_data` and downstream functions.
+#' Create example data for use with \code{make_flocker_data()} and downstream functions.
 #' @param visit_constant logical: return data with constant detection covariates
 #' within sites (TRUE) or variable detection covariates (FALSE)
 #' @return A three element named list with the observation matrix ($obs), the

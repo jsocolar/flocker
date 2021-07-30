@@ -1,4 +1,4 @@
-#' Format data for `flocker()`.
+#' Format data for \code{flocker()}.
 #' @param obs An I x J matrix-like object where closure is assumed across rows (i.e. 
 #' rows are sampling sites or species-sites) and columns are visits. Allowable 
 #' values are 1 (detection), 0 (no detection), and NA (no visit).
@@ -7,7 +7,7 @@
 #' constant across visits.
 #' @param visit_covs A named list of I x J matrices, each one corresponding to a covariate
 #' that varies by visit.
-#' @return A flocker_data list that can be passed as data to `flocker()`
+#' @return A flocker_data list that can be passed as data to \code{flocker()}.
 #' @export
 make_flocker_data <- function(obs, constant_covs = NULL, visit_covs = NULL) {
   if(length(dim(obs)) != 2) {

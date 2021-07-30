@@ -2,7 +2,7 @@
 % Please edit documentation in R/example_flocker_data.R
 \name{example_flocker_data}
 \alias{example_flocker_data}
-\title{Create example data for use with `make_flocker_data` and downstream functions.}
+\title{Create example data for use with \code{make_flocker_data()} and downstream functions.}
 \usage{
 example_flocker_data(visit_constant = FALSE, seed = 123)
 }
@@ -16,5 +16,5 @@ site covariate dataframe ($site_covs), and the visit covariate list
 ($visit_covs). If visit_constant is TRUE, then $visit_covs will be NULL.
 }
 \description{
-Create example data for use with `make_flocker_data` and downstream functions.
+Create example data for use with \code{make_flocker_data()} and downstream functions.
 }

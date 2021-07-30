@@ -15,7 +15,7 @@ covariate effects on occupancy.}
 
 \item{f_det}{A brms-type model formula for detection. Must begin with "~".}
 
-\item{flocker_data}{data, generally the output of `make_flocker_data()`.}
+\item{flocker_data}{data, generally the output of \code{make_flocker_data()}.}
 
 \item{data2}{additional data (e.g. a covariance matrix for a phylogenetic effect)}
 
@@ -23,23 +23,23 @@ covariate effects on occupancy.}
 Must be TRUE if the model lacks visit-specific detection covariates, otherwise must
 be FALSE.}
 
-\item{...}{additional arguments passed to cmdstanr::sample() if visit_constant is FALSE
+\item{...}{additional arguments passed to \code{cmdstanr::sample()} if visit_constant is FALSE
 or to brms::brm() if visit_constant is TRUE}
 }
 \value{
 the fitted occupancy model. 
 
-If visit_constant = F, a three element list. 
-        The first element, $draws is a draws_df object from package `posterior`. This
+If \code{visit_constant = F}, a three element list. 
+        The first element, $draws is a draws_df object from package posterior. This
         element uses meaningful parameter names.
-        The second element, $stan_fit, is a CmdStanFit object from package `cmdstanr`. This
+        The second element, $stan_fit, is a CmdStanFit object from package cmdstanr. This
         element uses the non-informative parameter names that are used internally by brms.
         The third element, $summary, is a character vector useful for viewing a summary
         of the output.
 
-If visit_constant = T, a brmsfit object from brms.
+If \code{visit_constant = T}, a brmsfit object from brms.
 # Important
-If visit_constant = T, then the occupancy sub-model gives the probability
+If \code{visit_constant = T}, then the occupancy sub-model gives the probability
 of NON-occupancy. Negate the terms associated with this sub-model to recover covariate
 effects on occupancy.
 }

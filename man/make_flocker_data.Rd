@@ -2,7 +2,7 @@
 % Please edit documentation in R/make_flocker_data.R
 \name{make_flocker_data}
 \alias{make_flocker_data}
-\title{Format data for `flocker()`.}
+\title{Format data for \code{flocker()}.}
 \usage{
 make_flocker_data(obs, constant_covs = NULL, visit_covs = NULL)
 }
@@ -18,8 +18,8 @@ constant across visits.}
 that varies by visit.}
 }
 \value{
-A flocker_data list that can be passed as data to `flocker()`
+A flocker_data list that can be passed as data to \code{flocker()}.
 }
 \description{
-Format data for `flocker()`.
+Format data for \code{flocker()}.
 }

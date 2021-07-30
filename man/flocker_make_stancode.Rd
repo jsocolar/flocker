@@ -3,14 +3,14 @@
 \name{flocker_make_stancode}
 \alias{flocker_make_stancode}
 \title{Make Stan code for a flocker model with visit-specific detection covariates.
-Primarily for internal use in `flocker()`}
+Primarily for internal use in \code{flocker()}.}
 \usage{
 flocker_make_stancode(model_formula, flocker_data, data2)
 }
 \arguments{
 \item{model_formula}{Model formula (occupancy + detection)}
 
-\item{flocker_data}{data, generally the output of `make_flocker_data()`.}
+\item{flocker_data}{data, generally the output of \code{make_flocker_data()}.}
 
 \item{data2}{additional data (e.g. a covariance matrix for a phylogenetic effect)}
 }
@@ -19,5 +19,5 @@ A character string giving a Stan model.
 }
 \description{
 Make Stan code for a flocker model with visit-specific detection covariates.
-Primarily for internal use in `flocker()`
+Primarily for internal use in \code{flocker()}.
 }
