@@ -19,34 +19,15 @@
 #'         of NON-occupancy. Negate the terms associated with this sub-model to recover covariate
 #'         effects on occupancy.
 #' @example
-#' npt <- 100
-#' nsp <- 100
-#' nsite <- npt*nsp
-#' nvisit <- 4
-#' site_covs <- data.frame(sc1 = rnorm(nsite), sc2 = rnorm(nsite), 
-#'                         grp = sample(c(1:20), nsite, replace = T), 
-#'                         species = rep(paste0("sp_", 1:nsp), npt))
-#' visit_covs <- list(vc1 = matrix(rnorm(nsite*nvisit), nrow=nsite), vc2 = matrix(rnorm(nsite*nvisit), nrow=nsite))
-#' logit_psi <- 0 + 1*site_covs$sc1 - 1*site_covs$sc2 + rnorm(20)[site_covs$grp]
-#' logit_theta <- matrix(rep((-.5 + .5*site_covs$sc1 + rnorm(20)[site_covs$grp]), 4), nrow = nsite) + 
-#'    .5*visit_covs$vc1 - 1*visit_covs$vc2
-#' true_Z <- rbinom(nsite, 1, boot::inv.logit(logit_psi))
-#' obs <- matrix(0, nrow=nsite, ncol=nvisit)
-#' for (i in 1:nsite) {
-#'   if (true_Z[i] == 1) {
-#'     for (j in 1:4) {
-#'       obs[i, j] <- rbinom(1, 1, boot::inv.logit(logit_theta[i, j]))
-#'     }
-#'   }
-#' }
-#' fd <- make_flocker_data(obs, site_covs, visit_covs)
-#' f_det <- 
+#' example_data <- example_flocker_data()
+#' fd <- make_flocker_data(example_data$obs, example_data$site_covs, example_data$visit_covs)
 #' flocker(f_occ = ~ sc1 + s(sc2) + (1|grp), 
 #'         f_det = ~ sc1 + vc1 + s(vc2) + (1|grp), 
 #'         flocker_data = fd, 
 #'         refresh = 1, chains = 1, iter_warmup = 5, iter_sampling = 5)
 #' @import cmdstanr
 #' @export
+
 flocker <- function(f_occ, f_det, flocker_data, data2 = NULL, visit_constant = FALSE, ...){
   if (!is.logical(visit_constant)) {
     stop("visit_constant must be logical")
