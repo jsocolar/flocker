@@ -6,9 +6,8 @@
 #' @param data2 additional data (e.g. a covariance matrix for a phylogenetic effect)
 #' @return A character string giving a Stan model.
 #' @export
-flocker_make_stancode <- function(f_occ_use, f_det_use, flocker_data, data2){
+flocker_make_stancode <- function(model_formula, flocker_data, data2){
   data <- flocker_data$flocker_data
-  model_formula <- brms::brmsformula(f_occ_use) + brms::brmsformula(f_det_use)
   stancode <- brms::make_stancode(model_formula, 
                                   data = data, data2 = data2,
                                   family = brms::bernoulli(link = "logit"))

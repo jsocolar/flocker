@@ -12,12 +12,21 @@
 #' @param visit_constant A logical indicator. Are detection probabilities constant across visits?
 #'          Must be TRUE if the model lacks visit-specific detection covariates, otherwise must
 #'          be FALSE.
-#' @return the fitted occupancy model. If visit_constant = F, a cmdstan_fit object from cmdstanr.
-#'         If visit_constant = T, a brmsfit object from brms.
-#'         # Important
-#'         If visit_constant = T, then the occupancy sub-model gives the probability
-#'         of NON-occupancy. Negate the terms associated with this sub-model to recover covariate
-#'         effects on occupancy.
+#' @return the fitted occupancy model. 
+#' 
+#' If visit_constant = F, a three element list. 
+#'         The first element, $draws is a draws_df object from package `posterior`. This
+#'         element uses meaningful parameter names.
+#'         The second element, $stan_fit, is a CmdStanFit object from package `cmdstanr`. This
+#'         element uses the non-informative parameter names that are used internally by brms.
+#'         The third element, $summary, is a character vector useful for viewing a summary
+#'         of the output.
+#'
+#' If visit_constant = T, a brmsfit object from brms.
+#' # Important
+#' If visit_constant = T, then the occupancy sub-model gives the probability
+#' of NON-occupancy. Negate the terms associated with this sub-model to recover covariate
+#' effects on occupancy.
 #' @examples
 #' \dontrun{
 #' example_data <- example_flocker_data()
@@ -47,10 +56,11 @@ flocker <- function(f_occ, f_det, flocker_data, data2 = NULL, visit_constant = F
   if (flocker_data$.type == "V") {
     f_occ_use <- as.formula(paste0("occ | resp_subset(occupancy_subset) ", f_occ_txt))
     f_det_use <- as.formula(paste0("det ", f_det_txt))
+    model_formula <- brms::brmsformula(f_occ_use) + brms::brmsformula(f_det_use)
     
     # make code and data
-    flocker_stancode <- flocker_make_stancode(f_occ_use, f_det_use, flocker_data, data2)
-    flocker_standata <- flocker_make_standata(f_occ_use, f_det_use, flocker_data, data2)
+    flocker_stancode <- flocker_make_stancode(model_formula, flocker_data, data2)
+    flocker_standata <- flocker_make_standata(model_formula, flocker_data, data2)
     
     # write .stan file in temp directory
     fileConn<-file(paste0(tempdir(), "/flocker_model.stan"))
@@ -61,11 +71,23 @@ flocker <- function(f_occ, f_det, flocker_data, data2 = NULL, visit_constant = F
     flocker_model <- cmdstanr::cmdstan_model(paste0(tempdir(), "/flocker_model.stan"))
     
     # sample model
-    flocker_fit <- flocker_model$sample(data = flocker_standata, ...)
+    ff <- flocker_model$sample(data = flocker_standata, ...)
+    ff2 <- rstan::read_stan_csv(ff$output_files())
+    
+    dummy_fit <- brms::brm(model_formula, data = flocker_data$flocker_data, data2 = data2,
+                     family = brms::bernoulli(link = "logit"), empty = TRUE)
+    dummy_fit$fit <- ff2
+    dummy_fit <- brms::rename_pars(dummy_fit)
+    res_vec <- capture.output(
+      print(dummy_fit)
+    )
+    
+    flocker_fit <- list(draws = posterior::as_draws_df(dummy_fit$fit), stan_fit = ff, summary = res_vec)
+    class(flocker_fit) <- "flocker_fit"
+    
   } else if (flocker_data$.type == "N") {
     f_occ_use <- as.formula(paste0("n_suc | trials(n_trial) ", f_occ_txt))
     f_det_use <- as.formula(paste0("zi ", f_det_txt))
-    
     flocker_fit <- brms::brm(brms::bf(f_occ_use, f_det_use),
                              data = flocker_data$flocker_data,
                              family = brms::zero_inflated_binomial(),

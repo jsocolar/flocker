@@ -6,7 +6,7 @@
 #' @param data2 additional data (e.g. a covariance matrix for a phylogenetic effect)
 #' @return A standata list.
 #' @export
-flocker_make_standata <- function(f_occ_use, f_det_use, flocker_data, data2) {
+flocker_make_standata <- function(model_formula, flocker_data, data2) {
   data <- flocker_data$flocker_data
   model_formula <- brms::brmsformula(f_occ_use) + brms::brmsformula(f_det_use)
   flocker_standata <- brms::make_standata(model_formula, 
