@@ -18,7 +18,8 @@
 #'         If visit_constant = T, then the occupancy sub-model gives the probability
 #'         of NON-occupancy. Negate the terms associated with this sub-model to recover covariate
 #'         effects on occupancy.
-#' @example
+#' @examples
+#' \dontrun{
 #' example_data <- example_flocker_data()
 #' fd <- make_flocker_data(example_data$obs, example_data$site_covs, example_data$visit_covs)
 #' flocker(f_occ = ~ sc1 + s(sc2) + (1|grp),
@@ -26,6 +27,7 @@
 #'           flocker_data = fd,
 #'           refresh = 50, chains = 1, iter_warmup = 5, iter_sampling = 200,
 #'           adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123)
+#' }
 #' @import cmdstanr
 #' @export
 

@@ -6,8 +6,8 @@
 #' ($visit_covs). If visit_constant is TRUE, then $visit_covs will be NULL.
 #' @export
 
-example_flocker_data <- function(visit_constant = FALSE) {
-  set.seed(123)
+example_flocker_data <- function(visit_constant = FALSE, seed = 123) {
+  if (!is.null(seed)) {set.seed(seed)}
   npt <- 100
   nsp <- 30
   nsite <- npt*nsp
