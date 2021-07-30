@@ -35,11 +35,26 @@ For more about Stan and cmdstan, see https://mc-stan.org/. If you really
 can't figure out installation, feel free to ask for help at 
 https://discourse.mc-stan.org/.
 
-### Getting started
-This vignette shows how to fit several classes of model in flocker.  For 
-additional classes of model, consult the relevant `brms` vignettes.
+Finally, `flocker` currently requires the development version of `brms` (this
+is a short-term situation until `brms` is updated on CRAN). Install via
+```
+remotes::install_github("paul-buerkner/brms")
+```
 
-**add vignette links to a flocker vignette and to relevant brms vignettes**
+### Getting started
+Soon we'll have a vignette here and some links to `brms` vignettes.  In the mean
+time, try running
+```
+library(flocker)
+example_data <- example_flocker_data()
+fd <- make_flocker_data(example_data$obs, example_data$site_covs, example_data$visit_covs)
+ff <- flocker(f_occ = ~ sc1 + sc2 + (1|grp),
+              f_det = ~ sc1 + vc1 + vc2 + (1|grp),
+              flocker_data = fd,
+              refresh = 50, chains = 1, iter_warmup = 5, iter_sampling = 200,
+              adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123)
+summary(ff)
+```
 
 ### Citing flocker
 Include citation details and suggestion to also cite `brms` and Stan.
