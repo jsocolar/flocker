@@ -51,7 +51,7 @@ flocker <- function(f_occ, f_det, flocker_data, data2 = NULL, visit_constant = F
     
     # write .stan file in temp directory
     fileConn<-file(paste0(tempdir(), "/flocker_model.stan"))
-    writeLines(stancode2, fileConn)
+    writeLines(flocker_stancode, fileConn)
     close(fileConn)
     
     # compile model
