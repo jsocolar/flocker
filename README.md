@@ -57,4 +57,9 @@ summary(ff)
 ```
 
 ### Citing flocker
-Include citation details and suggestion to also cite `brms` and Stan.
+Please cite `flocker` as:
+* Socolar, J.B. & Mills, S.C. (2021). "flocker: flexible occupancy estimation in 
+R." R package version XXX, <URL: https://github.com/jsocolar/flocker/>.
+
+Additionally, please consider citing [Stan](https://mc-stan.org/users/citations/)
+and R package [brms](https://mc-stan.org/users/interfaces/brms).
