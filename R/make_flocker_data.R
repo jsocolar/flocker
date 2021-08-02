@@ -11,18 +11,18 @@
 #' @export
 make_flocker_data <- function(obs, constant_covs = NULL, visit_covs = NULL) {
   if(length(dim(obs)) != 2) {
-    stop("obs must have exactly two dimensions")
+    stop("obs must have exactly two dimensions.")
   }
   n_site <- nrow(obs)
   n_visit <- ncol(obs)
   if (n_visit < 2) {
-    stop("obs must contain at least two columns")
+    stop("obs must contain at least two columns.")
   }
   if (any(!(unique(obs) %in% c(0, 1, NA)))) {
-    stop("obs contains values other than 0, 1, NA")
+    stop("obs contains values other than 0, 1, NA.")
   }
   if (any(is.na(obs[ , 1]))) {
-    stop("obs has NAs in its first column")
+    stop("obs has NAs in its first column.")
   }
   if (n_visit > 2) {
     for (j in 2:(n_visit - 1)) {
@@ -30,29 +30,41 @@ make_flocker_data <- function(obs, constant_covs = NULL, visit_covs = NULL) {
       if (any(the_nas)) {
         the_nas2 <- which(the_nas)
         if (any(!is.na(obs[the_nas2, j+1]))) {
-          stop(paste0("some rows of obs have non-trailing NAs"))
+          stop(paste0("Some rows of obs have non-trailing NAs."))
         }
       }
     }
   }
   if (all(is.na(obs[ , n_visit]))) {
-    warning("the final column of obs contains only NAs")
+    warning("The final column of obs contains only NAs.")
   }
   if (!is.null(constant_covs)) {
     if(nrow(constant_covs) != nrow(obs)) {
-      stop("obs and constant_covs have differing numbers of rows")
+      stop("Different numbers of rows found for obs and constant_covs.")
+    }
+    if (any(is.na(constant_covs))) {
+      stop("A constant covariate contains missing values.")
     }
   }
   if (!is.null(visit_covs)) {
-    if(!is.list(visit_covs)) {
-      stop("visit_covs must be provided as a list or must remain NULL")
+    if (!is.list(visit_covs)) {
+      stop("Visit_covs must be a list or NULL.")
     } else {
       n_visit_covs <- length(visit_covs)
+      missing_covs <- vector()
       for (vc in 1:n_visit_covs) {
         if (!all.equal(dim(visit_covs[[vc]]), dim(obs))) {
-          stop(paste0("dimension mismatch found between obs and visit_covs[[", vc, "]]."))
+          stop(paste0("Dimension mismatch found between obs and visit_covs[[", vc, "]]."))
+        }
+        missing_covs <- unique(c(missing_covs, which(is.na(visit_covs[[vc]]))))
+      }
+      if (length(missing_covs) > 0) {
+        if (!all(missing_covs %in% which(is.na(obs)))) {
+          stop(paste0("A visit covariate contains missing values ",
+                      "at a position where the response is not missing."))
         }
       }
+      
     }
   }
   n_suc <- rowSums(obs, na.rm = T)
