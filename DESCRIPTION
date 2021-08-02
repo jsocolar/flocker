@@ -8,8 +8,7 @@ Depends:
 	rstan (>= 2.21.0),
 	posterior (>= 1.0.0)
 Remotes: 
-	paul-buerkner/brms (>= 2.15.9),
-	stan-dev/cmdstanr (>= 0.4.0)
+	paul-buerkner/brms (>= 2.15.9)
 Description: flocker provides functionality to fit flexible occupancy models
 Encoding: UTF-8
 License: BSD_3_Clause
