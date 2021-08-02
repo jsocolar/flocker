@@ -5,8 +5,10 @@ Author: Jacob B. Socolar <jacob.socolar@gmail.com>
 Maintainer: Jacob B. Socolar <jacob.socolar@gmail.com>
 Depends: 
 	R (>= 3.2.0),
+	brms,
 	rstan (>= 2.21.0),
-	posterior (>= 1.0.0)
+	posterior (>= 1.0.0),
+	cmdstanr (>= 0.4.0)
 Remotes: 
 	paul-buerkner/brms,
 	stan-dev/cmdstanr
