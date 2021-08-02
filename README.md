@@ -22,14 +22,14 @@ Install `flocker` with
 # install.packages("remotes")
 remotes::install_github("jsocolar/flocker")
 ```
-`flocker` requires a working installation of cmdstan, an interface to the 
-probabilistic programming language Stan. We recommend installing cmdstan from 
-R with
+`flocker` requires a working installation of cmdstan, which is an interface to
+the probabilistic programming language Stan. We recommend installing cmdstan 
+from R with
 ```
 # install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 cmdstanr::install_cmdstan()
 ```
-Occasionally users encounter difficulties in installing cmdstan. To 
+Users occasionally report difficulties installing cmdstan. To 
 troubleshoot, consult https://mc-stan.org/cmdstanr/articles/cmdstanr.html. 
 For more about Stan and cmdstan, see https://mc-stan.org/. If you really 
 can't figure out installation, feel free to ask for help at 
