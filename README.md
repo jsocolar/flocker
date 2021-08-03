@@ -1,4 +1,9 @@
 # flocker: flexible ocʞupancy estimation in R
+<!-- badges: start -->
+[![Coverage
+Status](https://codecov.io/gh/jsocolar/flocker/branch/main/graph/badge.svg)](https://codecov.io/gh/stan-dev/posterior)
+<!-- badges: end -->
+
 
 The `flocker` R package enables users to fit flexible occupancy models using 
 the same extended `lme4` formula syntax employed by R package `brms`. Also 
