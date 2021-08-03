@@ -54,8 +54,8 @@ flocker <- function(f_occ, f_det, flocker_data, data2 = NULL, visit_constant = F
   f_det_txt <- paste0(deparse(f_det), collapse = "")
   
   if (flocker_data$.type == "V") {
-    f_occ_use <- as.formula(paste0("occ | resp_subset(occupancy_subset) ", f_occ_txt))
-    f_det_use <- as.formula(paste0("det ", f_det_txt))
+    f_occ_use <- stats::as.formula(paste0("occ | resp_subset(occupancy_subset) ", f_occ_txt))
+    f_det_use <- stats::as.formula(paste0("det ", f_det_txt))
     model_formula <- brms::brmsformula(f_occ_use) + brms::brmsformula(f_det_use)
     
     # make code and data
@@ -86,8 +86,8 @@ flocker <- function(f_occ, f_det, flocker_data, data2 = NULL, visit_constant = F
     class(flocker_fit) <- "flocker_fit"
     
   } else if (flocker_data$.type == "N") {
-    f_occ_use <- as.formula(paste0("n_suc | trials(n_trial) ", f_occ_txt))
-    f_det_use <- as.formula(paste0("zi ", f_det_txt))
+    f_occ_use <- stats::as.formula(paste0("n_suc | trials(n_trial) ", f_occ_txt))
+    f_det_use <- stats::as.formula(paste0("zi ", f_det_txt))
     flocker_fit <- brms::brm(brms::bf(f_occ_use, f_det_use),
                              data = flocker_data$flocker_data,
                              family = brms::zero_inflated_binomial(),
