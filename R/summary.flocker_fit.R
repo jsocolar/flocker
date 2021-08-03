@@ -7,6 +7,7 @@
 summary.flocker_fit <- function(flocker_fit, ...) {
   out <- flocker_fit$summary
   class(out) <- "flocker_summary"
+  out
 }
 
 #' Print a summary for a fitted model represented by a \code{flocker_fit} object.
