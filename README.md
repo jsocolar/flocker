@@ -1,7 +1,7 @@
 # flocker: flexible ocʞupancy estimation in R
 <!-- badges: start -->
 [![Coverage
-Status](https://codecov.io/gh/jsocolar/flocker/branch/main/graph/badge.svg)](https://codecov.io/gh/stan-dev/posterior)
+Status](https://codecov.io/gh/jsocolar/flocker/branch/main/graph/badge.svg)](https://codecov.io/gh/jsocolar/flocker)
 <!-- badges: end -->
 
 
