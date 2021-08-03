@@ -12,10 +12,10 @@ summary.flocker_fit <- function(flocker_fit, ...) {
 
 #' Print a summary for a fitted model represented by a \code{flocker_fit} object.
 #' @aliases print.flocker_summary
-#' @param flocker_fit An object of class \code{flocker_fit}.
+#' @param x An object of class \code{flocker_fit}.
 #' @param ... Other potential arguments passed to method \code{summary} of \code{flocker_fit}.
 #' @seealso \code{\link{summary.flocker_fit}}
 #' @export
-print.flocker_fit <- function(flocker_fit, ...) {
-  writeLines(paste(summary(flocker_fit, ...), collapse = "\n"))
+print.flocker_fit <- function(x, ...) {
+  writeLines(paste(summary(x, ...), collapse = "\n"))
 }
