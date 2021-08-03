@@ -7,9 +7,9 @@
 \method{summary}{flocker_fit}(object, ...)
 }
 \arguments{
-\item{...}{Other potential arguments.}
+\item{object}{A flocker_fit object produced by \code{flocker(..., visit_constant = F)}.}
 
-\item{flocker_fit}{A flocker_fit object produced by \code{flocker(..., visit_constant = F)}.}
+\item{...}{Other potential arguments.}
 }
 \description{
 Summary method for a flocker_fit object.

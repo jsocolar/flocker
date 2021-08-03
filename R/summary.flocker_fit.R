@@ -1,5 +1,5 @@
 #' Summary method for a flocker_fit object.
-#' @param flocker_fit A flocker_fit object produced by \code{flocker(..., visit_constant = F)}.
+#' @param object A flocker_fit object produced by \code{flocker(..., visit_constant = F)}.
 #' @param ... Other potential arguments.
 #' @method summary flocker_fit
 #' @export
