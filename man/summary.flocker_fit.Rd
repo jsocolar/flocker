@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{flocker_fit}{A flocker_fit object produced by \code{flocker(..., visit_constant = F)}}
+
+\item{...}{Other potential arguments}
 }
 \value{
 Print a summary output for the fit.
