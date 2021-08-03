@@ -14,5 +14,5 @@ Remotes:
 	stan-dev/cmdstanr
 Description: flocker provides functionality to fit flexible occupancy models
 Encoding: UTF-8
-License: BSD_3_Clause
+License: BSD_3_clause
 RoxygenNote: 7.1.1
