@@ -11,9 +11,6 @@
 
 \item{...}{Other potential arguments}
 }
-\value{
-Print a summary output for the fit.
-}
 \description{
 Summary method for a flocker_fit object
 }
