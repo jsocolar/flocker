@@ -37,7 +37,7 @@ test_that("make_flocker_data works correctly", {
   
   obs[,4] <- NA
   expect_warning(fd <- make_flocker_data(obs),
-                 "the final column of obs contains only NAs")
+                 "The final column of obs contains only NAs")
   
   obs <- array(obs, dim = c(nrow(obs), ncol(obs), 1))
   expect_error(fd <- make_flocker_data(obs), 
