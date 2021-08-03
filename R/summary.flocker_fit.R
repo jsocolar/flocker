@@ -4,7 +4,7 @@
 #' @method summary flocker_fit
 #' @export
 
-summary.flocker_fit <- function(flocker_fit) {
+summary.flocker_fit <- function(flocker_fit, ...) {
   out <- flocker_fit$summary
   class(out) <- "flocker_summary"
 }
