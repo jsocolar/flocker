@@ -4,12 +4,12 @@
 \alias{summary.flocker_fit}
 \title{Summary method for a flocker_fit object.}
 \usage{
-\method{summary}{flocker_fit}(flocker_fit, ...)
+\method{summary}{flocker_fit}(object, ...)
 }
 \arguments{
-\item{flocker_fit}{A flocker_fit object produced by \code{flocker(..., visit_constant = F)}.}
-
 \item{...}{Other potential arguments.}
+
+\item{flocker_fit}{A flocker_fit object produced by \code{flocker(..., visit_constant = F)}.}
 }
 \description{
 Summary method for a flocker_fit object.
