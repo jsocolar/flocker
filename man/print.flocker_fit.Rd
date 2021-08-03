@@ -5,10 +5,10 @@
 \alias{print.flocker_summary}
 \title{Print a summary for a fitted model represented by a \code{flocker_fit} object.}
 \usage{
-\method{print}{flocker_fit}(flocker_fit, ...)
+\method{print}{flocker_fit}(x, ...)
 }
 \arguments{
-\item{flocker_fit}{An object of class \code{flocker_fit}.}
+\item{x}{An object of class \code{flocker_fit}.}
 
 \item{...}{Other potential arguments passed to method \code{summary} of \code{flocker_fit}.}
 }

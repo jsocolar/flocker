@@ -4,7 +4,8 @@ Title: Flexible occupancy models in R via Stan+cmdstanr+brms
 Author: Jacob B. Socolar <jacob.socolar@gmail.com>
 Maintainer: Jacob B. Socolar <jacob.socolar@gmail.com>
 Depends: 
-	R (>= 3.2.0),
+	R (>= 3.5.0)
+Imports:
 	brms,
 	rstan (>= 2.21.0),
 	posterior (>= 1.0.0),
