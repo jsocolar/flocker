@@ -19,7 +19,7 @@
 #' flock(f_occ = ~ sc1 + s(sc2) + (1|grp),
 #'           f_det = ~ sc1 + vc1 + s(vc2) + (1|grp),
 #'           flocker_data = fd,
-#'           refresh = 50, chains = 1, iter_warmup = 5, iter_sampling = 200,
+#'           refresh = 50, chains = 1, warmup = 5, iter = 200,
 #'           adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123)
 #' }
 #' @export
@@ -50,22 +50,21 @@ flock <- function(f_occ, f_det, flocker_data, data2 = NULL, visit_constant = FAL
              vint_text, ") ", f_det_txt))
     f_use <- brms::bf(f_det_use, f_occ_use)
   
-    stanvars <- brms::stanvar(scode = make_occupancy_lpmf(max_visit = max_visit), block = "functions")
-    
-    occupancy <- occupancy_family(max_visit)
-    
+    stanvars <- brms::stanvar(scode = make_occupancy_vv_lpmf(max_visit = max_visit), block = "functions")
     flocker_fit <- brms::brm(f_use, 
                              data = flocker_data$data,
-                             family = occupancy, 
+                             family = occupancy_vv(max_visit), 
                              stanvars = stanvars,
                              ...)
   } else if (flocker_data$type == "N") {
-    f_occ_use <- stats::as.formula(paste0("n_suc | trials(n_trial) ", f_occ_txt))
-    f_det_use <- stats::as.formula(paste0("zi ", f_det_txt))
+    f_occ_use <- stats::as.formula(paste0("occ ", f_occ_txt))
+    f_det_use <- stats::as.formula(paste0("n_suc | vint(n_trial) ", f_det_txt))
     f_use <- brms::bf(f_det_use, f_occ_use)
-    flocker_fit <- brms::make_stancode(brms::bf(f_use),
+    stanvars <- brms::stanvar(scode = make_occupancy_vc_lpmf(), block = "functions")
+    flocker_fit <- brms::brm(brms::bf(f_use),
                              data = flocker_data$data,
-                             family = brms::zero_inflated_binomial(),
+                             family = occupancy_vc(),
+                             stanvars = stanvars,
                              ...)
   }
   
