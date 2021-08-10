@@ -36,7 +36,7 @@ make_flocker_data <- function(obs, constant_covs = NULL, visit_covs = NULL) {
     }
   }
   if (all(is.na(obs[ , n_visit]))) {
-    warning("The final column of obs contains only NAs.")
+    stop("The final column of obs contains only NAs.")
   }
   if (!is.null(constant_covs)) {
     if(nrow(constant_covs) != nrow(obs)) {
@@ -45,11 +45,27 @@ make_flocker_data <- function(obs, constant_covs = NULL, visit_covs = NULL) {
     if (any(is.na(constant_covs))) {
       stop("A constant covariate contains missing values.")
     }
+    if ("y" %in% names(visit_covs)) {
+      stop(paste0("'y' is a reserved variable name in flocker and is not allowed",
+                  "as the name of a constant covariate"))
+    }
+    if (any(grepl("^\\.", names(visit_covs)))) {
+      stop(paste0("variable names starting with '.' are reserved in flocker and ",
+                  "are not allowed as covariate names in constant_covs"))
+    }
   }
   if (!is.null(visit_covs)) {
     if (!is.list(visit_covs)) {
-      stop("Visit_covs must be a list or NULL.")
+      stop("visit_covs must be a list or NULL.")
     } else {
+      if (is.null(names(visit_covs))) {
+        stop("visit_covs must be named if provided")
+      }
+      if (!is.null(constant_covs)) {
+        if (any(names(visit_covs) %in% names(constant_covs))) {
+          stop("overlapping names detected between visit_covs and constant_covs")
+        }
+      }
       n_visit_covs <- length(visit_covs)
       missing_covs <- vector()
       for (vc in 1:n_visit_covs) {
@@ -64,41 +80,72 @@ make_flocker_data <- function(obs, constant_covs = NULL, visit_covs = NULL) {
                       "at a position where the response is not missing."))
         }
       }
+      if ("y" %in% names(visit_covs)) {
+        stop(paste0("'y' is a reserved variable name in flocker and is not allowed",
+                    "as the name of a visit covariate"))
+      }
       
+      if (any(grepl("^\\.", names(visit_covs)))) {
+        stop(paste0("variable names starting with '.' are reserved in flocker and ",
+                    "are not allowed as covariate names in visit_covs"))
+      }
     }
   }
-  n_suc <- rowSums(obs, na.rm = T)
-  n_trial <- rowSums(!is.na(obs))
+  
+  max_visit <- ncol(obs)
   if (is.null(visit_covs)) {
+    n_trial <- rowSums(!is.na(obs))
+    n_suc <- rowSums(obs, na.rm = T)
     flocker_data <- data.frame(n_suc = n_suc, n_trial = n_trial)
     if (!is.null(constant_covs)) {
       flocker_data <- cbind(flocker_data, constant_covs)
     }
-    out <- list(flocker_data = flocker_data, type = "N")  # N for no visit covariates
+    out <- list(data = flocker_data, max_visit = max_visit, 
+                type = "N")  # N for no visit covariates
   } else {
-    occ <- as.numeric(n_suc > 0)
-    data1 <- data1_1 <- cbind(occ, as.data.frame(constant_covs))
-    for(i in 2:n_visit) {
-      data1_1 <- rbind(data1_1, data1)
+    flocker_data <- data.frame(y = expand_matrix(obs))
+    if (!is.null(constant_covs)) {
+      constant_covs_stacked <- 
+        do.call(rbind, replicate(max_visit, constant_covs, simplify=FALSE))
+      flocker_data <- cbind(flocker_data, constant_covs_stacked)
     }
-    data2 <- as.data.frame(c(list(det = as.vector(as.matrix(obs)), lapply(visit_covs, function(x){as.vector(as.matrix(x))}))))
-    data2 <- cbind(data2, data1_1)
-    data2$.site <- rep(c(1:n_site), n_visit)
-    data2$.visit <- rep(c(1:n_visit), each = n_site)
-    data2$occ[(n_site + 1):(nrow(data2))] <- -99
-    data2 <- data2[!is.na(data2$det), ]
-    
-    data2$occupancy_subset <- 0
-    data2$occupancy_subset[1:n_site] <- 1
-    
-    
-    .indices <- matrix(data = -99, nrow = n_site, ncol = n_visit)
-    for (i in 1:n_site) {
-      .indices[i, 1:n_trial[i]] <- which(data2$.site == i)
+    if (!is.null(visit_covs)) {
+      visit_covs <- as.data.frame(lapply(visit_covs, expand_matrix))
+      flocker_data <- cbind(flocker_data, visit_covs)
     }
     
-    out <- list(flocker_data = data2, .nsite = n_site, .nvisit = n_trial, .indices = .indices, .type = "V")
+    flocker_data$nsite <- c(nrow(obs), 
+                             rep(-99, nrow(obs) - 1))
+    flocker_data$nvisit <- c(apply(obs, 1, function(x){sum(!is.na(x))}), 
+                              rep(-99, nrow(obs) * (max_visit - 1)))
+    flocker_data$Q <- c(as.integer(rowSums(obs, na.rm = T) > 0),
+                         rep(-99, nrow(obs) * (max_visit - 1)))
+    
+    # Prepare to add visit indices, and trim flocker_data to existing observations
+    flocker_data$site <- 1:nrow(obs)
+    flocker_data <- flocker_data[!is.na(flocker_data$y), ]
+    visit_indices <- as.data.frame(matrix(data = -99, nrow = nrow(obs),
+                                      ncol = max_visit))
+    names(visit_indices) <- paste0("visit_index", 1:max_visit)
+    for (i in 1:nrow(obs)) {
+      visit_indices[i, 1:flocker_data$nvisit[i]] <- which(flocker_data$site == i)
+    }
+    visit_indices_trailing <- 
+      as.data.frame(matrix(-99, nrow = nrow(flocker_data) - nrow(visit_indices),
+                           ncol = max_visit))
+    names(visit_indices_trailing) <- paste0("visit_index", 1:max_visit)
+    visit_indices <- rbind(visit_indices, visit_indices_trailing)
+    flocker_data <- cbind(flocker_data, visit_indices)
+    
+    out <- list(data = flocker_data, max_visit = max_visit,
+                type = "V")
   }
   class(out) <- c("list", "flocker_data")
   out
+}
+
+# helper function to convert matrix to long vector format
+# @param m matrix-like object to expand
+expand_matrix <- function (m) {
+  out <- as.vector(as.matrix(m))
 }
