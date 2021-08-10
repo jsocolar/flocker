@@ -1,97 +1,72 @@
 #' Fit an occupancy model
 #' @param f_occ A brms-type model formula for occupancy. Must begin with "~".
 #'              # Important
-#'              If visit_constant = T, then the occupancy sub-model gives the probability
-#'              of NON-occupancy. Negate the terms associated with this sub-model to recover 
-#'              covariate effects on occupancy.
+#'              If \code{visit_constant = T}, then the occupancy sub-model gives the 
+#'              probability of NON-occupancy. Negate the terms associated with this 
+#'              sub-model to recover covariate effects on occupancy.
 #' @param f_det A brms-type model formula for detection. Must begin with "~".
 #' @param flocker_data data, generally the output of \code{make_flocker_data()}.
 #' @param data2 additional data (e.g. a covariance matrix for a phylogenetic effect)
-#' @param ... additional arguments passed to \code{cmdstanr::sample()} if visit_constant is FALSE
-#'            or to brms::brm() if visit_constant is TRUE
+#' @param ... additional arguments passed to \code{brms::brm()}
 #' @param visit_constant A logical indicator. Are detection probabilities constant across visits?
 #'          Must be TRUE if the model lacks visit-specific detection covariates, otherwise must
 #'          be FALSE.
-#' @return the fitted occupancy model. 
-#' 
-#' If \code{visit_constant = F}, a three element list. 
-#'         The first element, $draws is a draws_df object from package posterior. This
-#'         element uses meaningful parameter names.
-#'         The second element, $stan_fit, is a CmdStanFit object from package cmdstanr. This
-#'         element uses the non-informative parameter names that are used internally by brms.
-#'         The third element, $summary, is a character vector useful for viewing a summary
-#'         of the output.
-#'
-#' If \code{visit_constant = T}, a brmsfit object from brms.
-#' # Important
-#' If \code{visit_constant = T}, then the occupancy sub-model gives the probability
-#' of NON-occupancy. Negate the terms associated with this sub-model to recover covariate
-#' effects on occupancy.
+#' @return a \code{brmsfit} containing the fitted occupancy model. 
 #' @examples
 #' \dontrun{
 #' example_data <- example_flocker_data()
 #' fd <- make_flocker_data(example_data$obs, example_data$site_covs, example_data$visit_covs)
-#' flocker(f_occ = ~ sc1 + s(sc2) + (1|grp),
+#' flock(f_occ = ~ sc1 + s(sc2) + (1|grp),
 #'           f_det = ~ sc1 + vc1 + s(vc2) + (1|grp),
 #'           flocker_data = fd,
 #'           refresh = 50, chains = 1, iter_warmup = 5, iter_sampling = 200,
 #'           adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123)
 #' }
-#' @import cmdstanr
 #' @export
 
-flocker <- function(f_occ, f_det, flocker_data, data2 = NULL, visit_constant = FALSE, ...){
+flock <- function(f_occ, f_det, flocker_data, data2 = NULL, visit_constant = FALSE, ...){
   if (!is.logical(visit_constant)) {
     stop("visit_constant must be logical")
   }
-  if (visit_constant & (flocker_data$.type != "N")) {
-    stop("flocker_data is not formatted for a model with visit-constant detection probabilities")
-  }else if ((!visit_constant) & (flocker_data$.type != "V")) {
-    stop("flocker_data is not formatted for a model with visit-specific detection probabilities")
+  if (visit_constant & (flocker_data$type != "N")) {
+    stop(paste("flocker_data is not formatted for a model with visit-constant",
+                "detection probabilities"))
+  }else if ((!visit_constant) & (flocker_data$type != "V")) {
+    stop(paste("flocker_data is not formatted for a model with visit-specific",
+                "detection probabilities"))
   }
   
   f_occ_txt <- paste0(deparse(f_occ), collapse = "")
   f_det_txt <- paste0(deparse(f_det), collapse = "")
   
-  if (flocker_data$.type == "V") {
-    f_occ_use <- stats::as.formula(paste0("occ | resp_subset(occupancy_subset) ", f_occ_txt))
-    f_det_use <- stats::as.formula(paste0("det ", f_det_txt))
-    model_formula <- brms::brmsformula(f_occ_use) + brms::brmsformula(f_det_use)
+  if (flocker_data$type == "V") {
+    max_visit <- flocker_data$max_visit
+    vint_text <- paste0("visit_index", 1:max_visit, 
+                        collapse = ", ")
     
-    # make code and data
-    flocker_stancode <- flocker_make_stancode(model_formula, flocker_data, data2)
-    flocker_standata <- flocker_make_standata(model_formula, flocker_data, data2)
+    f_occ_use <- stats::as.formula(paste0("occ ", f_occ_txt))
+    f_det_use <- stats::as.formula(
+      paste0("y | vint(nsite, nvisit, Q, ",
+             vint_text, ") ", f_det_txt))
+    f_use <- brms::bf(f_det_use, f_occ_use)
+  
+    stanvars <- stanvar(scode = make_occupancy_lpmf(max_visit = max_visit), block = "functions")
     
-    # write .stan file in temp directory
-    fileConn<-file(paste0(tempdir(), "/flocker_model.stan"))
-    writeLines(flocker_stancode, fileConn)
-    close(fileConn)
+    occupancy <- occupancy_family(max_visit)
     
-    # compile model
-    flocker_model <- cmdstanr::cmdstan_model(paste0(tempdir(), "/flocker_model.stan"))
-    
-    # sample model
-    ff <- flocker_model$sample(data = flocker_standata, ...)
-    ff2 <- rstan::read_stan_csv(ff$output_files())
-    
-    dummy_fit <- brms::brm(model_formula, data = flocker_data$flocker_data, data2 = data2,
-                     family = brms::bernoulli(link = "logit"), empty = TRUE)
-    dummy_fit$fit <- ff2
-    dummy_fit <- brms::rename_pars(dummy_fit)
-    res_vec <- capture.output(
-      print(dummy_fit)
-    )
-    
-    flocker_fit <- list(draws = posterior::as_draws_df(dummy_fit$fit), stan_fit = ff, summary = res_vec)
-    class(flocker_fit) <- "flocker_fit"
-    
-  } else if (flocker_data$.type == "N") {
+    flocker_fit <- brms::brm(f_use, 
+                             data = flocker_data$data,
+                             family = occupancy, 
+                             stanvars = stanvars,
+                             ...)
+  } else if (flocker_data$type == "N") {
     f_occ_use <- stats::as.formula(paste0("n_suc | trials(n_trial) ", f_occ_txt))
     f_det_use <- stats::as.formula(paste0("zi ", f_det_txt))
-    flocker_fit <- brms::brm(brms::bf(f_occ_use, f_det_use),
-                             data = flocker_data$flocker_data,
+    f_use <- brms::bf(f_det_use, f_occ_use)
+    flocker_fit <- brms::make_stancode(brms::bf(f_use),
+                             data = flocker_data$data,
                              family = brms::zero_inflated_binomial(),
-                             backend = 'cmdstanr', ...)
+                             ...)
   }
   
   flocker_fit

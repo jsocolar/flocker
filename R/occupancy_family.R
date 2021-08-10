@@ -1,15 +1,17 @@
-#' Create Stan code for the occupancy_lpmf function
+#' Define the occupancy model family
 #' Primarily for internal use in \code{flock()}.
-#' @param links links for detection and occupancy respectively, passed to
-#' \code{brms::custom_family(links)}
+#' @param max_visit the maximum number of repeat visits to a site
 #' @return a "customfamily" "brmsfamily" object from brms
 #' @export
 
-occupancy_family <- function(links = c("logit", "logit")) {
+occupancy_family <- function(max_visit) {
   brms::custom_family(
     "occupancy", dpars = c("mu", "occ"),
-    links = links,
-    type = "real", 
-    vars = c(".nsite", ".nvisit", ".Q", paste0(".visit_index", 1:.max_visit)),
+    links = c("logit", "logit"),
+    type = "int", 
+    vars = c("vint1", "vint2", "vint3", paste0("vint", 3 + (1:max_visit))),
+    # vars are nsite, nvisit, Q, visit_index1...
     loop = FALSE)
 }
+
+
