@@ -13,12 +13,12 @@ make_occupancy_lpmf <- function (max_visit) {
   sf_text1 <- "  real occupancy_lpmf(
     int[] y, // detection data
     vector mu, // lin pred for detection
-    vector occ, // lin pred for occupancy. Only the first nsite elements matter.
-    int[] vint1, // # sites. Elements after 1 irrelevant.
-    int[] vint2, // # visits per site. Elements after nsite[1] irrelevant.
-    int[] vint3, // Indicator for > 0 detections. Elements after nsite[1] irrelevant.
+    vector occ, // lin pred for occupancy. Only the first vint1[1] elements matter.
+    int[] vint1, // # sites (nsite). Elements after 1 irrelevant.
+    int[] vint2, // # visits per site (nvisit). Elements after vint1[1] irrelevant.
+    int[] vint3, // Indicator for > 0 detections (Q). Elements after vint1[1] irrelevant.
   
-  // indices for jth visit to each site (elements after nsite[1] irrelevant):"
+  // indices for jth visit to each site (elements after vint1[1] irrelevant):"
   
   sf_text2 <- paste0("    int[] vint", 3 + (1:max_visit), collapse = ",\n")
   

@@ -50,7 +50,7 @@ flock <- function(f_occ, f_det, flocker_data, data2 = NULL, visit_constant = FAL
              vint_text, ") ", f_det_txt))
     f_use <- brms::bf(f_det_use, f_occ_use)
   
-    stanvars <- stanvar(scode = make_occupancy_lpmf(max_visit = max_visit), block = "functions")
+    stanvars <- brms::stanvar(scode = make_occupancy_lpmf(max_visit = max_visit), block = "functions")
     
     occupancy <- occupancy_family(max_visit)
     

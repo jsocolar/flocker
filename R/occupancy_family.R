@@ -9,8 +9,8 @@ occupancy_family <- function(max_visit) {
     "occupancy", dpars = c("mu", "occ"),
     links = c("logit", "logit"),
     type = "int", 
+    # Integer aterms (vint) for nsite, nvisit, Q, visit_index1...
     vars = c("vint1", "vint2", "vint3", paste0("vint", 3 + (1:max_visit))),
-    # vars are nsite, nvisit, Q, visit_index1...
     loop = FALSE)
 }
 
