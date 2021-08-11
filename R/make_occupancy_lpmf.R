@@ -55,9 +55,12 @@ return(out)
 }
 
 
-
 #' Create Stan code occupancy_vc_lpmf with visit-constant covariates
 #' Primarily for internal use in \code{flock()}.
+#' The purpose of defining this custom family, rather than using brms's zero-inflated 
+#' binomial, is to ensure that the occupancy parameters are interpretable as though
+#' values of 1 in the marginalized state reflect occupancy rather than non-
+#' occupancy.
 #' @return Character string of Stan code corresponding to occupancy_vc_lpmf
 
 make_occupancy_vc_lpmf <- function () {
