@@ -3,4 +3,3 @@
 export(example_flocker_data)
 export(flock)
 export(make_flocker_data)
-export(make_occupancy_vv_lpmf)

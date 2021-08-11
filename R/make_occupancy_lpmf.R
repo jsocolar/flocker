@@ -2,7 +2,6 @@
 #' Primarily for internal use in \code{flock()}.
 #' @param max_visit Literal integer maximum number of visits to any site.
 #' @return Character string of Stan code corresponding to occupancy_vv_lpmf
-#' @export
 
 
 make_occupancy_vv_lpmf <- function (max_visit) {
