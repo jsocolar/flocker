@@ -54,7 +54,7 @@ time, try running
 library(flocker)
 example_data <- example_flocker_data()
 fd <- make_flocker_data(example_data$obs, example_data$site_covs, example_data$visit_covs)
-ff <- flocker(f_occ = ~ sc1 + sc2 + (1|grp),
+ff <- flock(f_occ = ~ sc1 + sc2 + (1|grp),
               f_det = ~ sc1 + vc1 + vc2 + (1|grp),
               flocker_data = fd,
               refresh = 50, chains = 1, iter_warmup = 5, iter_sampling = 200,
