@@ -59,7 +59,7 @@ make_flocker_data <- function(obs, constant_covs = NULL, visit_covs = NULL) {
       stop("visit_covs must be a list or NULL.")
     } else {
       if (is.null(names(visit_covs))) {
-        stop("visit_covs must be named if provided")
+        stop("If provided, visit_covs must be named.")
       }
       if (!is.null(constant_covs)) {
         if (any(names(visit_covs) %in% names(constant_covs))) {
