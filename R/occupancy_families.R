@@ -16,7 +16,6 @@ occupancy_vv <- function(max_visit) {
 
 #' Define the occupancy model family with visit-constant covariates
 #' Primarily for internal use in \code{flock()}.
-#' @param max_visit the maximum number of repeat visits to a site
 #' @return a "customfamily" "brmsfamily" object from brms
 
 occupancy_vc <- function() {

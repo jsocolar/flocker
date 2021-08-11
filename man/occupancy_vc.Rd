@@ -7,9 +7,6 @@ Primarily for internal use in \code{flock()}.}
 \usage{
 occupancy_vc()
 }
-\arguments{
-\item{max_visit}{the maximum number of repeat visits to a site}
-}
 \value{
 a "customfamily" "brmsfamily" object from brms
 }
