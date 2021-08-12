@@ -1,23 +1,31 @@
 Package: flocker
 Version: 0.1-0
-Title: Flexible occupancy models in R via Stan+cmdstanr+brms
+Title: Flexible occupancy estimation in R
+Authors@R: 
+    c(person("Jacob B.", "Socolar", email = "jacob.socolar@gmail.com",
+             role = c("aut", "cre")),
+      person("Simon C.", "Mills", role = c("aut")))
+
 Author: Jacob B. Socolar <jacob.socolar@gmail.com>
 Maintainer: Jacob B. Socolar <jacob.socolar@gmail.com>
 Depends: 
 	R (>= 3.5.0)
 Imports:
-	brms,
+	brms (>= 2.15.9),
 	rstan (>= 2.21.0),
 	posterior (>= 1.0.0),
-	cmdstanr (>= 0.4.0),
 	stats,
 	boot
 Suggests:
 	testthat (>= 2.1.0)
+	rstan (>= 2.26.0),
+	cmdstanr (>= 0.4.0),
 Remotes: 
 	paul-buerkner/brms,
 	stan-dev/cmdstanr
 Description: flocker provides functionality to fit flexible occupancy models
 Encoding: UTF-8
 License: BSD_3_clause
+URL: https://github.com/jsocolar/flocker
+BugReports: https://github.com/jsocolar/flocker/issues
 RoxygenNote: 7.1.1
