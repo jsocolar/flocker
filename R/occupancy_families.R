@@ -5,7 +5,7 @@
 
 occupancy_vv <- function(max_visit) {
   brms::custom_family(
-    "occupancy_vv", dpars = c("mu", "occ"),
+    "occupancy_V", dpars = c("mu", "occ"),
     links = c("logit", "logit"),
     type = "int", 
     # Integer aterms (vint) for nsite, nvisit, Q, visit_index1...
@@ -20,7 +20,7 @@ occupancy_vv <- function(max_visit) {
 
 occupancy_vc <- function() {
   brms::custom_family(
-    "occupancy_vc", dpars = c("mu", "occ"),
+    "occupancy_C", dpars = c("mu", "occ"),
     links = c("logit", "logit"),
     type = "int", 
     # Integer aterms (vint) for trials

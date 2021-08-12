@@ -30,7 +30,7 @@ flock <- function(f_occ, f_det, flocker_data, data2 = NULL,
     stop("visit_constant must be logical.")
   }
   if (visit_constant) {
-    if (flocker_data$type != "N") {
+    if (flocker_data$type != "C") {
       stop(paste("flocker_data is not formatted for a model with visit-constant",
                  "detection probabilities"))
     }
@@ -62,22 +62,27 @@ flock <- function(f_occ, f_det, flocker_data, data2 = NULL,
              vint_text, ") ", f_det_txt))
     f_use <- brms::bf(f_det_use, f_occ_use)
   
-    stanvars <- brms::stanvar(scode = make_occupancy_vv_lpmf(max_visit = max_visit), block = "functions")
+    stanvars <- brms::stanvar(scode = make_occupancy_V_lpmf(max_visit = max_visit), block = "functions")
     flocker_fit <- brms::brm(f_use, 
                              data = flocker_data$data,
-                             family = occupancy_vv(max_visit), 
+                             family = occupancy_V(max_visit), 
                              stanvars = stanvars,
                              ...)
-  } else if (flocker_data$type == "N") {
+    attr(flocker_fit, "class") <- c(attr(flocker_fit, "class"), 
+                                    "flocker_fit", "flocker_fit_V")
+  } else if (flocker_data$type == "C") {
     f_occ_use <- stats::as.formula(paste0("occ ", f_occ_txt))
     f_det_use <- stats::as.formula(paste0("n_suc | vint(n_trial) ", f_det_txt))
     f_use <- brms::bf(f_det_use, f_occ_use)
-    stanvars <- brms::stanvar(scode = make_occupancy_vc_lpmf(), block = "functions")
+    stanvars <- brms::stanvar(scode = make_occupancy_C_lpmf(), block = "functions")
     flocker_fit <- brms::brm(brms::bf(f_use),
                              data = flocker_data$data,
-                             family = occupancy_vc(),
+                             family = occupancy_C(),
                              stanvars = stanvars,
                              ...)
+    attr(flocker_fit, "class") <- c(attr(flocker_fit, "class"), 
+                                    "flocker_fit", "flocker_fit_C")
+    
   }
   
   flocker_fit

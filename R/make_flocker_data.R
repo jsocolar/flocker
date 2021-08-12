@@ -101,7 +101,7 @@ make_flocker_data <- function(obs, constant_covs = NULL, visit_covs = NULL) {
       flocker_data <- cbind(flocker_data, constant_covs)
     }
     out <- list(data = flocker_data, max_visit = max_visit, 
-                type = "N")  # N for no visit covariates
+                type = "C")  # C for visit-constant covariates
   } else {
     flocker_data <- data.frame(y = expand_matrix(obs))
     if (!is.null(constant_covs)) {

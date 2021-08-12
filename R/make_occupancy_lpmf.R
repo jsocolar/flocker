@@ -1,15 +1,15 @@
-#' Create Stan code for occupancy_vv_lpmf with visit-varying covariates
+#' Create Stan code for occupancy_V_lpmf with visit-varying covariates
 #' Primarily for internal use in \code{flock()}.
 #' @param max_visit Literal integer maximum number of visits to any site.
-#' @return Character string of Stan code corresponding to occupancy_vv_lpmf
+#' @return Character string of Stan code corresponding to occupancy_V_lpmf
 
 
-make_occupancy_vv_lpmf <- function (max_visit) {
+make_occupancy_V_lpmf <- function (max_visit) {
   if (!(is.integer(max_visit) & (max_visit > 1))) {
     stop("max_visit must be an integer greater than 1")
   }
   
-  sf_text1 <- "  real occupancy_vv_lpmf(
+  sf_text1 <- "  real occupancy_V_lpmf(
     int[] y, // detection data
     vector mu, // lin pred for detection
     vector occ, // lin pred for occupancy. Only the first vint1[1] elements matter.
@@ -54,16 +54,16 @@ return(out)
 }
 
 
-#' Create Stan code occupancy_vc_lpmf with visit-constant covariates
+#' Create Stan code occupancy_C_lpmf with visit-constant covariates
 #' Primarily for internal use in \code{flock()}.
 #' The purpose of defining this custom family, rather than using brms's zero-inflated 
 #' binomial, is to ensure that the occupancy parameters are interpretable as though
 #' values of 1 in the marginalized state reflect occupancy rather than non-
 #' occupancy.
-#' @return Character string of Stan code corresponding to occupancy_vc_lpmf
+#' @return Character string of Stan code corresponding to occupancy_C_lpmf
 
-make_occupancy_vc_lpmf <- function () {
-  "real occupancy_vc_lpmf(int y, real mu, real occ, int trials) {
+make_occupancy_C_lpmf <- function () {
+  "real occupancy_C_lpmf(int y, real mu, real occ, int trials) {
   if (y == 0) { 
     return log_sum_exp(bernoulli_logit_lpmf(0 | occ), 
                        bernoulli_logit_lpmf(1 | occ) + 
