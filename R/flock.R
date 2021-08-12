@@ -24,16 +24,28 @@
 #' }
 #' @export
 
-flock <- function(f_occ, f_det, flocker_data, data2 = NULL, visit_constant = FALSE, ...){
+flock <- function(f_occ, f_det, flocker_data, data2 = NULL, 
+                  visit_constant = FALSE, ...){
   if (!is.logical(visit_constant)) {
-    stop("visit_constant must be logical")
+    stop("visit_constant must be logical.")
   }
-  if (visit_constant & (flocker_data$type != "N")) {
-    stop(paste("flocker_data is not formatted for a model with visit-constant",
-                "detection probabilities"))
-  }else if ((!visit_constant) & (flocker_data$type != "V")) {
-    stop(paste("flocker_data is not formatted for a model with visit-specific",
-                "detection probabilities"))
+  if (visit_constant) {
+    if (flocker_data$type != "N") {
+      stop(paste("flocker_data is not formatted for a model with visit-constant",
+                 "detection probabilities"))
+    }
+  } else {
+    if (flocker_data$type != "V") {
+      stop(paste("flocker_data is not formatted for a model with visit-specific",
+                 "detection probabilities"))
+    }
+    extra_args <- list(...)
+    if ("threads" %in% names(extra_args)) {
+      if (extra_args$threads > 1) {
+        stop(paste("multithreading not allowed for a model with visit-specific",
+                    "detection probabilities."))
+      }
+    }
   }
   
   f_occ_txt <- paste0(deparse(f_occ), collapse = "")
