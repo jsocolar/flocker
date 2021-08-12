@@ -10,13 +10,14 @@ Status](https://codecov.io/gh/jsocolar/flocker/branch/main/graph/badge.svg)](htt
 
 The `flocker` R package enables users to fit flexible occupancy models using 
 the same extended `lme4` formula syntax employed by R package `brms`. Also 
-included are functions to format data for occupancy modeling and to extract 
-estimates and predictions from fitted occupancy models.
+included are functions to format data for occupancy modeling. `flocker` is 
+under active development. Soon to be included are functions to extract 
+estimates, predictions, posterior predictive checks, and model comparison 
+criteria from fitted occupancy models.
 
 Compared to existing R packages for fitting occupancy models, `flocker` is 
 substantially more flexible in the variety of single-season models that can 
 be fit, including 
-* multispecies models
 * sophisticated random effect structures
 * phylogenetic models
 * generalized additive models
@@ -30,18 +31,30 @@ Install `flocker` with
 # install.packages("remotes")
 remotes::install_github("jsocolar/flocker")
 ```
-`flocker` requires a working installation of cmdstan, which is an interface to
-the probabilistic programming language Stan. We recommend installing cmdstan 
-from R with
+`flocker` requires a working version of either Rstan or cmdstan, which are 
+interfaces to the probabilistic programming language Stan. For more about 
+Stan, see https://mc-stan.org/.
+To install Rstan, we strongly recommend installing the development version 
+rather than the CRAN version. In a fresh R session, do
+```
+# Uncomment the next line if you have previously installed rstan
+# remove.packages(c("StanHeaders", "rstan"))
+install.packages("StanHeaders", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+```
+To install cmdstan, we recommend using `cmdstanr` with
 ```
 # install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 cmdstanr::install_cmdstan()
 ```
-Users occasionally report difficulties installing cmdstan. To 
-troubleshoot, consult https://mc-stan.org/cmdstanr/articles/cmdstanr.html. 
-For more about Stan and cmdstan, see https://mc-stan.org/. If you really 
-can't figure out installation, feel free to ask for help at 
-https://discourse.mc-stan.org/.
+Stan, in turn, requires a working C++ toolchain, which in the past has occasionally posed
+complications for users. For Rstan-focused advice on installing Stan and
+the necessary C++ toolchain, consult 
+https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started.
+For cmdstan-focused advice, consult
+https://mc-stan.org/cmdstanr/articles/cmdstanr.html. 
+If you encounter toolchain issues that you are unable to troubleshoot, 
+feel free to ask for help at https://discourse.mc-stan.org/.
 
 Finally, `flocker` currently requires the development version of `brms` (this
 is a short-term situation until `brms` is updated on CRAN). Install via
