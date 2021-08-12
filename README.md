@@ -1,4 +1,4 @@
-<img src="man/figures/flocker_sticker.png" width = 200 alt="flocker logo"/>
+<img src="man/figures/flocker_sticker.png" width = 200 alt="flocker logo"/, align = "right">
 
 # flocker: flexible ocʞupancy estimation in R
 <!-- badges: start -->
