@@ -5,9 +5,6 @@ Authors@R:
     c(person("Jacob B.", "Socolar", email = "jacob.socolar@gmail.com",
              role = c("aut", "cre")),
       person("Simon C.", "Mills", role = c("aut")))
-
-Author: Jacob B. Socolar <jacob.socolar@gmail.com>
-Maintainer: Jacob B. Socolar <jacob.socolar@gmail.com>
 Depends: 
 	R (>= 3.5.0)
 Imports:
