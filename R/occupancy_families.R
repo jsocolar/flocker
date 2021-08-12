@@ -3,7 +3,7 @@
 #' @param max_visit the maximum number of repeat visits to a site
 #' @return a "customfamily" "brmsfamily" object from brms
 
-occupancy_vv <- function(max_visit) {
+occupancy_V <- function(max_visit) {
   brms::custom_family(
     "occupancy_V", dpars = c("mu", "occ"),
     links = c("logit", "logit"),
@@ -18,7 +18,7 @@ occupancy_vv <- function(max_visit) {
 #' Primarily for internal use in \code{flock()}.
 #' @return a "customfamily" "brmsfamily" object from brms
 
-occupancy_vc <- function() {
+occupancy_C <- function() {
   brms::custom_family(
     "occupancy_C", dpars = c("mu", "occ"),
     links = c("logit", "logit"),
