@@ -16,8 +16,8 @@ estimates and predictions from fitted occupancy models.
 Compared to existing R packages for fitting occupancy models, `flocker` is 
 substantially more flexible in the variety of single-season models that can 
 be fit, including 
-* random effects, optionally with sophisticated covariance structures spanning 
-both the occupancy and detection sub-models
+* multispecies models
+* sophisticated random effect structures
 * phylogenetic models
 * generalized additive models
 * spatially autoregressive models
