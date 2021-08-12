@@ -1,4 +1,4 @@
-<img src="man/figures/flocker_sticker.png" width = 120 alt="flocker Logo"/>
+<img src="man/figures/flocker_sticker.png" width = 120 alt="flocker logo"/>
 # flocker: flexible ocʞupancy estimation in R
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/jsocolar/flocker/workflows/R-CMD-check/badge.svg)](https://github.com/jsocolar/flocker/actions?workflow=R-CMD-check)
