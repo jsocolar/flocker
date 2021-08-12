@@ -68,8 +68,6 @@ flock <- function(f_occ, f_det, flocker_data, data2 = NULL,
                              family = occupancy_V(max_visit), 
                              stanvars = stanvars,
                              ...)
-    attr(flocker_fit, "class") <- c(attr(flocker_fit, "class"), 
-                                    "flocker_fit", "flocker_fit_V")
   } else if (flocker_data$type == "C") {
     f_occ_use <- stats::as.formula(paste0("occ ", f_occ_txt))
     f_det_use <- stats::as.formula(paste0("n_suc | vint(n_trial) ", f_det_txt))
@@ -80,10 +78,8 @@ flock <- function(f_occ, f_det, flocker_data, data2 = NULL,
                              family = occupancy_C(),
                              stanvars = stanvars,
                              ...)
-    attr(flocker_fit, "class") <- c(attr(flocker_fit, "class"), 
-                                    "flocker_fit", "flocker_fit_C")
-    
   }
-  
+  attr(flocker_fit, "class") <- c(attr(flocker_fit, "class"), "flocker_fit")
+  attr(flocker_fit, "lik_type") <- flocker_data$type
   flocker_fit
 }
