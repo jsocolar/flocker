@@ -11,14 +11,13 @@ Maintainer: Jacob B. Socolar <jacob.socolar@gmail.com>
 Depends: 
 	R (>= 3.5.0)
 Imports:
-	brms (>= 2.15.9),
+	brms,
 	rstan (>= 2.21.0),
 	posterior (>= 1.0.0),
 	stats,
 	boot
 Suggests:
 	testthat (>= 2.1.0)
-	rstan (>= 2.26.0),
 	cmdstanr (>= 0.4.0),
 Remotes: 
 	paul-buerkner/brms,
