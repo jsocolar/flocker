@@ -124,17 +124,12 @@ make_flocker_data <- function(obs, constant_covs = NULL, visit_covs = NULL) {
     # Prepare to add visit indices, and trim flocker_data to existing observations
     flocker_data$site <- 1:nrow(obs)
     flocker_data <- flocker_data[!is.na(flocker_data$y), ]
-    visit_indices <- as.data.frame(matrix(data = -99, nrow = nrow(obs),
+    visit_indices <- as.data.frame(matrix(data = -99, nrow = nrow(flocker_data),
                                       ncol = max_visit))
     names(visit_indices) <- paste0("visit_index", 1:max_visit)
     for (i in 1:nrow(obs)) {
       visit_indices[i, 1:flocker_data$nvisit[i]] <- which(flocker_data$site == i)
     }
-    visit_indices_trailing <- 
-      as.data.frame(matrix(-99, nrow = nrow(flocker_data) - nrow(visit_indices),
-                           ncol = max_visit))
-    names(visit_indices_trailing) <- paste0("visit_index", 1:max_visit)
-    visit_indices <- rbind(visit_indices, visit_indices_trailing)
     flocker_data <- cbind(flocker_data, visit_indices)
     
     out <- list(data = flocker_data, max_visit = max_visit,
