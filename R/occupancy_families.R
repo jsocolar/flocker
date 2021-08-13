@@ -21,7 +21,7 @@ occupancy_V <- function(max_visit) {
 occupancy_C <- function() {
   brms::custom_family(
     "occupancy_C", dpars = c("mu", "occ"),
-    links = c("logit", "logit"),
+    links = c("identity", "identity"),
     type = "int", 
     # Integer aterms (vint) for trials
     vars = c("vint1[n]"),
