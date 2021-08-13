@@ -12,7 +12,8 @@ Imports:
 	rstan (>= 2.21.0),
 	posterior (>= 1.0.0),
 	stats,
-	boot
+	boot,
+	matrixStats
 Suggests:
 	testthat (>= 2.1.0),
 	cmdstanr (>= 0.4.0)
