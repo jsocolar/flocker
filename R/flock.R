@@ -48,8 +48,15 @@ flock <- function(f_occ, f_det, flocker_data, data2 = NULL,
     }
   }
   
-  f_occ_txt <- paste0(deparse(f_occ), collapse = "")
-  f_det_txt <- paste0(deparse(f_det), collapse = "")
+  f_occ_txt <- tryCatch(paste0(deparse(f_occ), collapse = ""),
+                        error = function(x) 
+                          strwrap("Error in formula deparse: does the occupancy 
+                                  formula have the correct syntax, e.g. ~ a + b"))
+  
+  f_det_txt <- tryCatch(paste0(deparse(f_det), collapse = ""), 
+                        error = function(x) 
+                          strwrap("Error in formula deparse: does the detection 
+                                  formula have the correct syntax, e.g. ~ c + d"))
   
   if (flocker_data$type == "V") {
     max_visit <- flocker_data$max_visit
