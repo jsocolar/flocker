@@ -53,9 +53,9 @@ log_lik_V <- function(flocker_fit_V) {
   # finish likelihood calculation
   Q_index <- as.logical(ll_partial_S$Q)
   ll_partial_S$log_lik <- NA
-  ll_partial_S$log_lik [Q_index] <- log_inv_logit(ll_partial_S$lpo[Q_index]) + 
+  ll_partial_S$log_lik[Q_index] <- log_inv_logit(ll_partial_S$lpo[Q_index]) + 
     rowSums(ll_partial_V[Q_index,])
-  log_lik[!Q_index] <- matrixStats::rowLogSumExps(
+  ll_partial_S$log_lik[!Q_index] <- matrixStats::rowLogSumExps(
     cbind(log1m_inv_logit(ll_partial_S$lpo[!Q_index]),
           log_inv_logit(ll_partial_S$lpo[!Q_index]) + rowSums(ll_partial_V[!Q_index,])))
   
