@@ -32,9 +32,9 @@ Install `flocker` with
 remotes::install_github("jsocolar/flocker")
 ```
 `flocker` requires a working version of either Rstan or cmdstan, which are 
-interfaces to the probabilistic programming language Stan. For more about 
-Stan, see https://mc-stan.org/.
-To install Rstan, we strongly recommend installing the development version 
+interfaces to Stan, a state-of-the-art the probabilistic programming language. 
+For more about Stan, see https://mc-stan.org/.
+If using Rstan, we strongly recommend installing the development version 
 rather than the CRAN version. In a fresh R session, do
 ```
 # Uncomment the next line if you have previously installed rstan
@@ -42,16 +42,18 @@ rather than the CRAN version. In a fresh R session, do
 install.packages("StanHeaders", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
+If using cmdstan, you must have package `cmdstanr`. Download `cmdstanr` with
+```
+install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+```
 To install cmdstan, we recommend using `cmdstanr` with
 ```
-# install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 cmdstanr::install_cmdstan()
 ```
-Stan, in turn, requires a working C++ toolchain, which in the past has occasionally posed
-complications for users. For Rstan-focused advice on installing Stan and
-the necessary C++ toolchain, consult 
-https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started.
-For cmdstan-focused advice, consult
+Stan itself requires a working C++ toolchain, which in the past has occasionally posed
+complications for Stan users. For Rstan-focused advice on installing the toolchain, 
+consult https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started.
+For cmdstan-focused advice, consult 
 https://mc-stan.org/cmdstanr/articles/cmdstanr.html. 
 If you encounter toolchain issues that you are unable to troubleshoot, 
 feel free to ask for help at https://discourse.mc-stan.org/.
@@ -59,6 +61,7 @@ feel free to ask for help at https://discourse.mc-stan.org/.
 Finally, `flocker` currently requires the development version of `brms` (this
 is a short-term situation until `brms` is updated on CRAN). Install via
 ```
+# install.packages("remotes")
 remotes::install_github("paul-buerkner/brms")
 ```
 
