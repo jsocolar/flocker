@@ -116,7 +116,7 @@ make_flocker_data <- function(obs, constant_covs = NULL, visit_covs = NULL) {
     
     flocker_data$n_unit <- c(nrow(obs), 
                              rep(-99, nrow(obs) - 1))
-    flocker_data$nvisit <- c(apply(obs, 1, function(x){sum(!is.na(x))}), 
+    flocker_data$n_visit <- c(apply(obs, 1, function(x){sum(!is.na(x))}), 
                               rep(-99, nrow(obs) * (max_visit - 1)))
     flocker_data$Q <- c(as.integer(rowSums(obs, na.rm = T) > 0),
                          rep(-99, nrow(obs) * (max_visit - 1)))
@@ -128,7 +128,7 @@ make_flocker_data <- function(obs, constant_covs = NULL, visit_covs = NULL) {
                                       ncol = max_visit))
     names(visit_indices) <- paste0("visit_index", 1:max_visit)
     for (i in 1:nrow(obs)) {
-      visit_indices[i, 1:flocker_data$nvisit[i]] <- which(flocker_data$unit == i)
+      visit_indices[i, 1:flocker_data$n_visit[i]] <- which(flocker_data$unit == i)
     }
     flocker_data <- cbind(flocker_data, visit_indices)
     
