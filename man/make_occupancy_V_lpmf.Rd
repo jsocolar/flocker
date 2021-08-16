@@ -8,7 +8,7 @@ Primarily for internal use in \code{flock()}.}
 make_occupancy_V_lpmf(max_visit)
 }
 \arguments{
-\item{max_visit}{Literal integer maximum number of visits to any site.}
+\item{max_visit}{Literal integer maximum number of visits to any unit.}
 }
 \value{
 Character string of Stan code corresponding to occupancy_V_lpmf

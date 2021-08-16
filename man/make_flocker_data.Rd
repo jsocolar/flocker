@@ -11,8 +11,8 @@ make_flocker_data(obs, constant_covs = NULL, visit_covs = NULL)
 rows are sampling sites or species-sites) and columns are visits. Allowable 
 values are 1 (detection), 0 (no detection), and NA (no visit).}
 
-\item{constant_covs}{A dataframe of covariates for each site (or species-site) that are
-constant across visits.}
+\item{constant_covs}{A dataframe of covariates for each unit that are constant 
+across visits.}
 
 \item{visit_covs}{A named list of I x J matrices, each one corresponding to a covariate
 that varies by visit.}

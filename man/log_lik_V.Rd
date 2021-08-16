@@ -2,7 +2,7 @@
 % Please edit documentation in R/log_lik_V.R
 \name{log_lik_V}
 \alias{log_lik_V}
-\title{Compute sitewise log-likelihood matrix for a flocker_fit object with 
+\title{Compute unitwise log-likelihood matrix for a flocker_fit object with 
 visit-variable covariates}
 \usage{
 log_lik_V(flocker_fit_V)
@@ -11,9 +11,9 @@ log_lik_V(flocker_fit_V)
 \item{flocker_fit_V}{A flocker_fit with visit-variable covariates}
 }
 \value{
-A sitewise posterior log-likelihood matrix
+A unitwise posterior log-likelihood matrix
 }
 \description{
-Compute sitewise log-likelihood matrix for a flocker_fit object with 
+Compute unitwise log-likelihood matrix for a flocker_fit object with 
 visit-variable covariates
 }

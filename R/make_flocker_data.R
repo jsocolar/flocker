@@ -3,8 +3,8 @@
 #' rows are sampling sites or species-sites) and columns are visits. Allowable 
 #' values are 1 (detection), 0 (no detection), and NA (no visit).
 #  The data must be formatted so that all NAs are trailing within their rows.
-#' @param constant_covs A dataframe of covariates for each site (or species-site) that are
-#' constant across visits.
+#' @param constant_covs A dataframe of covariates for each unit that are constant 
+#'            across visits.
 #' @param visit_covs A named list of I x J matrices, each one corresponding to a covariate
 #' that varies by visit.
 #' @return A flocker_data list that can be passed as data to \code{flocker()}.
@@ -13,7 +13,7 @@ make_flocker_data <- function(obs, constant_covs = NULL, visit_covs = NULL) {
   if(length(dim(obs)) != 2) {
     stop("obs must have exactly two dimensions.")
   }
-  n_site <- nrow(obs)
+  n_unit <- nrow(obs)
   n_visit <- ncol(obs)
   if (n_visit < 2) {
     stop("obs must contain at least two columns.")
@@ -114,7 +114,7 @@ make_flocker_data <- function(obs, constant_covs = NULL, visit_covs = NULL) {
       flocker_data <- cbind(flocker_data, visit_covs)
     }
     
-    flocker_data$nsite <- c(nrow(obs), 
+    flocker_data$n_unit <- c(nrow(obs), 
                              rep(-99, nrow(obs) - 1))
     flocker_data$nvisit <- c(apply(obs, 1, function(x){sum(!is.na(x))}), 
                               rep(-99, nrow(obs) * (max_visit - 1)))
@@ -122,13 +122,13 @@ make_flocker_data <- function(obs, constant_covs = NULL, visit_covs = NULL) {
                          rep(-99, nrow(obs) * (max_visit - 1)))
     
     # Prepare to add visit indices, and trim flocker_data to existing observations
-    flocker_data$site <- 1:nrow(obs)
+    flocker_data$unit <- 1:nrow(obs)
     flocker_data <- flocker_data[!is.na(flocker_data$y), ]
     visit_indices <- as.data.frame(matrix(data = -99, nrow = nrow(flocker_data),
                                       ncol = max_visit))
     names(visit_indices) <- paste0("visit_index", 1:max_visit)
     for (i in 1:nrow(obs)) {
-      visit_indices[i, 1:flocker_data$nvisit[i]] <- which(flocker_data$site == i)
+      visit_indices[i, 1:flocker_data$nvisit[i]] <- which(flocker_data$unit == i)
     }
     flocker_data <- cbind(flocker_data, visit_indices)
     

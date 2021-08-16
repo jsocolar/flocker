@@ -8,13 +8,13 @@ example_flocker_data(visit_constant = FALSE, seed = 123)
 }
 \arguments{
 \item{visit_constant}{logical: return data with constant detection covariates
-within sites (TRUE) or variable detection covariates (FALSE)}
+within units (TRUE) or variable detection covariates (FALSE)}
 
 \item{seed}{random seed}
 }
 \value{
 A three element named list with the observation matrix ($obs), the
-site covariate dataframe ($site_covs), and the visit covariate list
+unit covariate dataframe ($unit_covs), and the visit covariate list
 ($visit_covs). If visit_constant is TRUE, then $visit_covs will be NULL.
 }
 \description{

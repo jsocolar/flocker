@@ -34,7 +34,7 @@ Fit an occupancy model
 \examples{
 \dontrun{
 example_data <- example_flocker_data()
-fd <- make_flocker_data(example_data$obs, example_data$site_covs, example_data$visit_covs)
+fd <- make_flocker_data(example_data$obs, example_data$unit_covs, example_data$visit_covs)
 flock(f_occ = ~ sc1 + s(sc2) + (1|grp),
           f_det = ~ sc1 + vc1 + s(vc2) + (1|grp),
           flocker_data = fd,

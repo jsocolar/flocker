@@ -1,10 +1,10 @@
 test_that("make_flocker_data works correctly", {
   example_data <- example_flocker_data()
   obs <- example_data$obs
-  site_covs <- example_data$site_covs
+  unit_covs <- example_data$unit_covs
   visit_covs <- example_data$visit_covs
   
-  fd <- make_flocker_data(obs, site_covs, visit_covs)
+  fd <- make_flocker_data(obs, unit_covs, visit_covs)
   expect_equal(fd$type, "V")
   expect_equal(class(fd), c("list", "flocker_data"))
   expect_equal(names(fd), c("data", "max_visit", "type"))
@@ -13,17 +13,17 @@ test_that("make_flocker_data works correctly", {
                           "visit_index3", "visit_index4")] - 
           matrix(1:12000, ncol = 4)), 0)  
   expect_equal(names(fd$data), c("y", "sc1", "sc2", "grp", "species", "vc1", "vc2",
-                                 "nsite", "nvisit", "Q", "site", "visit_index1", 
+                                 "n_unit", "n_visit", "Q", "unit", "visit_index1", 
                                  "visit_index2", "visit_index3", "visit_index4"))
   expect_true(all(fd$data$occ %in% c(0,1,-99)))
   
   visit_covs[[1]] <- matrix(1:12000, ncol = 4)
-  fd <- make_flocker_data(obs, site_covs, visit_covs)
+  fd <- make_flocker_data(obs, unit_covs, visit_covs)
   expect_equal(fd$data$vc1, 1:12000)
   
   
   obs[2,4] <- NA
-  fd <- make_flocker_data(obs, site_covs, visit_covs)
+  fd <- make_flocker_data(obs, unit_covs, visit_covs)
   expect_equal(fd$type, "V")
   expect_equal(class(fd), c("list", "flocker_data"))
   expect_equal(names(fd), c("data", "max_visit", "type"))
@@ -32,7 +32,7 @@ test_that("make_flocker_data works correctly", {
           matrix(1:9000, ncol = 3)), 0)
   expect_equal(fd$data$visit_index4[1:3000], c(9001, -99, 9002:11999))
   expect_equal(names(fd$data), c("y", "sc1", "sc2", "grp", "species", "vc1", "vc2",
-                                 "nsite", "nvisit", "Q", "site", "visit_index1", 
+                                 "n_unit", "n_visit", "Q", "unit", "visit_index1", 
                                  "visit_index2", "visit_index3", "visit_index4"))
   expect_true(all(fd$flocker_data$occ %in% c(0,1,-99)))
   expect_equal(fd$data$vc1[1:9000], 1:9000)

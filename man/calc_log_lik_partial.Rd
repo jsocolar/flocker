@@ -8,7 +8,7 @@ internally in log_lik_V(). Missed visits are returned as 0s}
 calc_log_lik_partial(resp, Q, lpd)
 }
 \arguments{
-\item{resp}{the response vector (detection/non-detection) at the site. Missing 
+\item{resp}{the response vector (detection/non-detection) at the unit. Missing 
 visits are represented as -99}
 
 \item{Q}{whether there is at least one detection at a species:point combination}

@@ -1,6 +1,6 @@
 #' Create Stan code for occupancy_V_lpmf with visit-varying covariates
 #' Primarily for internal use in \code{flock()}.
-#' @param max_visit Literal integer maximum number of visits to any site.
+#' @param max_visit Literal integer maximum number of visits to any unit.
 #' @return Character string of Stan code corresponding to occupancy_V_lpmf
 
 
@@ -13,16 +13,16 @@ make_occupancy_V_lpmf <- function (max_visit) {
     int[] y, // detection data
     vector mu, // lin pred for detection
     vector occ, // lin pred for occupancy. Only the first vint1[1] elements matter.
-    int[] vint1, // # sites (nsite). Elements after 1 irrelevant.
-    int[] vint2, // # visits per site (nvisit). Elements after vint1[1] irrelevant.
+    int[] vint1, // # units (n_unit). Elements after 1 irrelevant.
+    int[] vint2, // # visits per unit (n_visit). Elements after vint1[1] irrelevant.
     int[] vint3, // Indicator for > 0 detections (Q). Elements after vint1[1] irrelevant.
   
-  // indices for jth visit to each site (elements after vint1[1] irrelevant):"
+  // indices for jth visit to each unit (elements after vint1[1] irrelevant):"
   
   sf_text2 <- paste0("    int[] vint", 3 + (1:max_visit), collapse = ",\n")
   
   sf_text3 <- paste0(") {
-  // Create array of the visit indices that correspond to each site.
+  // Create array of the visit indices that correspond to each unit.
     int index_array[vint1[1], ", max_visit, "];")
   
   sf_text4.1 <- "      index_array[,"

@@ -14,7 +14,7 @@ log_lik_V <- function(flocker_fit_V) {
   
   # dimensions
   n_unit <- flocker_fit_V$data$n_unit[1]
-  n_visit <- max(flocker_fit_V$data$nvisit)
+  n_visit <- max(flocker_fit_V$data$n_visit)
   n_iter <- dim(flocker_fit_V$fit)[1]
   
   visit_index_matrix <- 
