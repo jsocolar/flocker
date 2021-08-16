@@ -4,86 +4,85 @@
 #' @return A sitewise posterior log-likelihood matrix
 #' @export
 
-log_lik_V <- function (flocker_fit_V) {
+log_lik_V <- function(flocker_fit_V) {
   if (!("flocker_fit" %in% class(flocker_fit_V))) {
     stop("flocker_fit_V must be an object of class flocker_fit.")
   }
   if (attributes(flocker_fit_V)$lik_type != "V") {
     stop("flocker_fit_V works only for flocker_fits with visit-variable covariates")
   }
+  
+  # dimensions
   n_site <- flocker_fit_V$data$nsite[1]
-  visit_index_matrix <- 
-    flocker_fit_V$data[1:n_site, grepl("visit_index", names(flocker_fit_V$data))]
-  resp <- flocker_fit_V$data$y
-  Q <- flocker_fit_V$data$Q[1:n_site]
-  lpo <- brms::posterior_linpred(flocker_fit_V, dpar = "occ")[ , 1:n_site]
-  lpd <- brms::posterior_linpred(flocker_fit_V, dpar = "mu")
-  
+  n_visit <- max(flocker_fit_V$data$nvisit)
   n_iter <- dim(flocker_fit_V$fit)[1]
-  log_lik_matrix <- matrix(NA, nrow = n_iter, ncol = n_site)
   
-  for (iter in 1:n_iter) {
-    log_lik_matrix[iter, ] <-
-      log_lik_V_iter(n_site, visit_index_matrix, resp, Q, lpo[iter, ], lpd[iter, ])
-  }
-  return(log_lik_matrix)
+  visit_index_matrix <- 
+    as.matrix(flocker_fit_V$data[1:n_site, grepl("visit_index", names(flocker_fit_V$data))])
+  
+  lpo_t <- t(brms::posterior_linpred(flocker_fit_V, dpar = "occ"))
+  lpd_t <- t(brms::posterior_linpred(flocker_fit_V, dpar = "mu"))
+  
+  # create long-format dataframe (with iterations stacked down rows)
+  # note: missed site visits are inserted as -99s
+  all_iters <- data.frame(resp = -99,
+                          site_index = rep(1:n_site, n_visit), 
+                          visit_index = c(visit_index_matrix),
+                          Q = rep(flocker_fit_V$data$Q[1:n_site], n_visit), 
+                          # note: everything above this is getting duplicated n_iter times
+                          iter = rep(1:n_iter, each = n_site*n_visit), 
+                          lpo = NA, 
+                          lpd = NA)
+  all_iters$resp[all_iters$visit_index != -99] <- flocker_fit_V$data$y
+  all_iters$lpo[all_iters$visit_index != -99] <- c(lpo_t)
+  all_iters$lpd[all_iters$visit_index != -99] <- c(lpd_t)
+  
+  # calculate visit-level component of likelihood
+  all_iters$ll <- calc_log_lik_partial(all_iters$resp, all_iters$Q, all_iters$lpd)
+  
+  # spread this to wide format (i.e. 1 col per visit)
+  visit_index <- rep(rep(1:n_visit, each=n_site), n_iter)
+  
+  ll_partial_V <- do.call("cbind", 
+                          lapply(1:n_visit, function(x) matrix(all_iters$ll[visit_index == x])))
+  
+  ll_partial_S <- data.frame(Q = rep(all_iters$Q[1:n_site], n_iter),
+                             lpo = all_iters$lpo[visit_index == 1], # note: duplicated across visits 
+                             iter = all_iters$iter[visit_index == 1]) 
+  
+  # finish likelihood calculation
+  Q_index <- as.logical(ll_partial_S$Q)
+  ll_partial_S$log_lik <- NA
+  ll_partial_S$log_lik [Q_index] <- log_inv_logit(ll_partial_S$lpo[Q_index]) + 
+    rowSums(ll_partial_V[Q_index,])
+  log_lik[!Q_index] <- matrixStats::rowLogSumExps(
+    cbind(log1m_inv_logit(ll_partial_S$lpo[!Q_index]),
+          log_inv_logit(ll_partial_S$lpo[!Q_index]) + rowSums(ll_partial_V[!Q_index,])))
+  
+  # unstack to matrix [n_iter, n_site]
+  log_lik_mat <- t(unstack(ll_partial_S[c("log_lik", "iter")], log_lik ~ iter))
+  
+  return(log_lik_mat)
 }
 
+#' Compute the part of the log-likelihood relating to visits. To be used 
+#' internally in log_lik_V(). Missed visits are returned as 0s
+#' @param resp the response vector (detection/non-detection) at the site. Missing 
+#' visits are represented as -99
+#' @param Q whether there is at least one detection at a species:point combination
+#' @param lpd the logit-scale linear predictor
 
-#' Compute sitewise log likelihood for a single posterior iteration for a 
-#' flocker_fit object with visit-variable covariates
-#' @param n_site number of sites or species-sites in the data
-#' @param visit_index_matrix a matrix or dataframe giving the first n_site rows
-#'     of the matrix of visit indices in the data (subsequent rows are redundant)
-#' @param resp a vector giving the integer response data
-#' @param Q a vector giving the first n_site elements of Q (whether there is at
-#'     least one detection at the site)
-#' @param lpo_iter a vector giving the first n_site elements of the logit-scale 
-#'     linear predictor for occupancy for the iteration of interest
-#' @param lpd_iter a vector giving the first n_site elements of the logit-scale 
-#'     linear predictor for detection for the iteration of interest
-#' @return a vector of sitewise log-likelihood values for the iteration of interest
-
-log_lik_V_iter <- function (n_site, visit_index_matrix, resp, Q, 
-                            lpo_iter, lpd_iter) {
-  log_lik_iter <- rep(NA, n_site)
-  for (i in 1:n_site) {
-    visit_subset_i <- as.integer(visit_index_matrix[i, ])
-    resp_i <- resp[visit_subset_i]
-    Q_i <- Q[i]
-    lpo_i <- lpo_iter[i]
-    lpd_i <- lpd_iter[visit_subset_i]
-    log_lik_iter[i] <-
-      log_lik_V_site(resp_i, Q_i, lpo_i, lpd_i)
-  }
-  return(log_lik_iter)
-}
-
-
-#' Compute the likelihood for a single site in a single posterior iteration for a
-#' flocker_fit object with visit-variable covariates
-#' @param resp_i the response vector (detection/non-detection) at the site
-#' @param Q_i whether there is at least one detection, equivalent to
-#'     (\code{as.integer(sum(resp_i) > 1)})
-#' @param lpo_i the logit-scale linear predictor for the site and iteration
-#' @param lpd_i a vector (or scalar if the site has just one visit) giving the 
-#'     logit-scale linear predictor for the site and iteration
-log_lik_V_site <- function (resp_i, Q_i, lpo_i, lpd_i) {
-  log_lik_occ <- log_inv_logit(lpo_i)
-  if (Q_i == 1) {
-    log_lik <- log_lik_occ
-    for (v in 1:length(resp_i)) {
-      log_lik <- log_lik + 
-        as.numeric(resp_i[v] == 1) * log_inv_logit(lpd_i[v]) +
-        as.numeric(resp_i[v] == 0) * log1m_inv_logit(lpd_i[v])
-    }
-  } else {
-    log_lik_occpart <- log_lik_occ
-    for (v in 1:length(resp_i)) {
-      log_lik_occpart <- log_lik_occpart + log1m_inv_logit(lpd_i[v])
-    }
-    log_lik <- matrixStats::logSumExp(c(log1m_inv_logit(lpo_i), log_lik_occpart))
-  }
-  return(log_lik)
+calc_log_lik_partial <- function(resp, Q, lpd) {
+  Q_index <- as.logical(Q)
+  ll <- rep(NA, length(Q))
+  
+  ll[Q_index] <- ifelse(as.logical(resp[Q_index]),
+                        log_inv_logit(lpd[Q_index]),
+                        log1m_inv_logit(lpd[Q_index]))
+  
+  ll[!Q_index] <- log1m_inv_logit(lpd[!Q_index])
+  
+  ll[resp == -99] <- 0
+  return(ll)
 }
 
