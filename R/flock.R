@@ -65,7 +65,7 @@ flock <- function(f_occ, f_det, flocker_data, data2 = NULL,
     
     f_occ_use <- stats::as.formula(paste0("occ ", f_occ_txt))
     f_det_use <- stats::as.formula(
-      paste0("y | vint(n_unit, nvisit, Q, ",
+      paste0("y | vint(n_unit, n_visit, Q, ",
              vint_text, ") ", f_det_txt))
     f_use <- brms::bf(f_det_use, f_occ_use)
   
