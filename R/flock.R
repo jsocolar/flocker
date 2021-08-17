@@ -43,20 +43,21 @@ flock <- function(f_occ, f_det, flocker_data, data2 = NULL,
     if ("threads" %in% names(extra_args)) {
       if (extra_args$threads > 1) {
         stop(paste("multithreading not allowed for a model with visit-specific",
-                    "detection probabilities."))
+                   "detection probabilities."))
       }
     }
   }
+  if(!inherits(f_occ, "formula")) {
+    stop(strwrap("Error in formula: does the occupancy formula have the correct 
+                 syntax? e.g. ~ a + b"))
+  }
+  if(!inherits(f_det, "formula")) {
+    stop(strwrap("Error in formula: does the detection formula have the correct 
+                 syntax? e.g. ~ c + d"))
+  }
   
-  f_occ_txt <- tryCatch(paste0(deparse(f_occ), collapse = ""),
-                        error = function(x) 
-                          strwrap("Error in formula deparse: does the occupancy 
-                                  formula have the correct syntax? e.g. ~ a + b"))
-  
-  f_det_txt <- tryCatch(paste0(deparse(f_det), collapse = ""), 
-                        error = function(x) 
-                          strwrap("Error in formula deparse: does the detection 
-                                  formula have the correct syntax? e.g. ~ c + d"))
+  f_occ_txt <- paste0(deparse(f_occ), collapse = "")
+  f_det_txt <- paste0(deparse(f_det), collapse = "")
   
   if (flocker_data$type == "V") {
     max_visit <- flocker_data$max_visit
@@ -68,7 +69,7 @@ flock <- function(f_occ, f_det, flocker_data, data2 = NULL,
       paste0("y | vint(n_unit, n_visit, Q, ",
              vint_text, ") ", f_det_txt))
     f_use <- brms::bf(f_det_use, f_occ_use)
-  
+    
     stanvars <- brms::stanvar(scode = make_occupancy_V_lpmf(max_visit = max_visit), block = "functions")
     flocker_fit <- brms::brm(f_use, 
                              data = flocker_data$data,
