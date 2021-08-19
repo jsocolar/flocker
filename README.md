@@ -19,11 +19,15 @@ Compared to existing R packages for fitting occupancy models, `flocker` is
 substantially more flexible in the variety of single-season models that can 
 be fit, including 
 * sophisticated random effect structures
-* phylogenetic models
 * generalized additive models
+* phylogenetic models
+* monotonic effects
+* measurement error
+
+COMING SOON
 * spatially autoregressive models
-* measurement error in the predictors
-* and more!
+* model selection with LOO
+* posterior prediction
 
 ### Installation
 Install `flocker` with 
