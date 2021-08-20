@@ -8,7 +8,7 @@ Authors@R:
 Depends: 
 	R (>= 3.5.0)
 Imports:
-	brms,
+	brms (>= 2.16.0),
 	rstan (>= 2.21.0),
 	posterior (>= 1.0.0),
 	stats,
@@ -18,7 +18,6 @@ Suggests:
 	testthat (>= 2.1.0),
 	cmdstanr (>= 0.4.0)
 Remotes: 
-	paul-buerkner/brms,
 	stan-dev/cmdstanr
 Description: flocker provides functionality to fit flexible occupancy models
 Encoding: UTF-8
