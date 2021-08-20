@@ -63,19 +63,7 @@ If you encounter toolchain issues that you are unable to troubleshoot,
 feel free to ask for help at https://discourse.mc-stan.org/.
 
 ### Getting started
-Soon we'll have a vignette here and some links to `brms` vignettes.  In the mean
-time, try running
-```
-library(flocker)
-example_data <- example_flocker_data()
-fd <- make_flocker_data(example_data$obs, example_data$unit_covs, example_data$visit_covs)
-ff <- flock(f_occ = ~ sc1 + sc2 + (1|grp),
-              f_det = ~ sc1 + vc1 + vc2 + (1|grp),
-              flocker_data = fd,
-              refresh = 50, chains = 1, iter_warmup = 5, iter_sampling = 200,
-              adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123)
-summary(ff)
-```
+To get started, check out our tutorial vignette, available here. INSERT LINK.
 
 ### Citing flocker
 Please cite `flocker` as:
