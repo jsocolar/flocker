@@ -21,11 +21,11 @@ be fit, including
 * sophisticated random effect structures
 * generalized additive models
 * phylogenetic models
+* spatial autoregressive models
 * monotonic effects
 * measurement error
 
 COMING SOON
-* spatially autoregressive models
 * model selection with LOO
 * posterior prediction
 
