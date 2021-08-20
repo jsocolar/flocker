@@ -1,6 +1,8 @@
 ---
-title: 'Occupancy models with flocker: getting started'
-author: "Jacob Socolar"
+title:  "Fitting occupancy models with flocker"
+knit: (function(inputFile, encoding) { 
+              rmarkdown::render(inputFile, encoding = encoding, 
+              output_file = file.path(dirname(inputFile), 'index.html')) })
 output: 
   html_document:
     toc: true
@@ -12,34 +14,38 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-`flocker` is an R package for fitting [occupancy models](https://jsocolar.github.io/closureOccupancy/). To date, software for occupancy modeling has required users either to work directly with probabilistic programming languages like Stan or JAGS, or to restrict themselves to simple effects structures in packages like `unmarked`. `flocker` changes that, providing occupancy modelers with a simple formula-based syntax for sophisticated model structures. Because it uses highly optimized Stan code, `flocker` is also *fast*, especially for large models.
+<img align="right" src="../man/figures/flocker_sticker.png" width=30%>
 
-Most of `flocker` is a front-end for R package `brms`, which in turn is a front-end for `Stan`. Mastering `flocker` is mostly a matter of mastering the formula syntax available in `brms`. 
+`flocker` is an R package for fitting [occupancy models](https://jsocolar.github.io/closureOccupancy/). To date, software for occupancy modeling has required users either to work directly with probabilistic programming languages like Stan or JAGS, or to restrict themselves to simple effects structures in packages like `unmarked`. `flocker` changes that, providing occupancy modelers with a simple formula-based syntax for sophisticated model structures. Based on highly optimized Stan code, `flocker` is also **fast**, especially for large models.
 
-In the remainder of this vignette, we 
+Most of `flocker` is a front-end for R package `brms`, which in turn is a front-end for `Stan`. Thus, mastering `flocker` is mostly a matter of mastering the formula syntax available in `brms`. 
+
+In the remainder of this vignette, we
+
 * define some useful terms 
 * explain how to format data for use with `flocker`
 * provide an overview of `brms` formula syntax, with links to additional documentation for advanced topics
 * illustrate how users can (and should!) specify their own priors 
 * review `flocker`'s functionality for posterior prediction and model comparison.
 
-To report bugs, request features, or contribute to `flocker`, check out [our page on GitHub](https://github.com/jsocolar/flocker/).
+## Installation and feedback
+We provide detailed installation instructions for `flocker` in the [README on our GitHub repository](https://github.com/jsocolar/flocker/). To request features or report bugs (much appreciated!), please [open an issue on GitHub](https://github.com/jsocolar/flocker/issues).
 
 ## Terms and defintions
-The following terms feature importantly in this vignette. Some are not stanard in the literature (but we think maybe they should be):
+The following terms feature importantly in this vignette. Some are not standard in the literature (but we think maybe they should be):
 
-**closure-unit**: The groupings of observations over which closure is assumed. In single-species models, a closure-unit corresponds to a "site" or "point". In multi-species models, a closure-unit is a species-site combination. In single-species dynamic models (not yet implemented in `flocker`), a closure-unit is a site-season or site-year combination.
+**closure-unit**: The groupings of observations over which [closure](https://jsocolar.github.io/closureOccupancy/) is assumed. In single-species models, a closure-unit corresponds to a "site" or "point". In multi-species models, a closure-unit is a species-site combination. In single-species dynamic models (not yet implemented in `flocker`), a closure-unit is a site-season or site-year combination.
 
 **Z**: The (unobserved) true occupancy state of each closure-unit. We can represent Z as a vector of ones and zeros with one element for each closure-unit: a one if occupied; a zero if unoccupied.
 
 $\boldsymbol{\psi}$, $\boldsymbol{\theta}$: The occupancy ($\psi$) and detection ($\theta$) probabilities. In many models, both $\psi$ and $\theta$ will vary across closure-units. In some models $\theta$ will additionally vary across visits within a closure-unit.
 
-**visit-constant**, **visit-varying**: We refer to models where $\theta$ is constant across visits within closure-units as *visit-constant models*. Occupancy models sometimes include covariates for detection that vary across visits to the same closure-unit. We call these models *visit-varying models*, as distinct from *visit-constant models*. It turns out that visit-constant models enable a more efficient parametrization of the likelihood than visit-varying models. It also turns out that this visit-constant likelihood enables some further bells and whistles, including within-chain parallelization of model fitting and better cross-validation, that are not available with the visit-varying likelihood.
+**visit-constant**, **visit-varying**: We refer to models where $\theta$ is constant within closure-units as *visit-constant models*, as constrasted with *visit-varying models* that incorporate visit-specific detection covariates. It turns out that visit-constant models enable a more efficient parametrization of the likelihood than visit-varying models.
 
 ## Data formatting
 The main function in `flocker` for fitting occupancy models, called `flock()`, expects a highly specific and somewhat peculiar data format. The function `make_flocker_data()` formats data for use with `flock` automatically. At a minimum, `make_flocker_data` expects a matrix or dataframe of detection/non-detection data. Rows represent closure-units, columns represent repeat visits, and entries must be `0` (nondetection), `1` (detection), or `NA` (no corresponding visit). The data must be formatted so that all `NA`s are trailing within their rows. For example, if some sites were visited four times and other three times, the three visits must be treated as visits 1, 2, and 3 (with the fourth visit `NA`) rather than as visits 1, 3, and 4 (with the second visit `NA`) or any other combination.
 
-Many occupancy models also include covariates that influence occupancy or detection probabilities. Sometimes covariates correspond to properties of a closure-unit (or a set of closure-units), such that they never vary across the repeated visits within a closure-unit. These *constant covariates* can be passed to `make_flocker_data()` as a dataframe with the same number of rows as the observation matrix and data in the same order as the rows of the observation matrix. Columns are covariates, and we recommend using informative column names. Alternatively, covariates (including visit-varying covariates) can be passed as a named list of matrices whose elements `[i, j]` are the covariate values for the visit represented by the corresponding position of the observation matrix. Again, we recommend using informative names for the list elements.
+Many occupancy models also include covariates that influence occupancy or detection probabilities. Sometimes covariates correspond to properties of a closure-unit (or a set of closure-units), such that they never vary across the repeated visits within a closure-unit. These *constant covariates* can be passed to `make_flocker_data()` as a dataframe with the same number of rows as the observation matrix and data in the same order as the rows of the observation matrix. Columns are covariates, and we recommend using informative column names. Alternatively, *visit-varying covariates* can be passed as a named list of matrices whose elements `[i, j]` are the covariate values for the visit represented by the corresponding position of the observation matrix. Again, we recommend using informative names for the list elements.
 
 Here's an example of how we format data:
 ```{r data formatting}
@@ -94,7 +100,7 @@ flock(f_occ = ~ s(sc1),
       flocker_data = flocker_data)
 ```
 
-### Advanced models
+### Other advanced models
 `brms` is capable of fitting a variety of additional effects structures. We believe that the following structures should translate directly to `flocker`, but these remain untested. As we test them and verify adequate performance, we will update this vignette with examples.
 
 #### Phylogenetic models
