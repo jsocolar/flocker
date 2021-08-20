@@ -62,13 +62,6 @@ https://mc-stan.org/cmdstanr/articles/cmdstanr.html.
 If you encounter toolchain issues that you are unable to troubleshoot, 
 feel free to ask for help at https://discourse.mc-stan.org/.
 
-Finally, `flocker` currently requires the development version of `brms` (this
-is a short-term situation until `brms` is updated on CRAN). Install via
-```
-# install.packages("remotes")
-remotes::install_github("paul-buerkner/brms")
-```
-
 ### Getting started
 Soon we'll have a vignette here and some links to `brms` vignettes.  In the mean
 time, try running
