@@ -17,17 +17,11 @@ criteria from fitted occupancy models.
 
 Compared to existing R packages for fitting occupancy models, `flocker` is 
 substantially more flexible in the variety of single-season models that can 
-be fit, including 
-* sophisticated random effect structures
-* generalized additive models
-* phylogenetic models
-* spatial autoregressive models
-* monotonic effects
-* measurement error
+be fit, and contains advanced functionality for model comparison and 
+checking.
 
-COMING SOON
-* model selection with LOO
-* posterior prediction
+### Getting started
+To get started, check out our tutorial vignette, available here. INSERT LINK.
 
 ### Installation
 Install `flocker` with 
@@ -62,8 +56,11 @@ https://mc-stan.org/cmdstanr/articles/cmdstanr.html.
 If you encounter toolchain issues that you are unable to troubleshoot, 
 feel free to ask for help at https://discourse.mc-stan.org/.
 
-### Getting started
-To get started, check out our tutorial vignette, available here. INSERT LINK.
+### Bugs, features, contributions
+To request a feature or report a bug (much appreciated!) please 
+[open an issue at the GitHub repository](https://github.com/jsocolar/flocker/issues).
+To contribute to `flocker` (very much appreciated!) have a look at existing open 
+issues, or open a new issue to discuss.
 
 ### Citing flocker
 Please cite `flocker` as:
