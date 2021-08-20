@@ -1,13 +1,11 @@
 ---
 title:  "Fitting occupancy models with flocker"
-knit: (function(inputFile, encoding) { 
-              rmarkdown::render(inputFile, encoding = encoding, 
-              output_file = file.path(dirname(inputFile), 'flocker_tutorial.html')) })
-output: 
-  html_document:
-    toc: true
-    toc_float:
-      toc_collapsed: true
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteEngine{knitr::knitr}
+  %\VignetteIndexEntry{Title of your vignette}
+  %\usepackage[UTF-8]{inputenc}
 ---
 
 ```{r setup, include=FALSE}
