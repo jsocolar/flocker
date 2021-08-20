@@ -2,3 +2,4 @@
 ^docs$
 ^pkgdown$
 ^\.github$
+^\.travis\.yml$
