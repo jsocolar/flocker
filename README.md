@@ -56,6 +56,12 @@ https://mc-stan.org/cmdstanr/articles/cmdstanr.html.
 If you encounter toolchain issues that you are unable to troubleshoot, 
 feel free to ask for help at https://discourse.mc-stan.org/.
 
+### Bugs, features, contributions
+To request a feature or report a bug (much appreciated!) please 
+[open an issue at the GitHub repository](https://github.com/jsocolar/flocker/issues).
+To contribute to `flocker` (very much appreciated!) have a look at existing open 
+issues, or open a new issue to discuss.
+
 ### Citing flocker
 Please cite `flocker` as:
 * Socolar, J.B. & Mills, S.C. (2021). "flocker: flexible occupancy estimation in 
