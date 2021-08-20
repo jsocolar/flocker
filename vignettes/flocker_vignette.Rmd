@@ -2,7 +2,7 @@
 title:  "Fitting occupancy models with flocker"
 knit: (function(inputFile, encoding) { 
               rmarkdown::render(inputFile, encoding = encoding, 
-              output_file = file.path(dirname(inputFile), 'index.html')) })
+              output_file = file.path(dirname(inputFile), 'flocker_tutorial.html')) })
 output: 
   html_document:
     toc: true
