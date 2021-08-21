@@ -15,8 +15,10 @@ Imports:
 	boot,
 	matrixStats
 Suggests:
-	testthat (>= 2.1.0),
-	cmdstanr (>= 0.4.0)
+    testthat (>= 2.1.0),
+    cmdstanr (>= 0.4.0),
+    knitr,
+    rmarkdown
 Remotes: 
 	stan-dev/cmdstanr
 Description: flocker provides functionality to fit flexible occupancy models
@@ -25,3 +27,4 @@ License: BSD_3_clause
 URL: https://github.com/jsocolar/flocker
 BugReports: https://github.com/jsocolar/flocker/issues
 RoxygenNote: 7.1.1
+VignetteBuilder: knitr
