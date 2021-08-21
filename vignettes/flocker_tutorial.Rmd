@@ -72,25 +72,25 @@ flock(f_occ = ~ sc1,
 ### Random effects
 Simple random effects follow `lme4` syntax, including advanced `lme4` syntax is supported, including `||` for uncorrelated effects and `/` and `:` for expansion of multiple grouping terms. Here's a simple example:
 ```{r lme4, eval=FALSE}
-flock(f_occ = ~ sc1 + (1|species), 
+flock(f_occ = ~ sc1 + (1 | species), 
       f_det = ~ 1, 
       flocker_data = flocker_data)
 ```
-When a model includes multiple random effects with the same grouping term, by default they are modeled as correlated *within* the occupancy or detection formulas, but as uncorrelated *between* formulas. For example, the code below estimates a single correlation for the intercept and slope in the occupancy model.
+When a model includes multiple random effects with the same grouping term, by default they are modeled as correlated *within* the occupancy or detection formulas, but as uncorrelated *between* formulas. For example, the code below estimates a single correlation for the intercept and slope in the occupancy sub-model.
 ```{r lme4_2, eval=FALSE}
 mymod <- flock(f_occ = ~ sc1 + (1 + sc1 | species), 
       f_det = ~ vc1 + (1 | species), 
       flocker_data = flocker_data,
       backend = 'cmdstanr', iter = 2)
 ```
-However, this assumption can easily be relaxed using the `|<ID>|` syntax from `brms`. The `ID` is an arbitrary character string representing a group of terms to model as correlated. The below code, for example, models correlated intercepts in the occupancy and detection models, and correlated effects of `sc1` on occupancy and `vc1` on detection, but no correlations between the intercepts and the slopes:
+However, this assumption can easily be relaxed using the `|<ID>|` syntax from `brms`. The `ID` is an arbitrary character string representing a group of terms to model as correlated. The below code, for example, models correlated intercepts in the occupancy and detection sub-models, and correlated effects of `sc1` on occupancy and `vc1` on detection, but no correlations between the intercepts and the slopes in either sub-model:
 ```{r lme4_3, eval=FALSE}
 mymod <- flock(f_occ = ~ sc1 + (1 |g1| species) + (0 + sc1 |g2| species), 
       f_det = ~ vc1 + (1 |g1| species) + (0 + vc1 |g2| species), 
       flocker_data = flocker_data,
       backend = 'cmdstanr', iter = 2)
 ```
-For more on the random effects syntax of `brms`, see the [documentation here](https://cran.r-project.org/web/packages/brms/vignettes/brms_multilevel.pdf).
+For more on `brms` syntax for random effects syntax, see the [documentation here](https://cran.r-project.org/web/packages/brms/vignettes/brms_multilevel.pdf).
 
 ### Generalized additive models
 Via `brms`, `flocker` supports `mgcv` syntax for thin-plate regression splines (`s()`) and tensor product smooths (`t2()`). For example:
