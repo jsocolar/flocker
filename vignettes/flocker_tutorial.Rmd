@@ -29,7 +29,7 @@ In the remainder of this vignette, we
 * review `flocker`'s functionality for posterior prediction and model comparison.
 
 ## Installation and feedback
-We provide detailed installation instructions for `flocker` in the [README on our GitHub repository](https://github.com/jsocolar/flocker/). To request features or report bugs (much appreciated!), please [open an issue on GitHub](https://github.com/jsocolar/flocker/issues).
+[Installation instructions are available here](https://jsocolar.github.io/flocker). To request features or report bugs (much appreciated!), please [open an issue on GitHub](https://github.com/jsocolar/flocker/issues).
 
 ## Terms and defintions
 The following terms feature importantly in this vignette. Some are not standard in the literature (but we think maybe they should be):
