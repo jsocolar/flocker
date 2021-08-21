@@ -51,8 +51,8 @@ You must additionally install cmdstan itself. We strongly recommend using
 ```
 cmdstanr::install_cmdstan()
 ```
-Stan itself requires a working C++ toolchain, which in the past has occasionally posed
-complications for Stan users. 
+Both Rstan and cmdstan require a working C++ toolchain, which in the past 
+has occasionally posed complications for Stan users. 
 [See here](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started) for 
 Rstan-focused advice on installing the toolchain, and 
 [see here](https://mc-stan.org/cmdstanr/articles/cmdstanr.html) for cmdstan-focused 
