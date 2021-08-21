@@ -90,24 +90,24 @@
 <div id="getting-started" class="section level3">
 <h3 class="hasAnchor">
 <a href="#getting-started" class="anchor"></a>Getting started</h3>
-<p>To get started, check out our tutorial vignette, available here. INSERT LINK.</p>
+<p>To get started, check out our <a href="https://jsocolar.github.io/flocker/articles/flocker_tutorial.html">tutorial vignette, available here</a>. For installation instructions, see below.</p>
 </div>
 <div id="installation" class="section level3">
 <h3 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h3>
-<p>Install <code>flocker</code> with</p>
+<p>Install <code>flocker</code> in R with</p>
 <pre><code><a href="https://remotes.r-lib.org/reference/install_github.html"># install.packages("remotes")
 remotes::install_github("jsocolar/flocker")</a></code></pre>
-<p><code>flocker</code> requires a working version of either Rstan or cmdstan, which are interfaces to Stan, a state-of-the-art the probabilistic programming language. For more about Stan, see <a href="https://mc-stan.org/" class="uri">https://mc-stan.org/</a>. If using Rstan, we strongly recommend installing the development version rather than the CRAN version. In a fresh R session, do</p>
+<p><code>flocker</code> requires a working version of either Rstan or cmdstan, which are interfaces to <a href="https://mc-stan.org/">Stan</a>, a state-of-the-art the probabilistic programming language. If using Rstan, we strongly recommend installing the development version rather than the CRAN version. In a fresh R session, do</p>
 <pre><code><a href="https://rdrr.io/r/utils/install.packages.html"># Uncomment the next line if you have previously installed rstan
 # remove.packages(c("StanHeaders", "rstan"))
 install.packages("StanHeaders", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))</a></code></pre>
-<p>If using cmdstan, you must have package <code>cmdstanr</code>. Download <code>cmdstanr</code> with</p>
+<p>To use cmdstan, you must install R package <code>cmdstanr</code> with</p>
 <pre><code><a href="https://rdrr.io/r/utils/install.packages.html">install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))</a></code></pre>
-<p>To install cmdstan, we recommend using <code>cmdstanr</code> with</p>
+<p>You must additionally install cmdstan itself. We strongly recommend using <code>cmdstanr</code> to manage the cmdstan installation:</p>
 <pre><code><a href="https://mc-stan.org/cmdstanr/reference/install_cmdstan.html">cmdstanr::install_cmdstan()</a></code></pre>
-<p>Stan itself requires a working C++ toolchain, which in the past has occasionally posed complications for Stan users. For Rstan-focused advice on installing the toolchain, consult <a href="https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started" class="uri">https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started</a>. For cmdstan-focused advice, consult <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr.html" class="uri">https://mc-stan.org/cmdstanr/articles/cmdstanr.html</a>. If you encounter toolchain issues that you are unable to troubleshoot, feel free to ask for help at <a href="https://discourse.mc-stan.org/" class="uri">https://discourse.mc-stan.org/</a>.</p>
+<p>Stan itself requires a working C++ toolchain, which in the past has occasionally posed complications for Stan users. <a href="https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started">See here</a> for Rstan-focused advice on installing the toolchain, and <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr.html">see here</a> for cmdstan-focused advice. If you encounter toolchain issues that you are unable to troubleshoot, ask for help at <a href="https://discourse.mc-stan.org/" class="uri">https://discourse.mc-stan.org/</a>.</p>
 </div>
 <div id="bugs-features-contributions" class="section level3">
 <h3 class="hasAnchor">
