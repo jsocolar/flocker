@@ -6,9 +6,9 @@ Authors@R:
              role = c("aut", "cre")),
       person("Simon C.", "Mills", role = c("aut")))
 Depends: 
-	R (>= 3.5.0),
-	brms (>= 2.16.0)
+	R (>= 3.5.0)
 Imports:
+	brms (>= 2.16.0),
 	rstan (>= 2.21.0),
 	posterior (>= 1.0.0),
 	stats,
