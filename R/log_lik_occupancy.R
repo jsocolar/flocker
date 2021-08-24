@@ -14,8 +14,8 @@ log_lik_V <- function(flocker_fit_V) {
   
   # dimensions
   n_unit <- flocker_fit_V$data$n_unit[1]
-  n_visit <- max(flocker_fit_V$data$n_visit)
-  n_iter <- dim(flocker_fit_V$fit)[1]
+  max_visit <- max(flocker_fit_V$data$n_visit)
+  n_iter <- prod(dim(flocker_fit_V$fit)[1:2])
   
   visit_index_matrix <- 
     as.matrix(flocker_fit_V$data[1:n_unit, grepl("visit_index", names(flocker_fit_V$data))])
@@ -24,13 +24,13 @@ log_lik_V <- function(flocker_fit_V) {
   lpd_t <- t(brms::posterior_linpred(flocker_fit_V, dpar = "mu"))
   
   # create long-format dataframe (with iterations stacked down rows)
-  # note: missed unit visits are inserted as -99s
+  # note: missed visits are inserted as -99s
   all_iters <- data.frame(resp = -99,
-                          unit_index = rep(1:n_unit, n_visit), 
+                          unit_index = rep(1:n_unit, max_visit), 
                           visit_index = c(visit_index_matrix),
-                          Q = rep(flocker_fit_V$data$Q[1:n_unit], n_visit), 
+                          Q = rep(flocker_fit_V$data$Q[1:n_unit], max_visit), 
                           # note: everything above this is getting duplicated n_iter times
-                          iter = rep(1:n_iter, each = n_unit*n_visit), 
+                          iter = rep(1:n_iter, each = n_unit*max_visit), 
                           lpo = NA, 
                           lpd = NA)
   all_iters$resp[all_iters$visit_index != -99] <- flocker_fit_V$data$y
@@ -41,10 +41,10 @@ log_lik_V <- function(flocker_fit_V) {
   all_iters$ll <- calc_log_lik_partial(all_iters$resp, all_iters$Q, all_iters$lpd)
   
   # spread this to wide format (i.e. 1 col per visit)
-  visit_index <- rep(rep(1:n_visit, each=n_unit), n_iter)
+  visit_index <- rep(rep(1:max_visit, each=n_unit), n_iter)
   
   ll_partial_V <- do.call("cbind", 
-                          lapply(1:n_visit, function(x) matrix(all_iters$ll[visit_index == x])))
+                          lapply(1:max_visit, function(x) matrix(all_iters$ll[visit_index == x])))
   
   ll_partial_S <- data.frame(Q = rep(all_iters$Q[1:n_unit], n_iter),
                              lpo = all_iters$lpo[visit_index == 1], # note: duplicated across visits 
@@ -86,3 +86,46 @@ calc_log_lik_partial <- function(resp, Q, lpd) {
   return(ll)
 }
 
+
+
+
+#' A log-likelihood function for the visit-constant occupancy model, sufficient for
+#' \code{brms::loo(vc_fit)} to work. 
+#' @param i Posterior iteration
+#' @param prep Output of \code{brms::prepare_predictions}. See brms custom families
+#' vignette at 
+#' https://cran.r-project.org/web/packages/brms/vignettes/brms_customfamilies.html
+#' @return The log-likelihood for observation i
+
+log_lik_occupancy_C <- function(i, prep) {
+  mu <- brms::get_dpar(prep, "mu", i = i)
+  occ <- brms::get_dpar(prep, "occ", i = i)
+  trials <- prep$data$vint1[i]
+  y <- prep$data$Y[i]
+  return(occupancy_C_lpmf(y, mu, occ, trials))
+}
+
+#' An R implementation of occupancy_C_lpmf
+#' @param y number of detections
+#' @param mu logit-scale detection probability
+#' @param occ logit-scale occupancy probability
+#' @param trials number of visits
+#' @return The log-likelihood
+
+occupancy_C_lpmf <- Vectorize(
+  function (y, mu, occ, trials) {
+    if (y == 0) {
+      out <- 
+        matrixStats::logSumExp(
+          c(log1m_inv_logit(occ), log_inv_logit(occ) + trials * log1m_inv_logit(mu))
+        )
+    } else {
+      out <- log_inv_logit(occ) + 
+     #   log(choose(trials, y)) +
+        y * log_inv_logit(mu) + 
+        (trials - y) * log1m_inv_logit(mu)
+      
+    }
+    return(out)
+  }
+)
