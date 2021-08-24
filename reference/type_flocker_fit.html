@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Function reference • flocker</title>
+<title>Extract type of flocker_fit from object of class flocker_fit — type_flocker_fit • flocker</title>
 
 
 <!-- jquery -->
@@ -39,7 +39,8 @@
 
 
 
-<meta property="og:title" content="Function reference" />
+<meta property="og:title" content="Extract type of flocker_fit from object of class flocker_fit — type_flocker_fit" />
+<meta property="og:description" content="Extract type of flocker_fit from object of class flocker_fit" />
 
 
 
@@ -58,7 +59,7 @@
   </head>
 
   <body data-spy="scroll" data-target="#toc">
-    <div class="container template-reference-index">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -117,137 +118,30 @@
       </header>
 
 <div class="row">
-  <div class="contents col-md-9">
+  <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Reference</h1>
+    <h1>Extract type of flocker_fit from object of class flocker_fit</h1>
+    <small class="dont-index">Source: <a href='https://github.com/jsocolar/flocker/blob/master/R/utils.R'><code>R/utils.R</code></a></small>
+    <div class="hidden name"><code>type_flocker_fit.Rd</code></div>
     </div>
 
-    <table class="ref-index">
+    <div class="ref-description">
+    <p>Extract type of flocker_fit from object of class flocker_fit</p>
+    </div>
 
-    <colgroup>
-      
-      <col class="alias" />
-      <col class="title" />
-    </colgroup>
+    <pre class="usage"><span class='fu'>type_flocker_fit</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span></pre>
 
-    <tbody>
-      <tr>
-        <th colspan="2">
-          <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
-          <p class="section-desc"></p>
-        </th>
-      </tr>
-      
-      
-    </tbody><tbody>
-      
-      
-      <tr>
-        
-        <td>
-          <p><code><a href="calc_log_lik_partial.html">calc_log_lik_partial()</a></code> </p>
-        </td>
-        <td><p>Compute the part of the log-likelihood relating to visits. To be used 
-internally in log_lik_V(). Missed visits are returned as 0s</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="example_flocker_data.html">example_flocker_data()</a></code> </p>
-        </td>
-        <td><p>Create example data for use with <code>make_flocker_data()</code> and downstream functions.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="flock.html">flock()</a></code> </p>
-        </td>
-        <td><p>Fit an occupancy model</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="is_flocker_fit.html">is_flocker_fit()</a></code> </p>
-        </td>
-        <td><p>Test whether an object is of class flocker_fit</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="log1m_inv_logit.html">log1m_inv_logit()</a></code> </p>
-        </td>
-        <td><p>Numerically stable log one-minus inverse logit</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="log_inv_logit.html">log_inv_logit()</a></code> </p>
-        </td>
-        <td><p>Numerically stable log inverse logit</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="log_lik_V.html">log_lik_V()</a></code> </p>
-        </td>
-        <td><p>Compute unitwise log-likelihood matrix for a flocker_fit object with 
-visit-variable covariates</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="log_lik_occupancy_C.html">log_lik_occupancy_C()</a></code> </p>
-        </td>
-        <td><p>A log-likelihood function for the visit-constant occupancy model, sufficient for
-<code>brms::loo(vc_fit)</code> to work.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="make_flocker_data.html">make_flocker_data()</a></code> </p>
-        </td>
-        <td><p>Format data for <code>flocker()</code>.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="make_occupancy_C_lpmf.html">make_occupancy_C_lpmf()</a></code> </p>
-        </td>
-        <td><p>Create Stan code occupancy_C_lpmf with visit-constant covariates
-Primarily for internal use in <code>flock()</code>.
-The purpose of defining this custom family, rather than using brms's zero-inflated 
-binomial, is to ensure that the occupancy parameters are interpretable as though
-values of 1 in the marginalized state reflect occupancy rather than non-
-occupancy.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="make_occupancy_V_lpmf.html">make_occupancy_V_lpmf()</a></code> </p>
-        </td>
-        <td><p>Create Stan code for occupancy_V_lpmf with visit-varying covariates
-Primarily for internal use in <code>flock()</code>.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="occupancy_C.html">occupancy_C()</a></code> </p>
-        </td>
-        <td><p>Define the occupancy model family with visit-constant covariates
-Primarily for internal use in <code>flock()</code>.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="occupancy_C_lpmf.html">occupancy_C_lpmf()</a></code> </p>
-        </td>
-        <td><p>An R implementation of occupancy_C_lpmf</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="occupancy_V.html">occupancy_V()</a></code> </p>
-        </td>
-        <td><p>Define the occupancy model family with visit-varying covariates
-Primarily for internal use in <code>flock()</code>.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="type_flocker_fit.html">type_flocker_fit()</a></code> </p>
-        </td>
-        <td><p>Extract type of flocker_fit from object of class flocker_fit</p></td>
-      </tr>
-    </tbody>
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>x</th>
+      <td><p>flocker_fit object</p></td>
+    </tr>
     </table>
-  </div>
 
+
+  </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
       <h2 data-toc-skip>Contents</h2>
