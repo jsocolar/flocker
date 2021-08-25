@@ -23,6 +23,7 @@ loo_flock <- function(x) {
       out[[i]] <- loo_flock_onefit(x[[i]])
     }
   }
+  names(out) <- names(x)
   return(out)
 }
 
@@ -63,7 +64,7 @@ loo_compare_flock <- function(x, model_names = NULL) {
   }
   occupancy_loo <- loo_flock(x)
   if (!is.null(model_names)) {
-    names(occupancy_loo) <- model_loo
+    names(occupancy_loo) <- model_names
   }
   loo::loo_compare(occupancy_loo)
 }
