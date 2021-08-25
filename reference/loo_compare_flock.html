@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Compute loo for a single flocker_fit object — loo_flock_onefit • flocker</title>
+<title>LOO comparisons for flocker models. — loo_compare_flock • flocker</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Compute loo for a single flocker_fit object — loo_flock_onefit" />
-<meta property="og:description" content="Compute loo for a single flocker_fit object" />
+<meta property="og:title" content="LOO comparisons for flocker models. — loo_compare_flock" />
+<meta property="og:description" content="LOO comparisons for flocker models." />
 
 
 
@@ -120,29 +120,30 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Compute loo for a single flocker_fit object</h1>
+    <h1>LOO comparisons for flocker models.</h1>
     <small class="dont-index">Source: <a href='https://github.com/jsocolar/flocker/blob/master/R/loo.R'><code>R/loo.R</code></a></small>
-    <div class="hidden name"><code>loo_flock_onefit.Rd</code></div>
+    <div class="hidden name"><code>loo_compare_flock.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Compute loo for a single flocker_fit object</p>
+    <p>LOO comparisons for flocker models.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>loo_flock_onefit</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>loo_compare_flock</span><span class='op'>(</span><span class='va'>x</span>, model_names <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>x</th>
-      <td><p>a flocker_fit object</p></td>
+      <td><p>a list of flocker_fit objects.</p></td>
+    </tr>
+    <tr>
+      <th>model_names</th>
+      <td><p>An optional vector of names for the models.</p></td>
     </tr>
     </table>
 
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
-
-    <p>a loo object</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
