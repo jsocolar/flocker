@@ -11,6 +11,7 @@ Imports:
 	brms (>= 2.16.0),
 	rstan (>= 2.21.0),
 	posterior (>= 1.0.0),
+	loo (>= 2.0.0),
 	stats,
 	boot,
 	matrixStats
