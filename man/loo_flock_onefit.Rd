@@ -4,16 +4,10 @@
 \alias{loo_flock_onefit}
 \title{Compute loo for a single flocker_fit object}
 \usage{
-loo_flock_onefit(x, binom_coef)
+loo_flock_onefit(x)
 }
 \arguments{
 \item{x}{a flocker_fit object}
-
-\item{binom_coef}{Currently deprecated.
-For visit-constant models, should the binomial coefficient
-be included in the likelihood (\code{T}) or dropped (\code{F})? To compare
-visit-constant models with alternative visit-varying specifications, the
-binomial coefficient *must* be dropped.}
 }
 \value{
 a loo object
