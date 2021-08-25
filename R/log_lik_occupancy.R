@@ -105,7 +105,7 @@ log_lik_occupancy_C <- function(i, prep) {
   return(occupancy_C_lpmf(y, mu, occ, trials))
 }
 
-#' An R implementation of occupancy_C_lpmf
+#' An R implementation of the visit constant lpmf without the binomial coefficient
 #' @param y number of detections
 #' @param mu logit-scale detection probability
 #' @param occ logit-scale occupancy probability
@@ -121,7 +121,6 @@ occupancy_C_lpmf <- Vectorize(
         )
     } else {
       out <- log_inv_logit(occ) + 
-     #   log(choose(trials, y)) +
         y * log_inv_logit(mu) + 
         (trials - y) * log1m_inv_logit(mu)
       
@@ -129,3 +128,33 @@ occupancy_C_lpmf <- Vectorize(
     return(out)
   }
 )
+
+
+
+#' An R implementation of occupancy_C_lpmf including the binomial coefficient.
+#' Not currently in use.
+#' @param y number of detections
+#' @param mu logit-scale detection probability
+#' @param occ logit-scale occupancy probability
+#' @param trials number of visits
+#' @return The log-likelihood
+
+occupancy_C_lpmf_with_coef <- Vectorize(
+  function (y, mu, occ, trials) {
+    if (y == 0) {
+      out <- 
+        matrixStats::logSumExp(
+          c(log1m_inv_logit(occ), log_inv_logit(occ) + trials * log1m_inv_logit(mu))
+        )
+    } else {
+      out <- log_inv_logit(occ) + 
+        log(choose(trials, y)) +
+        y * log_inv_logit(mu) + 
+        (trials - y) * log1m_inv_logit(mu)
+      
+    }
+    return(out)
+  }
+)
+
+
