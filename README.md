@@ -17,68 +17,53 @@ criteria from fitted occupancy models.
 
 Compared to existing R packages for fitting occupancy models, `flocker` is 
 substantially more flexible in the variety of single-season models that can 
-be fit, including 
-* sophisticated random effect structures
-* phylogenetic models
-* generalized additive models
-* spatially autoregressive models
-* measurement error in the predictors
-* and more!
+be fit, and contains advanced functionality for model comparison and 
+checking.
+
+### Getting started
+To get started, check out our 
+[tutorial vignette, available here](https://jsocolar.github.io/flocker/articles/flocker_tutorial.html). 
+For installation instructions, see below.
 
 ### Installation
-Install `flocker` with 
+Install `flocker` in R with
 ```
 # install.packages("remotes")
 remotes::install_github("jsocolar/flocker")
 ```
 `flocker` requires a working version of either Rstan or cmdstan, which are 
-interfaces to Stan, a state-of-the-art the probabilistic programming language. 
-For more about Stan, see https://mc-stan.org/.
-If using Rstan, we strongly recommend installing the development version 
-rather than the CRAN version. In a fresh R session, do
+interfaces to [Stan](https://mc-stan.org/), a state-of-the-art the 
+probabilistic programming language. If using Rstan, we strongly recommend 
+installing the development version rather than the CRAN version. In a fresh 
+R session, do
 ```
 # Uncomment the next line if you have previously installed rstan
 # remove.packages(c("StanHeaders", "rstan"))
 install.packages("StanHeaders", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
-If using cmdstan, you must have package `cmdstanr`. Download `cmdstanr` with
+To use cmdstan, you must install R package `cmdstanr` with
 ```
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
-To install cmdstan, we recommend using `cmdstanr` with
+You must additionally install cmdstan itself. We strongly recommend using
+`cmdstanr` to manage the cmdstan installation:
 ```
 cmdstanr::install_cmdstan()
 ```
-Stan itself requires a working C++ toolchain, which in the past has occasionally posed
-complications for Stan users. For Rstan-focused advice on installing the toolchain, 
-consult https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started.
-For cmdstan-focused advice, consult 
-https://mc-stan.org/cmdstanr/articles/cmdstanr.html. 
-If you encounter toolchain issues that you are unable to troubleshoot, 
-feel free to ask for help at https://discourse.mc-stan.org/.
+Both Rstan and cmdstan require a working C++ toolchain, which has posed occasional 
+complications for Stan users. 
+[See here](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started) for 
+Rstan-focused advice on installing the toolchain, and 
+[see here](https://mc-stan.org/cmdstanr/articles/cmdstanr.html) for cmdstan-focused 
+advice. If you encounter toolchain issues that you are unable to troubleshoot, 
+ask for help at https://discourse.mc-stan.org/.
 
-Finally, `flocker` currently requires the development version of `brms` (this
-is a short-term situation until `brms` is updated on CRAN). Install via
-```
-# install.packages("remotes")
-remotes::install_github("paul-buerkner/brms")
-```
-
-### Getting started
-Soon we'll have a vignette here and some links to `brms` vignettes.  In the mean
-time, try running
-```
-library(flocker)
-example_data <- example_flocker_data()
-fd <- make_flocker_data(example_data$obs, example_data$site_covs, example_data$visit_covs)
-ff <- flock(f_occ = ~ sc1 + sc2 + (1|grp),
-              f_det = ~ sc1 + vc1 + vc2 + (1|grp),
-              flocker_data = fd,
-              refresh = 50, chains = 1, iter_warmup = 5, iter_sampling = 200,
-              adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123)
-summary(ff)
-```
+### Bugs, features, contributions
+To request a feature or report a bug (much appreciated!) please 
+[open an issue at the GitHub repository](https://github.com/jsocolar/flocker/issues).
+To contribute to `flocker` (very much appreciated!) have a look at existing open 
+issues, or open a new issue to discuss.
 
 ### Citing flocker
 Please cite `flocker` as:

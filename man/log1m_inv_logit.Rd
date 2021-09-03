@@ -7,7 +7,7 @@
 log1m_inv_logit(x)
 }
 \arguments{
-\item{x}{logit-scale probability}
+\item{x}{real number or vector of reals}
 }
 \value{
 the logarithm of one minus the inverse logit of x

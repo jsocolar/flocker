@@ -27,3 +27,4 @@ occupancy_C <- function() {
     vars = c("vint1[n]"),
     loop = TRUE)
 }
+

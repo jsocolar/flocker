@@ -1,0 +1,125 @@
+---
+title: "Fitting occupancy models with flocker"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{my-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+<img align="right" src="../man/figures/flocker_sticker.png" width=30%>
+
+`flocker` is an R package for fitting [occupancy models](https://jsocolar.github.io/closureOccupancy/). To date, software for occupancy modeling has required users either to work directly with probabilistic programming languages like Stan or JAGS, or to restrict themselves to simple effects structures in packages like `unmarked`. `flocker` changes that, providing occupancy modelers with a simple formula-based syntax for sophisticated model structures. Based on highly optimized Stan code, `flocker` is also **fast**, especially for large models.
+
+Most of `flocker` is a front-end for R package `brms`, which in turn is a front-end for `Stan`. Thus, mastering `flocker` is mostly a matter of mastering the formula syntax available in `brms`. 
+
+In the remainder of this vignette, we
+
+* define some useful terms 
+* explain how to format data for use with `flocker`
+* provide an overview of `brms` formula syntax, with links to additional documentation for advanced topics
+* illustrate how users can (and should!) specify their own priors 
+* review `flocker`'s functionality for posterior prediction and model comparison.
+
+## Installation and feedback
+[Installation instructions are available here](https://jsocolar.github.io/flocker). To request features or report bugs (much appreciated!), please [open an issue on GitHub](https://github.com/jsocolar/flocker/issues).
+
+## Terms and defintions
+The following terms feature importantly in this vignette. Some are not standard in the literature (but we think maybe they should be):
+
+**closure-unit**: The groupings of observations over which [closure](https://jsocolar.github.io/closureOccupancy/) is assumed. In single-species models, a closure-unit corresponds to a "site" or "point". In multi-species models, a closure-unit is a species-site combination. In single-species dynamic models (not yet implemented in `flocker`), a closure-unit is a site-season or site-year combination.
+
+**Z**: The (unobserved) true occupancy state of each closure-unit. We can represent Z as a vector of ones and zeros with one element for each closure-unit: a one if occupied; a zero if unoccupied.
+
+$\boldsymbol{\psi}$, $\boldsymbol{\theta}$: The occupancy ($\psi$) and detection ($\theta$) probabilities. In many models, both $\psi$ and $\theta$ will vary across closure-units. In some models $\theta$ will additionally vary across visits within a closure-unit.
+
+**visit-constant**, **visit-varying**: We refer to models where $\theta$ is constant within closure-units as *visit-constant models*, as constrasted with *visit-varying models* that incorporate visit-specific detection covariates. It turns out that visit-constant models enable a more efficient parametrization of the likelihood than visit-varying models.
+
+## Data formatting
+The main function in `flocker` for fitting occupancy models, called `flock()`, expects a highly specific and somewhat peculiar data format. The function `make_flocker_data()` formats data for use with `flock` automatically. At a minimum, `make_flocker_data` expects a matrix or dataframe of detection/non-detection data. Rows represent closure-units, columns represent repeat visits, and entries must be `0` (nondetection), `1` (detection), or `NA` (no corresponding visit). The data must be formatted so that all `NA`s are trailing within their rows. For example, if some sites were visited four times and other three times, the three visits must be treated as visits 1, 2, and 3 (with the fourth visit `NA`) rather than as visits 1, 3, and 4 (with the second visit `NA`) or any other combination.
+
+Many occupancy models also include covariates that influence occupancy or detection probabilities. Sometimes covariates correspond to properties of a closure-unit (or a set of closure-units), such that they never vary across the repeated visits within a closure-unit. These *constant covariates* can be passed to `make_flocker_data()` as a dataframe with the same number of rows as the observation matrix and data in the same order as the rows of the observation matrix. Columns are covariates, and we recommend using informative column names. Alternatively, *visit-varying covariates* can be passed as a named list of matrices whose elements `[i, j]` are the covariate values for the visit represented by the corresponding position of the observation matrix. Again, we recommend using informative names for the list elements.
+
+Here's an example of how we format data:
+```{r data formatting}
+library(flocker)
+ex_data <- example_flocker_data()
+names(ex_data)
+names(ex_data$visit_covs)
+head(ex_data$obs) # observation matrix
+head(ex_data$unit_covs) # observation matrix
+head(ex_data$visit_covs$vc1)
+flocker_data <- make_flocker_data(obs = ex_data$obs, 
+                                  constant_covs = ex_data$unit_covs, 
+                                  visit_covs = ex_data$visit_covs)
+```
+
+## Model formulas
+Once we've formatted data with `make_flocker_data()`, we are ready to fit an occupancy model using the `flock()` function. Internally, `flock` calls `brms::brm()`, and the key to mastering `flock` is to master the formula synax from `brms`. We supply formulas for both occupancy and detection. Simple formulas follow the same syntax as R's `lm()` function. For example: 
+```{r lm, eval=FALSE}
+flock(f_occ = ~ sc1, 
+      f_det = ~ 1, 
+      flocker_data = flocker_data)
+```
+
+### Random effects
+Simple random effects follow `lme4` syntax, including advanced `lme4` syntax is supported, including `||` for uncorrelated effects and `/` and `:` for expansion of multiple grouping terms. Here's a simple example:
+```{r lme4, eval=FALSE}
+flock(f_occ = ~ sc1 + (1 | species), 
+      f_det = ~ 1, 
+      flocker_data = flocker_data)
+```
+When a model includes multiple random effects with the same grouping term, by default they are modeled as correlated *within* the occupancy or detection formulas, but as uncorrelated *between* formulas. For example, the code below estimates a single correlation for the intercept and slope in the occupancy sub-model.
+```{r lme4_2, eval=FALSE}
+mymod <- flock(f_occ = ~ sc1 + (1 + sc1 | species), 
+      f_det = ~ vc1 + (1 | species), 
+      flocker_data = flocker_data,
+      backend = 'cmdstanr', iter = 2)
+```
+However, this assumption can easily be relaxed using the `|<ID>|` syntax from `brms`. The `ID` is an arbitrary character string representing a group of terms to model as correlated. The below code, for example, models correlated intercepts in the occupancy and detection sub-models, and correlated effects of `sc1` on occupancy and `vc1` on detection, but no correlations between the intercepts and the slopes in either sub-model:
+```{r lme4_3, eval=FALSE}
+mymod <- flock(f_occ = ~ sc1 + (1 |g1| species) + (0 + sc1 |g2| species), 
+      f_det = ~ vc1 + (1 |g1| species) + (0 + vc1 |g2| species), 
+      flocker_data = flocker_data,
+      backend = 'cmdstanr', iter = 2)
+```
+For more on `brms` syntax for random effects syntax, see the [documentation here](https://cran.r-project.org/web/packages/brms/vignettes/brms_multilevel.pdf).
+
+### Generalized additive models
+Via `brms`, `flocker` supports `mgcv` syntax for thin-plate regression splines (`s()`) and tensor product smooths (`t2()`). For example:
+```{r mgcv, eval=FALSE}
+flock(f_occ = ~ s(sc1), 
+      f_det = ~ 1, 
+      flocker_data = flocker_data)
+```
+
+### Other advanced models
+`brms` is capable of fitting a variety of additional effects structures. We believe that the following structures should translate directly to `flocker`, but these remain untested. As we test them and verify adequate performance, we will update this vignette with examples.
+
+#### Phylogenetic models
+[See here](https://paul-buerkner.github.io/brms/articles/brms_phylogenetics.html) for details about specifying details of phylogenetic effects in `brms`. Note that `flocker` directly accepts a `data2` argument that it can pass to `brms` as necessary.
+
+#### Spatial autoregressive models
+[See here](https://paul-buerkner.github.io/brms/reference/car.html) for details about conditional autoregressive (CAR) models in `brms`. Note that if the spatial effect is applied to occupancy, it is essential closure-units be grouped such that many groups contain more than one unit. With just one unit per group (the `brms` default if no grouping is supplied), the logit-scale residual is not identified. Note that `flocker` directly accepts a `data2` argument that it can pass to `brms` as necessary.
+
+#### Monotonic effects
+[See here](https://paul-buerkner.github.io/brms/articles/brms_monotonic.html) for relevant `brms` documentation.
+
+#### Measurement error
+[See here](http://paul-buerkner.github.io/brms/reference/me.html) for relevant `brms` documentation.
+
+## Additional fitting arguments
+`flocker` will pass any relevant parameters forward to `brms::brm()`, giving the user important control over the algorithmic details of how the model is fit. See `?brms::brm` for details.
+
+## Prior specification
+COMING SOON: this is implemented but not yet tested or documented.
+
+## Post-processing
+COMING SOON: this is implemented for visit-constant models and partially implemented for visit-varying models.  It should be fully implemented, tested, and documented very soon.

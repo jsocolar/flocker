@@ -2,5 +2,9 @@
 
 export(example_flocker_data)
 export(flock)
+export(log1m_inv_logit)
+export(log_inv_logit)
 export(log_lik_V)
+export(loo_compare_flock)
+export(loo_flock)
 export(make_flocker_data)
