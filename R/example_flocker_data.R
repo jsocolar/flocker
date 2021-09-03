@@ -14,11 +14,11 @@ example_flocker_data <- function(visit_constant = FALSE, seed = 123) {
   n_unit <- n_pt*n_sp
   n_visit <- 4
   
-  backbone <- expand.grid(id_species = factor(paste0("sp_", 1:n_sp)), 
+  backbone <- expand.grid(species = factor(paste0("sp_", 1:n_sp)), 
                           id_visit = 1:n_visit,
                           id_point = 1:n_pt)
   
-  unit_covs <- within(unique(backbone[c("id_species", "id_point")]), {
+  unit_covs <- within(unique(backbone[c("species", "id_point")]), {
     id_unit = 1:n_unit
     sc1 = stats::rnorm(n_pt)[id_point]
     sc2 = stats::rnorm(n_pt)[id_point]
@@ -41,7 +41,7 @@ example_flocker_data <- function(visit_constant = FALSE, seed = 123) {
   
   # format data for return
   out <- list(obs = t(unstack(df_full[c("obs", "id_unit")], obs ~ id_unit)), 
-              unit_covs = unit_covs[c("sc1", "sc2", "grp", "id_species")], 
+              unit_covs = unit_covs[c("sc1", "sc2", "grp", "species")], 
               visit_covs = list(
                 vc1 = t(unstack(df_full[c("vc1", "id_unit")], vc1 ~ id_unit)), 
                 vc2 = t(unstack(df_full[c("vc2", "id_unit")], vc2 ~ id_unit))
