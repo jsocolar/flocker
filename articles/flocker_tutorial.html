@@ -130,28 +130,28 @@
 <span class="co">#&gt; [1] "vc1" "vc2"</span>
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">ex_data</span><span class="op">$</span><span class="va">obs</span><span class="op">)</span> <span class="co"># observation matrix</span>
 <span class="co">#&gt;      [,1] [,2] [,3] [,4]</span>
-<span class="co">#&gt; [1,]    0    0    0    0</span>
-<span class="co">#&gt; [2,]    1    0    1    1</span>
-<span class="co">#&gt; [3,]    0    0    1    0</span>
-<span class="co">#&gt; [4,]    0    0    0    0</span>
-<span class="co">#&gt; [5,]    0    0    0    0</span>
-<span class="co">#&gt; [6,]    0    0    0    0</span>
+<span class="co">#&gt; [1,]    1    1    0    1</span>
+<span class="co">#&gt; [2,]    0    1    0    0</span>
+<span class="co">#&gt; [3,]    1    1    1    0</span>
+<span class="co">#&gt; [4,]    0    0    0    1</span>
+<span class="co">#&gt; [5,]    0    1    0    1</span>
+<span class="co">#&gt; [6,]    1    0    1    1</span>
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">ex_data</span><span class="op">$</span><span class="va">unit_covs</span><span class="op">)</span> <span class="co"># observation matrix</span>
-<span class="co">#&gt;           sc1         sc2 grp species</span>
-<span class="co">#&gt; 1 -0.56047565 -0.15030748   2    sp_1</span>
-<span class="co">#&gt; 2 -0.23017749 -0.32775713   4    sp_2</span>
-<span class="co">#&gt; 3  1.55870831 -1.44816529  10    sp_3</span>
-<span class="co">#&gt; 4  0.07050839 -0.69728458   7    sp_4</span>
-<span class="co">#&gt; 5  0.12928774  2.59849023  20    sp_5</span>
-<span class="co">#&gt; 6  1.71506499 -0.03741501  15    sp_6</span>
+<span class="co">#&gt;          sc1        sc2 grp species</span>
+<span class="co">#&gt; 1 -0.5604756 -0.7104066  15    sp_1</span>
+<span class="co">#&gt; 2 -0.5604756 -0.7104066   3    sp_2</span>
+<span class="co">#&gt; 3 -0.5604756 -0.7104066   9    sp_3</span>
+<span class="co">#&gt; 4 -0.5604756 -0.7104066   7    sp_4</span>
+<span class="co">#&gt; 5 -0.5604756 -0.7104066   9    sp_5</span>
+<span class="co">#&gt; 6 -0.5604756 -0.7104066   4    sp_6</span>
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">ex_data</span><span class="op">$</span><span class="va">visit_covs</span><span class="op">$</span><span class="va">vc1</span><span class="op">)</span>
-<span class="co">#&gt;             [,1]       [,2]       [,3]        [,4]</span>
-<span class="co">#&gt; [1,] -1.02319552 -0.3796515  0.4148565 -1.10335005</span>
-<span class="co">#&gt; [2,]  0.04263264  0.4464637  0.9093307  0.26720915</span>
-<span class="co">#&gt; [3,]  0.09869699 -1.3087228 -0.3956048 -0.02551803</span>
-<span class="co">#&gt; [4,] -0.72760151  1.5807607 -0.3210727 -0.38312111</span>
-<span class="co">#&gt; [5,]  1.75699080 -0.6695637 -1.4919679  1.23598179</span>
-<span class="co">#&gt; [6,] -0.03508250  0.1657652 -0.1826987  0.05136632</span>
+<span class="co">#&gt;          [,1]     [,2]     [,3]     [,4]</span>
+<span class="co">#&gt; [1,] 1.090935 1.703323 0.561680 1.325398</span>
+<span class="co">#&gt; [2,] 1.090935 1.325398 1.703323 0.561680</span>
+<span class="co">#&gt; [3,] 1.090935 0.561680 1.325398 1.703323</span>
+<span class="co">#&gt; [4,] 1.090935 1.703323 0.561680 1.325398</span>
+<span class="co">#&gt; [5,] 1.703323 1.090935 0.561680 1.325398</span>
+<span class="co">#&gt; [6,] 1.090935 1.703323 1.325398 0.561680</span>
 <span class="va">flocker_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_flocker_data.html">make_flocker_data</a></span><span class="op">(</span>obs <span class="op">=</span> <span class="va">ex_data</span><span class="op">$</span><span class="va">obs</span>, 
                                   constant_covs <span class="op">=</span> <span class="va">ex_data</span><span class="op">$</span><span class="va">unit_covs</span>, 
                                   visit_covs <span class="op">=</span> <span class="va">ex_data</span><span class="op">$</span><span class="va">visit_covs</span><span class="op">)</span></code></pre></div>
