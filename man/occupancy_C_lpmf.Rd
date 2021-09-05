@@ -2,7 +2,7 @@
 % Please edit documentation in R/log_lik_occupancy.R
 \name{occupancy_C_lpmf}
 \alias{occupancy_C_lpmf}
-\title{An R implementation of the visit constant lpmf without the binomial coefficient}
+\title{An R implementation of the rep constant lpmf without the binomial coefficient}
 \usage{
 occupancy_C_lpmf(y, mu, occ, trials)
 }
@@ -13,11 +13,11 @@ occupancy_C_lpmf(y, mu, occ, trials)
 
 \item{occ}{logit-scale occupancy probability}
 
-\item{trials}{number of visits}
+\item{trials}{number of reps}
 }
 \value{
 The log-likelihood
 }
 \description{
-An R implementation of the visit constant lpmf without the binomial coefficient
+An R implementation of the rep constant lpmf without the binomial coefficient
 }

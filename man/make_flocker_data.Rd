@@ -4,18 +4,18 @@
 \alias{make_flocker_data}
 \title{Format data for \code{flocker()}.}
 \usage{
-make_flocker_data(obs, constant_covs = NULL, visit_covs = NULL)
+make_flocker_data(obs, unit_covs = NULL, event_covs = NULL)
 }
 \arguments{
-\item{obs}{An I x J matrix-like object where closure is assumed across rows (i.e. 
-rows are sampling sites or species-sites) and columns are visits. Allowable 
-values are 1 (detection), 0 (no detection), and NA (no visit).}
+\item{obs}{An I x J matrix-like object where closure is assumed across rows 
+and columns are repeated sampling events. Allowable values are 1 (detection), 
+0 (no detection), and NA (no sampling event).}
 
-\item{constant_covs}{A dataframe of covariates for each unit that are constant 
-across visits.}
+\item{unit_covs}{A dataframe of covariates for each unit that are constant 
+across repeated sampling events within closure-units.}
 
-\item{visit_covs}{A named list of I x J matrices, each one corresponding to a covariate
-that varies by visit.}
+\item{event_covs}{A named list of I x J matrices, each one corresponding to a covariate
+that varies across repeated sampling events within closure-units}
 }
 \value{
 A flocker_data list that can be passed as data to \code{flocker()}.

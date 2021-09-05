@@ -14,7 +14,7 @@ occupancy_C_lpmf_with_coef(y, mu, occ, trials)
 
 \item{occ}{logit-scale occupancy probability}
 
-\item{trials}{number of visits}
+\item{trials}{number of reps}
 }
 \value{
 The log-likelihood

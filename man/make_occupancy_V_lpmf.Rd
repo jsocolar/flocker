@@ -2,18 +2,19 @@
 % Please edit documentation in R/make_occupancy_lpmf.R
 \name{make_occupancy_V_lpmf}
 \alias{make_occupancy_V_lpmf}
-\title{Create Stan code for occupancy_V_lpmf with visit-varying covariates
+\title{Create Stan code for likelihood function occupancy_V_lpmf for rep-varying model.
 Primarily for internal use in \code{flock()}.}
 \usage{
-make_occupancy_V_lpmf(max_visit)
+make_occupancy_V_lpmf(max_rep)
 }
 \arguments{
-\item{max_visit}{Literal integer maximum number of visits to any unit.}
+\item{max_rep}{Literal integer maximum number of repeated sampling events at 
+any unit.}
 }
 \value{
 Character string of Stan code corresponding to occupancy_V_lpmf
 }
 \description{
-Create Stan code for occupancy_V_lpmf with visit-varying covariates
+Create Stan code for likelihood function occupancy_V_lpmf for rep-varying model.
 Primarily for internal use in \code{flock()}.
 }

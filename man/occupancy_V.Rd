@@ -2,18 +2,18 @@
 % Please edit documentation in R/occupancy_families.R
 \name{occupancy_V}
 \alias{occupancy_V}
-\title{Define the occupancy model family with visit-varying covariates
+\title{Define the rep-varying occupancy family
 Primarily for internal use in \code{flock()}.}
 \usage{
-occupancy_V(max_visit)
+occupancy_V(max_rep)
 }
 \arguments{
-\item{max_visit}{the maximum number of repeat visits to a unit}
+\item{max_rep}{the maximum number of repeat sampling events at a unit}
 }
 \value{
 a "customfamily" "brmsfamily" object from brms
 }
 \description{
-Define the occupancy model family with visit-varying covariates
+Define the rep-varying occupancy family
 Primarily for internal use in \code{flock()}.
 }

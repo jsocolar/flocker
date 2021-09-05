@@ -2,7 +2,7 @@
 % Please edit documentation in R/make_occupancy_lpmf.R
 \name{make_occupancy_C_lpmf}
 \alias{make_occupancy_C_lpmf}
-\title{Create Stan code occupancy_C_lpmf with visit-constant covariates
+\title{Create Stan code for likelihood function occupancy_C_lpmf for rep-constant model.
 Primarily for internal use in \code{flock()}.
 The purpose of defining this custom family, rather than using brms's zero-inflated 
 binomial, is to ensure that the occupancy parameters are interpretable as though
@@ -15,7 +15,7 @@ make_occupancy_C_lpmf()
 Character string of Stan code corresponding to occupancy_C_lpmf
 }
 \description{
-Create Stan code occupancy_C_lpmf with visit-constant covariates
+Create Stan code for likelihood function occupancy_C_lpmf for rep-constant model.
 Primarily for internal use in \code{flock()}.
 The purpose of defining this custom family, rather than using brms's zero-inflated 
 binomial, is to ensure that the occupancy parameters are interpretable as though

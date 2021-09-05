@@ -2,7 +2,7 @@
 % Please edit documentation in R/occupancy_families.R
 \name{occupancy_C}
 \alias{occupancy_C}
-\title{Define the occupancy model family with visit-constant covariates
+\title{Define the rep-constant occupancy family
 Primarily for internal use in \code{flock()}.}
 \usage{
 occupancy_C()
@@ -11,6 +11,6 @@ occupancy_C()
 a "customfamily" "brmsfamily" object from brms
 }
 \description{
-Define the occupancy model family with visit-constant covariates
+Define the rep-constant occupancy family
 Primarily for internal use in \code{flock()}.
 }

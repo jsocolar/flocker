@@ -2,20 +2,20 @@
 % Please edit documentation in R/log_lik_occupancy.R
 \name{calc_log_lik_partial}
 \alias{calc_log_lik_partial}
-\title{Compute the part of the log-likelihood relating to visits. To be used 
-internally in log_lik_V(). Missed visits are returned as 0s}
+\title{Compute the part of the log-likelihood relating to sampling events. To be used 
+internally in log_lik_V(). Missing events are returned as 0s}
 \usage{
 calc_log_lik_partial(resp, Q, lpd)
 }
 \arguments{
 \item{resp}{the response vector (detection/non-detection) at the unit. Missing 
-visits are represented as -99}
+events are represented as -99}
 
 \item{Q}{whether there is at least one detection at a species:point combination}
 
 \item{lpd}{the logit-scale linear predictor}
 }
 \description{
-Compute the part of the log-likelihood relating to visits. To be used 
-internally in log_lik_V(). Missed visits are returned as 0s
+Compute the part of the log-likelihood relating to sampling events. To be used 
+internally in log_lik_V(). Missing events are returned as 0s
 }

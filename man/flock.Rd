@@ -4,14 +4,10 @@
 \alias{flock}
 \title{Fit an occupancy model}
 \usage{
-flock(f_occ, f_det, flocker_data, data2 = NULL, visit_constant = FALSE, ...)
+flock(f_occ, f_det, flocker_data, data2 = NULL, rep_constant = FALSE, ...)
 }
 \arguments{
-\item{f_occ}{A brms-type model formula for occupancy. Must begin with "~".
-# Important
-If \code{visit_constant = T}, then the occupancy sub-model gives the 
-probability of NON-occupancy. Negate the terms associated with this 
-sub-model to recover covariate effects on occupancy.}
+\item{f_occ}{A brms-type model formula for occupancy. Must begin with "~".}
 
 \item{f_det}{A brms-type model formula for detection. Must begin with "~".}
 
@@ -19,9 +15,8 @@ sub-model to recover covariate effects on occupancy.}
 
 \item{data2}{additional data (e.g. a covariance matrix for a phylogenetic effect)}
 
-\item{visit_constant}{A logical indicator. Are detection probabilities constant across visits?
-Must be TRUE if the model lacks visit-specific detection covariates, otherwise must
-be FALSE.}
+\item{rep_constant}{A logical indicator. Are detection probabilities constant 
+across repeated sampling events within closure units?}
 
 \item{...}{additional arguments passed to \code{brms::brm()}}
 }
@@ -34,9 +29,9 @@ Fit an occupancy model
 \examples{
 \dontrun{
 example_data <- example_flocker_data()
-fd <- make_flocker_data(example_data$obs, example_data$unit_covs, example_data$visit_covs)
-flock(f_occ = ~ sc1 + s(sc2) + (1|grp),
-          f_det = ~ sc1 + vc1 + s(vc2) + (1|grp),
+fd <- make_flocker_data(example_data$obs, example_data$unit_covs, example_data$event_covs)
+flock(f_occ = ~ uc1 + s(uc2) + (1|grp),
+          f_det = ~ uc1 + ec1 + s(ec2) + (1|grp),
           flocker_data = fd,
           refresh = 50, chains = 1, warmup = 5, iter = 200,
           adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123)

@@ -2,18 +2,16 @@
 % Please edit documentation in R/log_lik_occupancy.R
 \name{log_lik_V}
 \alias{log_lik_V}
-\title{Compute unitwise log-likelihood matrix for a flocker_fit object with 
-visit-variable covariates}
+\title{Compute unitwise log-likelihood matrix for a rep-varying flocker_fit object}
 \usage{
 log_lik_V(flocker_fit_V)
 }
 \arguments{
-\item{flocker_fit_V}{A flocker_fit with visit-variable covariates}
+\item{flocker_fit_V}{A rep-varying flocker_fit object}
 }
 \value{
 A unitwise posterior log-likelihood matrix
 }
 \description{
-Compute unitwise log-likelihood matrix for a flocker_fit object with 
-visit-variable covariates
+Compute unitwise log-likelihood matrix for a rep-varying flocker_fit object
 }

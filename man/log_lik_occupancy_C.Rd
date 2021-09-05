@@ -2,7 +2,7 @@
 % Please edit documentation in R/log_lik_occupancy.R
 \name{log_lik_occupancy_C}
 \alias{log_lik_occupancy_C}
-\title{A log-likelihood function for the visit-constant occupancy model, sufficient for
+\title{A log-likelihood function for the rep-constant occupancy model, sufficient for
 \code{brms::loo(vc_fit)} to work.}
 \usage{
 log_lik_occupancy_C(i, prep)
@@ -18,6 +18,6 @@ https://cran.r-project.org/web/packages/brms/vignettes/brms_customfamilies.html}
 The log-likelihood for observation i
 }
 \description{
-A log-likelihood function for the visit-constant occupancy model, sufficient for
+A log-likelihood function for the rep-constant occupancy model, sufficient for
 \code{brms::loo(vc_fit)} to work.
 }
