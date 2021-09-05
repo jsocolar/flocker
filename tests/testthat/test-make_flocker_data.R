@@ -2,41 +2,41 @@ test_that("make_flocker_data works correctly", {
   example_data <- example_flocker_data()
   obs <- example_data$obs
   unit_covs <- example_data$unit_covs
-  visit_covs <- example_data$visit_covs
+  event_covs <- example_data$event_covs
   
-  fd <- make_flocker_data(obs, unit_covs, visit_covs)
+  fd <- make_flocker_data(obs, unit_covs, event_covs)
   expect_equal(fd$type, "V")
   expect_equal(class(fd), c("list", "flocker_data"))
-  expect_equal(names(fd), c("data", "max_visit", "type"))
+  expect_equal(names(fd), c("data", "max_rep", "type"))
   expect_equal(
-    sum(fd$data[1:3000, c("visit_index1", "visit_index2", 
-                          "visit_index3", "visit_index4")] - 
+    sum(fd$data[1:3000, c("rep_index1", "rep_index2", 
+                          "rep_index3", "rep_index4")] - 
           matrix(1:12000, ncol = 4)), 0)  
-  expect_equal(names(fd$data), c("y", "sc1", "sc2", "grp", "species", "vc1", "vc2",
-                                 "n_unit", "n_visit", "Q", "unit", "visit_index1", 
-                                 "visit_index2", "visit_index3", "visit_index4"))
+  expect_equal(names(fd$data), c("y", "uc1", "uc2", "grp", "species", "ec1", "ec2",
+                                 "n_unit", "n_rep", "Q", "unit", "rep_index1", 
+                                 "rep_index2", "rep_index3", "rep_index4"))
   expect_true(all(fd$data$occ %in% c(0,1,-99)))
   
-  visit_covs[[1]] <- matrix(1:12000, ncol = 4)
-  fd <- make_flocker_data(obs, unit_covs, visit_covs)
-  expect_equal(fd$data$vc1, 1:12000)
+  event_covs[[1]] <- matrix(1:12000, ncol = 4)
+  fd <- make_flocker_data(obs, unit_covs, event_covs)
+  expect_equal(fd$data$ec1, 1:12000)
   
   
   obs[2,4] <- NA
-  fd <- make_flocker_data(obs, unit_covs, visit_covs)
+  fd <- make_flocker_data(obs, unit_covs, event_covs)
   expect_equal(fd$type, "V")
   expect_equal(class(fd), c("list", "flocker_data"))
-  expect_equal(names(fd), c("data", "max_visit", "type"))
+  expect_equal(names(fd), c("data", "max_rep", "type"))
   expect_equal(
-    sum(fd$data[1:3000, c("visit_index1", "visit_index2", "visit_index3")] - 
+    sum(fd$data[1:3000, c("rep_index1", "rep_index2", "rep_index3")] - 
           matrix(1:9000, ncol = 3)), 0)
-  expect_equal(fd$data$visit_index4[1:3000], c(9001, -99, 9002:11999))
-  expect_equal(names(fd$data), c("y", "sc1", "sc2", "grp", "species", "vc1", "vc2",
-                                 "n_unit", "n_visit", "Q", "unit", "visit_index1", 
-                                 "visit_index2", "visit_index3", "visit_index4"))
+  expect_equal(fd$data$rep_index4[1:3000], c(9001, -99, 9002:11999))
+  expect_equal(names(fd$data), c("y", "uc1", "uc2", "grp", "species", "ec1", "ec2",
+                                 "n_unit", "n_rep", "Q", "unit", "rep_index1", 
+                                 "rep_index2", "rep_index3", "rep_index4"))
   expect_true(all(fd$flocker_data$occ %in% c(0,1,-99)))
-  expect_equal(fd$data$vc1[1:9000], 1:9000)
-  expect_equal(fd$data$vc1[9001:11999], c(9001, 9003:12000))
+  expect_equal(fd$data$ec1[1:9000], 1:9000)
+  expect_equal(fd$data$ec1[9001:11999], c(9001, 9003:12000))
   
   obs[,4] <- NA
   expect_error(fd <- make_flocker_data(obs),
@@ -63,5 +63,5 @@ test_that("make_flocker_data works correctly", {
   expect_error(fd <- make_flocker_data(obs), 
                "Some rows of obs have non-trailing NAs")
 
-  # Still need to add checks for the rest of the error messages, and for proper error messages using visit-constant data
+  # Still need to add checks for the rest of the error messages, and for proper error messages using rep-constant data
 })

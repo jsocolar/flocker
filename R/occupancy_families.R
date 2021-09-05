@@ -1,20 +1,20 @@
-#' Define the occupancy model family with visit-varying covariates
+#' Define the rep-varying occupancy family
 #' Primarily for internal use in \code{flock()}.
-#' @param max_visit the maximum number of repeat visits to a unit
+#' @param max_rep the maximum number of repeat sampling events at a unit
 #' @return a "customfamily" "brmsfamily" object from brms
 
-occupancy_V <- function(max_visit) {
+occupancy_V <- function(max_rep) {
   brms::custom_family(
     "occupancy_V", dpars = c("mu", "occ"),
     links = c("identity", "identity"),
     type = "int", 
-    # Integer aterms (vint) for n_unit, n_visit, Q, visit_index1...
-    vars = c("vint1", "vint2", "vint3", paste0("vint", 3 + (1:max_visit))),
+    # Integer aterms (vint) for n_unit, n_rep, Q, rep_index1...
+    vars = c("vint1", "vint2", "vint3", paste0("vint", 3 + (1:max_rep))),
     loop = FALSE)
 }
 
 
-#' Define the occupancy model family with visit-constant covariates
+#' Define the rep-constant occupancy family
 #' Primarily for internal use in \code{flock()}.
 #' @return a "customfamily" "brmsfamily" object from brms
 

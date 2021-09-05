@@ -1,6 +1,6 @@
 <img src="man/figures/flocker_sticker.png" width = 200 alt="flocker logo" align = "right">
 
-# flocker: flexible ocʞupancy estimation in R
+# flocker: flexible occupancy estimation in R
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/jsocolar/flocker/workflows/R-CMD-check/badge.svg)](https://github.com/jsocolar/flocker/actions?workflow=R-CMD-check)
 [![Coverage
@@ -9,11 +9,12 @@ Status](https://codecov.io/gh/jsocolar/flocker/branch/main/graph/badge.svg)](htt
 
 
 The `flocker` R package enables users to fit flexible occupancy models using 
-the same extended `lme4` formula syntax employed by R package `brms`. Also 
+the extended `lme4` formula syntax provided by R package `brms`. Also 
 included are functions to format data for occupancy modeling. `flocker` is 
 under active development. Soon to be included are functions to extract 
 estimates, predictions, posterior predictive checks, and model comparison 
-criteria from fitted occupancy models.
+criteria from fitted occupancy models. Priorities for future development 
+include multiseason models and N-mixture models.
 
 Compared to existing R packages for fitting occupancy models, `flocker` is 
 substantially more flexible in the variety of single-season models that can 

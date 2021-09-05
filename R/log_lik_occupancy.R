@@ -1,6 +1,5 @@
-#' Compute unitwise log-likelihood matrix for a flocker_fit object with 
-#' visit-variable covariates
-#' @param flocker_fit_V A flocker_fit with visit-variable covariates
+#' Compute unitwise log-likelihood matrix for a rep-varying flocker_fit object
+#' @param flocker_fit_V A rep-varying flocker_fit object
 #' @return A unitwise posterior log-likelihood matrix
 #' @export
 
@@ -9,46 +8,46 @@ log_lik_V <- function(flocker_fit_V) {
     stop("flocker_fit_V must be an object of class flocker_fit.")
   }
   if (attributes(flocker_fit_V)$lik_type != "V") {
-    stop("flocker_fit_V works only for flocker_fits with visit-variable covariates")
+    stop("flocker_fit_V works only for rep-varying flocker_fits")
   }
   
   # dimensions
   n_unit <- flocker_fit_V$data$n_unit[1]
-  max_visit <- max(flocker_fit_V$data$n_visit)
+  max_rep <- max(flocker_fit_V$data$n_rep)
   n_iter <- prod(dim(flocker_fit_V$fit)[1:2])
   
-  visit_index_matrix <- 
-    as.matrix(flocker_fit_V$data[1:n_unit, grepl("visit_index", names(flocker_fit_V$data))])
+  rep_index_matrix <- 
+    as.matrix(flocker_fit_V$data[1:n_unit, grepl("rep_index", names(flocker_fit_V$data))])
   
   lpo_t <- t(brms::posterior_linpred(flocker_fit_V, dpar = "occ"))
   lpd_t <- t(brms::posterior_linpred(flocker_fit_V, dpar = "mu"))
   
   # create long-format dataframe (with iterations stacked down rows)
-  # note: missed visits are inserted as -99s
+  # note: missed reps are inserted as -99s
   all_iters <- data.frame(resp = -99,
-                          unit_index = rep(1:n_unit, max_visit), 
-                          visit_index = c(visit_index_matrix),
-                          Q = rep(flocker_fit_V$data$Q[1:n_unit], max_visit), 
+                          unit_index = rep(1:n_unit, max_rep), 
+                          rep_index = c(rep_index_matrix),
+                          Q = rep(flocker_fit_V$data$Q[1:n_unit], max_rep), 
                           # note: everything above this is getting duplicated n_iter times
-                          iter = rep(1:n_iter, each = n_unit*max_visit), 
+                          iter = rep(1:n_iter, each = n_unit*max_rep), 
                           lpo = NA, 
                           lpd = NA)
-  all_iters$resp[all_iters$visit_index != -99] <- flocker_fit_V$data$y
-  all_iters$lpo[all_iters$visit_index != -99] <- c(lpo_t)
-  all_iters$lpd[all_iters$visit_index != -99] <- c(lpd_t)
+  all_iters$resp[all_iters$rep_index != -99] <- flocker_fit_V$data$y
+  all_iters$lpo[all_iters$rep_index != -99] <- c(lpo_t)
+  all_iters$lpd[all_iters$rep_index != -99] <- c(lpd_t)
   
-  # calculate visit-level component of likelihood
+  # calculate rep-level component of likelihood
   all_iters$ll <- calc_log_lik_partial(all_iters$resp, all_iters$Q, all_iters$lpd)
   
-  # spread this to wide format (i.e. 1 col per visit)
-  visit_index <- rep(rep(1:max_visit, each=n_unit), n_iter)
+  # spread this to wide format (i.e. 1 column per rep)
+  rep_index <- rep(rep(1:max_rep, each=n_unit), n_iter)
   
   ll_partial_V <- do.call("cbind", 
-                          lapply(1:max_visit, function(x) matrix(all_iters$ll[visit_index == x])))
+                          lapply(1:max_rep, function(x) matrix(all_iters$ll[rep_index == x])))
   
   ll_partial_S <- data.frame(Q = rep(all_iters$Q[1:n_unit], n_iter),
-                             lpo = all_iters$lpo[visit_index == 1], # note: duplicated across visits 
-                             iter = all_iters$iter[visit_index == 1]) 
+                             lpo = all_iters$lpo[rep_index == 1], # note: duplicated across reps 
+                             iter = all_iters$iter[rep_index == 1]) 
   
   # finish likelihood calculation
   Q_index <- as.logical(ll_partial_S$Q)
@@ -65,10 +64,10 @@ log_lik_V <- function(flocker_fit_V) {
   return(log_lik_mat)
 }
 
-#' Compute the part of the log-likelihood relating to visits. To be used 
-#' internally in log_lik_V(). Missed visits are returned as 0s
+#' Compute the part of the log-likelihood relating to sampling events. To be used 
+#' internally in log_lik_V(). Missing events are returned as 0s
 #' @param resp the response vector (detection/non-detection) at the unit. Missing 
-#' visits are represented as -99
+#' events are represented as -99
 #' @param Q whether there is at least one detection at a species:point combination
 #' @param lpd the logit-scale linear predictor
 
@@ -89,7 +88,7 @@ calc_log_lik_partial <- function(resp, Q, lpd) {
 
 
 
-#' A log-likelihood function for the visit-constant occupancy model, sufficient for
+#' A log-likelihood function for the rep-constant occupancy model, sufficient for
 #' \code{brms::loo(vc_fit)} to work. 
 #' @param i Posterior iteration
 #' @param prep Output of \code{brms::prepare_predictions}. See brms custom families
@@ -105,11 +104,11 @@ log_lik_occupancy_C <- function(i, prep) {
   return(occupancy_C_lpmf(y, mu, occ, trials))
 }
 
-#' An R implementation of the visit constant lpmf without the binomial coefficient
+#' An R implementation of the rep constant lpmf without the binomial coefficient
 #' @param y number of detections
 #' @param mu logit-scale detection probability
 #' @param occ logit-scale occupancy probability
-#' @param trials number of visits
+#' @param trials number of reps
 #' @return The log-likelihood
 
 occupancy_C_lpmf <- Vectorize(
@@ -136,7 +135,7 @@ occupancy_C_lpmf <- Vectorize(
 #' @param y number of detections
 #' @param mu logit-scale detection probability
 #' @param occ logit-scale occupancy probability
-#' @param trials number of visits
+#' @param trials number of reps
 #' @return The log-likelihood
 
 occupancy_C_lpmf_with_coef <- Vectorize(

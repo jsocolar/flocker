@@ -1,12 +1,13 @@
-#' Create Stan code for occupancy_V_lpmf with visit-varying covariates
+#' Create Stan code for likelihood function occupancy_V_lpmf for rep-varying model.
 #' Primarily for internal use in \code{flock()}.
-#' @param max_visit Literal integer maximum number of visits to any unit.
+#' @param max_rep Literal integer maximum number of repeated sampling events at 
+#'    any unit.
 #' @return Character string of Stan code corresponding to occupancy_V_lpmf
 
 
-make_occupancy_V_lpmf <- function (max_visit) {
-  if (!(is.integer(max_visit) & (max_visit > 1))) {
-    stop("max_visit must be an integer greater than 1")
+make_occupancy_V_lpmf <- function (max_rep) {
+  if (!(is.integer(max_rep) & (max_rep > 1))) {
+    stop("max_rep must be an integer greater than 1")
   }
   
   sf_text1 <- "  real occupancy_V_lpmf(
@@ -14,21 +15,21 @@ make_occupancy_V_lpmf <- function (max_visit) {
     vector mu, // lin pred for detection
     vector occ, // lin pred for occupancy. Only the first vint1[1] elements matter.
     int[] vint1, // # units (n_unit). Elements after 1 irrelevant.
-    int[] vint2, // # visits per unit (n_visit). Elements after vint1[1] irrelevant.
+    int[] vint2, // # sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
     int[] vint3, // Indicator for > 0 detections (Q). Elements after vint1[1] irrelevant.
   
-  // indices for jth visit to each unit (elements after vint1[1] irrelevant):"
+  // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):"
   
-  sf_text2 <- paste0("    int[] vint", 3 + (1:max_visit), collapse = ",\n")
+  sf_text2 <- paste0("    int[] vint", 3 + (1:max_rep), collapse = ",\n")
   
   sf_text3 <- paste0(") {
-  // Create array of the visit indices that correspond to each unit.
-    int index_array[vint1[1], ", max_visit, "];")
+  // Create array of the rep indices that correspond to each unit.
+    int index_array[vint1[1], ", max_rep, "];")
   
   sf_text4.1 <- "      index_array[,"
-  sf_text4.2 <- 1:max_visit
+  sf_text4.2 <- 1:max_rep
   sf_text4.3 <- "] = vint"
-  sf_text4.4 <- 3 + (1:max_visit)
+  sf_text4.4 <- 3 + (1:max_rep)
   sf_text4.5 <- "[1:vint1[1]];\n"
   sf_text4 <- paste0(sf_text4.1, sf_text4.2, sf_text4.3, sf_text4.4, sf_text4.5, collapse = "")
   
@@ -54,7 +55,7 @@ return(out)
 }
 
 
-#' Create Stan code occupancy_C_lpmf with visit-constant covariates
+#' Create Stan code for likelihood function occupancy_C_lpmf for rep-constant model.
 #' Primarily for internal use in \code{flock()}.
 #' The purpose of defining this custom family, rather than using brms's zero-inflated 
 #' binomial, is to ensure that the occupancy parameters are interpretable as though

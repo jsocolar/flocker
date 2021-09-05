@@ -38,33 +38,35 @@ The following terms feature importantly in this vignette. Some are not standard 
 
 **Z**: The (unobserved) true occupancy state of each closure-unit. We can represent Z as a vector of ones and zeros with one element for each closure-unit: a one if occupied; a zero if unoccupied.
 
-$\boldsymbol{\psi}$, $\boldsymbol{\theta}$: The occupancy ($\psi$) and detection ($\theta$) probabilities. In many models, both $\psi$ and $\theta$ will vary across closure-units. In some models $\theta$ will additionally vary across visits within a closure-unit.
+$\boldsymbol{\psi}$, $\boldsymbol{\theta}$: The occupancy ($\psi$) and detection ($\theta$) probabilities. In many models, both $\psi$ and $\theta$ will vary across closure-units. In some models $\theta$ will additionally vary across repeated sampling events within a closure-unit.
 
-**visit-constant**, **visit-varying**: We refer to models where $\theta$ is constant within closure-units as *visit-constant models*, as constrasted with *visit-varying models* that incorporate visit-specific detection covariates. It turns out that visit-constant models enable a more efficient parametrization of the likelihood than visit-varying models.
+**rep-constant**, **rep-varying**: We refer to models where $\theta$ is constant across repeated sampling events within closure-units as *rep-constant models*, as contrasted with *rep-varying models* that incorporate event-specific detection covariates. It turns out that rep-constant models enable a more efficient parametrization of the likelihood than rep-varying models.
+
+**unit covariates**, **event covariates**: We refer to any covariate that does not vary across sampling events within closure-units as a "unit covariate". This includes covariates that are intrinsically properties of single closure-units (e.g. the elevations of sites in a single-species model), covariates that are intrinsically properties of groups of closure units (e.g. elevations of sites in a multispecies model), and covariates that are intrinsically properties of sampling events but happen to be constant within all closure-units (e.g. observer in a sampling design where every site is visited by exactly one observer). We refer to any covariate that varies across sampling events within covariates as an "event covariate". Note that while unit covariates may appear in either the occupancy or the detection formula, event covariates are restricted to the detection formula. Models that incorporate event covariates are *rep-varying* (see above); those that do not are *rep-constant*.
 
 ## Data formatting
-The main function in `flocker` for fitting occupancy models, called `flock()`, expects a highly specific and somewhat peculiar data format. The function `make_flocker_data()` formats data for use with `flock` automatically. At a minimum, `make_flocker_data` expects a matrix or dataframe of detection/non-detection data. Rows represent closure-units, columns represent repeat visits, and entries must be `0` (nondetection), `1` (detection), or `NA` (no corresponding visit). The data must be formatted so that all `NA`s are trailing within their rows. For example, if some sites were visited four times and other three times, the three visits must be treated as visits 1, 2, and 3 (with the fourth visit `NA`) rather than as visits 1, 3, and 4 (with the second visit `NA`) or any other combination.
+The main function in `flocker` for fitting occupancy models, called `flock()`, expects a highly specific and somewhat peculiar data format. The function `make_flocker_data()` formats data for use with `flock` automatically. At a minimum, `make_flocker_data` expects a matrix or dataframe of detection/non-detection data. Rows represent closure-units, columns represent repeated sampling events within closure-units, and entries must be `0` (nondetection), `1` (detection), or `NA` (no corresponding sampling event). The data must be formatted so that all `NA`s are trailing within their rows. For example, if some units were sampled four times and other three times, the three sampling events must be treated as events 1, 2, and 3 (with the fourth event `NA`) rather than as events 1, 3, and 4 (with the second event `NA`) or any other combination.
 
-Many occupancy models also include covariates that influence occupancy or detection probabilities. Sometimes covariates correspond to properties of a closure-unit (or a set of closure-units), such that they never vary across the repeated visits within a closure-unit. These *constant covariates* can be passed to `make_flocker_data()` as a dataframe with the same number of rows as the observation matrix and data in the same order as the rows of the observation matrix. Columns are covariates, and we recommend using informative column names. Alternatively, *visit-varying covariates* can be passed as a named list of matrices whose elements `[i, j]` are the covariate values for the visit represented by the corresponding position of the observation matrix. Again, we recommend using informative names for the list elements.
+Many occupancy models also include covariates that influence occupancy or detection probabilities. Unit covariates (see *Terms and definitions* above) can be passed to `make_flocker_data()` as a dataframe with the same number of rows as the observation matrix and data in the same order as the rows of the observation matrix. Columns are covariates, and we recommend using informative column names. *Event covariates* (see *Terms and definitions* above) can be passed as a named list of matrices whose elements `[i, j]` are the covariate values for the sampling event represented by the corresponding position of the observation matrix. Again, we recommend using informative names for the list elements. If the corresponding observation is `NA`, then the value of the event covariate does not matter.
 
 Here's an example of how we format data:
 ```{r data formatting}
 library(flocker)
 ex_data <- example_flocker_data()
 names(ex_data)
-names(ex_data$visit_covs)
+names(ex_data$event_covs)
 head(ex_data$obs) # observation matrix
 head(ex_data$unit_covs) # observation matrix
-head(ex_data$visit_covs$vc1)
+head(ex_data$event_covs$ec1)
 flocker_data <- make_flocker_data(obs = ex_data$obs, 
-                                  constant_covs = ex_data$unit_covs, 
-                                  visit_covs = ex_data$visit_covs)
+                                  unit_covs = ex_data$unit_covs, 
+                                  event_covs = ex_data$event_covs)
 ```
 
 ## Model formulas
 Once we've formatted data with `make_flocker_data()`, we are ready to fit an occupancy model using the `flock()` function. Internally, `flock` calls `brms::brm()`, and the key to mastering `flock` is to master the formula synax from `brms`. We supply formulas for both occupancy and detection. Simple formulas follow the same syntax as R's `lm()` function. For example: 
 ```{r lm, eval=FALSE}
-flock(f_occ = ~ sc1, 
+flock(f_occ = ~ uc1, 
       f_det = ~ 1, 
       flocker_data = flocker_data)
 ```
@@ -72,30 +74,28 @@ flock(f_occ = ~ sc1,
 ### Random effects
 Simple random effects follow `lme4` syntax, including advanced `lme4` syntax is supported, including `||` for uncorrelated effects and `/` and `:` for expansion of multiple grouping terms. Here's a simple example:
 ```{r lme4, eval=FALSE}
-flock(f_occ = ~ sc1 + (1 | species), 
+flock(f_occ = ~ uc1 + (1 | species), 
       f_det = ~ 1, 
       flocker_data = flocker_data)
 ```
 When a model includes multiple random effects with the same grouping term, by default they are modeled as correlated *within* the occupancy or detection formulas, but as uncorrelated *between* formulas. For example, the code below estimates a single correlation for the intercept and slope in the occupancy sub-model.
 ```{r lme4_2, eval=FALSE}
-mymod <- flock(f_occ = ~ sc1 + (1 + sc1 | species), 
-      f_det = ~ vc1 + (1 | species), 
-      flocker_data = flocker_data,
-      backend = 'cmdstanr', iter = 2)
+mymod <- flock(f_occ = ~ uc1 + (1 + uc1 | species), 
+      f_det = ~ ec1 + (1 | species), 
+      flocker_data = flocker_data)
 ```
 However, this assumption can easily be relaxed using the `|<ID>|` syntax from `brms`. The `ID` is an arbitrary character string representing a group of terms to model as correlated. The below code, for example, models correlated intercepts in the occupancy and detection sub-models, and correlated effects of `sc1` on occupancy and `vc1` on detection, but no correlations between the intercepts and the slopes in either sub-model:
 ```{r lme4_3, eval=FALSE}
-mymod <- flock(f_occ = ~ sc1 + (1 |g1| species) + (0 + sc1 |g2| species), 
-      f_det = ~ vc1 + (1 |g1| species) + (0 + vc1 |g2| species), 
-      flocker_data = flocker_data,
-      backend = 'cmdstanr', iter = 2)
+mymod <- flock(f_occ = ~ uc1 + (1 |g1| species) + (0 + uc1 |g2| species), 
+      f_det = ~ ec1 + (1 |g1| species) + (0 + ec1 |g2| species), 
+      flocker_data = flocker_data)
 ```
 For more on `brms` syntax for random effects syntax, see the [documentation here](https://cran.r-project.org/web/packages/brms/vignettes/brms_multilevel.pdf).
 
 ### Generalized additive models
 Via `brms`, `flocker` supports `mgcv` syntax for thin-plate regression splines (`s()`) and tensor product smooths (`t2()`). For example:
 ```{r mgcv, eval=FALSE}
-flock(f_occ = ~ s(sc1), 
+flock(f_occ = ~ s(uc1), 
       f_det = ~ 1, 
       flocker_data = flocker_data)
 ```
@@ -122,4 +122,4 @@ flock(f_occ = ~ s(sc1),
 COMING SOON: this is implemented but not yet tested or documented.
 
 ## Post-processing
-COMING SOON: this is implemented for visit-constant models and partially implemented for visit-varying models.  It should be fully implemented, tested, and documented very soon.
+COMING SOON: this is implemented for rep-constant models and partially implemented for rep-varying models.  It should be fully implemented, tested, and documented very soon.
