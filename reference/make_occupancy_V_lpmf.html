@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Create Stan code for occupancy_V_lpmf with visit-varying covariates
+<title>Create Stan code for likelihood function occupancy_V_lpmf for rep-varying model.
 Primarily for internal use in flock(). — make_occupancy_V_lpmf • flocker</title>
 
 
@@ -40,9 +40,9 @@ Primarily for internal use in flock(). — make_occupancy_V_lpmf • flocker</ti
 
 
 
-<meta property="og:title" content="Create Stan code for occupancy_V_lpmf with visit-varying covariates
+<meta property="og:title" content="Create Stan code for likelihood function occupancy_V_lpmf for rep-varying model.
 Primarily for internal use in flock(). — make_occupancy_V_lpmf" />
-<meta property="og:description" content="Create Stan code for occupancy_V_lpmf with visit-varying covariates
+<meta property="og:description" content="Create Stan code for likelihood function occupancy_V_lpmf for rep-varying model.
 Primarily for internal use in flock()." />
 
 
@@ -123,25 +123,26 @@ Primarily for internal use in flock()." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Create Stan code for occupancy_V_lpmf with visit-varying covariates
+    <h1>Create Stan code for likelihood function occupancy_V_lpmf for rep-varying model.
 Primarily for internal use in <code>flock()</code>.</h1>
     <small class="dont-index">Source: <a href='https://github.com/jsocolar/flocker/blob/master/R/make_occupancy_lpmf.R'><code>R/make_occupancy_lpmf.R</code></a></small>
     <div class="hidden name"><code>make_occupancy_V_lpmf.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Create Stan code for occupancy_V_lpmf with visit-varying covariates
+    <p>Create Stan code for likelihood function occupancy_V_lpmf for rep-varying model.
 Primarily for internal use in <code><a href='flock.html'>flock()</a></code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>make_occupancy_V_lpmf</span><span class='op'>(</span><span class='va'>max_visit</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>make_occupancy_V_lpmf</span><span class='op'>(</span><span class='va'>max_rep</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>max_visit</th>
-      <td><p>Literal integer maximum number of visits to any unit.</p></td>
+      <th>max_rep</th>
+      <td><p>Literal integer maximum number of repeated sampling events at 
+any unit.</p></td>
     </tr>
     </table>
 

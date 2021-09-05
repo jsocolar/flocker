@@ -129,26 +129,26 @@
     <p>Format data for <code>flocker()</code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>make_flocker_data</span><span class='op'>(</span><span class='va'>obs</span>, constant_covs <span class='op'>=</span> <span class='cn'>NULL</span>, visit_covs <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>make_flocker_data</span><span class='op'>(</span><span class='va'>obs</span>, unit_covs <span class='op'>=</span> <span class='cn'>NULL</span>, event_covs <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>obs</th>
-      <td><p>An I x J matrix-like object where closure is assumed across rows (i.e. 
-rows are sampling sites or species-sites) and columns are visits. Allowable 
-values are 1 (detection), 0 (no detection), and NA (no visit).</p></td>
+      <td><p>An I x J matrix-like object where closure is assumed across rows 
+and columns are repeated sampling events. Allowable values are 1 (detection), 
+0 (no detection), and NA (no sampling event).</p></td>
     </tr>
     <tr>
-      <th>constant_covs</th>
+      <th>unit_covs</th>
       <td><p>A dataframe of covariates for each unit that are constant 
-across visits.</p></td>
+across repeated sampling events within closure-units.</p></td>
     </tr>
     <tr>
-      <th>visit_covs</th>
+      <th>event_covs</th>
       <td><p>A named list of I x J matrices, each one corresponding to a covariate
-that varies by visit.</p></td>
+that varies across repeated sampling events within closure-units</p></td>
     </tr>
     </table>
 

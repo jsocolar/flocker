@@ -6,8 +6,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Compute the part of the log-likelihood relating to visits. To be used 
-internally in log_lik_V(). Missed visits are returned as 0s — calc_log_lik_partial • flocker</title>
+<title>Compute the part of the log-likelihood relating to sampling events. To be used 
+internally in log_lik_V(). Missing events are returned as 0s — calc_log_lik_partial • flocker</title>
 
 
 <!-- jquery -->
@@ -40,10 +40,10 @@ internally in log_lik_V(). Missed visits are returned as 0s — calc_log_lik_par
 
 
 
-<meta property="og:title" content="Compute the part of the log-likelihood relating to visits. To be used 
-internally in log_lik_V(). Missed visits are returned as 0s — calc_log_lik_partial" />
-<meta property="og:description" content="Compute the part of the log-likelihood relating to visits. To be used 
-internally in log_lik_V(). Missed visits are returned as 0s" />
+<meta property="og:title" content="Compute the part of the log-likelihood relating to sampling events. To be used 
+internally in log_lik_V(). Missing events are returned as 0s — calc_log_lik_partial" />
+<meta property="og:description" content="Compute the part of the log-likelihood relating to sampling events. To be used 
+internally in log_lik_V(). Missing events are returned as 0s" />
 
 
 
@@ -123,15 +123,15 @@ internally in log_lik_V(). Missed visits are returned as 0s" />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Compute the part of the log-likelihood relating to visits. To be used 
-internally in log_lik_V(). Missed visits are returned as 0s</h1>
+    <h1>Compute the part of the log-likelihood relating to sampling events. To be used 
+internally in log_lik_V(). Missing events are returned as 0s</h1>
     <small class="dont-index">Source: <a href='https://github.com/jsocolar/flocker/blob/master/R/log_lik_occupancy.R'><code>R/log_lik_occupancy.R</code></a></small>
     <div class="hidden name"><code>calc_log_lik_partial.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Compute the part of the log-likelihood relating to visits. To be used 
-internally in log_lik_V(). Missed visits are returned as 0s</p>
+    <p>Compute the part of the log-likelihood relating to sampling events. To be used 
+internally in log_lik_V(). Missing events are returned as 0s</p>
     </div>
 
     <pre class="usage"><span class='fu'>calc_log_lik_partial</span><span class='op'>(</span><span class='va'>resp</span>, <span class='va'>Q</span>, <span class='va'>lpd</span><span class='op'>)</span></pre>
@@ -142,7 +142,7 @@ internally in log_lik_V(). Missed visits are returned as 0s</p>
     <tr>
       <th>resp</th>
       <td><p>the response vector (detection/non-detection) at the unit. Missing 
-visits are represented as -99</p></td>
+events are represented as -99</p></td>
     </tr>
     <tr>
       <th>Q</th>

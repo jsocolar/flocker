@@ -129,27 +129,27 @@
     <p>Create example data for use with <code><a href='make_flocker_data.html'>make_flocker_data()</a></code> and downstream functions.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>example_flocker_data</span><span class='op'>(</span>visit_constant <span class='op'>=</span> <span class='cn'>FALSE</span>, seed <span class='op'>=</span> <span class='fl'>123</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>example_flocker_data</span><span class='op'>(</span>rep_constant <span class='op'>=</span> <span class='cn'>FALSE</span>, seed <span class='op'>=</span> <span class='fl'>123</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>visit_constant</th>
-      <td><p>logical: return data with constant detection covariates
-within units (TRUE) or variable detection covariates (FALSE)</p></td>
+      <th>rep_constant</th>
+      <td><p>logical: create data with unit covariates only (TRUE) 
+or data that includes event covariates (FALSE)</p></td>
     </tr>
     <tr>
       <th>seed</th>
-      <td><p>random seed</p></td>
+      <td><p>random seed. To use existing RNG state set to NULL.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>A three element named list with the observation matrix ($obs), the
-unit covariate dataframe ($unit_covs), and the visit covariate list
-($visit_covs). If visit_constant is TRUE, then $visit_covs will be NULL.</p>
+unit covariate dataframe ($unit_covs), and the event covariate list
+($rep_covs). If rep_constant is TRUE, then $rep_covs will be NULL.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
