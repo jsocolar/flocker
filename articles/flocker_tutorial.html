@@ -175,12 +175,12 @@
       flocker_data <span class="op">=</span> <span class="va">flocker_data</span><span class="op">)</span></code></pre></div>
 <p>When a model includes multiple random effects with the same grouping term, by default they are modeled as correlated <em>within</em> the occupancy or detection formulas, but as uncorrelated <em>between</em> formulas. For example, the code below estimates a single correlation for the intercept and slope in the occupancy sub-model.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">mymod</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span>f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">uc1</span> <span class="op">|</span> <span class="va">species</span><span class="op">)</span>, 
+<code class="sourceCode R"><span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span>f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">uc1</span> <span class="op">|</span> <span class="va">species</span><span class="op">)</span>, 
       f_det <span class="op">=</span> <span class="op">~</span> <span class="va">ec1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">species</span><span class="op">)</span>, 
       flocker_data <span class="op">=</span> <span class="va">flocker_data</span><span class="op">)</span></code></pre></div>
 <p>However, this assumption can easily be relaxed using the <code>|&lt;ID&gt;|</code> syntax from <code>brms</code>. The <code>ID</code> is an arbitrary character string representing a group of terms to model as correlated. The below code, for example, models correlated intercepts in the occupancy and detection sub-models, and correlated effects of <code>sc1</code> on occupancy and <code>vc1</code> on detection, but no correlations between the intercepts and the slopes in either sub-model:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">mymod</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span>f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span><span class="va">g1</span><span class="op">|</span> <span class="va">species</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">0</span> <span class="op">+</span> <span class="va">uc1</span> <span class="op">|</span><span class="va">g2</span><span class="op">|</span> <span class="va">species</span><span class="op">)</span>, 
+<code class="sourceCode R"><span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span>f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span><span class="va">g1</span><span class="op">|</span> <span class="va">species</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">0</span> <span class="op">+</span> <span class="va">uc1</span> <span class="op">|</span><span class="va">g2</span><span class="op">|</span> <span class="va">species</span><span class="op">)</span>, 
       f_det <span class="op">=</span> <span class="op">~</span> <span class="va">ec1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span><span class="va">g1</span><span class="op">|</span> <span class="va">species</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">0</span> <span class="op">+</span> <span class="va">ec1</span> <span class="op">|</span><span class="va">g2</span><span class="op">|</span> <span class="va">species</span><span class="op">)</span>, 
       flocker_data <span class="op">=</span> <span class="va">flocker_data</span><span class="op">)</span></code></pre></div>
 <p>For more on <code>brms</code> syntax for random effects syntax, see the <a href="https://cran.r-project.org/web/packages/brms/vignettes/brms_multilevel.pdf">documentation here</a>.</p>
@@ -233,7 +233,37 @@
 <div id="post-processing" class="section level2">
 <h2 class="hasAnchor">
 <a href="#post-processing" class="anchor"></a>Post-processing</h2>
-<p>COMING SOON: this is implemented for rep-constant models and partially implemented for rep-varying models. It should be fully implemented, tested, and documented very soon.</p>
+<p><code>flocker</code> provides functions for three main types of post-processing. <code>get_Z</code> provides the posterior distribution for the latent occupancy state. <code>predict_flock</code> provides posterior predictions at the observed points (e.g. for use in posterior predictive checking) or for new data. <code>loo_flock</code> and <code>loo_compare_flock</code> both provide functionality for model comparison. See below for details on all three types of post-processing. Both posterior predictions and model comparison rely on subtle aspects of the occupancy model likelihood that we explain in more detail <a href="https://jsocolar.github.io/likelihoodOccupancy/">here</a>.</p>
+<div id="posterior-z" class="section level3">
+<h3 class="hasAnchor">
+<a href="#posterior-z" class="anchor"></a>Posterior Z</h3>
+<p>COMING SOON</p>
+</div>
+<div id="posterior-predictions" class="section level3">
+<h3 class="hasAnchor">
+<a href="#posterior-predictions" class="anchor"></a>Posterior predictions</h3>
+<p>COMING SOON</p>
+</div>
+<div id="model-comparison" class="section level3">
+<h3 class="hasAnchor">
+<a href="#model-comparison" class="anchor"></a>Model comparison</h3>
+<p><code>flocker</code> supports computationally efficient approximate leave-one-out cross-validation via R package <code>loo</code> via a method commonly known as PSIS-LOO. This method provides superior performance to other computationally efficient model performance diagnostics, and it comes with diagnostics that signal when the approximation is unreliable. Importantly, when diagnostics indicate that PSIS-LOO is unreliable, other model-comparison metrics such as WAIC are even less reliable. For details about PSIS-LOO, see <code>loo</code> package documentation and:</p>
+<p><a href="https://arxiv.org/abs/1507.04544">Vehtari, A., Gelman, A., &amp; Gabry J. (2016). Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC. In Statistics and Computing, doi:10.1007/s11222-016-9696-4. arXiv preprint arXiv:1507.04544.</a></p>
+<p><a href="https://arxiv.org/abs/1507.02646">Vehtari, A., Simpson, D., Gelman, A., Yao, Y., and Gabry, J. (2019). Pareto smoothed importance sampling. preprint arXiv:1507.02646</a></p>
+<p>The most straightforward way to compare models fit with <code>flocker</code> is the function <code>loo_compare_flock</code>. This function takes a list of flocker_fit objects as its argument and returns a model comparison table based on the difference in the expected log predictive density (elpd) between models. This table is a <code>compare.loo</code> object from <code><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo::loo_compare</a></code>. The “leave-one-out” holdouts consist of entire closure-units, not single sampling events (see <a href="https://jsocolar.github.io/likelihoodOccupancy/">here for details of why</a>).</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">ff1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span>f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span>, 
+      f_det <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span>, 
+      flocker_data <span class="op">=</span> <span class="va">flocker_data</span><span class="op">)</span>
+
+<span class="va">ff2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span>f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span>, 
+      f_det <span class="op">=</span> <span class="op">~</span> <span class="va">ec1</span> <span class="op">+</span> <span class="va">ec2</span>, 
+      flocker_data <span class="op">=</span> <span class="va">flocker_data</span><span class="op">)</span>
+
+<span class="fu"><a href="../reference/loo_compare_flock.html">loo_compare_flock</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>ff1 <span class="op">=</span> <span class="va">ff1</span>, ff2 <span class="op">=</span> <span class="va">ff2</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<p>Flocker also provides the function <code>loo_flock</code> to return a table of <code>elpd_loo</code>, <code>p_loo</code>, and <code>looic</code> estimates from <code><a href="https://mc-stan.org/loo/reference/loo.html">loo::loo</a></code> or <code><a href="https://rdrr.io/pkg/brms/man/loo.brmsfit.html">brms::loo</a></code> (the former for rep-varying models, the latter for rep-constant models).</p>
+<p>For more about PSIS-LOO with <code>flocker_fit</code> objects, see <a href="MAKE%20THIS">flocker’s LOO vignette</a>.</p>
+</div>
 </div>
   </div>
 
