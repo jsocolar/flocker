@@ -22,8 +22,8 @@ loo_flock <- function(x) {
     for (i in 1:length(x)) {
       out[[i]] <- loo_flock_onefit(x[[i]])
     }
+    names(out) <- names(x)
   }
-  names(out) <- names(x)
   return(out)
 }
 
@@ -39,11 +39,11 @@ loo_flock_onefit <- function(x) {
     # } else {
     #   .GlobalEnv$occupancy_C_lpmf <- occupancy_C_lpmf_without_coef
     # }
-    out <- brms::loo(x)
+    # out <- brms::loo(x)
   } else if (type == "V") {
     chain_id <- rep(c(1:dim(x$fit)[2]), each = dim(x$fit)[1])
     ll <- log_lik_V(x)
-    out <- brms::loo(ll, r_eff = loo::relative_eff(ll, chain_id = chain_id))
+    out <- loo::loo(ll, r_eff = loo::relative_eff(ll, chain_id = chain_id))
   }
   return(out)
 }

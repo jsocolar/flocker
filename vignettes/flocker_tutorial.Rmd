@@ -80,13 +80,13 @@ flock(f_occ = ~ uc1 + (1 | species),
 ```
 When a model includes multiple random effects with the same grouping term, by default they are modeled as correlated *within* the occupancy or detection formulas, but as uncorrelated *between* formulas. For example, the code below estimates a single correlation for the intercept and slope in the occupancy sub-model.
 ```{r lme4_2, eval=FALSE}
-mymod <- flock(f_occ = ~ uc1 + (1 + uc1 | species), 
+flock(f_occ = ~ uc1 + (1 + uc1 | species), 
       f_det = ~ ec1 + (1 | species), 
       flocker_data = flocker_data)
 ```
 However, this assumption can easily be relaxed using the `|<ID>|` syntax from `brms`. The `ID` is an arbitrary character string representing a group of terms to model as correlated. The below code, for example, models correlated intercepts in the occupancy and detection sub-models, and correlated effects of `sc1` on occupancy and `vc1` on detection, but no correlations between the intercepts and the slopes in either sub-model:
 ```{r lme4_3, eval=FALSE}
-mymod <- flock(f_occ = ~ uc1 + (1 |g1| species) + (0 + uc1 |g2| species), 
+flock(f_occ = ~ uc1 + (1 |g1| species) + (0 + uc1 |g2| species), 
       f_det = ~ ec1 + (1 |g1| species) + (0 + ec1 |g2| species), 
       flocker_data = flocker_data)
 ```
@@ -122,4 +122,35 @@ flock(f_occ = ~ s(uc1),
 COMING SOON: this is implemented but not yet tested or documented.
 
 ## Post-processing
-COMING SOON: this is implemented for rep-constant models and partially implemented for rep-varying models.  It should be fully implemented, tested, and documented very soon.
+`flocker` provides functions for three main types of post-processing. `get_Z` provides the posterior distribution for the latent occupancy state. `predict_flock` provides posterior predictions at the observed points (e.g. for use in posterior predictive checking) or for new data. `loo_flock` and `loo_compare_flock` both provide functionality for model comparison. See below for details on all three types of post-processing. Both posterior predictions and model comparison rely on subtle aspects of the occupancy model likelihood that we explain in more detail [here](https://jsocolar.github.io/likelihoodOccupancy/).
+
+### Posterior Z
+COMING SOON
+
+### Posterior predictions
+COMING SOON
+
+### Model comparison
+`flocker` supports computationally efficient approximate leave-one-out cross-validation via R package `loo` via a method commonly known as PSIS-LOO. This method provides superior performance to other computationally efficient model performance diagnostics, and it comes with diagnostics that signal when the approximation is unreliable. Importantly, when diagnostics indicate that PSIS-LOO is unreliable, other model-comparison metrics such as WAIC are even less reliable. For details about PSIS-LOO, see `loo` package documentation and:
+
+[Vehtari, A., Gelman, A., & Gabry J. (2016). Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC. In Statistics and Computing, doi:10.1007/s11222-016-9696-4. arXiv preprint arXiv:1507.04544.](https://arxiv.org/abs/1507.04544)
+
+[Vehtari, A., Simpson, D., Gelman, A., Yao, Y., and Gabry, J. (2019). Pareto smoothed importance sampling. preprint arXiv:1507.02646](https://arxiv.org/abs/1507.02646)
+
+The most straightforward way to compare models fit with `flocker` is the function `loo_compare_flock`. This function takes a list of flocker_fit objects as its argument and returns a model comparison table based on the difference in the expected log predictive density (elpd) between models. This table is a `compare.loo` object from `loo::loo_compare`. The "leave-one-out" holdouts consist of entire closure-units, not single sampling events (see [here for details of why](https://jsocolar.github.io/likelihoodOccupancy/)). 
+
+```{r LOO, eval=FALSE}
+ff1 <- flock(f_occ = ~ uc1, 
+      f_det = ~ 1, 
+      flocker_data = flocker_data)
+
+ff2 <- flock(f_occ = ~ uc1, 
+      f_det = ~ ec1 + ec2, 
+      flocker_data = flocker_data)
+
+loo_compare_flock(list(ff1 = ff1, ff2 = ff2))
+```
+
+Flocker also provides the function `loo_flock` to return a table of `elpd_loo`, `p_loo`, and `looic` estimates from `loo::loo` or `brms::loo` (the former for rep-varying models, the latter for rep-constant models). 
+
+For more about PSIS-LOO with `flocker_fit` objects, see [flocker's LOO vignette](MAKE THIS).
