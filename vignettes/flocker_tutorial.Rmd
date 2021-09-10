@@ -40,6 +40,8 @@ The following terms feature importantly in this vignette. Some are not standard 
 
 $\boldsymbol{\psi}$, $\boldsymbol{\theta}$: The occupancy ($\psi$) and detection ($\theta$) probabilities. In many models, both $\psi$ and $\theta$ will vary across closure-units. In some models $\theta$ will additionally vary across repeated sampling events within a closure-unit.
 
+**Q** The (observed) detection/nondetection state of each closure-unit (i.e. does the unit have at least one detection in the data or not). As for Z, we represent Q as a vector of ones and zeros.
+
 **rep-constant**, **rep-varying**: We refer to models where $\theta$ is constant across repeated sampling events within closure-units as *rep-constant models*, as contrasted with *rep-varying models* that incorporate event-specific detection covariates. It turns out that rep-constant models enable a more efficient parametrization of the likelihood than rep-varying models.
 
 **unit covariates**, **event covariates**: We refer to any covariate that does not vary across sampling events within closure-units as a "unit covariate". This includes covariates that are intrinsically properties of single closure-units (e.g. the elevations of sites in a single-species model), covariates that are intrinsically properties of groups of closure units (e.g. elevations of sites in a multispecies model), and covariates that are intrinsically properties of sampling events but happen to be constant within all closure-units (e.g. observer in a sampling design where every site is visited by exactly one observer). We refer to any covariate that varies across sampling events within covariates as an "event covariate". Note that while unit covariates may appear in either the occupancy or the detection formula, event covariates are restricted to the detection formula. Models that incorporate event covariates are *rep-varying* (see above); those that do not are *rep-constant*.
@@ -125,14 +127,16 @@ COMING SOON: this is implemented but not yet tested or documented.
 `flocker` provides functions for three main types of post-processing. `get_Z` provides the posterior distribution for the latent occupancy state. `predict_flock` provides posterior predictions at the observed points (e.g. for use in posterior predictive checking) or for new data. `loo_flock` and `loo_compare_flock` both provide functionality for model comparison. See below for details on all three types of post-processing. Both posterior predictions and model comparison rely on subtle aspects of the occupancy model likelihood that we explain in more detail [here](https://jsocolar.github.io/likelihoodOccupancy/).
 
 ### Posterior Z
-The function `get_Z` returns the posterior distribution of occupancy probabilities across the closure-units. The output is a matrix where rows are posterior iterations, columns are closure-units, and values are draws from the posterior distribution of occupancy probabilities. The optional argument `n_iter` can be used to request only a certain number of posterior iterations (achieved by appropriately thinning the posterior chains). For example:
+The function `get_Z` returns the posterior distribution of occupancy probabilities across the closure-units. The output is a matrix where rows are posterior iterations, columns are closure-units, and values are draws from the posterior distribution of occupancy probabilities. For example:
 
 ```{r get_Z, eval=FALSE}
 ff <- flock(f_occ = ~ uc1, 
       f_det = ~ 1, 
       flocker_data = flocker_data)
-get_Z(ff, n_iter = 100)
+get_Z(ff)
 ```
+
+`get_Z` accepts several additional arguments that control the way that posterior is obtained and the values of returned. See `?get_Z` for details.
 
 ### Posterior predictions
 COMING SOON
