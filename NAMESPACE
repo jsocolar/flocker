@@ -2,6 +2,7 @@
 
 export(example_flocker_data)
 export(flock)
+export(get_Z)
 export(log1m_inv_logit)
 export(log_inv_logit)
 export(log_lik_V)

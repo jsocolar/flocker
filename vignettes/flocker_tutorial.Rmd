@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 `flocker` is an R package for fitting [occupancy models](https://jsocolar.github.io/closureOccupancy/). To date, software for occupancy modeling has required users either to work directly with probabilistic programming languages like Stan or JAGS, or to restrict themselves to simple effects structures in packages like `unmarked`. `flocker` changes that, providing occupancy modelers with a simple formula-based syntax for sophisticated model structures. Based on highly optimized Stan code, `flocker` is also **fast**, especially for large models.
 
-Most of `flocker` is a front-end for R package `brms`, which in turn is a front-end for `Stan`. Thus, mastering `flocker` is mostly a matter of mastering the formula syntax available in `brms`. 
+`flocker` is built on R package `brms`, which in turn is a front-end for `Stan`. Thus, mastering `flocker` is mostly a matter of mastering the formula syntax available in `brms`. 
 
 In the remainder of this vignette, we
 
@@ -104,10 +104,10 @@ flock(f_occ = ~ s(uc1),
 `brms` is capable of fitting a variety of additional effects structures. We believe that the following structures should translate directly to `flocker`, but these remain untested. As we test them and verify adequate performance, we will update this vignette with examples.
 
 #### Phylogenetic models
-[See here](https://paul-buerkner.github.io/brms/articles/brms_phylogenetics.html) for details about specifying details of phylogenetic effects in `brms`. Note that `flocker` directly accepts a `data2` argument that it can pass to `brms` as necessary.
+[See here](https://paul-buerkner.github.io/brms/articles/brms_phylogenetics.html) for details about specifying details of phylogenetic effects in `brms`. Note that `flock` directly accepts a `data2` argument that it can pass to `brms` as necessary.
 
 #### Spatial autoregressive models
-[See here](https://paul-buerkner.github.io/brms/reference/car.html) for details about conditional autoregressive (CAR) models in `brms`. Note that if the spatial effect is applied to occupancy, it is essential closure-units be grouped such that many groups contain more than one unit. With just one unit per group (the `brms` default if no grouping is supplied), the logit-scale residual is not identified. Note that `flocker` directly accepts a `data2` argument that it can pass to `brms` as necessary.
+[See here](https://paul-buerkner.github.io/brms/reference/car.html) for details about conditional autoregressive (CAR) models in `brms`. Note that if the spatial effect is applied to occupancy, it is essential closure-units be grouped such that many groups contain more than one unit. With just one unit per group (the `brms` default if no grouping is supplied), the logit-scale residual is not identified. Note that `flock` directly accepts a `data2` argument that it can pass to `brms` as necessary.
 
 #### Monotonic effects
 [See here](https://paul-buerkner.github.io/brms/articles/brms_monotonic.html) for relevant `brms` documentation.
@@ -116,7 +116,7 @@ flock(f_occ = ~ s(uc1),
 [See here](http://paul-buerkner.github.io/brms/reference/me.html) for relevant `brms` documentation.
 
 ## Additional fitting arguments
-`flocker` will pass any relevant parameters forward to `brms::brm()`, giving the user important control over the algorithmic details of how the model is fit. See `?brms::brm` for details.
+`flock` will pass any relevant parameters forward to `brms::brm()`, giving the user important control over the algorithmic details of how the model is fit. See `?brms::brm` for details. To speed up the execution, we recommend supplying the argument `backend = "cmdstanr"`. This requires the cmdstanr package and a working installation of cmdstan; [see here](https://mc-stan.org/cmdstanr/) for instructions to get started and further details.
 
 ## Prior specification
 COMING SOON: this is implemented but not yet tested or documented.
@@ -125,13 +125,20 @@ COMING SOON: this is implemented but not yet tested or documented.
 `flocker` provides functions for three main types of post-processing. `get_Z` provides the posterior distribution for the latent occupancy state. `predict_flock` provides posterior predictions at the observed points (e.g. for use in posterior predictive checking) or for new data. `loo_flock` and `loo_compare_flock` both provide functionality for model comparison. See below for details on all three types of post-processing. Both posterior predictions and model comparison rely on subtle aspects of the occupancy model likelihood that we explain in more detail [here](https://jsocolar.github.io/likelihoodOccupancy/).
 
 ### Posterior Z
-COMING SOON
+The function `get_Z` returns the posterior distribution of occupancy probabilities across the closure-units. The output is a matrix where rows are posterior iterations, columns are closure-units, and values are draws from the posterior distribution of occupancy probabilities. The optional argument `n_iter` can be used to request only a certain number of posterior iterations (achieved by appropriately thinning the posterior chains). For example:
+
+```{r get_Z, eval=FALSE}
+ff <- flock(f_occ = ~ uc1, 
+      f_det = ~ 1, 
+      flocker_data = flocker_data)
+get_Z(ff, n_iter = 100)
+```
 
 ### Posterior predictions
 COMING SOON
 
 ### Model comparison
-`flocker` supports computationally efficient approximate leave-one-out cross-validation via R package `loo` via a method commonly known as PSIS-LOO. This method provides superior performance to other computationally efficient model performance diagnostics, and it comes with diagnostics that signal when the approximation is unreliable. Importantly, when diagnostics indicate that PSIS-LOO is unreliable, other model-comparison metrics such as WAIC are even less reliable. For details about PSIS-LOO, see `loo` package documentation and:
+`flocker` supports computationally efficient approximate leave-one-out cross-validation via R package `loo` using a method commonly known as PSIS-LOO. This method generally provides superior performance to other computationally efficient model performance criteria (e.g. WAIC), and it comes with diagnostics that signal when the approximation is unreliable. Importantly, when diagnostics indicate that PSIS-LOO is unreliable, other model-comparison metrics such as WAIC are even less reliable. For details about PSIS-LOO, see `loo` package documentation and:
 
 [Vehtari, A., Gelman, A., & Gabry J. (2016). Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC. In Statistics and Computing, doi:10.1007/s11222-016-9696-4. arXiv preprint arXiv:1507.04544.](https://arxiv.org/abs/1507.04544)
 
