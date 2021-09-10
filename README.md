@@ -34,16 +34,8 @@ remotes::install_github("jsocolar/flocker")
 ```
 `flocker` requires a working version of either Rstan or cmdstan, which are 
 interfaces to [Stan](https://mc-stan.org/), a state-of-the-art the 
-probabilistic programming language. If using Rstan, we strongly recommend 
-installing the development version rather than the CRAN version. In a fresh 
-R session, do
-```
-# Uncomment the next line if you have previously installed rstan
-# remove.packages(c("StanHeaders", "rstan"))
-install.packages("StanHeaders", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
-install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
-```
-To use cmdstan, you must install R package `cmdstanr` with
+probabilistic programming language. We recommend using cmdstan if possible.
+To do so, first install R package `cmdstanr` with
 ```
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
@@ -51,6 +43,15 @@ You must additionally install cmdstan itself. We strongly recommend using
 `cmdstanr` to manage the cmdstan installation:
 ```
 cmdstanr::install_cmdstan()
+```
+If using Rstan, we strongly recommend 
+installing the development version rather than the CRAN version. In a fresh 
+R session, do
+```
+# Uncomment the next line if you have previously installed rstan
+# remove.packages(c("StanHeaders", "rstan"))
+install.packages("StanHeaders", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
 Both Rstan and cmdstan require a working C++ toolchain, which has posed occasional 
 complications for Stan users. 
