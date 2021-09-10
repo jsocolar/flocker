@@ -91,7 +91,7 @@
     
 <p><img align="right" src="../man/figures/flocker_sticker.png" width="30%"></p>
 <p><code>flocker</code> is an R package for fitting <a href="https://jsocolar.github.io/closureOccupancy/">occupancy models</a>. To date, software for occupancy modeling has required users either to work directly with probabilistic programming languages like Stan or JAGS, or to restrict themselves to simple effects structures in packages like <code>unmarked</code>. <code>flocker</code> changes that, providing occupancy modelers with a simple formula-based syntax for sophisticated model structures. Based on highly optimized Stan code, <code>flocker</code> is also <strong>fast</strong>, especially for large models.</p>
-<p>Most of <code>flocker</code> is a front-end for R package <code>brms</code>, which in turn is a front-end for <code>Stan</code>. Thus, mastering <code>flocker</code> is mostly a matter of mastering the formula syntax available in <code>brms</code>.</p>
+<p><code>flocker</code> is built on R package <code>brms</code>, which in turn is a front-end for <code>Stan</code>. Thus, mastering <code>flocker</code> is mostly a matter of mastering the formula syntax available in <code>brms</code>.</p>
 <p>In the remainder of this vignette, we</p>
 <ul>
 <li>define some useful terms</li>
@@ -201,12 +201,12 @@
 <div id="phylogenetic-models" class="section level4">
 <h4 class="hasAnchor">
 <a href="#phylogenetic-models" class="anchor"></a>Phylogenetic models</h4>
-<p><a href="https://paul-buerkner.github.io/brms/articles/brms_phylogenetics.html">See here</a> for details about specifying details of phylogenetic effects in <code>brms</code>. Note that <code>flocker</code> directly accepts a <code>data2</code> argument that it can pass to <code>brms</code> as necessary.</p>
+<p><a href="https://paul-buerkner.github.io/brms/articles/brms_phylogenetics.html">See here</a> for details about specifying details of phylogenetic effects in <code>brms</code>. Note that <code>flock</code> directly accepts a <code>data2</code> argument that it can pass to <code>brms</code> as necessary.</p>
 </div>
 <div id="spatial-autoregressive-models" class="section level4">
 <h4 class="hasAnchor">
 <a href="#spatial-autoregressive-models" class="anchor"></a>Spatial autoregressive models</h4>
-<p><a href="https://paul-buerkner.github.io/brms/reference/car.html">See here</a> for details about conditional autoregressive (CAR) models in <code>brms</code>. Note that if the spatial effect is applied to occupancy, it is essential closure-units be grouped such that many groups contain more than one unit. With just one unit per group (the <code>brms</code> default if no grouping is supplied), the logit-scale residual is not identified. Note that <code>flocker</code> directly accepts a <code>data2</code> argument that it can pass to <code>brms</code> as necessary.</p>
+<p><a href="https://paul-buerkner.github.io/brms/reference/car.html">See here</a> for details about conditional autoregressive (CAR) models in <code>brms</code>. Note that if the spatial effect is applied to occupancy, it is essential closure-units be grouped such that many groups contain more than one unit. With just one unit per group (the <code>brms</code> default if no grouping is supplied), the logit-scale residual is not identified. Note that <code>flock</code> directly accepts a <code>data2</code> argument that it can pass to <code>brms</code> as necessary.</p>
 </div>
 <div id="monotonic-effects" class="section level4">
 <h4 class="hasAnchor">
@@ -223,7 +223,7 @@
 <div id="additional-fitting-arguments" class="section level2">
 <h2 class="hasAnchor">
 <a href="#additional-fitting-arguments" class="anchor"></a>Additional fitting arguments</h2>
-<p><code>flocker</code> will pass any relevant parameters forward to <code><a href="https://rdrr.io/pkg/brms/man/brm.html">brms::brm()</a></code>, giving the user important control over the algorithmic details of how the model is fit. See <code><a href="https://rdrr.io/pkg/brms/man/brm.html">?brms::brm</a></code> for details.</p>
+<p><code>flock</code> will pass any relevant parameters forward to <code><a href="https://rdrr.io/pkg/brms/man/brm.html">brms::brm()</a></code>, giving the user important control over the algorithmic details of how the model is fit. See <code><a href="https://rdrr.io/pkg/brms/man/brm.html">?brms::brm</a></code> for details. To speed up the execution, we recommend supplying the argument <code>backend = "cmdstanr"</code>. This requires the cmdstanr package and a working installation of cmdstan; <a href="https://mc-stan.org/cmdstanr/">see here</a> for instructions to get started and further details.</p>
 </div>
 <div id="prior-specification" class="section level2">
 <h2 class="hasAnchor">
@@ -237,7 +237,12 @@
 <div id="posterior-z" class="section level3">
 <h3 class="hasAnchor">
 <a href="#posterior-z" class="anchor"></a>Posterior Z</h3>
-<p>COMING SOON</p>
+<p>The function <code>get_Z</code> returns the posterior distribution of occupancy probabilities across the closure-units. The output is a matrix where rows are posterior iterations, columns are closure-units, and values are draws from the posterior distribution of occupancy probabilities. The optional argument <code>n_iter</code> can be used to request only a certain number of posterior iterations (achieved by appropriately thinning the posterior chains). For example:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">ff</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span>f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span>, 
+      f_det <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span>, 
+      flocker_data <span class="op">=</span> <span class="va">flocker_data</span><span class="op">)</span>
+<span class="fu"><a href="../reference/get_Z.html">get_Z</a></span><span class="op">(</span><span class="va">ff</span>, n_iter <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="posterior-predictions" class="section level3">
 <h3 class="hasAnchor">
@@ -247,11 +252,11 @@
 <div id="model-comparison" class="section level3">
 <h3 class="hasAnchor">
 <a href="#model-comparison" class="anchor"></a>Model comparison</h3>
-<p><code>flocker</code> supports computationally efficient approximate leave-one-out cross-validation via R package <code>loo</code> via a method commonly known as PSIS-LOO. This method provides superior performance to other computationally efficient model performance diagnostics, and it comes with diagnostics that signal when the approximation is unreliable. Importantly, when diagnostics indicate that PSIS-LOO is unreliable, other model-comparison metrics such as WAIC are even less reliable. For details about PSIS-LOO, see <code>loo</code> package documentation and:</p>
+<p><code>flocker</code> supports computationally efficient approximate leave-one-out cross-validation via R package <code>loo</code> using a method commonly known as PSIS-LOO. This method generally provides superior performance to other computationally efficient model performance criteria (e.g. WAIC), and it comes with diagnostics that signal when the approximation is unreliable. Importantly, when diagnostics indicate that PSIS-LOO is unreliable, other model-comparison metrics such as WAIC are even less reliable. For details about PSIS-LOO, see <code>loo</code> package documentation and:</p>
 <p><a href="https://arxiv.org/abs/1507.04544">Vehtari, A., Gelman, A., &amp; Gabry J. (2016). Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC. In Statistics and Computing, doi:10.1007/s11222-016-9696-4. arXiv preprint arXiv:1507.04544.</a></p>
 <p><a href="https://arxiv.org/abs/1507.02646">Vehtari, A., Simpson, D., Gelman, A., Yao, Y., and Gabry, J. (2019). Pareto smoothed importance sampling. preprint arXiv:1507.02646</a></p>
 <p>The most straightforward way to compare models fit with <code>flocker</code> is the function <code>loo_compare_flock</code>. This function takes a list of flocker_fit objects as its argument and returns a model comparison table based on the difference in the expected log predictive density (elpd) between models. This table is a <code>compare.loo</code> object from <code><a href="https://mc-stan.org/loo/reference/loo_compare.html">loo::loo_compare</a></code>. The “leave-one-out” holdouts consist of entire closure-units, not single sampling events (see <a href="https://jsocolar.github.io/likelihoodOccupancy/">here for details of why</a>).</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">ff1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span>f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span>, 
       f_det <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span>, 
       flocker_data <span class="op">=</span> <span class="va">flocker_data</span><span class="op">)</span>
