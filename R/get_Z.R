@@ -1,6 +1,7 @@
 #' Get posterior distribution of Z matrix
 #' @param flocker_fit A flocker_fit object
-#' @param n_iter The number of posterior iterations desired
+#' @param n_iter The number of posterior iterations desired. If `NULL`, use
+#'     all available posterior iterations.
 #' @param hist_condition Should the posterior distribution for Z directly 
 #'     condition on the observed detection history (`TRUE`) or not (`FALSE`)?
 #'     For example, at sites with at least one detection, the true occupancy 
@@ -43,6 +44,10 @@ get_Z <- function (flocker_fit, n_iter = NULL, hist_condition = TRUE,
     stop("requested more iterations than contained in flocker_fit")
   }
   
+  if (!is.logical(hist_condition)) {
+    stop("hist_condition must be logical")
+  }
+  
   if (is.null(new_data)) {
     new_data <- flocker_fit$data
   } else if (hist_condition) {
@@ -69,7 +74,7 @@ get_Z <- function (flocker_fit, n_iter = NULL, hist_condition = TRUE,
     n_unit <- new_data$n_unit[1]
     lpo <- lpo[, 1:n_unit]
   } else {
-    n_unit <- nrow(flocker_fit$data)
+    n_unit <- nrow(new_data)
   }
   
   psi_all <- boot::inv.logit(lpo)
@@ -81,7 +86,7 @@ get_Z <- function (flocker_fit, n_iter = NULL, hist_condition = TRUE,
     antitheta_all <- boot::inv.logit(-lpd)
     if (lik_type == "V") {
       index_matrix <- new_data[grep("^rep_index", names(new_data))]
-      Q <- as.integer(flocker_fit$data$Q[1:n_unit])
+      Q <- as.integer(new_data$Q[1:n_unit])
       for (i in 1:n_unit) {
         if (Q[i] == 0L) {
           psi <- psi_all[ , i]
@@ -92,13 +97,13 @@ get_Z <- function (flocker_fit, n_iter = NULL, hist_condition = TRUE,
         }
       }
     } else {
-      Q <- as.integer(flocker_fit$data$n_suc > 0)
+      Q <- as.integer(new_data$n_suc > 0)
       Z <- matrix(data = 1, nrow = length(iter), ncol = n_unit)
       for (i in 1:n_unit) {
         if (Q[i] == 0L) {
           psi <- psi_all[, i]
           antitheta <- antitheta_all[, i]
-          numerator <- psi * antitheta^flocker_fit$data$n_trial[i]
+          numerator <- psi * antitheta^new_data$n_trial[i]
           denominator <- numerator + (1 - psi)
           Z[, i] <- numerator/denominator
         }

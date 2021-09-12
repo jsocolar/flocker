@@ -47,3 +47,20 @@ type_flocker_fit <- function(x) {
   }
   return(out)
 }
+
+#' Get matrix positions corresponding to each row of data in rep-varying 
+#' flocker_fit
+#' @param flocker_fit a visit-varying `flocker_fit` object
+#' @return an n_row x 2 matrix, where each row contains the indices of the 
+#'     corresponding sampling event in the observation dataframe
+get_positions_V <- function(flocker_fit) {
+  if (attributes(flocker_fit)$lik_type != "V") {
+    stop("flocker_fit type is not 'V'")
+  }
+  n_unit <- flocker_fit$data$n_unit[1]
+  index_matrix <- as.matrix(flocker_fit$data[1:n_unit, grepl("^rep_index", 
+                                                    names(flocker_fit$data))])
+  n_row <- nrow(flocker_fit$data)
+  out <- t(sapply(1:n_row, function(x){which(index_matrix == x, arr.ind = T)}))
+  return(out)
+}

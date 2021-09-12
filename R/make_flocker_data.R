@@ -45,12 +45,20 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL) {
     if (any(is.na(unit_covs))) {
       stop("A constant covariate contains missing values.")
     }
-    if ("y" %in% names(event_covs)) {
+    if ("y" %in% names(unit_covs)) {
       stop(paste0("'y' is a reserved variable name in flocker and is not allowed",
                   "as the name of a constant covariate"))
     }
-    if (any(grepl("^\\.", names(event_covs)))) {
+    if (any(grepl("^\\.", names(unit_covs)))) {
       stop(paste0("variable names starting with '.' are reserved in flocker and ",
+                  "are not allowed as covariate names in unit_covs"))
+    }
+    if (any(grepl("^occ_", names(unit_covs)))) {
+      stop(paste0("variable names starting with 'occ_' are reserved in flocker and ",
+                  "are not allowed as covariate names in unit_covs"))
+    }
+    if (any(grepl("^rep_", names(unit_covs)))) {
+      stop(paste0("variable names starting with 'rep_' are reserved in flocker and ",
                   "are not allowed as covariate names in unit_covs"))
     }
   }
@@ -84,9 +92,20 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL) {
         stop(paste0("'y' is a reserved variable name in flocker and is not allowed",
                     "as the name of an event covariate"))
       }
-      
       if (any(grepl("^\\.", names(event_covs)))) {
         stop(paste0("variable names starting with '.' are reserved in flocker and ",
+                    "are not allowed as covariate names in event_covs"))
+      }
+      if (any(grepl("^\\.", names(event_covs)))) {
+        stop(paste0("variable names starting with '.' are reserved in flocker and ",
+                    "are not allowed as covariate names in event_covs"))
+      }
+      if (any(grepl("^occ_", names(event_covs)))) {
+        stop(paste0("variable names starting with 'occ_' are reserved in flocker and ",
+                    "are not allowed as covariate names in event_covs"))
+      }
+      if (any(grepl("^rep_", names(event_covs)))) {
+        stop(paste0("variable names starting with 'rep_' are reserved in flocker and ",
                     "are not allowed as covariate names in event_covs"))
       }
     }
