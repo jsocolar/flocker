@@ -68,7 +68,7 @@ get_Z <- function (flocker_fit, n_iter = NULL, hist_condition = TRUE,
                                  newdata = new_data, allow_new_levels = TRUE,
                                  sample_new_levels = sample_new_levels)
 
-  lik_type <- attributes(flocker_fit)$lik_type
+  lik_type <- type_flocker_fit(flocker_fit)
   
   if (lik_type == "V") {
     n_unit <- new_data$n_unit[1]

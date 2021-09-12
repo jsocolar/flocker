@@ -7,7 +7,7 @@ log_lik_V <- function(flocker_fit_V) {
   if (!("flocker_fit" %in% class(flocker_fit_V))) {
     stop("flocker_fit_V must be an object of class flocker_fit.")
   }
-  if (attributes(flocker_fit_V)$lik_type != "V") {
+  if (type_flocker_fit(flocker_fit_V) != "V") {
     stop("flocker_fit_V works only for rep-varying flocker_fits")
   }
   
