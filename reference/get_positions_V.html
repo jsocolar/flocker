@@ -6,7 +6,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Get posterior distribution of Z matrix — get_Z • flocker</title>
+<title>Get matrix positions corresponding to each row of data in rep-varying 
+flocker_fit — get_positions_V • flocker</title>
 
 
 <!-- jquery -->
@@ -39,8 +40,10 @@
 
 
 
-<meta property="og:title" content="Get posterior distribution of Z matrix — get_Z" />
-<meta property="og:description" content="Get posterior distribution of Z matrix" />
+<meta property="og:title" content="Get matrix positions corresponding to each row of data in rep-varying 
+flocker_fit — get_positions_V" />
+<meta property="og:description" content="Get matrix positions corresponding to each row of data in rep-varying 
+flocker_fit" />
 
 
 
@@ -120,66 +123,32 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Get posterior distribution of Z matrix</h1>
-    <small class="dont-index">Source: <a href='https://github.com/jsocolar/flocker/blob/master/R/get_Z.R'><code>R/get_Z.R</code></a></small>
-    <div class="hidden name"><code>get_Z.Rd</code></div>
+    <h1>Get matrix positions corresponding to each row of data in rep-varying 
+flocker_fit</h1>
+    <small class="dont-index">Source: <a href='https://github.com/jsocolar/flocker/blob/master/R/utils.R'><code>R/utils.R</code></a></small>
+    <div class="hidden name"><code>get_positions_V.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Get posterior distribution of Z matrix</p>
+    <p>Get matrix positions corresponding to each row of data in rep-varying 
+flocker_fit</p>
     </div>
 
-    <pre class="usage"><span class='fu'>get_Z</span><span class='op'>(</span>
-  <span class='va'>flocker_fit</span>,
-  n_iter <span class='op'>=</span> <span class='cn'>NULL</span>,
-  hist_condition <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  new_data <span class='op'>=</span> <span class='cn'>NULL</span>,
-  sample_new_levels <span class='op'>=</span> <span class='st'>"uncertainty"</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>get_positions_V</span><span class='op'>(</span><span class='va'>flocker_fit</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>flocker_fit</th>
-      <td><p>A flocker_fit object</p></td>
-    </tr>
-    <tr>
-      <th>n_iter</th>
-      <td><p>The number of posterior iterations desired. If `NULL`, use
-all available posterior iterations.</p></td>
-    </tr>
-    <tr>
-      <th>hist_condition</th>
-      <td><p>Should the posterior distribution for Z directly 
-condition on the observed detection history (`TRUE`) or not (`FALSE`)?
-For example, at sites with at least one detection, the true occupancy 
-state conditioned on the history is one with absolute certainty. Without 
-directly conditioning on the history, the occupancy state is controlled 
-by the posterior distribution for the occupancy probability psi. Of 
-course even without conditioning directly on the detection history, we 
-still condition indirectly on the observed history via the fitted value 
-of psi, which itself depends on all of the observed detection histories.</p></td>
-    </tr>
-    <tr>
-      <th>new_data</th>
-      <td><p>Optional new data at which to predict the Z matrix. Generally
-the output of `make_flocker_data`. Cannot be used if `hist_condition` is
-set to `TRUE`.</p></td>
-    </tr>
-    <tr>
-      <th>sample_new_levels</th>
-      <td><p>If new_data is provided and contains random effect
-levels not present in the original data, how should predictions be
-handled? Passed directly to brms::prepare_predictions, which see.</p></td>
+      <td><p>a visit-varying `flocker_fit` object</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>The posterior Z matrix. Rows are iterations and columns
-    are closure-units. Values are samples from the posterior distribution
-    of occupancy probability.</p>
+    <p>an n_row x 2 matrix, where each row contains the indices of the 
+    corresponding sampling event in the observation dataframe</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
