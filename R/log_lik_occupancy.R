@@ -64,6 +64,7 @@ log_lik_V <- function(flocker_fit_V) {
   return(log_lik_mat)
 }
 
+
 #' Compute the part of the log-likelihood relating to sampling events. To be used 
 #' internally in log_lik_V(). Missing events are returned as 0s
 #' @param resp the response vector (detection/non-detection) at the unit. Missing 
@@ -86,8 +87,6 @@ calc_log_lik_partial <- function(resp, Q, lpd) {
 }
 
 
-
-
 #' A log-likelihood function for the rep-constant occupancy model, sufficient for
 #' \code{brms::loo(vc_fit)} to work. 
 #' @param i Posterior iteration
@@ -103,6 +102,7 @@ log_lik_occupancy_C <- function(i, prep) {
   y <- prep$data$Y[i]
   return(occupancy_C_lpmf(y, mu, occ, trials))
 }
+
 
 #' An R implementation of the rep constant lpmf without the binomial coefficient
 #' @param y number of detections
@@ -127,7 +127,6 @@ occupancy_C_lpmf <- Vectorize(
     return(out)
   }
 )
-
 
 
 #' An R implementation of occupancy_C_lpmf including the binomial coefficient.
@@ -155,5 +154,3 @@ occupancy_C_lpmf_with_coef <- Vectorize(
     return(out)
   }
 )
-
-

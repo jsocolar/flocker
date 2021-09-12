@@ -9,6 +9,7 @@
 #' that varies across repeated sampling events within closure-units
 #' @return A flocker_data list that can be passed as data to \code{flocker()}.
 #' @export
+
 make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL) {
   if(length(dim(obs)) != 2) {
     stop("obs must have exactly two dimensions.")
@@ -158,8 +159,10 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL) {
   out
 }
 
+
 # helper function to convert matrix to long vector format
 # @param m matrix-like object to expand
+
 expand_matrix <- function (m) {
   out <- as.vector(as.matrix(m))
 }

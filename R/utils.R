@@ -2,6 +2,7 @@
 #' @param x real number or vector of reals
 #' @return the logarithm of the inverse logit of x
 #' @export
+
 log_inv_logit <- function (x) {
   if (!is.numeric(x)) {
     stop("x must be numeric")
@@ -12,10 +13,12 @@ log_inv_logit <- function (x) {
   return(out)
 }
 
+
 #' Numerically stable log one-minus inverse logit
 #' @param x real number or vector of reals
 #' @return the logarithm of one minus the inverse logit of x
 #' @export
+
 log1m_inv_logit <- function (x) {
   if (!is.numeric(x)) {
     stop("x must be numeric")
@@ -26,14 +29,18 @@ log1m_inv_logit <- function (x) {
   return(out)
 }
 
+
 #' Test whether an object is of class flocker_fit
 #' @param x object to be tested
+
 is_flocker_fit <- function(x) {
   return("flocker_fit" %in% class(x))
 }
 
+
 #' Extract lik_type from object of class flocker_fit
 #' @param x flocker_fit object
+
 type_flocker_fit <- function(x) {
   if (!is_flocker_fit(x)) {
     stop("x must be a flocker_fit object")
@@ -48,11 +55,13 @@ type_flocker_fit <- function(x) {
   return(out)
 }
 
+
 #' Get matrix positions corresponding to each row of data in rep-varying 
 #' flocker_fit
 #' @param flocker_fit a rep-varying `flocker_fit` object
 #' @return an n_row x 2 matrix, where each row contains the indices of the 
 #'     corresponding sampling event in the observation dataframe
+
 get_positions_V <- function(flocker_fit) {
   if (attributes(flocker_fit)$lik_type != "V") {
     stop("flocker_fit type is not 'V'; i.e. the model is not rep-varying")

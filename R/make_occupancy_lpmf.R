@@ -4,7 +4,6 @@
 #'    any unit.
 #' @return Character string of Stan code corresponding to occupancy_V_lpmf
 
-
 make_occupancy_V_lpmf <- function (max_rep) {
   if (!(is.integer(max_rep) & (max_rep > 1))) {
     stop("max_rep must be an integer greater than 1")
@@ -50,8 +49,8 @@ make_occupancy_V_lpmf <- function (max_rep) {
   }
 "
 
-out <- paste(sf_text1, sf_text2, sf_text3, sf_text4, sf_text5, sep = "\n")
-return(out)
+  out <- paste(sf_text1, sf_text2, sf_text3, sf_text4, sf_text5, sep = "\n")
+  return(out)
 }
 
 

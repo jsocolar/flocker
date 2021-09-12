@@ -27,6 +27,7 @@ loo_flocker <- function(x) {
   return(out)
 }
 
+
 #' Compute loo for a single flocker_fit object
 #' @param x a flocker_fit object
 #' @return a loo object
@@ -47,7 +48,6 @@ loo_flock_onefit <- function(x) {
   }
   return(out)
 }
-
 
 
 #' LOO comparisons for flocker models. 
