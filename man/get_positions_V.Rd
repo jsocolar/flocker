@@ -8,7 +8,7 @@ flocker_fit}
 get_positions_V(flocker_fit)
 }
 \arguments{
-\item{flocker_fit}{a visit-varying `flocker_fit` object}
+\item{flocker_fit}{a rep-varying `flocker_fit` object}
 }
 \value{
 an n_row x 2 matrix, where each row contains the indices of the 

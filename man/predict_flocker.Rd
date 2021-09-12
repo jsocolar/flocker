@@ -42,8 +42,13 @@ levels not present in the original data, how should predictions be
 handled? Passed directly to brms::prepare_predictions, which see.}
 }
 \value{
-An array of posterior predictions. If the model is visit-varying, 
-    then a 3-dimensional array
+An array of posterior predictions. If the model is rep-varying, 
+    then a 3-dimensional array where the first dimension is the closure-unit,
+    the second dimension is the rep, the third dimension is the iteration, 
+    and the value is 1, 0, or NA indicating detection, non-detection, or 
+    non-existence of the sampling event.
+    If the model is rep-constant, then a matrix where rows are iterations,
+    columns are closure-units, and values are the number of successes.
 }
 \description{
 Get posterior predictions from a flocker model
