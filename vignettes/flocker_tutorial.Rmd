@@ -139,7 +139,15 @@ get_Z(ff)
 `get_Z` accepts several additional arguments that control the way that posterior is obtained and the values of returned. See `?get_Z` for details.
 
 ### Posterior predictions
-COMING SOON
+The funtion `predict_flocker` provides posterior predictions. By default, predictions are provided for the covariate data to which the model were fit, but predictions to new data are also possible via the `new_data` argument. The output differs for rep-constant and rep-varying models. For rep-constant models, a matrix where rows are iterations, columns are units, and values are the number of detections. For rep-varying models, an array whose first dimension is units, second dimension is sampling events, third dimension is iterations, and values are 1, 0, or NA, representing detection, nondetection, and no corresponding sampling event.  For example:
+
+```{r predict_flocker, eval=FALSE}
+ff <- flock(f_occ = ~ uc1, 
+      f_det = ~ 1, 
+      flocker_data = flocker_data)
+predict_flocker(ff)
+```
+`predict_flocker` accepts several additional arguments that control the way that posterior is obtained and the values of returned. See `?predict_flocker` for details.
 
 ### Model comparison
 `flocker` supports computationally efficient approximate leave-one-out cross-validation via R package `loo` using a method commonly known as PSIS-LOO. This method generally provides superior performance to other computationally efficient model performance criteria (e.g. WAIC), and it comes with diagnostics that signal when the approximation is unreliable. Importantly, when diagnostics indicate that PSIS-LOO is unreliable, other model-comparison metrics such as WAIC are even less reliable. For details about PSIS-LOO, see `loo` package documentation and:
