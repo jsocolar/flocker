@@ -32,7 +32,7 @@ is_flocker_fit <- function(x) {
   return("flocker_fit" %in% class(x))
 }
 
-#' Extract type of flocker_fit from object of class flocker_fit
+#' Extract lik_type from object of class flocker_fit
 #' @param x flocker_fit object
 type_flocker_fit <- function(x) {
   if (!is_flocker_fit(x)) {

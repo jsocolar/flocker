@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{type_flocker_fit}
 \alias{type_flocker_fit}
-\title{Extract type of flocker_fit from object of class flocker_fit}
+\title{Extract lik_type from object of class flocker_fit}
 \usage{
 type_flocker_fit(x)
 }
@@ -10,5 +10,5 @@ type_flocker_fit(x)
 \item{x}{flocker_fit object}
 }
 \description{
-Extract type of flocker_fit from object of class flocker_fit
+Extract lik_type from object of class flocker_fit
 }
