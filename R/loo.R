@@ -3,7 +3,7 @@
 #' @return a loo object or a list of loo objects
 #' @export
 
-loo_flock <- function(x) {
+loo_flocker <- function(x) {
   if (!(is_flocker_fit(x) | is.list(x))) {
     stop("x must be a flocker_fit object or a list of flocker_fit objects")
   }
@@ -55,7 +55,7 @@ loo_flock_onefit <- function(x) {
 #' @param model_names An optional vector of names for the models.
 #' @export
 
-loo_compare_flock <- function(x, model_names = NULL) {
+loo_compare_flocker <- function(x, model_names = NULL) {
   if (!("list" %in% class(x))) {
     stop("x must be a list of flocker_fit objects.")
   }
