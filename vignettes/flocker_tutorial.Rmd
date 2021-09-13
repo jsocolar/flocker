@@ -143,7 +143,7 @@ ff <- flock(f_occ = ~ uc1 + (1|species),
               flocker_data = fd, prior=user_prior)
 ```
 then there will be two entries for each of the shared parameters in the prior table (`uc1` in this example). Specifying a prior for each parameter individually can be done with reference to the `dpar` column, e.g.:
-```{r, priors_2, eval=FALSE}
+```{r, priors_3, eval=FALSE}
 user_prior <- c(brms::set_prior("normal(0, 1)", coef = "uc1"), 
                 brms::set_prior("normal(0, 3)", coef = "uc1", dpar = "occ"))
 ```
