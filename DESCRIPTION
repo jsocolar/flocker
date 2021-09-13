@@ -4,7 +4,8 @@ Title: Flexible occupancy estimation in R
 Authors@R: 
     c(person("Jacob B.", "Socolar", email = "jacob.socolar@gmail.com",
              role = c("aut", "cre")),
-      person("Simon C.", "Mills", role = c("aut")))
+      person("Simon C.", "Mills", role = c("aut")),
+      person(person("Paul-Christian", "Bürkner", role = c("ctb")))
 Depends: 
 	R (>= 3.5.0)
 Imports:
