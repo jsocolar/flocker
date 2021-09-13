@@ -90,7 +90,7 @@ get_Z <- function (flocker_fit, n_iter = NULL, hist_condition = TRUE,
       for (i in 1:n_unit) {
         if (Q[i] == 0L) {
           psi <- psi_all[ , i]
-          antitheta <- antitheta_all[ , as.integer(index_matrix[1:flocker_data$data$n_rep[i], i])]
+          antitheta <- antitheta_all[ , as.integer(index_matrix[1:new_data$n_rep[i], i])]
           numerator <- psi * matrixStats::rowProds(antitheta)
           denominator <- numerator + (1 - psi)
           Z[, i] <- numerator/denominator
