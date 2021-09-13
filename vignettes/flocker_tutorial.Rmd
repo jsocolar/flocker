@@ -121,7 +121,34 @@ flock(f_occ = ~ s(uc1),
 `flock` will pass any relevant parameters forward to `brms::brm()`, giving the user important control over the algorithmic details of how the model is fit. See `?brms::brm` for details. To speed up the execution, we recommend supplying the argument `backend = "cmdstanr"`. This requires the cmdstanr package and a working installation of cmdstan; [see here](https://mc-stan.org/cmdstanr/) for instructions to get started and further details.
 
 ## Prior specification
-COMING SOON: this is implemented but not yet tested or documented.
+Priors can be implemented as they would with any `brms` model. Priors can be specified using `set_prior()`, with priors specified for groups of parameters (via `class`) or individual parameters (via `coef`). The priors used for a particular model can be retrieved using `prior_summary()`
+
+```{r, priors, eval=FALSE}
+user_prior <- c(brms::set_prior("normal(0, 3)", class="b"), 
+                brms::set_prior("normal(0, 2)", class="Intercept"), 
+                brms::set_prior("normal(0, 1)", coef="ec1"))
+
+ff <- flock(f_occ = ~ uc1 + uc2 + (1|species), 
+            f_det = ~  ec1 + ec2 + (1|species), 
+            flocker_data = fd, 
+            prior = user_prior)
+
+brms::prior_summary(ff)
+```
+
+Note: if there are parameters shared between both the occupancy and detection model formulas, e.g. 
+```{r, priors_2, eval=FALSE}
+ff <- flock(f_occ = ~ uc1 + (1|species), 
+              f_det = ~  uc1 + ec2 + (1|species), 
+              flocker_data = fd, prior=user_prior)
+```
+then there will be two entries for each of the shared parameters in the prior table (`uc1` in this example). Specifying a prior for each parameter individually can be done with reference to the `dpar` column, e.g.:
+```{r, priors_2, eval=FALSE}
+user_prior <- c(brms::set_prior("normal(0, 1)", coef = "uc1"), 
+                brms::set_prior("normal(0, 3)", coef = "uc1", dpar = "occ"))
+```
+where the `uc1` parameter in the occupancy component is specified by the addition of the `dpar` argument, and the `uc1` parameter in the detection component is specified without reference to `dpar`.
+              
 
 ## Post-processing
 `flocker` provides functions for three main types of post-processing. `get_Z()` provides the posterior distribution for the latent occupancy state. `predict_flocker()` provides posterior predictions at the observed points (e.g. for use in posterior predictive checking) or for new data. `loo_flocker()` and `loo_compare_flocker()` both provide functionality for model comparison. See below for details on all three types of post-processing. Both posterior predictions and model comparison rely on subtle aspects of the occupancy model likelihood that we explain in more detail [here](https://jsocolar.github.io/likelihoodOccupancy/).
