@@ -32,7 +32,7 @@ loo_flocker <- function(x) {
 #' @param x a flocker_fit object
 #' @return a loo object
 
-loo_flock_onefit <- function(x) {
+loo_flocker_onefit <- function(x) {
   type <- type_flocker_fit(x)
   if (type == "C") {
     # if (binom_coef) {
@@ -62,7 +62,7 @@ loo_compare_flocker <- function(x, model_names = NULL) {
   if (length(x) < 2L) {
     stop("x must contain at least two flocker_fit objects.")
   }
-  occupancy_loo <- loo_flock(x)
+  occupancy_loo <- loo_flocker(x)
   if (!is.null(model_names)) {
     names(occupancy_loo) <- model_names
   }
