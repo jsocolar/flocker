@@ -159,8 +159,8 @@ brms::prior_summary(ff)
 Note that if there are parameters shared between both the occupancy and detection model formulas, e.g. 
 ```{r, priors_2, eval=FALSE}
 ff <- flock(f_occ = ~ uc1 + (1|species), 
-              f_det = ~  uc1 + ec2 + (1|species), 
-              flocker_data = fd, prior=user_prior)
+              f_det = ~ uc1 + ec2 + (1|species), 
+              flocker_data = flocker_data, prior=user_prior)
 ```
 then there will be two entries for each of the shared parameters in the prior table (`uc1` in this example). Specifying a prior for each parameter individually can be done with reference to the `dpar` column, e.g.:
 ```{r, priors_3, eval=FALSE}

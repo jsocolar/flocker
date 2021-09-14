@@ -12,7 +12,7 @@ The `flocker` R package enables users to fit flexible occupancy models using
 the extended `lme4` formula syntax provided by R package `brms`. Also 
 included are functions to format data for occupancy modeling and functions 
 for model post-processing, including posterior predictions, the posterior
-distribution of the latent true occuapncy state, and model comparison. 
+distribution of the latent true occupancy state, and model comparison. 
 `flocker` is under active development: development priorities include better 
 direct functionality for posterior predictive checking and implementation of 
 dynamic (multiseason) occupancy models and N-mixture models.
