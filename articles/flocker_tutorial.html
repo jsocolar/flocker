@@ -202,7 +202,7 @@
 <div id="phylogenetic-models" class="section level4">
 <h4 class="hasAnchor">
 <a href="#phylogenetic-models" class="anchor"></a>Phylogenetic models</h4>
-<p>Phylogenetic effects can be included by providing a covariance matrix as a <code>data2</code> argument and using the <code>gr()</code> function to link species identities in <code>flocker_data</code> with the supplied covariance matrix. Note that phylogenetic effects can be included in either the occupancy component, the detection component, or both!</p>
+<p>Phylogenetic effects can be included by providing a covariance matrix as a <code>data2</code> argument and using the <code><a href="https://rdrr.io/pkg/brms/man/gr.html">brms::gr()</a></code> function to link species identities in <code>flocker_data</code> with the supplied covariance matrix. Note that phylogenetic effects can be included in either the occupancy component, the detection component, or both!</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># simulate an example phylogeny</span>
 <span class="va">phylogeny</span> <span class="op">&lt;-</span> <span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/rtree.html">rtree</a></span><span class="op">(</span><span class="fl">30</span>, tip.label <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="st">"sp_"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">30</span><span class="op">)</span><span class="op">)</span>
@@ -268,6 +268,7 @@
 <code class="sourceCode R"><span class="va">user_prior</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/brms/man/set_prior.html">set_prior</a></span><span class="op">(</span><span class="st">"normal(0, 1)"</span>, coef <span class="op">=</span> <span class="st">"uc1"</span><span class="op">)</span>, 
                 <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/brms/man/set_prior.html">set_prior</a></span><span class="op">(</span><span class="st">"normal(0, 3)"</span>, coef <span class="op">=</span> <span class="st">"uc1"</span>, dpar <span class="op">=</span> <span class="st">"occ"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p>where the <code>uc1</code> parameter in the occupancy component is specified by the addition of the <code>dpar</code> argument, and the <code>uc1</code> parameter in the detection component is specified without reference to <code>dpar</code>.</p>
+<p>For more on priors in <code>brms</code>, see <code><a href="https://rdrr.io/pkg/brms/man/set_prior.html">?brms::set_prior</a></code>.</p>
 </div>
 <div id="post-processing" class="section level2">
 <h2 class="hasAnchor">
