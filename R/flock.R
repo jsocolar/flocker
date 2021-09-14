@@ -68,6 +68,7 @@ flock <- function(f_occ, f_det, flocker_data, data2 = NULL,
     stanvars <- brms::stanvar(scode = make_occupancy_V_lpmf(max_rep = max_rep), block = "functions")
     flocker_fit <- brms::brm(f_use, 
                              data = flocker_data$data,
+                             data2 = data2,
                              family = occupancy_V(max_rep), 
                              stanvars = stanvars,
                              ...)
@@ -78,6 +79,7 @@ flock <- function(f_occ, f_det, flocker_data, data2 = NULL,
     stanvars <- brms::stanvar(scode = make_occupancy_C_lpmf(), block = "functions")
     flocker_fit <- brms::brm(brms::bf(f_use),
                              data = flocker_data$data,
+                             data2 = data2,
                              family = occupancy_C(),
                              stanvars = stanvars,
                              ...)
