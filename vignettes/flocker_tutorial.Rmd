@@ -106,7 +106,7 @@ flock(f_occ = ~ s(uc1),
 `brms` is capable of fitting a variety of additional effects structures. We believe that the following structures should translate directly to `flocker`, but these remain untested. As we test them and verify adequate performance, we will update this vignette with examples.
 
 #### Phylogenetic models
-Phylogenetic effects can be included by providing a covariance matrix as a `data2` argument and using the `gr()` function to link species identities in `flocker_data` with the supplied covariance matrix. Note that phylogenetic effects can be included in either the occupancy component, the detection component, or both! 
+Phylogenetic effects can be included by providing a covariance matrix as a `data2` argument and using the `brms::gr()` function to link species identities in `flocker_data` with the supplied covariance matrix. Note that phylogenetic effects can be included in either the occupancy component, the detection component, or both! 
 ```{r, phylo, eval=FALSE} 
 # simulate an example phylogeny
 phylogeny <- ape::rtree(30, tip.label = paste0("sp_", 1:30))
@@ -168,6 +168,8 @@ user_prior <- c(brms::set_prior("normal(0, 1)", coef = "uc1"),
                 brms::set_prior("normal(0, 3)", coef = "uc1", dpar = "occ"))
 ```
 where the `uc1` parameter in the occupancy component is specified by the addition of the `dpar` argument, and the `uc1` parameter in the detection component is specified without reference to `dpar`.
+
+For more on priors in `brms`, see `?brms::set_prior`.
               
 
 ## Post-processing
