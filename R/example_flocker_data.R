@@ -9,7 +9,7 @@
 
 example_flocker_data <- function(rep_constant = FALSE, seed = 123) {
   if (!is.null(seed)) {set.seed(seed)}
-  n_pt <- 100
+  n_pt <- 30
   n_sp <- 30
   n_unit <- n_pt*n_sp
   n_rep <- 4
