@@ -189,7 +189,7 @@
 <div id="generalized-additive-models" class="section level3">
 <h3 class="hasAnchor">
 <a href="#generalized-additive-models" class="anchor"></a>Generalized additive models</h3>
-<p>Via <code>brms</code>, <code>flocker</code> supports <code>mgcv</code> syntax for thin-plate regression splines (<code>s()</code>) and tensor product smooths (<code>t2()</code>). For example:</p>
+<p>Via <code>brms</code>, <code>flocker</code> supports <code>mgcv</code> syntax for thin-plate regression splines (<code><a href="https://rdrr.io/pkg/brms/man/s.html">brms::s()</a></code>) and tensor product smooths (<code><a href="https://rdrr.io/pkg/brms/man/s.html">brms::t2()</a></code>). For example:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span>f_occ <span class="op">=</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">uc1</span><span class="op">)</span>, 
       f_det <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span>, 
