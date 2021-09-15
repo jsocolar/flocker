@@ -95,7 +95,7 @@ flock(f_occ = ~ uc1 + (1 |g1| species) + (0 + uc1 |g2| species),
 For more on `brms` syntax for random effects syntax, see the [documentation here](https://cran.r-project.org/web/packages/brms/vignettes/brms_multilevel.pdf).
 
 ### Generalized additive models
-Via `brms`, `flocker` supports `mgcv` syntax for thin-plate regression splines (`s()`) and tensor product smooths (`t2()`). For example:
+Via `brms`, `flocker` supports `mgcv` syntax for thin-plate regression splines (`brms::s()`) and tensor product smooths (`brms::t2()`). For example:
 ```{r mgcv, eval=FALSE}
 flock(f_occ = ~ s(uc1), 
       f_det = ~ 1, 
