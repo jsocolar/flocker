@@ -19,11 +19,9 @@
 #'     and the estimate and its credible interval (lower and upper bounds)
 #' @export
 
-# Note: if user doesn't specify new_data, the returned dataframe will contain 
-# a number of irrelevant columns. Need to fix this. Also needs editing to work 
-# for phylogenetic models (or anything using data2). 
-fitted_occ <- function(flocker_fit, new_data = NULL, CI = c(.05, .95), ndraws = NULL, 
-                       response=TRUE, re_formula = NULL) {
+# Note: Still needs phylogenetic models implementing (or anything using data2). 
+fitted_occ <- function(flocker_fit, new_data = NULL, CI = c(.05, .95), 
+                       ndraws = NULL, response=TRUE, re_formula = NULL) {
     # catch errors
     if(length(CI) != 2) {
         stop("CI should just be length 2 (lwr, upr)")
@@ -33,8 +31,10 @@ fitted_occ <- function(flocker_fit, new_data = NULL, CI = c(.05, .95), ndraws = 
         stop("CI cannot have bounds <0 or >1")
     }
     
-    if(!is.null(ndraws) & ndraws > brms::ndraws(flocker_fit)) {
-        stop("You can't have more draws than there are samples")
+    if(!is.null(ndraws)) {
+        if(ndraws > brms::ndraws(flocker_fit)) {
+            stop("You can't have more draws than there are samples")
+        }
     }
     if(is.null(ndraws)) {
         ndraws <- brms::ndraws(flocker_fit)
@@ -44,6 +44,12 @@ fitted_occ <- function(flocker_fit, new_data = NULL, CI = c(.05, .95), ndraws = 
     if(is.null(new_data)) { 
         # only need first block for occ linpred
         new_data_fmtd <- flocker_fit$data[1:flocker_fit$data$n_unit[1],]
+        # get new_data from this
+        occ_form <- as.character(fit_ed$formula$pforms$occ)[3] # occ formula
+        occ_comp <- strsplit(occ_form, " ")[[1]]
+        occ_comp2 <- gsub("\\(|\\)", "", occ_comp)
+        occ_preds <- occ_comp2[!grepl("\\+|^1$|\\|", occ_comp2)]
+        new_data <- new_data_fmtd[,occ_preds]
     } else {
         # add cols (not relevant for getting linpred on occ, but throws error 
         # otherwise)
