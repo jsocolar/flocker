@@ -20,7 +20,8 @@
 #' @export
 
 # Note: if user doesn't specify new_data, the returned dataframe will contain 
-# a number of irrelevant columns. Need to fix this. 
+# a number of irrelevant columns. Need to fix this. Also needs editing to work 
+# for phylogenetic models (or anything using data2). 
 fitted_occ <- function(flocker_fit, new_data = NULL, CI = c(.05, .95), ndraws = NULL, 
                        response=TRUE, re_formula = NULL) {
     # catch errors
