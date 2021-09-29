@@ -1,5 +1,7 @@
 #' Get expected values of the posterior predictive distribution for the occupancy
-#' component
+#' component. Note that these are values for a hypothetical set of unit covariates
+#' rather than the ones actually observed (some of which are known to be occupied,
+#' when Q == 1).
 #' @param flocker_fit A flocker_fit object.
 #' @param new_data Optional new data at which to evaluate occupancy predictions. 
 #'     If `NULL` (the default) expected values are generated for the original data.
