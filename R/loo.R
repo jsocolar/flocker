@@ -16,11 +16,11 @@ loo_flocker <- function(x) {
   }
   
   if (is_flocker_fit(x)) {
-    out <- loo_flock_onefit(x)
+    out <- loo_flocker_onefit(x)
   } else {
     out <- list()
     for (i in 1:length(x)) {
-      out[[i]] <- loo_flock_onefit(x[[i]])
+      out[[i]] <- loo_flocker_onefit(x[[i]])
     }
     names(out) <- names(x)
   }
