@@ -96,17 +96,17 @@
 <h3 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h3>
 <p>Install <code>flocker</code> in R with</p>
-<pre><code><a href="https://remotes.r-lib.org/reference/install_github.html"># install.packages("remotes")
-remotes::install_github("jsocolar/flocker")</a></code></pre>
+<pre><code># install.packages("remotes")
+remotes::install_github("jsocolar/flocker")</code></pre>
 <p><code>flocker</code> requires a working version of either Rstan or cmdstan, which are interfaces to <a href="https://mc-stan.org/">Stan</a>, a state-of-the-art the probabilistic programming language. We recommend using cmdstan if possible. To do so, first install R package <code>cmdstanr</code> with</p>
-<pre><code><a href="https://rdrr.io/r/utils/install.packages.html">install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))</a></code></pre>
+<pre><code>install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))</code></pre>
 <p>You must additionally install cmdstan itself. We strongly recommend using <code>cmdstanr</code> to manage the cmdstan installation:</p>
 <pre><code><a href="https://mc-stan.org/cmdstanr/reference/install_cmdstan.html">cmdstanr::install_cmdstan()</a></code></pre>
 <p>If using Rstan, we strongly recommend installing the development version rather than the CRAN version. In a fresh R session, do</p>
-<pre><code><a href="https://rdrr.io/r/utils/install.packages.html"># Uncomment the next line if you have previously installed rstan
+<pre><code># Uncomment the next line if you have previously installed rstan
 # remove.packages(c("StanHeaders", "rstan"))
 install.packages("StanHeaders", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
-install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))</a></code></pre>
+install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))</code></pre>
 <p>Both Rstan and cmdstan require a working C++ toolchain, which has posed occasional complications for Stan users. <a href="https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started">See here</a> for Rstan-focused advice on installing the toolchain, and <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr.html">see here</a> for cmdstan-focused advice. If you encounter toolchain issues that you are unable to troubleshoot, ask for help at <a href="https://discourse.mc-stan.org/" class="uri">https://discourse.mc-stan.org/</a>.</p>
 </div>
 <div id="bugs-features-contributions" class="section level3">

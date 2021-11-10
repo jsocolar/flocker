@@ -169,7 +169,7 @@
 <div id="random-effects" class="section level3">
 <h3 class="hasAnchor">
 <a href="#random-effects" class="anchor"></a>Random effects</h3>
-<p>Simple random effects follow <code>lme4</code> syntax, including advanced <code>lme4</code> syntax is supported, including <code><a href="https://rdrr.io/r/base/Logic.html">||</a></code> for uncorrelated effects and <code><a href="https://rdrr.io/r/base/Arithmetic.html">/</a></code> and <code><a href="https://rdrr.io/r/base/Colon.html">:</a></code> for expansion of multiple grouping terms. Here’s a simple example:</p>
+<p>Simple random effects follow <code>lme4</code> syntax, including advanced <code>lme4</code> syntax is supported, including <code>||</code> for uncorrelated effects and <code>/</code> and <code>:</code> for expansion of multiple grouping terms. Here’s a simple example:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span>f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">species</span><span class="op">)</span>, 
       f_det <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span>, 
