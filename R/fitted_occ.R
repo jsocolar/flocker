@@ -6,7 +6,7 @@
 #' @param new_data Optional new data at which to evaluate occupancy predictions. 
 #'     If `NULL` (the default) expected values are generated for the original data.
 #' @param CI A vector of length 2 specifying the upper and lower bounds of the 
-#'     credible interval
+#'     credible interval. Defaults to c(.05, .95)
 #' @param ndraws Positive integer indicating how many poserior draws should be 
 #'     used. If `NULL` (the default) all draws are used. 
 #' @param response Should expected values be returned on the response or logit-scale? 
@@ -19,54 +19,57 @@
 #'     and the estimate and its credible interval (lower and upper bounds)
 #' @export
 
-# Note: Still needs phylogenetic models implementing (or anything using data2). 
 fitted_occ <- function(flocker_fit, new_data = NULL, CI = c(.05, .95), 
-                       ndraws = NULL, response=TRUE, re_formula = NULL) {
-    # catch errors
-    if(length(CI) != 2) {
-        stop("CI should just be length 2 (lwr, upr)")
+                       ndraws = NULL, response=TRUE, re_formula = NULL, 
+                       summarise = TRUE, allow_new_levels = FALSE) {
+  ## catch errors
+  if(length(CI) != 2 | !is.numeric(CI)) {
+    stop("CI should be numeric length 2")
+  }
+  if(any(CI < 0 | CI > 1)) {
+    stop("CI cannot have bounds <0 or >1")
+  }
+  if(!is.null(ndraws)) {
+    if(ndraws > brms::ndraws(flocker_fit)) {
+      stop("You can't have more draws than there are samples")
     }
-    
-    if(any(CI < 0 | CI > 1)) {
-        stop("CI cannot have bounds <0 or >1")
-    }
-    
-    if(!is.null(ndraws)) {
-        if(ndraws > brms::ndraws(flocker_fit)) {
-            stop("You can't have more draws than there are samples")
-        }
-    }
-    if(is.null(ndraws)) {
-        ndraws <- brms::ndraws(flocker_fit)
-    }
-    
-    # format new_data
-    if(is.null(new_data)) { 
-        # only need first block for occ linpred
-        new_data_fmtd <- flocker_fit$data[1:flocker_fit$data$n_unit[1],]
-        # get new_data from this
-        occ_form <- as.character(fit_ed$formula$pforms$occ)[3] # occ formula
-        occ_comp <- strsplit(occ_form, " ")[[1]]
-        occ_comp2 <- gsub("\\(|\\)", "", occ_comp)
-        occ_preds <- occ_comp2[!grepl("\\+|^1$|\\|", occ_comp2)]
-        new_data <- new_data_fmtd[,occ_preds]
+  } else { # i.e. is null
+    ndraws <- brms::ndraws(flocker_fit)
+  }
+  
+  # format new_data: add necessary flocker cols to data frame
+  if(is.null(new_data)) { # new data not provided
+    new_data_fmtd <- flocker_fit$data
+  } else {
+    # add cols (not relevant for getting linpred on occ, but throws error 
+    # otherwise)
+    col_string <- "^y$|^Q$|^n_unit$|^unit$|^n_rep$|^rep_index"
+    flocker_cols <- flocker_fit$data[grepl(col_string, names(flocker_fit$data))]
+    extra_cols <- which(!(names(flocker_cols) %in% names(new_data)))
+    if(length(extra_cols) == 0) {
+      new_data_fmtd <- new_data
     } else {
-        # add cols (not relevant for getting linpred on occ, but throws error 
-        # otherwise)
-        extra_cols <- which(!(names(fit_ed$data) %in% names(new_data)))
-        new_data_fmtd <- cbind(new_data, flocker_fit$data[1, extra_cols], row.names=NULL)
-    } 
-    
-    linpred <- t(brms::posterior_linpred(flocker_fit, dpar = "occ", 
-                                         ndraws = ndraws, 
-                                         newdata = new_data_fmtd, 
-                                         re_formula = re_formula))
-    if(response == TRUE) {
-        linpred <- boot::inv.logit(linpred)
+      new_data_fmtd <- cbind(new_data, 
+                             do.call(rbind, replicate(nrow(new_data), flocker_fit$data[1, extra_cols], F)), 
+                             row.names=NULL) 
     }
-    ests <- data.frame(estimate = matrixStats::rowMeans2(linpred),
-                       lwr = matrixStats::rowQuantiles(linpred, probs = min(CI)), 
-                       upr = matrixStats::rowQuantiles(linpred, probs = max(CI)))
-    # return
-    cbind(new_data, ests)
+  } 
+  
+  linpred <- t(brms::posterior_linpred(flocker_fit, dpar = "occ", 
+                                       ndraws = ndraws, 
+                                       newdata = new_data_fmtd, 
+                                       re_formula = re_formula))
+  colnames(linpred) <- paste0("iter_", 1:ndraws)
+  
+  if(isTRUE(response)) {
+    linpred <- boot::inv.logit(linpred)
+  }
+  
+  if(isTRUE(summarise)) {
+    linpred <- data.frame(estimate = matrixStats::rowMeans2(linpred),
+                          lwr = matrixStats::rowQuantiles(linpred, probs = min(CI)), 
+                          upr = matrixStats::rowQuantiles(linpred, probs = max(CI)))
+    names(linpred)[2:3] <- paste0("Q", c(min(CI)*100, paste0(max(CI)*100)))
+  }
+  return(linpred)
 }
