@@ -7,12 +7,10 @@
 #' ($rep_covs). If rep_constant is TRUE, then $rep_covs will be NULL.
 #' @export
 
-example_flocker_data <- function(rep_constant = FALSE, seed = 123) {
+example_flocker_data <- function(rep_constant = FALSE, seed = 123, 
+                                 n_pt = 30, n_sp = 30, n_rep = 4) {
   if (!is.null(seed)) {set.seed(seed)}
-  n_pt <- 30
-  n_sp <- 30
   n_unit <- n_pt*n_sp
-  n_rep <- 4
   
   backbone <- expand.grid(species = factor(paste0("sp_", 1:n_sp)), 
                           id_rep = 1:n_rep,
@@ -50,4 +48,3 @@ example_flocker_data <- function(rep_constant = FALSE, seed = 123) {
   rownames(out$event_covs$ec2) <- NULL
   return(out)
 }
-
