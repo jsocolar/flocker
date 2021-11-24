@@ -1,8 +1,11 @@
 #' Get expected values of the posterior predictive distribution for the occupancy
-#' component. Note that these are values for a hypothetical set of unit covariates
-#' rather than the ones actually observed (some of which are known to be occupied,
-#' when Q == 1).
+#' component, the detection component, or both. Note that in the case of the 
+#' detection component, you are conditioning on occupancy being 1. Note that these 
+#' are values for a hypothetical set of unit covariates rather than the ones 
+#' actually observed (some of which are known to be occupied, when Q == 1).
 #' @param flocker_fit A flocker_fit object.
+#' @param type Get posterior probabilities for 'occupancy', 'detection', or for 
+#' 'both'. 
 #' @param new_data Optional new data at which to evaluate occupancy predictions. 
 #'     If `NULL` (the default) expected values are generated for the original data.
 #' @param CI A vector of length 2 specifying the upper and lower bounds of the 
@@ -11,18 +14,25 @@
 #'     used. If `NULL` (the default) all draws are used. 
 #' @param response Should expected values be returned on the response or logit-scale? 
 #' Defaults to `TRUE`, i.e. response scale.
+#' @param summarise if TRUE, return the expected value and upper and lower bound 
+#' of the credible interval, otherwise return the posterior matrix. 
 #' @param re_formula formula containing group-level effects to be considered in 
 #'     the prediction. If `NULL` (default), include all group-level effects; if 
 #'     NA, include no group-level effects.
-
+#' @param sample_new_levels If new_data is provided and contains random effect
+#'     levels not present in the original data, how should predictions be
+#'     handled? Passed directly to brms::prepare_predictions.
 #' @return A data.frame containing the columns used to generate expected values 
 #'     and the estimate and its credible interval (lower and upper bounds)
 #' @export
-
-fitted_occ <- function(flocker_fit, new_data = NULL, CI = c(.05, .95), 
-                       ndraws = NULL, response=TRUE, re_formula = NULL, 
-                       summarise = TRUE, allow_new_levels = FALSE) {
+#' 
+fitted_flock <- function(flocker_fit, type, new_data = NULL, CI = c(.05, .95), 
+                         ndraws = NULL, response=TRUE, re_formula = NULL, 
+                         summarise = TRUE, sample_new_levels = "uncertainty") {
   ## catch errors
+  if(!(type %in% c("occupancy", "detection", "both"))) {
+    stop("type must either be 'occupancy', 'detection', or 'both'")
+  }
   if(length(CI) != 2 | !is.numeric(CI)) {
     stop("CI should be numeric length 2")
   }
@@ -55,14 +65,35 @@ fitted_occ <- function(flocker_fit, new_data = NULL, CI = c(.05, .95),
     }
   } 
   
-  linpred <- t(brms::posterior_linpred(flocker_fit, dpar = "occ", 
-                                       ndraws = ndraws, 
-                                       newdata = new_data_fmtd, 
-                                       re_formula = re_formula))
+  if(type %in% c("occupancy", "both")) {
+    linpred_occ <- t(brms::posterior_linpred(flocker_fit, dpar = "occ", 
+                                             ndraws = ndraws, 
+                                             newdata = new_data_fmtd, 
+                                             re_formula = re_formula, 
+                                             allow_new_levels = TRUE,
+                                             sample_new_levels = sample_new_levels)) 
+    linpred_occ <- boot::inv.logit(linpred_occ)
+    if(type == "occupancy") linpred <- linpred_occ
+  }
+  if(type %in% c("detection", "both")) {
+    linpred_det <- t(brms::posterior_linpred(flocker_fit, dpar = "mu", 
+                                             ndraws = ndraws, 
+                                             newdata = new_data_fmtd, 
+                                             re_formula = re_formula, 
+                                             allow_new_levels = TRUE,
+                                             sample_new_levels = sample_new_levels))
+    linpred_det <- boot::inv.logit(linpred_det)
+    if(type == "detection") linpred <- linpred_det
+  }
+  
+  if(type == "both") {
+    linpred <- exp(log(linpred_occ) + log(linpred_det))
+  }
+  
   colnames(linpred) <- paste0("iter_", 1:ndraws)
   
-  if(isTRUE(response)) {
-    linpred <- boot::inv.logit(linpred)
+  if(isFALSE(response)) {
+    linpred <- boot::logit(linpred)
   }
   
   if(isTRUE(summarise)) {
