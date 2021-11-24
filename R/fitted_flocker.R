@@ -26,9 +26,10 @@
 #'     and the estimate and its credible interval (lower and upper bounds)
 #' @export
 #' 
-fitted_flock <- function(flocker_fit, type, new_data = NULL, CI = c(.05, .95), 
+fitted_flocker <- function(flocker_fit, type, new_data = NULL, CI = c(.05, .95), 
                          ndraws = NULL, response=TRUE, re_formula = NULL, 
-                         summarise = TRUE, sample_new_levels = "uncertainty") {
+                         summarise = TRUE, allow_new_levels = FALSE, 
+                         sample_new_levels = "uncertainty") {
   ## catch errors
   if(!(type %in% c("occupancy", "detection", "both"))) {
     stop("type must either be 'occupancy', 'detection', or 'both'")
@@ -70,7 +71,7 @@ fitted_flock <- function(flocker_fit, type, new_data = NULL, CI = c(.05, .95),
                                              ndraws = ndraws, 
                                              newdata = new_data_fmtd, 
                                              re_formula = re_formula, 
-                                             allow_new_levels = TRUE,
+                                             allow_new_levels = allow_new_levels,
                                              sample_new_levels = sample_new_levels)) 
     linpred_occ <- boot::inv.logit(linpred_occ)
     if(type == "occupancy") linpred <- linpred_occ
@@ -80,7 +81,7 @@ fitted_flock <- function(flocker_fit, type, new_data = NULL, CI = c(.05, .95),
                                              ndraws = ndraws, 
                                              newdata = new_data_fmtd, 
                                              re_formula = re_formula, 
-                                             allow_new_levels = TRUE,
+                                             allow_new_levels = allow_new_levels,
                                              sample_new_levels = sample_new_levels))
     linpred_det <- boot::inv.logit(linpred_det)
     if(type == "detection") linpred <- linpred_det
