@@ -1,6 +1,6 @@
 test_that("fitted_flocker works correctly", {
   # read test-case flocker fit
-  test_fit <- readRDS("tests/test_data/test_fit.rds")
+  test_fit <- readRDS("test_data/test_fit.rds")
 
   # new data
   newdat <- expand.grid(uc1 = rnorm(10), 
