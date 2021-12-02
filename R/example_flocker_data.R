@@ -2,9 +2,9 @@
 #' @param rep_constant logical: create data with unit covariates only (TRUE) 
 #' or data that includes event covariates (FALSE)
 #' @param seed random seed. To use existing RNG state set to NULL.
-#' @param n_pt number of points to simulate
-#' @param n_sp number of species to simulate
-#' @param n_rep number of replicates to simulate
+#' @param n_pt number of points to simulate.
+#' @param n_sp number of species to simulate.
+#' @param n_rep number of replicates to simulate.
 #' @return A three element named list with the observation matrix ($obs), the
 #' unit covariate dataframe ($unit_covs), and the event covariate list
 #' ($rep_covs). If rep_constant is TRUE, then $rep_covs will be NULL.
