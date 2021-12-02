@@ -46,6 +46,8 @@ NA, include no group-level effects.}
 \item{summarise}{if TRUE, return the expected value and upper and lower bound 
 of the credible interval, otherwise return the posterior matrix.}
 
+\item{allow_new_levels}{allow new levels in new_data?}
+
 \item{sample_new_levels}{If new_data is provided and contains random effect
 levels not present in the original data, how should predictions be
 handled? Passed directly to brms::prepare_predictions.}
