@@ -17,6 +17,12 @@ within units (TRUE) or variable detection covariates (FALSE)}
 
 \item{rep_constant}{logical: create data with unit covariates only (TRUE) 
 or data that includes event covariates (FALSE)}
+
+\item{n_pt}{number of points to simulate}
+
+\item{n_sp}{number of species to simulate}
+
+\item{n_rep}{number of replicates to simulate}
 }
 \value{
 A three element named list with the observation matrix ($obs), the

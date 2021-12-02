@@ -19,6 +19,7 @@
 #' @param re_formula formula containing group-level effects to be considered in 
 #'     the prediction. If `NULL` (default), include all group-level effects; if 
 #'     NA, include no group-level effects.
+#' @param allow_new_levels allow new levels in new_data?
 #' @param sample_new_levels If new_data is provided and contains random effect
 #'     levels not present in the original data, how should predictions be
 #'     handled? Passed directly to brms::prepare_predictions.
