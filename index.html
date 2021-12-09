@@ -19,6 +19,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-home">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,18 +33,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">flocker</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1-0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1-0</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="reference/index.html">Reference</a>
 </li>
@@ -61,7 +57,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/jsocolar/flocker/">
+  <a href="https://github.com/jsocolar/flocker/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -80,48 +76,45 @@
   <div class="contents col-md-9">
 
 <p><img src="reference/figures/flocker_sticker.png" width="200" alt="flocker logo" align="right"></p>
-<div id="flocker-flexible-occupancy-estimation-in-r" class="section level1">
-<div class="page-header"><h1 class="hasAnchor">
-<a href="#flocker-flexible-occupancy-estimation-in-r" class="anchor"></a>flocker: flexible occupancy estimation in R</h1></div>
+<div class="section level1">
+<div class="page-header"><h1 id="flocker-flexible-occupancy-estimation-in-r">flocker: flexible occupancy estimation in R<a class="anchor" aria-label="anchor" href="#flocker-flexible-occupancy-estimation-in-r"></a>
+</h1></div>
 <!-- badges: start -->
-<p><a href="https://github.com/jsocolar/flocker/actions?workflow=R-CMD-check"><img src="https://github.com/jsocolar/flocker/workflows/R-CMD-check/badge.svg" alt="R-CMD-check"></a> <a href="https://codecov.io/gh/jsocolar/flocker"><img src="https://codecov.io/gh/jsocolar/flocker/branch/main/graph/badge.svg" alt="Coverage Status"></a> <!-- badges: end --></p>
+
 <p>The <code>flocker</code> R package enables users to fit flexible occupancy models using the extended <code>lme4</code> formula syntax provided by R package <code>brms</code>. Also included are functions to format data for occupancy modeling and functions for model post-processing, including posterior predictions, the posterior distribution of the latent true occupancy state, and model comparison. <code>flocker</code> is under active development: development priorities include better direct functionality for posterior predictive checking and implementation of dynamic (multiseason) occupancy models and N-mixture models.</p>
 <p>Compared to existing R packages for fitting occupancy models, <code>flocker</code> is substantially more flexible in the variety of single-season models that can be fit, and contains advanced functionality for model comparison and checking.</p>
-<div id="getting-started" class="section level3">
-<h3 class="hasAnchor">
-<a href="#getting-started" class="anchor"></a>Getting started</h3>
-<p>To get started, check out our <a href="https://jsocolar.github.io/flocker/articles/flocker_tutorial.html">tutorial vignette, available here</a>. For installation instructions, see below.</p>
+<div class="section level3">
+<h3 id="getting-started">Getting started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
+</h3>
+<p>To get started, check out our <a href="https://jsocolar.github.io/flocker/articles/flocker_tutorial.html" class="external-link">tutorial vignette, available here</a>. For installation instructions, see below.</p>
 </div>
-<div id="installation" class="section level3">
-<h3 class="hasAnchor">
-<a href="#installation" class="anchor"></a>Installation</h3>
+<div class="section level3">
+<h3 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h3>
 <p>Install <code>flocker</code> in R with</p>
-<pre><code># install.packages("remotes")
-remotes::install_github("jsocolar/flocker")</code></pre>
-<p><code>flocker</code> requires a working version of either Rstan or cmdstan, which are interfaces to <a href="https://mc-stan.org/">Stan</a>, a state-of-the-art the probabilistic programming language. We recommend using cmdstan if possible. To do so, first install R package <code>cmdstanr</code> with</p>
-<pre><code>install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))</code></pre>
+<pre><code><span class="co"># install.packages("remotes")</span>
+<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"jsocolar/flocker"</span><span class="op">)</span></code></pre>
+<p><code>flocker</code> requires a working version of either Rstan or cmdstan, which are interfaces to <a href="https://mc-stan.org/" class="external-link">Stan</a>, a state-of-the-art the probabilistic programming language. We recommend using cmdstan if possible. To do so, first install R package <code>cmdstanr</code> with</p>
+<pre><code><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"cmdstanr"</span>, repos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"https://mc-stan.org/r-packages/"</span>, <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"repos"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></code></pre>
 <p>You must additionally install cmdstan itself. We strongly recommend using <code>cmdstanr</code> to manage the cmdstan installation:</p>
-<pre><code><a href="https://mc-stan.org/cmdstanr/reference/install_cmdstan.html">cmdstanr::install_cmdstan()</a></code></pre>
+<pre><code><span class="fu">cmdstanr</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/cmdstanr/reference/install_cmdstan.html" class="external-link">install_cmdstan</a></span><span class="op">(</span><span class="op">)</span></code></pre>
 <p>If using Rstan, we strongly recommend installing the development version rather than the CRAN version. In a fresh R session, do</p>
-<pre><code># Uncomment the next line if you have previously installed rstan
-# remove.packages(c("StanHeaders", "rstan"))
-install.packages("StanHeaders", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
-install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))</code></pre>
-<p>Both Rstan and cmdstan require a working C++ toolchain, which has posed occasional complications for Stan users. <a href="https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started">See here</a> for Rstan-focused advice on installing the toolchain, and <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr.html">see here</a> for cmdstan-focused advice. If you encounter toolchain issues that you are unable to troubleshoot, ask for help at <a href="https://discourse.mc-stan.org/" class="uri">https://discourse.mc-stan.org/</a>.</p>
+<pre><code><span class="co"># Uncomment the next line if you have previously installed rstan</span>
+<span class="co"># remove.packages(c("StanHeaders", "rstan"))</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"StanHeaders"</span>, repos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"https://mc-stan.org/r-packages/"</span>, <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"repos"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"rstan"</span>, repos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"https://mc-stan.org/r-packages/"</span>, <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"repos"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></code></pre>
+<p>Both Rstan and cmdstan require a working C++ toolchain, which has posed occasional complications for Stan users. <a href="https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started" class="external-link">See here</a> for Rstan-focused advice on installing the toolchain, and <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr.html" class="external-link">see here</a> for cmdstan-focused advice. If you encounter toolchain issues that you are unable to troubleshoot, ask for help at <a href="https://discourse.mc-stan.org/" class="external-link uri">https://discourse.mc-stan.org/</a>.</p>
 </div>
-<div id="bugs-features-contributions" class="section level3">
-<h3 class="hasAnchor">
-<a href="#bugs-features-contributions" class="anchor"></a>Bugs, features, contributions</h3>
-<p>To request a feature or report a bug (much appreciated!) please <a href="https://github.com/jsocolar/flocker/issues">open an issue at the GitHub repository</a>. To contribute to <code>flocker</code> (very much appreciated!) have a look at existing open issues, or open a new issue to discuss.</p>
+<div class="section level3">
+<h3 id="bugs-features-contributions">Bugs, features, contributions<a class="anchor" aria-label="anchor" href="#bugs-features-contributions"></a>
+</h3>
+<p>To request a feature or report a bug (much appreciated!) please <a href="https://github.com/jsocolar/flocker/issues" class="external-link">open an issue at the GitHub repository</a>. To contribute to <code>flocker</code> (very much appreciated!) have a look at existing open issues, or open a new issue to discuss.</p>
 </div>
-<div id="citing-flocker" class="section level3">
-<h3 class="hasAnchor">
-<a href="#citing-flocker" class="anchor"></a>Citing flocker</h3>
-<p>Please cite <code>flocker</code> as:</p>
-<ul>
-<li>Socolar, J.B. &amp; Mills, S.C. (2021). “flocker: flexible occupancy estimation in R.” R package version XXX, &lt;URL: <a href="https://github.com/jsocolar/flocker/" class="uri">https://github.com/jsocolar/flocker/</a>&gt;.</li>
-</ul>
-<p>Additionally, please consider citing <a href="https://mc-stan.org/users/citations/">Stan</a> and R package <a href="https://mc-stan.org/users/interfaces/brms">brms</a>.</p>
+<div class="section level3">
+<h3 id="citing-flocker">Citing flocker<a class="anchor" aria-label="anchor" href="#citing-flocker"></a>
+</h3>
+<p>Please cite <code>flocker</code> as: * Socolar, J.B. &amp; Mills, S.C. (2021). “flocker: flexible occupancy estimation in R.” R package version XXX, &lt;URL: <a href="https://github.com/jsocolar/flocker/" class="external-link uri">https://github.com/jsocolar/flocker/</a>&gt;.</p>
+<p>Additionally, please consider citing <a href="https://mc-stan.org/users/citations/" class="external-link">Stan</a> and R package <a href="https://mc-stan.org/users/interfaces/brms" class="external-link">brms</a>.</p>
 </div>
 </div>
 
@@ -129,26 +122,42 @@ install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <div class="links">
-<h2>Links</h2>
+<h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li>Browse source code at <br><a href="https://github.com/jsocolar/flocker/">https://​github.com/​jsocolar/​flocker/​</a>
-</li>
-<li>Report a bug at <br><a href="https://github.com/jsocolar/flocker/issues">https://​github.com/​jsocolar/​flocker/​issues</a>
-</li>
+<li><a href="https://github.com/jsocolar/flocker/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/jsocolar/flocker/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
+
 <div class="license">
-<h2>License</h2>
+<h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
-<li><a href="https://opensource.org/licenses/BSD-3-Clause">BSD_3_clause</a></li>
+<li><a href="https://opensource.org/licenses/BSD-3-Clause" class="external-link">BSD_3_clause</a></li>
 </ul>
 </div>
+
+
+<div class="citation">
+<h2 data-toc-skip>Citation</h2>
+<ul class="list-unstyled">
+<li><a href="authors.html#citation">Citing flocker</a></li>
+</ul>
+</div>
+
 <div class="developers">
-<h2>Developers</h2>
+<h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>Jacob B. Socolar <br><small class="roles"> Author, maintainer </small>  </li>
 <li>Simon C. Mills <br><small class="roles"> Author </small>  </li>
-<li><a href="authors.html">All authors...</a></li>
+<li><a href="authors.html">More about authors...</a></li>
+</ul>
+</div>
+
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/jsocolar/flocker/actions?workflow=R-CMD-check" class="external-link"><img src="https://github.com/jsocolar/flocker/workflows/R-CMD-check/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://codecov.io/gh/jsocolar/flocker" class="external-link"><img src="https://codecov.io/gh/jsocolar/flocker/branch/main/graph/badge.svg" alt="Coverage Status"></a></li>
 </ul>
 </div>
 
@@ -157,11 +166,13 @@ install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption
 
 
       <footer><div class="copyright">
-  <p>Developed by Jacob B. Socolar, Simon C. Mills.</p>
+  <p></p>
+<p>Developed by Jacob B. Socolar, Simon C. Mills.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer>
@@ -169,6 +180,8 @@ install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption
 
   
 
+
+  
 
   </body>
 </html>
