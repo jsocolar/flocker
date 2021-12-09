@@ -2,17 +2,18 @@
 #' @param rep_constant logical: create data with unit covariates only (TRUE) 
 #' or data that includes event covariates (FALSE)
 #' @param seed random seed. To use existing RNG state set to NULL.
+#' @param n_pt number of points to simulate.
+#' @param n_sp number of species to simulate.
+#' @param n_rep number of replicates to simulate.
 #' @return A three element named list with the observation matrix ($obs), the
 #' unit covariate dataframe ($unit_covs), and the event covariate list
 #' ($rep_covs). If rep_constant is TRUE, then $rep_covs will be NULL.
 #' @export
 
-example_flocker_data <- function(rep_constant = FALSE, seed = 123) {
+example_flocker_data <- function(rep_constant = FALSE, seed = 123, 
+                                 n_pt = 30, n_sp = 30, n_rep = 4) {
   if (!is.null(seed)) {set.seed(seed)}
-  n_pt <- 30
-  n_sp <- 30
   n_unit <- n_pt*n_sp
-  n_rep <- 4
   
   backbone <- expand.grid(species = factor(paste0("sp_", 1:n_sp)), 
                           id_rep = 1:n_rep,
@@ -50,4 +51,3 @@ example_flocker_data <- function(rep_constant = FALSE, seed = 123) {
   rownames(out$event_covs$ec2) <- NULL
   return(out)
 }
-
