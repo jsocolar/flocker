@@ -3,7 +3,7 @@
 #' @return a loo object or a list of loo objects
 #' @export
 
-loo_flocker <- function(x) {
+loo_flocker <- function(x, thin = NULL) {
   if (!(is_flocker_fit(x) | is.list(x))) {
     stop("x must be a flocker_fit object or a list of flocker_fit objects")
   }
@@ -16,11 +16,11 @@ loo_flocker <- function(x) {
   }
   
   if (is_flocker_fit(x)) {
-    out <- loo_flocker_onefit(x)
+    out <- loo_flocker_onefit(x, thin = thin)
   } else {
     out <- list()
     for (i in 1:length(x)) {
-      out[[i]] <- loo_flocker_onefit(x[[i]])
+      out[[i]] <- loo_flocker_onefit(x[[i]], thin = thin)
     }
     names(out) <- names(x)
   }
@@ -32,8 +32,24 @@ loo_flocker <- function(x) {
 #' @param x a flocker_fit object
 #' @return a loo object
 
-loo_flocker_onefit <- function(x) {
+loo_flocker_onefit <- function(x, thin = NULL) {
   type <- type_flocker_fit(x)
+  # do thinning 
+  # thin == 1 | thin == NULL: retain all
+  # thin == 2: retain every other 
+  # thin == 3 retain every third, etc. 
+  niter <- brms::niterations(x)
+  nchains <- brms::nchains(x)
+  
+  if(is.null(thin)) {
+    draw_ids <- 1:(niter*nchains) 
+    chain_ids <- rep(c(1:dim(x$fit)[2]), each = dim(x$fit)[1])
+  } else {
+    iter_keep <- seq(1, niter, thin)
+    draw_ids <- rep(seq(0, (niter-1)*nchains, niter), each=length(iter_keep)) + iter_keep
+    chain_ids <- rep(1:nchains, each = length(iter_keep))
+  }
+  
   if (type == "C") {
     # if (binom_coef) {
     #   .GlobalEnv$occupancy_C_lpmf <- occupancy_C_lpmf_with_coef
@@ -41,28 +57,28 @@ loo_flocker_onefit <- function(x) {
     #   .GlobalEnv$occupancy_C_lpmf <- occupancy_C_lpmf_without_coef
     # }
     # out <- brms::loo(x)
+    ll <- brms::log_lik(x, draw_ids = draw_ids)
+    out <- loo::loo(ll, r_eff = loo::relative_eff(ll, chain_id = chain_ids))
   } else if (type == "V") {
-    chain_id <- rep(c(1:dim(x$fit)[2]), each = dim(x$fit)[1])
-    ll <- log_lik_V(x)
-    out <- loo::loo(ll, r_eff = loo::relative_eff(ll, chain_id = chain_id))
+    ll <- log_lik_V(x, draw_ids = draw_ids)
+    out <- loo::loo(ll, r_eff = loo::relative_eff(ll, chain_id = chain_ids))
   }
   return(out)
 }
-
 
 #' LOO comparisons for flocker models. 
 #' @param x a list of flocker_fit objects.
 #' @param model_names An optional vector of names for the models.
 #' @export
 
-loo_compare_flocker <- function(x, model_names = NULL) {
+loo_compare_flocker <- function(x, model_names = NULL, thin = NULL) {
   if (!("list" %in% class(x))) {
     stop("x must be a list of flocker_fit objects.")
   }
   if (length(x) < 2L) {
     stop("x must contain at least two flocker_fit objects.")
   }
-  occupancy_loo <- loo_flocker(x)
+  occupancy_loo <- loo_flocker(x, thin = thin)
   if (!is.null(model_names)) {
     names(occupancy_loo) <- model_names
   }
