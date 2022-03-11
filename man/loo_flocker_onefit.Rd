@@ -4,10 +4,12 @@
 \alias{loo_flocker_onefit}
 \title{Compute loo for a single flocker_fit object}
 \usage{
-loo_flocker_onefit(x)
+loo_flocker_onefit(x, thin = NULL)
 }
 \arguments{
 \item{x}{a flocker_fit object}
+
+\item{thin}{specify the amount of thinning required. 1 or NULL implies no thinning, 2 implies every other value, 3 every third, etc.}
 }
 \value{
 a loo object
