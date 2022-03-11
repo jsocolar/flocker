@@ -1,5 +1,6 @@
 #' Compute unitwise log-likelihood matrix for a rep-varying flocker_fit object
 #' @param flocker_fit_V A rep-varying flocker_fit object
+#' @param draw_ids the draw ids to compute log-likelihoods for. Defaults to using the full posterior. 
 #' @return A unitwise posterior log-likelihood matrix
 #' @export
 

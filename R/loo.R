@@ -1,5 +1,6 @@
 #' Compute loo for flocker_fit objects
 #' @param x a flocker_fit object or a list of flocker_fit objects
+#' @param thin specify the amount of thinning required. 1 or NULL implies no thinning, 2 implies every other value, 3 every third, etc.
 #' @return a loo object or a list of loo objects
 #' @export
 
@@ -30,6 +31,7 @@ loo_flocker <- function(x, thin = NULL) {
 
 #' Compute loo for a single flocker_fit object
 #' @param x a flocker_fit object
+#' @param thin specify the amount of thinning required. 1 or NULL implies no thinning, 2 implies every other value, 3 every third, etc.
 #' @return a loo object
 
 loo_flocker_onefit <- function(x, thin = NULL) {
@@ -68,6 +70,7 @@ loo_flocker_onefit <- function(x, thin = NULL) {
 
 #' LOO comparisons for flocker models. 
 #' @param x a list of flocker_fit objects.
+#' @param thin specify the amount of thinning required. 1 or NULL implies no thinning, 2 implies every other value, 3 every third, etc.
 #' @param model_names An optional vector of names for the models.
 #' @export
 
