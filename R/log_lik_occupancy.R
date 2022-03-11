@@ -12,6 +12,8 @@ log_lik_V <- function(flocker_fit_V, draw_ids = NULL) {
     stop("flocker_fit_V works only for rep-varying flocker_fits")
   }
 
+  if(is.null(draw_ids)) draw_ids <- 1:brms::ndraws(flocker_fit_V)
+  
   # dimensions
   n_unit <- flocker_fit_V$data$n_unit[1]
   ndraws <- length(draw_ids)
@@ -65,7 +67,6 @@ log_lik_V <- function(flocker_fit_V, draw_ids = NULL) {
   
   return(log_lik_mat)
 }
-
 
 #' Compute the part of the log-likelihood relating to sampling events. To be used 
 #' internally in log_lik_V(). Missing events are returned as 0s
