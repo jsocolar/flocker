@@ -4,10 +4,10 @@
 \alias{loo_compare_flocker}
 \title{LOO comparisons for flocker models.}
 \usage{
-loo_compare_flocker(x, model_names = NULL, thin = NULL)
+loo_compare_flocker(model_list, model_names = NULL, thin = NULL)
 }
 \arguments{
-\item{x}{a list of flocker_fit objects.}
+\item{model_list}{a list of flocker_fit objects.}
 
 \item{model_names}{An optional vector of names for the models.}
 

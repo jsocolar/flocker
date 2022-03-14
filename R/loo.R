@@ -69,7 +69,7 @@ loo_flocker_onefit <- function(x, thin = NULL) {
 }
 
 #' LOO comparisons for flocker models. 
-#' @param x a list of flocker_fit objects.
+#' @param model_list a list of flocker_fit objects.
 #' @param thin specify the amount of thinning required. 1 or NULL implies no thinning, 2 implies every other value, 3 every third, etc.
 #' @param model_names An optional vector of names for the models.
 #' @export
