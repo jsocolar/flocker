@@ -8,9 +8,12 @@ test_that("check log_lik_V works correctly", {
   ll_test <- log_lik_V(test_fit, draw_ids = 1:50)
   expect_equal(dim(ll_test), c(50, 50))
   
-  # check classes
+  # check classes/values
   expect_equal(class(ll_test), c("matrix", "array"))
-  expect_equal(class(ll_test[1]), "numeric")
+  expect_equal(class(as.vector(ll_test)), "numeric")
+  expect_lte(max(ll_test), 0)
+  any(is.infinite(ll_test), FALSE)
+  any(is.na(ll_test), FALSE)
   
   # check rep-constant error
   attributes(test_fit)$lik_type <- "C"
