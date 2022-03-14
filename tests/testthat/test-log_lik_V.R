@@ -12,8 +12,8 @@ test_that("check log_lik_V works correctly", {
   expect_equal(class(ll_test), c("matrix", "array"))
   expect_equal(class(as.vector(ll_test)), "numeric")
   expect_lte(max(ll_test), 0)
-  any(is.infinite(ll_test), FALSE)
-  any(is.na(ll_test), FALSE)
+  expect_false(any(is.infinite(ll_test)))
+  expect_false(any(is.na(ll_test)))
   
   # check rep-constant error
   attributes(test_fit)$lik_type <- "C"
