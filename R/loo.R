@@ -74,14 +74,14 @@ loo_flocker_onefit <- function(x, thin = NULL) {
 #' @param model_names An optional vector of names for the models.
 #' @export
 
-loo_compare_flocker <- function(x, model_names = NULL, thin = NULL) {
-  if (!("list" %in% class(x))) {
-    stop("x must be a list of flocker_fit objects.")
+loo_compare_flocker <- function(model_list, model_names = NULL, thin = NULL) {
+  if (!("list" %in% class(model_list))) {
+    stop("model_list must be a list of flocker_fit objects.")
   }
-  if (length(x) < 2L) {
-    stop("x must contain at least two flocker_fit objects.")
+  if (length(model_list) < 2L) {
+    stop("model_list must contain at least two flocker_fit objects.")
   }
-  occupancy_loo <- loo_flocker(x, thin = thin)
+  occupancy_loo <- loo_flocker(model_list, thin = thin)
   if (!is.null(model_names)) {
     names(occupancy_loo) <- model_names
   }
