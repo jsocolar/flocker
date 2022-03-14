@@ -1,26 +1,29 @@
 #' Compute unitwise log-likelihood matrix for a rep-varying flocker_fit object
 #' @param flocker_fit_V A rep-varying flocker_fit object
+#' @param draw_ids the draw ids to compute log-likelihoods for. Defaults to using the full posterior. 
 #' @return A unitwise posterior log-likelihood matrix
 #' @export
 
-log_lik_V <- function(flocker_fit_V) {
+log_lik_V <- function(flocker_fit_V, draw_ids = NULL) {
   if (!("flocker_fit" %in% class(flocker_fit_V))) {
     stop("flocker_fit_V must be an object of class flocker_fit.")
   }
   if (type_flocker_fit(flocker_fit_V) != "V") {
     stop("flocker_fit_V works only for rep-varying flocker_fits")
   }
-  
+
+  if(is.null(draw_ids)) draw_ids <- 1:brms::ndraws(flocker_fit_V)
+    
   # dimensions
   n_unit <- flocker_fit_V$data$n_unit[1]
+  ndraws <- length(draw_ids)
   max_rep <- max(flocker_fit_V$data$n_rep)
-  n_iter <- prod(dim(flocker_fit_V$fit)[1:2])
   
   rep_index_matrix <- 
     as.matrix(flocker_fit_V$data[1:n_unit, grepl("rep_index", names(flocker_fit_V$data))])
   
-  lpo_t <- t(brms::posterior_linpred(flocker_fit_V, dpar = "occ"))
-  lpd_t <- t(brms::posterior_linpred(flocker_fit_V, dpar = "mu"))
+  lpo_t <- t(brms::posterior_linpred(flocker_fit_V, dpar = "occ", draw_ids = draw_ids))
+  lpd_t <- t(brms::posterior_linpred(flocker_fit_V, dpar = "mu", draw_ids = draw_ids))
   
   # create long-format dataframe (with iterations stacked down rows)
   # note: missed reps are inserted as -99s
@@ -28,8 +31,8 @@ log_lik_V <- function(flocker_fit_V) {
                           unit_index = rep(1:n_unit, max_rep), 
                           rep_index = c(rep_index_matrix),
                           Q = rep(flocker_fit_V$data$Q[1:n_unit], max_rep), 
-                          # note: everything above this is getting duplicated n_iter times
-                          iter = rep(1:n_iter, each = n_unit*max_rep), 
+                          # note: everything above this is getting duplicated ndraws times
+                          draw_id = rep(draw_ids, each = n_unit*max_rep), 
                           lpo = NA, 
                           lpd = NA)
   all_iters$resp[all_iters$rep_index != -99] <- flocker_fit_V$data$y
@@ -40,14 +43,14 @@ log_lik_V <- function(flocker_fit_V) {
   all_iters$ll <- calc_log_lik_partial(all_iters$resp, all_iters$Q, all_iters$lpd)
   
   # spread this to wide format (i.e. 1 column per rep)
-  rep_index <- rep(rep(1:max_rep, each=n_unit), n_iter)
+  rep_index <- rep(rep(1:max_rep, each=n_unit), ndraws)
   
   ll_partial_V <- do.call("cbind", 
                           lapply(1:max_rep, function(x) matrix(all_iters$ll[rep_index == x])))
   
-  ll_partial_S <- data.frame(Q = rep(all_iters$Q[1:n_unit], n_iter),
+  ll_partial_S <- data.frame(Q = rep(all_iters$Q[1:n_unit], ndraws),
                              lpo = all_iters$lpo[rep_index == 1], # note: duplicated across reps 
-                             iter = all_iters$iter[rep_index == 1]) 
+                             draw_id = all_iters$draw_id[rep_index == 1]) 
   
   # finish likelihood calculation
   Q_index <- as.logical(ll_partial_S$Q)
@@ -59,7 +62,8 @@ log_lik_V <- function(flocker_fit_V) {
           log_inv_logit(ll_partial_S$lpo[!Q_index]) + rowSums(ll_partial_V[!Q_index,])))
   
   # unstack to matrix [n_iter, n_unit]
-  log_lik_mat <- t(unstack(ll_partial_S[c("log_lik", "iter")], log_lik ~ iter))
+  log_lik_mat <- t(unstack(ll_partial_S[c("log_lik", "draw_id")], log_lik ~ draw_id))
+  row.names(log_lik_mat) <- gsub("X", "", row.names(log_lik_mat))
   
   return(log_lik_mat)
 }

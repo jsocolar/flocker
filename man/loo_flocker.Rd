@@ -4,10 +4,12 @@
 \alias{loo_flocker}
 \title{Compute loo for flocker_fit objects}
 \usage{
-loo_flocker(x)
+loo_flocker(x, thin = NULL)
 }
 \arguments{
 \item{x}{a flocker_fit object or a list of flocker_fit objects}
+
+\item{thin}{specify the amount of thinning required. 1 or NULL implies no thinning, 2 implies every other value, 3 every third, etc.}
 }
 \value{
 a loo object or a list of loo objects
