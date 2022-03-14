@@ -17,7 +17,7 @@ test_that("loo_flocker_onefit works correctly", {
   expect_equal(attributes(test_loo_thinned)$dims, c(200, 50))
   
   # check list output
-  expect_identical(class(test_compare), "list")
-  expect_identical(test_compare[[1]], test_compare[[2]])
+  expect_identical(class(test_loo_list), "list")
+  expect_identical(test_loo_list[[1]], test_loo_list[[2]])
   expect_identical(test_loo_list[[1]], test_loo)
 })
