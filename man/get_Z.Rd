@@ -7,7 +7,7 @@
 get_Z(
   flocker_fit,
   n_iter = NULL,
-  hist_condition = TRUE,
+  history_condition = TRUE,
   new_data = NULL,
   sample_new_levels = "uncertainty"
 )
@@ -18,7 +18,7 @@ get_Z(
 \item{n_iter}{The number of posterior iterations desired. If `NULL`, use
 all available posterior iterations.}
 
-\item{hist_condition}{Should the posterior distribution for Z directly 
+\item{history_condition}{Should the posterior distribution for Z directly 
 condition on the observed detection history (`TRUE`) or not (`FALSE`)?
 For example, at sites with at least one detection, the true occupancy 
 state conditioned on the history is one with absolute certainty. Without 
@@ -29,7 +29,7 @@ still condition indirectly on the observed history via the fitted value
 of psi, which itself depends on all of the observed detection histories.}
 
 \item{new_data}{Optional new data at which to predict the Z matrix. Generally
-the output of `make_flocker_data`. Cannot be used if `hist_condition` is
+the output of `make_flocker_data`. Cannot be used if `history_condition` is
 set to `TRUE`.}
 
 \item{sample_new_levels}{If new_data is provided and contains random effect

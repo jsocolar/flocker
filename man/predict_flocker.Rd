@@ -8,7 +8,7 @@ predict_flocker(
   flocker_fit,
   n_iter = NULL,
   new_data = NULL,
-  hist_condition = FALSE,
+  history_condition = FALSE,
   mixed = FALSE,
   sample_new_levels = "uncertainty"
 )
@@ -22,7 +22,7 @@ all available posterior iterations.}
 \item{new_data}{Optional new data at which to predict. If `NULL`, predictions
 are given at the data points used for model fitting ("retrodictions")}
 
-\item{hist_condition}{Logical indicator of whether to directly condition the 
+\item{history_condition}{Logical indicator of whether to directly condition the 
 posterior for the occupancy state on the observed detection histories.
 For example, at sites with at least one detection, the true occupancy 
 state conditioned on the history is one with absolute certainty. Without 

@@ -2,24 +2,60 @@
 % Please edit documentation in R/make_flocker_data.R
 \name{make_flocker_data}
 \alias{make_flocker_data}
-\title{Format data for \code{flocker()}.}
+\title{Format data for occupancy model with \code{flock()}.}
 \usage{
-make_flocker_data(obs, unit_covs = NULL, event_covs = NULL)
+make_flocker_data(
+  obs,
+  unit_covs = NULL,
+  event_covs = NULL,
+  type = "single",
+  n_aug = NULL,
+  fp = FALSE,
+  verbose = TRUE
+)
 }
 \arguments{
-\item{obs}{An I x J matrix-like object where closure is assumed across rows 
-and columns are repeated sampling events. Allowable values are 1 (detection), 
-0 (no detection), and NA (no sampling event).}
+\item{obs}{If \code{dynamic = FALSE} an I x J matrix-like object where 
+closure is assumed across rows and columns are repeated sampling events. 
+    If \code{dynamic = TRUE} an I x J x K array where rows are sites or 
+species-sites, columns are repeated sampling events, and slices along the 
+third dimension are seasons. Allowable values are 1 (detection), 0 (no 
+detection), and NA (no sampling event).
+ The data must be formatted so that all NAs are trailing within their rows.
+If (\code{dynamic = TRUE}), this means that the data must be packed so that,
+for a given unit (site-season or species-site-season) all visits in the 
+data come before any missing visits.}
 
-\item{unit_covs}{A dataframe of covariates for each unit that are constant 
-across repeated sampling events within closure-units.}
+\item{unit_covs}{If \code{type} is not \code{"multi"}, a dataframe of 
+covariates for each closure-unit that are constant across repeated 
+sampling events within units.
+If \code{type = "multi"}, a list of such dataframes, one per period. All 
+dataframes must have identical column names and types, and all
+dataframes must have I rows.}
 
-\item{event_covs}{A named list of I x J matrices, each one corresponding to a covariate
-that varies across repeated sampling events within closure-units}
+\item{event_covs}{If \code{type} is not \code{"multi"}, a named list of 
+I x J matrices, each one corresponding to a covariate that varies across 
+repeated sampling events within closure-units.
+If \code{type = "multi"}, a named list of I x J x K arrays, each one 
+corresponding to a covariate that varies across repeated sampling events 
+within closure-units.}
+
+\item{type}{The type of occupancy model to fit. Current options are:
+\code{"single"} for a single_season model,
+\code{"multi"} for a multi-season (dynamic) model, or
+\code{"augmented"} for a single-season multi-species model with 
+data-augmentation for never-observed pseudospecies.}
+
+\item{n_aug}{Number of pseudo-species to augment. Only applicable if 
+\code{type = "augmented"}.}
+
+\item{fp}{logical. TRUE if model is an fp model}
+
+\item{verbose}{Show informational messages?}
 }
 \value{
-A flocker_data list that can be passed as data to \code{flocker()}.
+A flocker_data list that can be passed as data to \code{flock()}.
 }
 \description{
-Format data for \code{flocker()}.
+Format data for occupancy model with \code{flock()}.
 }
