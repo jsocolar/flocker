@@ -621,7 +621,7 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
     n_event_covs <- length(event_covs)
     missing_covs <- vector()
     for (ec in 1:n_event_covs) {
-      if (!all.equal(dim(event_covs[[ec]]), dim(obs1))) {
+      if (!identical(dim(event_covs[[ec]]), dim(obs1))) {
         stop(paste0("Dimension mismatch found between obs and event_covs[[", ec, "]]."))
       }
       missing_covs <- unique(c(missing_covs, which(is.na(event_covs[[ec]]))))
