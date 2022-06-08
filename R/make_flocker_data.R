@@ -229,9 +229,9 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
     flocker_data$n_unit <- c(nrow(obs), 
                              rep(-99, nrow(obs) - 1))
     flocker_data$n_rep <- c(matrixStats::rowSums2(!is.na(obs)), 
-                            rep(-99, nrow(obs) * (max_rep - 1)))
+                            rep(-99, nrow(obs) * (n_rep - 1)))
     flocker_data$Q <- c(as.integer(matrixStats::rowSums2(obs, na.rm = T) > 0),
-                        rep(-99, nrow(obs) * (max_rep - 1)))
+                        rep(-99, nrow(obs) * (n_rep - 1)))
     
     # Prepare to add rep indices, and trim flocker_data to existing observations
     flocker_data$unit <- 1:nrow(obs)
@@ -240,7 +240,7 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
                                       ncol = n_rep))
     names(rep_indices) <- paste0("rep_index", 1:n_rep)
     is_not_na <- !is.na(flocker_data$y)
-    rep_index_vec <- rep(-99, max_rep*nrow(obs))
+    rep_index_vec <- rep(-99, n_rep*nrow(obs))
     rep_index_vec[is_not_na] <- cumsum(is_not_na)[is_not_na]
     rep_indices[1:nrow(obs),] <- rep_index_vec
     
