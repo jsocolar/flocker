@@ -4,10 +4,12 @@
 \alias{log_lik_V}
 \title{Compute unitwise log-likelihood matrix for a rep-varying flocker_fit object}
 \usage{
-log_lik_V(flocker_fit_V)
+log_lik_V(flocker_fit_V, draw_ids = NULL)
 }
 \arguments{
 \item{flocker_fit_V}{A rep-varying flocker_fit object}
+
+\item{draw_ids}{the draw ids to compute log-likelihoods for. Defaults to using the full posterior.}
 }
 \value{
 A unitwise posterior log-likelihood matrix

@@ -58,18 +58,18 @@ get_Z <- function (flocker_fit, n_iter = NULL, history_condition = TRUE,
   } else {
     new_data <- new_data$data
   }
-  
-  iter <- (1:n_iter)*floor(total_iter/n_iter)
-  
   message("computing occupancy linear predictor")
-  lpo <- brms::posterior_linpred(flocker_fit, dpar = "occ", draw_ids = iter, 
-                                 newdata = new_data, allow_new_levels = TRUE,
-                                 sample_new_levels = sample_new_levels)
+  lpo <- t(fitted_flocker(flocker_fit, type="occupancy", ndraws = n_iter, 
+                          new_data = new_data, 
+                          summarise = F, allow_new_levels = TRUE, 
+                          sample_new_levels = sample_new_levels,
+                          response = F))
   message("computing detection linear predictor")
-  lpd <- brms::posterior_linpred(flocker_fit, dpar = "mu", draw_ids = iter,
-                                 newdata = new_data, allow_new_levels = TRUE,
-                                 sample_new_levels = sample_new_levels)
-
+  lpd <- t(fitted_flocker(flocker_fit, type="detection", ndraws = n_iter, 
+                          new_data = new_data, 
+                          summarise = F, allow_new_levels = TRUE, 
+                          sample_new_levels = sample_new_levels, 
+                          response = F))
   lik_type <- type_flocker_fit(flocker_fit)
   
   if (lik_type == "V") {
@@ -80,7 +80,7 @@ get_Z <- function (flocker_fit, n_iter = NULL, history_condition = TRUE,
   }
   
   psi_all <- boot::inv.logit(lpo)
-  Z <- matrix(data = 1, nrow = length(iter), ncol = n_unit)
+  Z <- matrix(data = 1, nrow = n_iter, ncol = n_unit)
   
   message("computing Z")
   if (!history_condition) {
@@ -89,10 +89,10 @@ get_Z <- function (flocker_fit, n_iter = NULL, history_condition = TRUE,
     pb <- utils::txtProgressBar(min = 0, max = n_unit, style = 3)
     antitheta_all <- boot::inv.logit(-lpd)
     if (lik_type == "V") {
-      index_matrix <- new_data[grep("^rep_index", names(new_data))]
-      Q <- as.integer(new_data$Q[1:n_unit])
+      index_matrix <- new_data[grep("^rep_index", names(new_data))] 
+      Q <- as.integer(new_data$Q[1:n_unit]) # get Q
       for (i in 1:n_unit) {
-        if (Q[i] == 0L) {
+        if (Q[i] == 0L) { # if Q is 0
           psi <- psi_all[ , i]
           antitheta <- antitheta_all[ , as.integer(index_matrix[1:new_data$n_rep[i], i])]
           numerator <- psi * matrixStats::rowProds(antitheta)
@@ -101,15 +101,15 @@ get_Z <- function (flocker_fit, n_iter = NULL, history_condition = TRUE,
         }
         utils::setTxtProgressBar(pb, i)
       }
-    } else {
+    } else { # lik_type == "C"
       Q <- as.integer(new_data$n_suc > 0)
-      Z <- matrix(data = 1, nrow = length(iter), ncol = n_unit)
+      Z <- matrix(data = 1, nrow = n_iter, ncol = n_unit)
       for (i in 1:n_unit) {
         if (Q[i] == 0L) {
           psi <- psi_all[, i]
           antitheta <- antitheta_all[, i]
-          numerator <- psi * antitheta^new_data$n_trial[i]
-          denominator <- numerator + (1 - psi)
+          numerator <- psi * antitheta^new_data$n_trial[i] 
+          denominator <- numerator + (1 - psi) 
           Z[, i] <- numerator/denominator
         }
         utils::setTxtProgressBar(pb, i)
