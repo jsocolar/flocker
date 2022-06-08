@@ -12,6 +12,7 @@ validate_flock_params(
   f_col,
   f_ex,
   colex_init,
+  f_auto,
   augmented,
   fp
 )

@@ -14,6 +14,7 @@ flock_(
   f_col = NULL,
   f_ex = NULL,
   colex_init = NULL,
+  f_auto = NULL,
   augmented = FALSE,
   fp = FALSE,
   ...
@@ -54,6 +55,9 @@ be the (possibly site-specific) equilibrium probabilities from the
 colonization-extinction dynamics. In this case, time-varying covariates are 
 not allowed for colonization or extinction (but are still allowed for 
 detection).}
+
+\item{f_auto}{A brms-type model formula for the autologistic offset 
+parameter (theta). If provided, must begin with "~".}
 
 \item{augmented}{Logical. Must be TRUE if data are formatted for a 
 data-augmented multi-species model, and FALSE otherwise.}

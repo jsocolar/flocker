@@ -12,6 +12,7 @@ validate_params_individually(
   f_col,
   f_ex,
   colex_init,
+  f_auto,
   augmented,
   fp
 )

@@ -12,6 +12,7 @@ validate_param_combos_single_C(
   f_col,
   f_ex,
   colex_init,
+  f_auto,
   augmented,
   fp
 )
