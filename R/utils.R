@@ -78,14 +78,14 @@ flocker_reserved <- function() {
 flocker_model_types <- function() {
   c("single", # single-season garden-variety model
     "single_C", # single without rep-varying covariates
-#    "single_fp", # single-season false-positive model with known fp probabilities
     "augmented", # single-season data-augmented multispecies model
     "multi_colex", # multi-season model with explicit colonization/extinction
-#    "multi_autologistic", # multi-season autologistic model
-    "multi_colex_fp" # multi_colex with known fp rates
+    "multi_colex_eq", # multi_colex with equilibrium starting probabiltiies
+    "multi_autologistic", # multi-season autologistic model
+    "single_fp", # single-season false-positive model with known fp probabilities
+    "multi_colex_fp", # multi_colex with known fp rates
 #    "multi_autologistic_fp", # multi_autologistic with known fp rates
-#    "multi_colex_eq", # multi_colex with equilibrium starting probabiltiies
-#    "multi_colex_eq_fp # multi_colex_eq with known fp rates
+    "multi_colex_eq_fp" # multi_colex_eq with known fp rates
     )
 }
 

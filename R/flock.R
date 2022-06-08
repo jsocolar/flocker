@@ -112,7 +112,7 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
                   ...) {
   ### validate parameters
   validate_flock_params(f_occ, f_det, flocker_data, multiseason, f_col, 
-                        f_ex, colex_init, augmented, fp)
+                        f_ex, colex_init, f_auto, augmented, fp)
   extra_args <- list(...)
   if ("threads" %in% names(extra_args)) {
     assertthat::assert_that(flocker_data$type %in% threading_types(),
