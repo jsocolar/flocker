@@ -465,8 +465,8 @@ make_occupancy_multi_colex_lpmf <- function (max_rep, max_year) {
     array[] int y, // detection data
     vector mu, // linear predictor for detection
     vector occ, // linear predictor for initial occupancy. Only the first vint1[1] elements matter.
-    vector colo, // linear predictor for colonization. Elements after vint3[1] irrelevant.
-    vector ex, // linear predictor for extinction. Elements after vint3[1] irrelevant.
+    vector colo, // linear predictor for colonization. Elements after vint2[1] irrelevant.
+    vector ex, // linear predictor for extinction. Elements after vint2[1] irrelevant.
     array[] int vint1, // # of series (# of HMMs). Elements after 1 irrelevant.
     array[] int vint2, // # units (series-years). Elements after 1 irrelevant.
     array[] int vint3, // # years per series. Elements after vint1[1] irrelevant.
@@ -556,8 +556,8 @@ make_occupancy_multi_colex_eq_lpmf <- function (max_rep, max_year) {
   sf_text1 <- "  real occupancy_multi_colex_eq_lpmf(
     array[] int y, // detection data
     vector mu, // linear predictor for detection
-    vector colo, // linear predictor for colonization. Elements after vint3[1] irrelevant.
-    vector ex, // linear predictor for extinction. Elements after vint3[1] irrelevant.
+    vector colo, // linear predictor for colonization. Elements after vint2[1] irrelevant.
+    vector ex, // linear predictor for extinction. Elements after vint2[1] irrelevant.
     array[] int vint1, // # of series (# of HMMs). Elements after 1 irrelevant.
     array[] int vint2, // # units (series-years). Elements after 1 irrelevant.
     array[] int vint3, // # years per series. Elements after vint1[1] irrelevant.
@@ -651,7 +651,7 @@ make_occupancy_multi_colex_eq_lpmf <- function (max_rep, max_year) {
     vector mu, // linear predictor for detection
     vector occ, // linear predictor for occupancy conditional on no occupancy
                 // in previous year. Elements after vint2[1] irrelevant.
-    vector theta, // logit-scale offset for occupancy conditional on occupancy
+    vector auto, // logit-scale offset for occupancy conditional on occupancy
                   // in previous year. Elements after vint2[1] irrelevant.
     array[] int vint1, // # of series (# of HMMs). Elements after 1 irrelevant.
     array[] int vint2, // # units (series-years). Elements after 1 irrelevant.
@@ -696,7 +696,7 @@ make_occupancy_multi_colex_eq_lpmf <- function (max_rep, max_year) {
   sf_text9 <- "  // Initialize and compute log-likelihood
     real lp = 0;
     vector colo = occ;
-    vector ex = - (occ + theta);
+    vector ex = - (occ + auto);
     for (i in 1:vint1[1]) {
       int n_year = vint3[i];
       array[n_year] int Q = vint5[unit_index_array[i,1:n_year]];
@@ -798,8 +798,8 @@ make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
     vector fp, // fp data
     vector mu, // linear predictor for detection
     vector occ, // linear predictor for initial occupancy. Only the first vint1[1] elements matter.
-    vector colo, // linear predictor for colonization. Elements after vint3[1] irrelevant.
-    vector ex, // linear predictor for extinction. Elements after vint3[1] irrelevant.
+    vector colo, // linear predictor for colonization. Elements after vint2[1] irrelevant.
+    vector ex, // linear predictor for extinction. Elements after vint2[1] irrelevant.
     array[] int vint1, // # of series (# of HMMs). Elements after 1 irrelevant.
     array[] int vint2, // # units (series-years). Elements after 1 irrelevant.
     array[] int vint3, // # years per series. Elements after vint1[1] irrelevant.
@@ -885,8 +885,8 @@ make_occupancy_multi_colex_eq_fp_lpdf <- function (max_rep, max_year) {
   sf_text1 <- "  real occupancy_multi_colex_eq_fp_lpdf(
     vector fp, // fp data
     vector mu, // linear predictor for detection
-    vector colo, // linear predictor for colonization. Elements after vint3[1] irrelevant.
-    vector ex, // linear predictor for extinction. Elements after vint3[1] irrelevant.
+    vector colo, // linear predictor for colonization. Elements after vint2[1] irrelevant.
+    vector ex, // linear predictor for extinction. Elements after vint2[1] irrelevant.
     array[] int vint1, // # of series (# of HMMs). Elements after 1 irrelevant.
     array[] int vint2, // # units (series-years). Elements after 1 irrelevant.
     array[] int vint3, // # years per series. Elements after vint1[1] irrelevant.
