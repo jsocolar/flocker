@@ -24,6 +24,8 @@
 #'  colonization-extinction dynamics. In this case, time-varying covariates are 
 #'  not allowed for colonization or extinction (but are still allowed for 
 #'  detection).
+#' @param f_auto A brms-type model formula for the autologistic offset 
+#'  parameter (theta). If provided, must begin with "~".
 #' @param augmented Logical. Must be TRUE if data are formatted for a 
 #'  data-augmented multi-species model, and FALSE otherwise.
 #' @param fp logical. If data are formatted for an fp model, must be set to
@@ -43,13 +45,14 @@
 #' }
 #' @export
 flock <- function(f_occ, f_det, flocker_data, data2 = NULL, 
-                   multiseason = NULL, f_col = NULL, f_ex = NULL, colex_init = NULL,
+                   multiseason = NULL, f_col = NULL, f_ex = NULL, colex_init = NULL, f_auto = NULL,
                    augmented = FALSE, fp = FALSE,
                    ...) {
   flock_(stancode = FALSE, f_occ = f_occ, f_det = f_det, 
          flocker_data = flocker_data, data2 = data2, 
          multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
-         colex_init = colex_init, augmented = augmented, fp = fp, ... = ...)
+         colex_init = colex_init, f_auto = f_auto,
+         augmented = augmented, fp = fp, ... = ...)
 }
 
 
@@ -58,13 +61,14 @@ flock <- function(f_occ, f_det, flocker_data, data2 = NULL,
 #' @inheritParams flock
 #' @export
 flocker_stancode <- function(f_occ, f_det, flocker_data, data2 = NULL, 
-                  multiseason = NULL, f_col = NULL, f_ex = NULL, colex_init = NULL,
+                  multiseason = NULL, f_col = NULL, f_ex = NULL, colex_init = NULL, f_auto = NULL,
                   augmented = FALSE, fp = FALSE,
                   ...) {
   flock_(stancode = TRUE, f_occ = f_occ, f_det = f_det, 
          flocker_data = flocker_data, data2 = data2, 
          multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
-         colex_init = colex_init, augmented = augmented, fp = fp, ... = ...)
+         colex_init = colex_init, f_auto = f_auto,
+         augmented = augmented, fp = fp, ... = ...)
 }
 
 #' Fit an occupancy model or generate Stan code for a model 
@@ -94,6 +98,8 @@ flocker_stancode <- function(f_occ, f_det, flocker_data, data2 = NULL,
 #'  colonization-extinction dynamics. In this case, time-varying covariates are 
 #'  not allowed for colonization or extinction (but are still allowed for 
 #'  detection).
+#' @param f_auto A brms-type model formula for the autologistic offset 
+#'  parameter (theta). If provided, must begin with "~".
 #' @param augmented Logical. Must be TRUE if data are formatted for a 
 #'  data-augmented multi-species model, and FALSE otherwise.
 #' @param fp logical. If data are formatted for an fp model, must be set to
@@ -101,7 +107,7 @@ flocker_stancode <- function(f_occ, f_det, flocker_data, data2 = NULL,
 #' @param ... additional arguments passed to \code{brms::brm()}
 #' @return stan code for brms model or a \code{brmsfit} containing the fitted occupancy model. 
 flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL, 
-                  multiseason = NULL, f_col = NULL, f_ex = NULL, colex_init = NULL,
+                  multiseason = NULL, f_col = NULL, f_ex = NULL, colex_init = NULL, f_auto = NULL,
                   augmented = FALSE, fp = FALSE,
                   ...) {
   ### validate parameters
@@ -120,11 +126,15 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
   }
   if (!is.null(f_col)) {
     f_col_txt <- paste0(deparse(f_col), collapse = "")
-    f_col_use <- stats::as.formula(paste0("col ", f_col_txt))
+    f_col_use <- stats::as.formula(paste0("colo ", f_col_txt))
   }
   if (!is.null(f_ex)) {
     f_ex_txt <- paste0(deparse(f_ex), collapse = "")
     f_ex_use <- stats::as.formula(paste0("ex ", f_ex_txt))
+  }
+  if (!is.null(f_auto)) {
+    f_auto_txt <- paste0(deparse(f_auto), collapse = "")
+    f_auto_use <- stats::as.formula(paste0("auto ", f_ex_txt))
   }
   
   f_det_txt <- paste0(deparse(f_det), collapse = "")
@@ -189,12 +199,9 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
     vint_text2 <- paste0("rep_index", seq(n_rep), 
                         collapse = ", ")
     
-    f_occ_use <- stats::as.formula(paste0("occ ", f_occ_txt))
     f_det_use <- stats::as.formula(
       paste0("y | vint(n_series, n_unit, n_year, n_rep, Q, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
-    f_col_use <- stats::as.formula(paste0("colo ", f_col_txt))
-    f_ex_use <- stats::as.formula(paste0("ex ", f_ex_txt))
     
     f_use <- brms::bf(f_det_use, f_occ_use, f_col_use, f_ex_use)
     
@@ -232,8 +239,6 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
     f_det_use <- stats::as.formula(
       paste0("y | vint(n_series, n_unit, n_year, n_rep, Q, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
-    f_col_use <- stats::as.formula(paste0("colo ", f_col_txt))
-    f_ex_use <- stats::as.formula(paste0("ex ", f_ex_txt))
     
     f_use <- brms::bf(f_det_use, f_col_use, f_ex_use)
     
@@ -262,7 +267,42 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
                                  stanvars = stanvars,
                                  ...)
   } else if (isTRUE(multiseason == "autologistic") & !fp) {
-    stop("autologistic models not yet implemented")
+    n_rep <- flocker_data$n_rep
+    n_year <- flocker_data$n_year
+    vint_text1 <- paste0("unit_index", seq(n_year), 
+                         collapse = ", ")
+    vint_text2 <- paste0("rep_index", seq(n_rep), 
+                         collapse = ", ")
+    f_det_use <- stats::as.formula(
+      paste0("y | vint(n_series, n_unit, n_year, n_rep, Q, ",
+             vint_text1, ", ", vint_text2, ") ", f_det_txt))
+    
+    f_use <- brms::bf(f_det_use, f_occ_use, f_auto_use)
+    
+    stanvars <- 
+      brms::stanvar(
+        scode = make_emission_1(), 
+        block = "functions"
+      ) + 
+      brms::stanvar(
+        scode = make_colex_likelihoods(), 
+        block = "functions"
+      ) + 
+      brms::stanvar(
+        scode = make_forward_colex(), 
+        block = "functions"
+      ) + 
+      brms::stanvar(
+        scode = make_occupancy_multi_autologistic_lpmf(max_rep = n_rep, max_year = n_year), 
+        block = "functions"
+      )
+    out <- flocker_fit_code_util(stancode, 
+                                 f_use, 
+                                 data = flocker_data$data,
+                                 data2 = data2,
+                                 family = occupancy_multi_autologistic(n_year, n_rep), 
+                                 stanvars = stanvars,
+                                 ...)
   } else if (flocker_data$type == "single" & fp) {
     max_rep <- flocker_data$n_rep
     vint_text <- paste0("rep_index", 1:max_rep, 
@@ -293,12 +333,9 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
                          collapse = ", ")
     vint_text2 <- paste0("rep_index", seq(n_rep), 
                          collapse = ", ")
-    f_occ_use <- stats::as.formula(paste0("occ ", f_occ_txt))
     f_det_use <- stats::as.formula(
       paste0("y | vint(n_series, n_unit, n_year, n_rep, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
-    f_col_use <- stats::as.formula(paste0("colo ", f_col_txt))
-    f_ex_use <- stats::as.formula(paste0("ex ", f_ex_txt))
     
     f_use <- brms::bf(f_det_use, f_occ_use, f_col_use, f_ex_use)
     
@@ -340,8 +377,6 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
     f_det_use <- stats::as.formula(
       paste0("y | vint(n_series, n_unit, n_year, n_rep, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
-    f_col_use <- stats::as.formula(paste0("colo ", f_col_txt))
-    f_ex_use <- stats::as.formula(paste0("ex ", f_ex_txt))
     
     f_use <- brms::bf(f_det_use, f_col_use, f_ex_use)
     

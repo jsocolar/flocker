@@ -6,9 +6,10 @@
 #' @return Character string of Stan code corresponding to occupancy_single_lpmf
 
 make_occupancy_single_lpmf <- function (max_rep) {
-  if (!(is.integer(max_rep) & (max_rep > 1))) {
-    stop("max_rep must be an integer greater than 1")
-  }
+  assertthat::assert_that(
+    is.integer(max_rep) & (max_rep > 1),
+    msg = "max_rep must be an integer greater than 1"
+  )
   
   sf_text1 <- "  real occupancy_single_lpmf(
     array[] int y, // detection data
@@ -85,9 +86,10 @@ make_occupancy_single_C_lpmf <- function () {
 #' @return Character string of Stan code corresponding to occupancy_V_lpmf
 
 make_occupancy_augmented_lpmf <- function (max_rep) {
-  if (!(is.integer(max_rep) & (max_rep > 1))) {
-    stop("max_rep must be an integer greater than 1")
-  }
+  assertthat::assert_that(
+    is.integer(max_rep) & (max_rep > 1),
+    msg = "max_rep must be an integer greater than 1"
+  )
   
   sf_text1 <- "  real occupancy_augmented_lpmf(
     array[] int y, // detection data
@@ -292,7 +294,6 @@ make_colex_fp_likelihoods <- function() {
   )
 }
 
-
 ##### multi-season: forward algorithm #####
 
 #' Create Stan code for forward_colex function, an implementation of the 
@@ -451,12 +452,14 @@ make_forward_colex_fp <- function() {
 #'    any unit.
 #' @return Character string of Stan code corresponding to occupancy_multi_colex_lpmf
 make_occupancy_multi_colex_lpmf <- function (max_rep, max_year) {
-  if (!(is.integer(max_rep) & (max_rep > 1))) {
-    stop("max_rep must be an integer greater than 1")
-  }
-  if (!(is.integer(max_year) & (max_rep > 1))) {
-    stop("max_year must be an integer greater than 1")
-  }
+  assertthat::assert_that(
+    is.integer(max_rep) & (max_rep > 1),
+    msg = "max_rep must be an integer greater than 1"
+  )
+  assertthat::assert_that(
+    is.integer(max_year) & (max_year > 1),
+    msg = "max_year must be an integer greater than 1"
+  )
   
   sf_text1 <- "  real occupancy_multi_colex_lpmf(
     array[] int y, // detection data
@@ -541,12 +544,14 @@ make_occupancy_multi_colex_lpmf <- function (max_rep, max_year) {
 #'    any unit.
 #' @return Character string of Stan code corresponding to occupancy_multi_colex_eq_lpmf
 make_occupancy_multi_colex_eq_lpmf <- function (max_rep, max_year) {
-  if (!(is.integer(max_rep) & (max_rep > 1))) {
-    stop("max_rep must be an integer greater than 1")
-  }
-  if (!(is.integer(max_year) & (max_rep > 1))) {
-    stop("max_year must be an integer greater than 1")
-  }
+  assertthat::assert_that(
+    is.integer(max_rep) & (max_rep > 1),
+    msg = "max_rep must be an integer greater than 1"
+  )
+  assertthat::assert_that(
+    is.integer(max_year) & (max_year > 1),
+    msg = "max_year must be an integer greater than 1"
+  )
   
   sf_text1 <- "  real occupancy_multi_colex_eq_lpmf(
     array[] int y, // detection data
@@ -625,15 +630,113 @@ make_occupancy_multi_colex_eq_lpmf <- function (max_rep, max_year) {
   return(out)
 }
 
+##### multi_autologistic_lpmf #####
+
+#' Create Stan code for likelihood function occupancy_multi_autologistic_lpmf.
+#' @param max_rep Literal integer maximum number of repeated sampling events at 
+#'    any unit.
+#' @return Character string of Stan code corresponding to occupancy_multi_autologistic_lpmf
+make_occupancy_multi_colex_eq_lpmf <- function (max_rep, max_year) {
+  assertthat::assert_that(
+    is.integer(max_rep) & (max_rep > 1),
+    msg = "max_rep must be an integer greater than 1"
+  )
+  assertthat::assert_that(
+    is.integer(max_year) & (max_year > 1),
+    msg = "max_year must be an integer greater than 1"
+  )
+  
+  sf_text1 <- "  real occupancy_multi_colex_eq_lpmf(
+    array[] int y, // detection data
+    vector mu, // linear predictor for detection
+    vector occ, // linear predictor for occupancy conditional on no occupancy
+                // in previous year. Elements after vint2[1] irrelevant.
+    vector theta, // logit-scale offset for occupancy conditional on occupancy
+                  // in previous year. Elements after vint2[1] irrelevant.
+    array[] int vint1, // # of series (# of HMMs). Elements after 1 irrelevant.
+    array[] int vint2, // # units (series-years). Elements after 1 irrelevant.
+    array[] int vint3, // # years per series. Elements after vint1[1] irrelevant.
+    array[] int vint4, // # sampling events per unit (n_rep). Elements after vint2[1] irrelevant.
+    array[] int vint5, // Indicator for > 0 detections (Q). Elements after vint2[1] irrelevant.
+  
+  // indices for jth unit (first rep) for each series. Elements after vint1[1] irrelevant."
+  
+  sf_text2.1 <- paste0("    array[] int vint", 5 + (1:max_year), collapse = ",\n")
+  
+  sf_text2.2 <- ",\n"
+  
+  sf_text2 <- paste0(sf_text2.1, sf_text2.2)
+  
+  sf_text3 <- "// indices for jth repeated sampling event to each unit (elements after vint2[1] irrelevant):"
+  
+  sf_text4 <- paste0("    array[] int vint", 5 + max_year + (1:max_rep), collapse = ",\n")
+  
+  sf_text5 <- paste0(") {
+  // Create array of the unit indices that correspond to each series.
+    array[vint1[1], ", max_year, "] int unit_index_array;")
+  
+  sf_text6.1 <- "      unit_index_array[,"
+  sf_text6.2 <- 1:max_year
+  sf_text6.3 <- "] = vint"
+  sf_text6.4 <- 5 + (1:max_year)
+  sf_text6.5 <- "[1:vint1[1]];\n"
+  sf_text6 <- paste0(sf_text6.1, sf_text6.2, sf_text6.3, sf_text6.4, sf_text6.5, collapse = "")
+  
+  sf_text7 <- paste0("
+  // Create array of the rep indices that correspond to each unit.
+    array[vint2[1], ", max_rep, "] int visit_index_array;")
+  
+  sf_text8.1 <- "      visit_index_array[,"
+  sf_text8.2 <- 1:max_rep
+  sf_text8.3 <- "] = vint"
+  sf_text8.4 <- 5 + max_year + (1:max_rep)
+  sf_text8.5 <- "[1:vint2[1]];\n"
+  sf_text8 <- paste0(sf_text8.1, sf_text8.2, sf_text8.3, sf_text8.4, sf_text8.5, collapse = "")
+  
+  sf_text9 <- "  // Initialize and compute log-likelihood
+    real lp = 0;
+    vector colo = occ;
+    vector ex = - (occ + theta);
+    for (i in 1:vint1[1]) {
+      int n_year = vint3[i];
+      array[n_year] int Q = vint5[unit_index_array[i,1:n_year]];
+      array[n_year] int n_obs = vint4[unit_index_array[i,1:n_year]];
+      int max_obs = max(n_obs);
+      array[n_year, max_obs] int y_i;
+      real occ_i = logit(
+        inv_logit(colo[unit_index_array[i,1]]) / 
+          (inv_logit(colo[unit_index_array[i,1]]) + inv_logit(ex[unit_index_array[i,1]])));
+      vector[n_year] colo_i = to_vector(colo[unit_index_array[i,1:n_year]]);
+      vector[n_year] ex_i = to_vector(ex[unit_index_array[i,1:n_year]]);
+      array[n_year] row_vector[max_obs] det_i;
+      
+      for (j in 1:n_year) {
+        if (n_obs[j] > 0) {
+          y_i[j, 1:n_obs[j]] = y[visit_index_array[unit_index_array[i, j], 1:n_obs[j]]];
+          det_i[j, 1:n_obs[j]] = to_row_vector(mu[visit_index_array[unit_index_array[i, j], 1:n_obs[j]]]);
+        }
+      }
+      lp += forward_colex(n_year, Q, n_obs, y_i, occ_i, colo_i, ex_i, det_i);
+    }
+    return(lp);
+  }
+"
+  
+  out <- paste(sf_text1, sf_text2, sf_text3, sf_text4, sf_text5, sf_text6, 
+               sf_text7, sf_text8, sf_text9, sep = "\n")
+  return(out)
+}
+
 ##### single-fp lpmf #####
 #' Create Stan code for likelihood function occupancy_single_fp_lpmf
 #' @param max_rep Literal integer maximum number of repeated sampling events at 
 #'    any unit.
 #' @return Character string of Stan code corresponding to occupancy_single_fp_lpmf
 make_occupancy_single_fp_lpdf <- function (max_rep) {
-  if (!(is.integer(max_rep) & (max_rep > 1))) {
-    stop("max_rep must be an integer greater than 1")
-  }
+  assertthat::assert_that(
+    is.integer(max_rep) & (max_rep > 1),
+    msg = "max_rep must be an integer greater than 1"
+  )
   
   sf_text1 <- "  real occupancy_single_fp_lpdf(
     vector fp, // fp data
@@ -682,12 +785,14 @@ make_occupancy_single_fp_lpdf <- function (max_rep) {
 #'    any unit.
 #' @return Character string of Stan code corresponding to occupancy_multi_colex_fp_lpdf
 make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
-  if (!(is.integer(max_rep) & (max_rep > 1))) {
-    stop("max_rep must be an integer greater than 1")
-  }
-  if (!(is.integer(max_year) & (max_rep > 1))) {
-    stop("max_year must be an integer greater than 1")
-  }
+  assertthat::assert_that(
+    is.integer(max_rep) & (max_rep > 1),
+    msg = "max_rep must be an integer greater than 1"
+  )
+  assertthat::assert_that(
+    is.integer(max_year) & (max_year > 1),
+    msg = "max_year must be an integer greater than 1"
+  )
   
   sf_text1 <- "  real occupancy_multi_colex_fp_lpdf(
     vector fp, // fp data
@@ -769,12 +874,14 @@ make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
 #'    any unit.
 #' @return Character string of Stan code corresponding to occupancy_multi_colex_eq_fp_lpmf
 make_occupancy_multi_colex_eq_fp_lpdf <- function (max_rep, max_year) {
-  if (!(is.integer(max_rep) & (max_rep > 1))) {
-    stop("max_rep must be an integer greater than 1")
-  }
-  if (!(is.integer(max_year) & (max_rep > 1))) {
-    stop("max_year must be an integer greater than 1")
-  }
+  assertthat::assert_that(
+    is.integer(max_rep) & (max_rep > 1),
+    msg = "max_rep must be an integer greater than 1"
+  )
+  assertthat::assert_that(
+    is.integer(max_year) & (max_year > 1),
+    msg = "max_year must be an integer greater than 1"
+  )
   sf_text1 <- "  real occupancy_multi_colex_eq_fp_lpdf(
     vector fp, // fp data
     vector mu, // linear predictor for detection

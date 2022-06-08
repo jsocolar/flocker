@@ -51,7 +51,7 @@ occupancy_multi_colex <- function(max_year, max_rep) {
     loop = FALSE)
 }
 
-#' Define the colonization-extinction family
+#' Define the colonization-extinction equilibrium family
 #' @param max_year the maximum number of seasons at a colex unit
 #' @param max_rep the maximum number of repeat sampling events at a closure unit
 #' @return a "customfamily" "brmsfamily" object from brms
@@ -65,6 +65,20 @@ occupancy_multi_colex_eq <- function(max_year, max_rep) {
     loop = FALSE)
 }
 
+
+#' Define the autologistic family
+#' @param max_year the maximum number of seasons at a colex unit
+#' @param max_rep the maximum number of repeat sampling events at a closure unit
+#' @return a "customfamily" "brmsfamily" object from brms
+occupancy_multi_autologistic <- function(max_year, max_rep) {
+  brms::custom_family(
+    "occupancy_multi_autologistic", dpars = c("mu", "occ", "theta"),
+    links = c("identity", "identity", "identity"),
+    type = "int", 
+    # Integer aterms (vint) for n_unit, n_rep, Q, rep_index1...
+    vars = c(paste0("vint", seq(5 + max_year + max_rep))),
+    loop = FALSE)
+}
 
 ### fp models ###
 
