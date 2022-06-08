@@ -4,13 +4,25 @@
 \alias{example_flocker_data}
 \title{Create example data for use with \code{make_flocker_data()} and downstream functions.}
 \usage{
-example_flocker_data(rep_constant = FALSE, seed = 123)
+example_flocker_data(
+  rep_constant = FALSE,
+  seed = 123,
+  n_pt = 30,
+  n_sp = 30,
+  n_rep = 4
+)
 }
 \arguments{
 \item{rep_constant}{logical: create data with unit covariates only (TRUE) 
 or data that includes event covariates (FALSE)}
 
 \item{seed}{random seed. To use existing RNG state set to NULL.}
+
+\item{n_pt}{number of points to simulate.}
+
+\item{n_sp}{number of species to simulate.}
+
+\item{n_rep}{number of replicates to simulate.}
 }
 \value{
 A three element named list with the observation matrix ($obs), the
