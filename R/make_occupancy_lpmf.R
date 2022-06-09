@@ -390,6 +390,7 @@ make_forward_colex_fp <- function() {
     "  // Forward algorithm implementation",
     "  real forward_colex_fp(",
     "    int n_year, // number of years",
+    "    array[] int Q, // At least one detection in year?",
     "    array[] int n_obs, // number of visits in year",
     "    array[,] real fp, // probability that true datum is one: rows are units, columns visits",
     "    real occ_initial, // initial occupancy logit-probability",
@@ -409,37 +410,61 @@ make_forward_colex_fp <- function() {
     "      alpha_0 = bernoulli_logit_lpmf(0 | occ_initial);",
     "      alpha_1 = bernoulli_logit_lpmf(1 | occ_initial);",
     "    } else {",
-    "      e0 = emission_0_fp(fp[1, 1:n_obs[1]]);",
     "      e1 = emission_1_fp(fp[1, 1:n_obs[1]], det[1, 1:n_obs[1]]);",
-    "      alpha_0 = bernoulli_logit_lpmf(0 | occ_initial) + e0;",
     "      alpha_1 = bernoulli_logit_lpmf(1 | occ_initial) + e1;",
+    "      if (Q[1] == 0) {",
+    "        e0 = emission_0_fp(fp[1, 1:n_obs[1]]);",
+    "        alpha_0 = bernoulli_logit_lpmf(0 | occ_initial) + e0;",
+    "      }",
     "    }",
     "    ",
     "    // Recursion for subsequent years",
     "    if (n_year > 1) {",
+    "      // alpha_0  is not computed if Q[i] == 1",
+    "      // alpha_1 is always computed.",
     "      for (i in 2:n_year) {",
     "        // Store alpha_0 and alpha_1 for the next round",
     "        alpha_0_prev = alpha_0;",
     "        alpha_1_prev = alpha_1;",
     "        ",
     "        if (n_obs[i] == 0) {  // year with no observations",
-    "          alpha_0 = log_sum_exp(alpha_0_prev + bernoulli_logit_lpmf(0 | colo[i]),",
-    "                                alpha_1_prev + bernoulli_logit_lpmf(1 | ex[i]));",
-    "          alpha_1 = log_sum_exp(alpha_0_prev + bernoulli_logit_lpmf(1 | colo[i]),",
-    "                                alpha_1_prev + bernoulli_logit_lpmf(0 | ex[i]));",
-    "        } else if (n_obs[i] > 0) { // year with observations",
-    "          e0 = emission_0_fp(fp[i, 1:n_obs[i]]);",
+    "          if (Q[i - 1] == 0) {",
+    "            alpha_0 = log_sum_exp(alpha_0_prev + bernoulli_logit_lpmf(0 | colo[i]),",
+    "                                  alpha_1_prev + bernoulli_logit_lpmf(1 | ex[i]));",
+    "            alpha_1 = log_sum_exp(alpha_0_prev + bernoulli_logit_lpmf(1 | colo[i]),",
+    "                                  alpha_1_prev + bernoulli_logit_lpmf(0 | ex[i]));",
+    "          } else if (Q[i - 1] == 1) {",
+    "            alpha_0 = alpha_1_prev + bernoulli_logit_lpmf(1 | ex[i]);",
+    "            alpha_1 = alpha_1_prev + bernoulli_logit_lpmf(0 | ex[i]);",
+    "          }",
+    "        } else { // year with observations",
     "          e1 = emission_1_fp(fp[i, 1:n_obs[i]], det[i, 1:n_obs[i]]);",
-    "          alpha_0 = log_sum_exp(alpha_0_prev + zero_zero(colo[i], e0), ",
-    "                                alpha_1_prev + one_zero(ex[i], e0));",
-    "          alpha_1 = log_sum_exp(alpha_0_prev + zero_one(colo[i], e1), ",
-    "                                alpha_1_prev + one_one(ex[i], e1));",
+    "          e0 = emission_0_fp(fp[i, 1:n_obs[i]]);",
+    "          if ((Q[i - 1] == 0) && (Q[i] == 0)) { // now years with at least one observation",
+    "            alpha_0 = log_sum_exp(alpha_0_prev + zero_zero(colo[i], e0),",  
+    "                                  alpha_1_prev + one_zero(ex[i], e0));",
+    "            alpha_1 = log_sum_exp(alpha_0_prev + zero_one(colo[i], e1),",
+    "                                  alpha_1_prev + one_one(ex[i], e1));",
+    "          } else if ((Q[i - 1] == 0) && (Q[i] == 1)) {",
+    "            alpha_1 = log_sum_exp(alpha_0_prev + zero_one(colo[i], e1),",
+    "                                  alpha_1_prev + one_one(ex[i], e1));",
+    "          } else if ((Q[i - 1] == 1) && (Q[i] == 0)) {",
+    "            alpha_0 = alpha_1_prev + one_zero(ex[i], e0);",
+    "            alpha_1 = alpha_1_prev + one_one(ex[i], e1);",
+    "          } else if ((Q[i - 1] == 1) && (Q[i] == 1)) {",
+    "            alpha_1 = alpha_1_prev + one_one(ex[i], e1);",
+    "          }",
     "        }",
     "      }",
     "    }",
     "  ",
     "    // Return",
-    "    real out = log_sum_exp(alpha_0, alpha_1);",
+    "    real out;",
+    "    if (Q[n_year] == 0) {",
+    "      out = log_sum_exp(alpha_0, alpha_1);",
+    "    } else if (Q[n_year] == 1) {",
+    "      out = alpha_1;",
+    "    }",
     "    return(out);",
     "  }",
     sep = "\n")
@@ -636,7 +661,7 @@ make_occupancy_multi_colex_eq_lpmf <- function (max_rep, max_year) {
 #' @param max_rep Literal integer maximum number of repeated sampling events at 
 #'    any unit.
 #' @return Character string of Stan code corresponding to occupancy_multi_autologistic_lpmf
-make_occupancy_multi_colex_eq_lpmf <- function (max_rep, max_year) {
+make_occupancy_multi_autologistic_lpmf <- function (max_rep, max_year) {
   assertthat::assert_that(
     is.integer(max_rep) & (max_rep > 1),
     msg = "max_rep must be an integer greater than 1"
@@ -646,12 +671,12 @@ make_occupancy_multi_colex_eq_lpmf <- function (max_rep, max_year) {
     msg = "max_year must be an integer greater than 1"
   )
   
-  sf_text1 <- "  real occupancy_multi_colex_eq_lpmf(
+  sf_text1 <- "  real occupancy_multi_autologistic_lpmf(
     array[] int y, // detection data
     vector mu, // linear predictor for detection
     vector occ, // linear predictor for occupancy conditional on no occupancy
                 // in previous year. Elements after vint2[1] irrelevant.
-    vector auto, // logit-scale offset for occupancy conditional on occupancy
+    vector autologistic, // logit-scale offset for occupancy conditional on occupancy
                   // in previous year. Elements after vint2[1] irrelevant.
     array[] int vint1, // # of series (# of HMMs). Elements after 1 irrelevant.
     array[] int vint2, // # units (series-years). Elements after 1 irrelevant.
@@ -695,8 +720,8 @@ make_occupancy_multi_colex_eq_lpmf <- function (max_rep, max_year) {
   
   sf_text9 <- "  // Initialize and compute log-likelihood
     real lp = 0;
-    vector colo = occ;
-    vector ex = - (occ + auto);
+    vector[size(occ)] colo = occ;
+    vector[size(occ)] ex = - (occ + autologistic);
     for (i in 1:vint1[1]) {
       int n_year = vint3[i];
       array[n_year] int Q = vint5[unit_index_array[i,1:n_year]];
@@ -744,10 +769,11 @@ make_occupancy_single_fp_lpdf <- function (max_rep) {
     vector occ, // lin pred for occupancy. Only the first vint1[1] elements matter.
     array[] int vint1, // # units (n_unit). Elements after 1 irrelevant.
     array[] int vint2, // # sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
+    array[] int vint3, // Indicator for > 0 certain detections (Q). Elements after vint1[1] irrelevant.
 
   // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):"
   
-  sf_text2 <- paste0("    array[] int vint", 2 + (1:max_rep), collapse = ",\n")
+  sf_text2 <- paste0("    array[] int vint", 3 + (1:max_rep), collapse = ",\n")
   
   sf_text3 <- paste0(") {
   // Create array of the rep indices that correspond to each unit.
@@ -756,7 +782,7 @@ make_occupancy_single_fp_lpdf <- function (max_rep) {
   sf_text4.1 <- "      index_array[,"
   sf_text4.2 <- 1:max_rep
   sf_text4.3 <- "] = vint"
-  sf_text4.4 <- 2 + (1:max_rep)
+  sf_text4.4 <- 3 + (1:max_rep)
   sf_text4.5 <- "[1:vint1[1]];\n"
   sf_text4 <- paste0(sf_text4.1, sf_text4.2, sf_text4.3, sf_text4.4, sf_text4.5, collapse = "")
   
@@ -764,17 +790,21 @@ make_occupancy_single_fp_lpdf <- function (max_rep) {
     real lp = 0;
     for (i in 1:vint1[1]) {
       array[vint2[i]] int indices = index_array[i, 1:vint2[i]];
-      lp += log_sum_exp(
-        bernoulli_logit_lpmf(1 | occ[i]) + 
-          emission_1_fp(to_array_1d(fp[indices]), to_row_vector(mu[indices])),
-        bernoulli_logit_lpmf(0 | occ[i]) +
-          emission_0_fp(to_array_1d(fp[indices]))
-      );
+      if (vint3[i] == 1) {
+        lp += bernoulli_logit_lpmf(1 | occ[i]) + 
+          emission_1_fp(to_array_1d(fp[indices]), to_row_vector(mu[indices]));
+      } else {
+        lp += log_sum_exp(
+          bernoulli_logit_lpmf(1 | occ[i]) + 
+            emission_1_fp(to_array_1d(fp[indices]), to_row_vector(mu[indices])),
+          bernoulli_logit_lpmf(0 | occ[i]) +
+            emission_0_fp(to_array_1d(fp[indices]))
+        );
+      }
     }
     return(lp);
   }
 "
-  
   out <- paste(sf_text1, sf_text2, sf_text3, sf_text4, sf_text5, sep = "\n")
   return(out)
 }
@@ -804,10 +834,11 @@ make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
     array[] int vint2, // # units (series-years). Elements after 1 irrelevant.
     array[] int vint3, // # years per series. Elements after vint1[1] irrelevant.
     array[] int vint4, // # sampling events per unit (n_rep). Elements after vint2[1] irrelevant.
+    array[] int vint5, // Indicator for > 0 certain detections (Q). Elements after vint2[1] irrelevant.
 
   // indices for jth unit (first rep) for each series. Elements after vint1[1] irrelevant."
   
-  sf_text2.1 <- paste0("    array[] int vint", 4 + (1:max_year), collapse = ",\n")
+  sf_text2.1 <- paste0("    array[] int vint", 5 + (1:max_year), collapse = ",\n")
   
   sf_text2.2 <- ",\n"
   
@@ -815,7 +846,7 @@ make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
   
   sf_text3 <- "// indices for jth repeated sampling event to each unit (elements after vint2[1] irrelevant):"
   
-  sf_text4 <- paste0("    array[] int vint", 4 + max_year + (1:max_rep), collapse = ",\n")
+  sf_text4 <- paste0("    array[] int vint", 5 + max_year + (1:max_rep), collapse = ",\n")
   
   sf_text5 <- paste0(") {
   // Create array of the unit indices that correspond to each series.
@@ -824,7 +855,7 @@ make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
   sf_text6.1 <- "      unit_index_array[,"
   sf_text6.2 <- 1:max_year
   sf_text6.3 <- "] = vint"
-  sf_text6.4 <- 4 + (1:max_year)
+  sf_text6.4 <- 5 + (1:max_year)
   sf_text6.5 <- "[1:vint1[1]];\n"
   sf_text6 <- paste0(sf_text6.1, sf_text6.2, sf_text6.3, sf_text6.4, sf_text6.5, collapse = "")
   
@@ -835,7 +866,7 @@ make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
   sf_text8.1 <- "      visit_index_array[,"
   sf_text8.2 <- 1:max_rep
   sf_text8.3 <- "] = vint"
-  sf_text8.4 <- 4 + max_year + (1:max_rep)
+  sf_text8.4 <- 5 + max_year + (1:max_rep)
   sf_text8.5 <- "[1:vint2[1]];\n"
   sf_text8 <- paste0(sf_text8.1, sf_text8.2, sf_text8.3, sf_text8.4, sf_text8.5, collapse = "")
   
@@ -843,6 +874,7 @@ make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
     real lp = 0;
     for (i in 1:vint1[1]) {
       int n_year = vint3[i];
+      array[n_year] int Q = vint5[unit_index_array[i,1:n_year]];
       array[n_year] int n_obs = vint4[unit_index_array[i,1:n_year]];
       int max_obs = max(n_obs);
       array[n_year, max_obs] real fp_i;
@@ -857,7 +889,7 @@ make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
           det_i[j, 1:n_obs[j]] = to_row_vector(mu[visit_index_array[unit_index_array[i, j], 1:n_obs[j]]]);
         }
       }
-      lp += forward_colex_fp(n_year, n_obs, fp_i, occ_i, colo_i, ex_i, det_i);
+      lp += forward_colex_fp(n_year, Q, n_obs, fp_i, occ_i, colo_i, ex_i, det_i);
     }
     return(lp);
   }
@@ -891,10 +923,11 @@ make_occupancy_multi_colex_eq_fp_lpdf <- function (max_rep, max_year) {
     array[] int vint2, // # units (series-years). Elements after 1 irrelevant.
     array[] int vint3, // # years per series. Elements after vint1[1] irrelevant.
     array[] int vint4, // # sampling events per unit (n_rep). Elements after vint2[1] irrelevant.
+    array[] int vint5, // Indicator for > 0 certain detections (Q). Elements after vint2[1] irrelevant.
 
   // indices for jth unit (first rep) for each series. Elements after vint1[1] irrelevant."
   
-  sf_text2.1 <- paste0("    array[] int vint", 4 + (1:max_year), collapse = ",\n")
+  sf_text2.1 <- paste0("    array[] int vint", 5 + (1:max_year), collapse = ",\n")
   
   sf_text2.2 <- ",\n"
   
@@ -902,7 +935,7 @@ make_occupancy_multi_colex_eq_fp_lpdf <- function (max_rep, max_year) {
   
   sf_text3 <- "// indices for jth repeated sampling event to each unit (elements after vint2[1] irrelevant):"
   
-  sf_text4 <- paste0("    array[] int vint", 4 + max_year + (1:max_rep), collapse = ",\n")
+  sf_text4 <- paste0("    array[] int vint", 5 + max_year + (1:max_rep), collapse = ",\n")
   
   sf_text5 <- paste0(") {
   // Create array of the unit indices that correspond to each series.
@@ -911,7 +944,7 @@ make_occupancy_multi_colex_eq_fp_lpdf <- function (max_rep, max_year) {
   sf_text6.1 <- "      unit_index_array[,"
   sf_text6.2 <- 1:max_year
   sf_text6.3 <- "] = vint"
-  sf_text6.4 <- 4 + (1:max_year)
+  sf_text6.4 <- 5 + (1:max_year)
   sf_text6.5 <- "[1:vint1[1]];\n"
   sf_text6 <- paste0(sf_text6.1, sf_text6.2, sf_text6.3, sf_text6.4, sf_text6.5, collapse = "")
   
@@ -922,7 +955,7 @@ make_occupancy_multi_colex_eq_fp_lpdf <- function (max_rep, max_year) {
   sf_text8.1 <- "      visit_index_array[,"
   sf_text8.2 <- 1:max_rep
   sf_text8.3 <- "] = vint"
-  sf_text8.4 <- 4 + max_year + (1:max_rep)
+  sf_text8.4 <- 5 + max_year + (1:max_rep)
   sf_text8.5 <- "[1:vint2[1]];\n"
   sf_text8 <- paste0(sf_text8.1, sf_text8.2, sf_text8.3, sf_text8.4, sf_text8.5, collapse = "")
   
@@ -930,6 +963,7 @@ make_occupancy_multi_colex_eq_fp_lpdf <- function (max_rep, max_year) {
     real lp = 0;
     for (i in 1:vint1[1]) {
       int n_year = vint3[i];
+      array[n_year] int Q = vint5[unit_index_array[i,1:n_year]];
       array[n_year] int n_obs = vint4[unit_index_array[i,1:n_year]];
       int max_obs = max(n_obs);
       array[n_year, max_obs] real fp_i;
@@ -947,7 +981,7 @@ make_occupancy_multi_colex_eq_fp_lpdf <- function (max_rep, max_year) {
           det_i[j, 1:n_obs[j]] = to_row_vector(mu[visit_index_array[unit_index_array[i, j], 1:n_obs[j]]]);
         }
       }
-      lp += forward_colex_fp(n_year, n_obs, fp_i, occ_i, colo_i, ex_i, det_i);
+      lp += forward_colex_fp(n_year, Q, n_obs, fp_i, occ_i, colo_i, ex_i, det_i);
     }
     return(lp);
   }

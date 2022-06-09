@@ -5,8 +5,6 @@
 \title{Create Stan code for likelihood function occupancy_multi_colex_eq_lpmf.}
 \usage{
 make_occupancy_multi_colex_eq_lpmf(max_rep, max_year)
-
-make_occupancy_multi_colex_eq_lpmf(max_rep, max_year)
 }
 \arguments{
 \item{max_rep}{Literal integer maximum number of repeated sampling events at 
@@ -14,11 +12,7 @@ any unit.}
 }
 \value{
 Character string of Stan code corresponding to occupancy_multi_colex_eq_lpmf
-
-Character string of Stan code corresponding to occupancy_multi_autologistic_lpmf
 }
 \description{
 Create Stan code for likelihood function occupancy_multi_colex_eq_lpmf.
-
-Create Stan code for likelihood function occupancy_multi_autologistic_lpmf.
 }

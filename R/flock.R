@@ -134,7 +134,7 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
   }
   if (!is.null(f_auto)) {
     f_auto_txt <- paste0(deparse(f_auto), collapse = "")
-    f_auto_use <- stats::as.formula(paste0("auto ", f_ex_txt))
+    f_auto_use <- stats::as.formula(paste0("autologistic ", f_auto_txt))
   }
   
   f_det_txt <- paste0(deparse(f_det), collapse = "")
@@ -308,7 +308,7 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
     vint_text <- paste0("rep_index", 1:max_rep, 
                         collapse = ", ")
     f_det_use <- stats::as.formula(
-      paste0("y | vint(n_unit, n_rep, ",
+      paste0("y | vint(n_unit, n_rep, Q, ",
              vint_text, ") ", f_det_txt))
     f_use <- brms::bf(f_det_use, f_occ_use)
     
@@ -334,7 +334,7 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
     vint_text2 <- paste0("rep_index", seq(n_rep), 
                          collapse = ", ")
     f_det_use <- stats::as.formula(
-      paste0("y | vint(n_series, n_unit, n_year, n_rep, ",
+      paste0("y | vint(n_series, n_unit, n_year, n_rep, Q, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
     
     f_use <- brms::bf(f_det_use, f_occ_use, f_col_use, f_ex_use)
@@ -367,7 +367,7 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
                                  family = occupancy_multi_colex_fp(n_year, n_rep), 
                                  stanvars = stanvars,
                                  ...)
-  } else if (isTRUE(multiseason == "colex") & colex_init == isTRUE("equilibrium") & fp) {
+  } else if (isTRUE(multiseason == "colex") & isTRUE(colex_init == "equilibrium") & fp) {
     n_rep <- flocker_data$n_rep
     n_year <- flocker_data$n_year
     vint_text1 <- paste0("unit_index", seq(n_year), 
@@ -375,7 +375,7 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
     vint_text2 <- paste0("rep_index", seq(n_rep), 
                          collapse = ", ")
     f_det_use <- stats::as.formula(
-      paste0("y | vint(n_series, n_unit, n_year, n_rep, ",
+      paste0("y | vint(n_series, n_unit, n_year, n_rep, Q, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
     
     f_use <- brms::bf(f_det_use, f_col_use, f_ex_use)
@@ -409,7 +409,7 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
                                  stanvars = stanvars,
                                  ...)
   } else if (isTRUE(multiseason == "autologistic") & fp) {
-    stop("autologistic models not yet implemented")
+    stop("autologistic fp models not yet implemented")
   } else {
     stop("Error: unhandled type. This should not happen; please report a bug.")
   }

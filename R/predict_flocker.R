@@ -111,7 +111,7 @@ predict_flocker <- function(flocker_fit, n_iter=NULL, new_data = NULL,
   
   lt <- type_flocker_fit(flocker_fit)
   
-  if (lt == "V") {
+  if (lt == "single") {
     n_unit <- new_data$n_unit[1]
     max_rep <- max(new_data$n_rep)
     positions <- get_positions_V(flocker_fit)
@@ -122,7 +122,7 @@ predict_flocker <- function(flocker_fit, n_iter=NULL, new_data = NULL,
       j <- positions[k, 2]
       out[i, j, ] <- rbinom(n_iter, 1, pd[, k]*Z_samp[, i])
     }
-  } else if (lt == "C") {
+  } else if (lt == "single_C") {
     n_unit <- nrow(new_data)
     out <- matrix(nrow = n_iter, ncol = n_unit)
     for (i in 1:n_unit) {

@@ -72,7 +72,7 @@ occupancy_multi_colex_eq <- function(max_year, max_rep) {
 #' @return a "customfamily" "brmsfamily" object from brms
 occupancy_multi_autologistic <- function(max_year, max_rep) {
   brms::custom_family(
-    "occupancy_multi_autologistic", dpars = c("mu", "occ", "theta"),
+    "occupancy_multi_autologistic", dpars = c("mu", "occ", "autologistic"),
     links = c("identity", "identity", "identity"),
     type = "int", 
     # Integer aterms (vint) for n_unit, n_rep, Q, rep_index1...
@@ -91,7 +91,7 @@ occupancy_single_fp <- function(max_rep) {
     links = c("identity", "identity"),
     type = "real", 
     # Integer aterms (vint) for n_unit, n_rep, rep_index1...
-    vars = c(paste0("vint", seq(2 + max_rep))),
+    vars = c(paste0("vint", seq(3 + max_rep))),
     loop = FALSE)
 }
 
@@ -105,7 +105,7 @@ occupancy_multi_colex_fp <- function(max_year, max_rep) {
     links = c("identity", "identity", "identity", "identity"),
     type = "real", 
     # Integer aterms (vint) for n_unit, n_rep, rep_index1...
-    vars = c(paste0("vint", seq(4 + max_year + max_rep))),
+    vars = c(paste0("vint", seq(5 + max_year + max_rep))),
     loop = FALSE)
 }
 
@@ -120,6 +120,6 @@ occupancy_multi_colex_eq_fp <- function(max_year, max_rep) {
     links = c("identity", "identity", "identity"),
     type = "real", 
     # Integer aterms (vint) for n_unit, n_rep, rep_index1...
-    vars = c(paste0("vint", seq(4 + max_year + max_rep))),
+    vars = c(paste0("vint", seq(5 + max_year + max_rep))),
     loop = FALSE)
 }

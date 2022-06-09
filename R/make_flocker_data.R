@@ -481,10 +481,8 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
     apply(obs_unstacked, 1, max_position_not_na, treat_m99_NA = TRUE),
     rep(-99, n_total - n_series*n_year)
   )
-  if (!fp) {
-    flocker_data$Q <- c(as.integer(apply(obs_unstacked, 1, function(x){1 %in% x})),
-                        rep(-99, n_total - n_series*n_year))
-  }
+  flocker_data$Q <- c(as.integer(apply(obs_unstacked, 1, function(x){isTRUE(any(x == 1))})),
+                      rep(-99, n_total - n_series*n_year))
 
   # Prepare to add unit and rep indices:
   flocker_data$series <- seq(n_series)

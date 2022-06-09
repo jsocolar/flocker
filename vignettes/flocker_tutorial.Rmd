@@ -70,7 +70,8 @@ Once we've formatted data with `make_flocker_data()`, we are ready to fit an occ
 ```{r lm, eval=FALSE}
 flock(f_occ = ~ uc1, 
       f_det = ~ 1, 
-      flocker_data = flocker_data)
+      flocker_data = flocker_data,
+      backend = "cmdstanr")
 ```
 
 ### Random effects
@@ -210,11 +211,13 @@ The most straightforward way to compare models fit with `flocker` is the functio
 ```{r LOO, eval=FALSE}
 ff1 <- flock(f_occ = ~ uc1, 
       f_det = ~ 1, 
-      flocker_data = flocker_data)
+      flocker_data = flocker_data,
+      backend = "cmdstanr")
 
 ff2 <- flock(f_occ = ~ uc1, 
       f_det = ~ ec1 + ec2, 
-      flocker_data = flocker_data)
+      flocker_data = flocker_data,
+      backend = "cmdstanr")
 
 loo_compare_flock(list(ff1 = ff1, ff2 = ff2))
 ```
