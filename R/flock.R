@@ -30,6 +30,8 @@
 #'  data-augmented multi-species model, and FALSE otherwise.
 #' @param fp logical. If data are formatted for an fp model, must be set to
 #'  TRUE, otherwise to FALSE.
+#' @param threads NULL or positive integer. If integer, the number of threads
+#'  to use per chain in within chain parallelization.
 #' @param ... additional arguments passed to \code{brms::brm()}
 #' @return a \code{brmsfit} containing the fitted occupancy model. 
 #' @examples
@@ -46,13 +48,13 @@
 #' @export
 flock <- function(f_occ, f_det, flocker_data, data2 = NULL, 
                    multiseason = NULL, f_col = NULL, f_ex = NULL, colex_init = NULL, f_auto = NULL,
-                   augmented = FALSE, fp = FALSE,
+                   augmented = FALSE, fp = FALSE, threads = NULL,
                    ...) {
-  flock_(stancode = FALSE, f_occ = f_occ, f_det = f_det, 
+  flock_(output = "model", f_occ = f_occ, f_det = f_det, 
          flocker_data = flocker_data, data2 = data2, 
          multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
          colex_init = colex_init, f_auto = f_auto,
-         augmented = augmented, fp = fp, ... = ...)
+         augmented = augmented, fp = fp, threads = threads, ...)
 }
 
 
@@ -62,17 +64,31 @@ flock <- function(f_occ, f_det, flocker_data, data2 = NULL,
 #' @export
 flocker_stancode <- function(f_occ, f_det, flocker_data, data2 = NULL, 
                   multiseason = NULL, f_col = NULL, f_ex = NULL, colex_init = NULL, f_auto = NULL,
-                  augmented = FALSE, fp = FALSE,
+                  augmented = FALSE, fp = FALSE, threads = threads,
                   ...) {
-  flock_(stancode = TRUE, f_occ = f_occ, f_det = f_det, 
+  flock_(output = "code", f_occ = f_occ, f_det = f_det, 
          flocker_data = flocker_data, data2 = data2, 
          multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
          colex_init = colex_init, f_auto = f_auto,
-         augmented = augmented, fp = fp, ... = ...)
+         augmented = augmented, fp = fp, threads = threads, ...)
+}
+
+#' Generate stan data for an occupancy model
+#' @inheritParams flock
+#' @export
+flocker_standata <- function(f_occ, f_det, flocker_data, data2 = NULL, 
+                             multiseason = NULL, f_col = NULL, f_ex = NULL, colex_init = NULL, f_auto = NULL,
+                             augmented = FALSE, fp = FALSE, threads = threads,
+                             ...) {
+  flock_(output = "data", f_occ = f_occ, f_det = f_det, 
+         flocker_data = flocker_data, data2 = data2, 
+         multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
+         colex_init = colex_init, f_auto = f_auto,
+         augmented = augmented, fp = fp, threads = threads, ...)
 }
 
 #' Fit an occupancy model or generate Stan code for a model 
-#' @param stancode logical: output Stan code or fitted model (T) or fit model (F)
+#' @param output "model" for model fitting, "code" for stancode, "data" for standata
 #' @param f_occ A brms-type model formula for occupancy. If provided, must begin 
 #'  with "~".
 #' @param f_det A brms-type model formula for detection. Must begin with "~".
@@ -104,21 +120,17 @@ flocker_stancode <- function(f_occ, f_det, flocker_data, data2 = NULL,
 #'  data-augmented multi-species model, and FALSE otherwise.
 #' @param fp logical. If data are formatted for an fp model, must be set to
 #'  TRUE, otherwise to FALSE.
+#' @param threads NULL or positive integer. If integer, the number of threads
+#'  to use per chain in within chain parallelization.
 #' @param ... additional arguments passed to \code{brms::brm()}
 #' @return stan code for brms model or a \code{brmsfit} containing the fitted occupancy model. 
-flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL, 
+flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL, 
                   multiseason = NULL, f_col = NULL, f_ex = NULL, colex_init = NULL, f_auto = NULL,
-                  augmented = FALSE, fp = FALSE,
+                  augmented = FALSE, fp = FALSE, threads = NULL,
                   ...) {
   ### validate parameters
   validate_flock_params(f_occ, f_det, flocker_data, multiseason, f_col, 
-                        f_ex, colex_init, f_auto, augmented, fp)
-  extra_args <- list(...)
-  if ("threads" %in% names(extra_args)) {
-    assertthat::assert_that(flocker_data$type %in% threading_types(),
-    msg = "multithreading is not enabled for this model type")
-  }
-  
+                        f_ex, colex_init, f_auto, augmented, fp, threads)
   ### create final formulas
   if (!is.null(f_occ)) {
     f_occ_txt <- paste0(deparse(f_occ), collapse = "")
@@ -148,28 +160,53 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
       paste0("y | vint(n_unit, n_rep, Q, ",
              vint_text, ") ", f_det_txt))
     f_use <- brms::bf(f_det_use, f_occ_use)
-    stanvars <- brms::stanvar(
-      scode = make_occupancy_single_lpmf(max_rep = max_rep), block = "functions"
-    )
-    out <- flocker_fit_code_util(stancode, 
-                                 f_use, 
-                                 data = flocker_data$data,
-                                 data2 = data2,
-                                 family = occupancy_single(max_rep), 
-                                 stanvars = stanvars,
-                                 ...)
+    if (is.null(threads)) {
+      stanvars <- brms::stanvar(
+        scode = make_occupancy_single_lpmf(max_rep = max_rep), block = "functions"
+      )
+      out <- flocker_fit_code_util(output, 
+                                   f_use, 
+                                   data = flocker_data$data,
+                                   data2 = data2,
+                                   family = occupancy_single(max_rep), 
+                                   stanvars = stanvars,
+                                   ...)
+    } else {
+      stanvars <- 
+        brms::stanvar(
+          scode = make_occupancy_single_partial_sum(max_rep = max_rep), 
+          block = "functions"
+        ) +
+        brms::stanvar(
+          scode = make_occupancy_single_threaded_lpmf(
+            max_rep = max_rep,
+            grainsize = as.integer(ceiling(flocker_data$data$n_unit[1] / threads))
+          ), 
+          block = "functions"
+        )
+      out <- flocker_fit_code_util(output, 
+                                   f_use, 
+                                   data = flocker_data$data,
+                                   data2 = data2,
+                                   family = occupancy_single_threaded(max_rep), 
+                                   stanvars = stanvars,
+                                   threads = threads,
+                                   ...)
+    }
+
   } else if (flocker_data$type == "single_C") {
     f_det_use <- stats::as.formula(paste0("n_suc | vint(n_trial) ", f_det_txt))
     f_use <- brms::bf(f_det_use, f_occ_use)
     stanvars <- brms::stanvar(
       scode = make_occupancy_single_C_lpmf(), block = "functions"
     )
-    out <- flocker_fit_code_util(stancode, 
+    out <- flocker_fit_code_util(output, 
                                  f_use, 
                                  data = flocker_data$data,
                                  data2 = data2,
                                  family = occupancy_single_C(), 
                                  stanvars = stanvars,
+                                 threads = threads,
                                  ...)
   } else if (augmented) {
     max_rep <- flocker_data$n_rep
@@ -184,7 +221,7 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
       scode = make_occupancy_augmented_lpmf(max_rep = max_rep), 
       block = "functions"
     )
-    out <- flocker_fit_code_util(stancode, 
+    out <- flocker_fit_code_util(output, 
                                  f_use, 
                                  data = flocker_data$data,
                                  data2 = data2,
@@ -222,7 +259,7 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
         scode = make_occupancy_multi_colex_lpmf(max_rep = n_rep, max_year = n_year), 
         block = "functions"
       )
-    out <- flocker_fit_code_util(stancode, 
+    out <- flocker_fit_code_util(output, 
                                  f_use, 
                                  data = flocker_data$data,
                                  data2 = data2,
@@ -259,7 +296,7 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
         scode = make_occupancy_multi_colex_eq_lpmf(max_rep = n_rep, max_year = n_year), 
         block = "functions"
       )
-    out <- flocker_fit_code_util(stancode, 
+    out <- flocker_fit_code_util(output, 
                                  f_use, 
                                  data = flocker_data$data,
                                  data2 = data2,
@@ -296,7 +333,7 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
         scode = make_occupancy_multi_autologistic_lpmf(max_rep = n_rep, max_year = n_year), 
         block = "functions"
       )
-    out <- flocker_fit_code_util(stancode, 
+    out <- flocker_fit_code_util(output, 
                                  f_use, 
                                  data = flocker_data$data,
                                  data2 = data2,
@@ -319,7 +356,7 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
         scode = make_occupancy_single_fp_lpdf(max_rep = max_rep), 
         block = "functions"
       )
-    out <- flocker_fit_code_util(stancode, 
+    out <- flocker_fit_code_util(output, 
                                  f_use, 
                                  data = flocker_data$data,
                                  data2 = data2,
@@ -360,7 +397,7 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
         scode = make_occupancy_multi_colex_fp_lpdf(max_rep = n_rep, max_year = n_year), 
         block = "functions"
       )
-    out <- flocker_fit_code_util(stancode, 
+    out <- flocker_fit_code_util(output, 
                                  f_use, 
                                  data = flocker_data$data,
                                  data2 = data2,
@@ -401,7 +438,7 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
         scode = make_occupancy_multi_colex_eq_fp_lpdf(max_rep = n_rep, max_year = n_year), 
         block = "functions"
       )
-    out <- flocker_fit_code_util(stancode, 
+    out <- flocker_fit_code_util(output, 
                                  f_use, 
                                  data = flocker_data$data,
                                  data2 = data2,
@@ -413,7 +450,7 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
   } else {
     stop("Error: unhandled type. This should not happen; please report a bug.")
   }
-  if (!stancode) {
+  if (output == "model") {
     attr(out, "class") <- c(attr(out, "class"), "flocker_fit")
     attr(out, "lik_type") <- flocker_data$type
     attr(out, "colex_init") <- flocker_data$colex_init
@@ -422,32 +459,69 @@ flock_ <- function(stancode, f_occ, f_det, flocker_data, data2 = NULL,
   out
 }
 
-#' Either fit a flocker model or output stancode
-#' @param stancode logical; if TRUE return stan code, if false fit model
+#' Either fit a flocker model or output stancode or output standata
+#' @param output logical; if TRUE return stan code, if false fit model
 #' @param f_use brms formula
 #' @param data brms data
 #' @param data2 brms data2
 #' @param family brms family
 #' @param stanvars brms stanvars
 #' @param ... brms ...
-#' @return output of brms::make_stancode or brms::brm
+#' @return output of brms::brm or brms::make_stancode or brms::make_standata
 flocker_fit_code_util <- function (
-  stancode, f_use, data, data2, family, stanvars, ...
+  output, f_use, data, data2, family, stanvars, threads, ...
  ) {
-  if (stancode) {
-    out <- brms::make_stancode(f_use, 
-                               data = data,
-                               data2 = data2,
-                               family = family, 
-                               stanvars = stanvars,
-                               ...)
+  if (family$name == "occupancy_single_threaded") {
+    if (output == "code") {
+      out <- brms::make_stancode(f_use, 
+                                 data = data,
+                                 data2 = data2,
+                                 family = family, 
+                                 stanvars = stanvars,
+                                 threads_per_chain = threads,
+                                 ...)
+    } else if (output == "data") {
+      out <- brms::make_standata(f_use, 
+                                 data = data,
+                                 data2 = data2,
+                                 family = family, 
+                                 stanvars = stanvars,
+                                 threads_per_chain = threads,
+                                 ...)
+    } else if (output == "model") {
+      print("tt")
+      cml <- cmdstanr::cmdstan_make_local()
+      cpp_stan_threads <- list("STAN_THREADS=true")
+      cmdstanr::cmdstan_make_local(cpp_options = cpp_stan_threads)
+      out <- brms::brm(f_use, 
+                       data = data,
+                       data2 = data2,
+                       family = family, 
+                       stanvars = stanvars,
+                       threads_per_chain = threads,
+                       ...)
+      cmdstanr::cmdstan_make_local(cpp_options = cml, append = F)
+    }
   } else {
-    out <- brms::brm(f_use, 
-                     data = data,
-                     data2 = data2,
-                     family = family, 
-                     stanvars = stanvars,
-                     ...)
+    if (output == "code") {
+      out <- brms::make_stancode(f_use, 
+                                 data = data,
+                                 data2 = data2,
+                                 family = family, 
+                                 stanvars = stanvars,
+                                 threads = threads,
+                                 ...)
+    } else if (output == "data") {
+      
+    } else if (output == "model") {
+      out <- brms::brm(f_use, 
+                       data = data,
+                       data2 = data2,
+                       family = family, 
+                       stanvars = stanvars,
+                       threads = threads,
+                       ...)
+    }
   }
   out
 }

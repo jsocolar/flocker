@@ -11,6 +11,19 @@ occupancy_single <- function(max_rep) {
     loop = FALSE)
 }
 
+#' Define the rep-varying occupancy family with threading
+#' @param max_rep the maximum number of repeat sampling events at a unit
+#' @return a "customfamily" "brmsfamily" object from brms
+occupancy_single_threaded <- function (max_rep) {
+  brms::custom_family(
+    "occupancy_single_threaded", dpars = c("mu", "occ"),
+    links = c("identity", "identity"),
+    type = "int", 
+    # Integer aterms (vint) for n_unit, n_rep, Q, rep_index1...
+    vars = c(paste0("vint", seq(3 + max_rep))),
+    loop = FALSE)
+}
+
 
 #' Define the rep-constant occupancy family
 #' @return a "customfamily" "brmsfamily" object from brms

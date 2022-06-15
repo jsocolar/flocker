@@ -991,3 +991,120 @@ make_occupancy_multi_colex_eq_fp_lpdf <- function (max_rep, max_year) {
                sf_text7, sf_text8, sf_text9, sep = "\n")
   return(out)
 }
+
+
+
+##### Single threaded #####
+make_occupancy_single_threaded_lpmf <- function (max_rep, grainsize) {
+  assertthat::assert_that(
+    is.integer(max_rep) & (max_rep > 1),
+    msg = "max_rep must be an integer greater than 1"
+  )
+  assertthat::assert_that(
+    is.integer(grainsize) & (grainsize > 0),
+    msg = "grainsize must be an integer greater than 0"
+  )
+  
+  sf_text0.1 <- "  real occupancy_single_threaded_lpmf(
+    array[] int y, // detection data
+    vector occ,
+    vector mu, // lin pred for detection
+    array[] int vint1, // # units (n_unit). Elements after 1 irrelevant.
+    array[] int vint2, // # sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
+    array[] int vint3, // Indicator for > 0 detections (Q). Elements after vint1[1] irrelevant.
+  
+  // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):"
+  
+  sf_text0.2 <- paste0("    array[] int vint", 3 + (1:max_rep), collapse = ",\n")
+  
+  sf_text0.3 <- ") {"
+
+  sf_text0 <- paste(sf_text0.1, sf_text0.2, sf_text0.3, sep = "\n")
+  sf_text1.1 <- 
+    "    real lp = reduce_sum(
+      // partial sum function
+      occupancy_single_partial_sum,
+      // occupancy lp to slice
+      to_array_1d(occ[1:vint1[1]]),"
+  sf_text1.2 <- paste0("      ", grainsize, ", // grainsize")
+  sf_text1.3 <- "      y, // detection data
+      mu, // lin pred for detection
+      vint1, // # units (n_unit). Elements after 1 irrelevant.
+      vint2, // # sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
+      vint3, // Indicator for > 0 detections (Q). Elements after vint1[1] irrelevant.
+  
+      // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):"
+  
+  sf_text1 <- paste(sf_text1.1, sf_text1.2, sf_text1.3, sep = "\n")
+  
+  sf_text2 <- paste0("      vint", 3 + (1:max_rep), collapse = ",\n")
+  
+  sf_text3 <- "    );
+    return(lp);
+  }
+"
+  
+  out <- paste(sf_text0, sf_text1, sf_text2, sf_text3, sep = "\n")
+  return(out)
+}
+
+#' Create Stan code for likelihood function occupancy_single_lpmf.
+#' @param max_rep Literal integer maximum number of repeated sampling events at 
+#'    any unit.
+#' @return Character string of Stan code corresponding to occupancy_single_lpmf
+
+make_occupancy_single_partial_sum <- function (max_rep) {
+  assertthat::assert_that(
+    is.integer(max_rep) & (max_rep > 1),
+    msg = "max_rep must be an integer greater than 1"
+  )
+  
+  sf_text1 <- "  real occupancy_single_partial_sum(
+    array[] real occ, // sliced linpred for occupancy
+    int start,
+    int end,
+    array[] int y, // detection data
+    vector mu, // lin pred for detection
+    array[] int vint1, // # units (n_unit). Elements after 1 irrelevant.
+    array[] int vint2, // # sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
+    array[] int vint3, // Indicator for > 0 detections (Q). Elements after vint1[1] irrelevant.
+  
+  // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):"
+  
+  sf_text2 <- paste0("    array[] int vint", 3 + (1:max_rep), collapse = ",\n")
+  
+  sf_text3 <- paste0(") {
+  // Create array of the rep indices that correspond to each unit.
+    array[1 + end - start, ", max_rep, "] int index_array;")
+  
+  sf_text4.1 <- "      index_array[,"
+  sf_text4.2 <- 1:max_rep
+  sf_text4.3 <- "] = vint"
+  sf_text4.4 <- 3 + (1:max_rep)
+  sf_text4.5 <- "[start : end];\n"
+  sf_text4 <- paste0(sf_text4.1, sf_text4.2, sf_text4.3, sf_text4.4, sf_text4.5, collapse = "")
+  
+  sf_text5 <- "  // Initialize and compute log-likelihood
+    real lp = 0;
+    for (i in 1 : (1 + end - start)) {
+      array[vint2[i + start - 1]] int indices = index_array[i, 1:vint2[i + start - 1]];
+      if (vint3[i + start - 1] == 1) {
+        lp += bernoulli_logit_lpmf(1 | occ[i]);
+        lp += bernoulli_logit_lpmf(y[indices] | mu[indices]);
+      }
+      if (vint3[i + start - 1] == 0) {
+        lp += log_sum_exp(bernoulli_logit_lpmf(1 | occ[i]) + 
+                              sum(log1m_inv_logit(mu[indices])), bernoulli_logit_lpmf(0 | occ[i]));
+      }
+    }
+    return(lp);
+  }
+"
+  
+  out <- paste(sf_text1, sf_text2, sf_text3, sf_text4, sf_text5, sep = "\n")
+  return(out)
+}
+
+
+
+

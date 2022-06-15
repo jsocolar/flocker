@@ -179,12 +179,12 @@ get_positions_single <- function(flocker_fit) {
 #' @return silent if parameters are valid
 validate_flock_params <- function(f_occ, f_det, flocker_data,
                                   multiseason, f_col, f_ex, colex_init, f_auto,
-                                  augmented, fp) {
+                                  augmented, fp, threads) {
   
   # Check that inputs are valid individually
   validate_params_individually(f_occ, f_det, flocker_data,
                                multiseason, f_col, f_ex, colex_init, f_auto,
-                               augmented, fp)
+                               augmented, fp, threads)
   
   # Check that parameters are valid in combination
   if (flocker_data$type == "single") {
@@ -198,13 +198,13 @@ validate_flock_params <- function(f_occ, f_det, flocker_data,
   } else if (flocker_data$type == "augmented") {
     validate_param_combos_augmented(f_occ, f_det, flocker_data, 
                                    multiseason, f_col, f_ex, colex_init, f_auto,
-                                   augmented, fp)
+                                   augmented, fp, threads)
   } else {
     assertthat::assert_that(flocker_data$type == "multi") 
     # above line is redundant but included for clarity
     validate_param_combos_multi(f_occ, f_det, flocker_data, 
                                 multiseason, f_col, f_ex, colex_init, f_auto,
-                                augmented, fp)
+                                augmented, fp, threads)
   }
 }
 
@@ -212,7 +212,7 @@ validate_flock_params <- function(f_occ, f_det, flocker_data,
 #' @return silent if parameters are valid
 validate_params_individually <- function(f_occ, f_det, flocker_data,
                                          multiseason, f_col, f_ex, colex_init, f_auto,
-                                         augmented, fp) {
+                                         augmented, fp, threads) {
   # Check that formulas are valid and produce informative errors otherwise
   assertthat::assert_that(
     !is.null(f_det),
@@ -256,6 +256,13 @@ validate_params_individually <- function(f_occ, f_det, flocker_data,
   assertthat::assert_that(colex_init2 %in% c("NULL", "explicit", "equilibrium"))
   assertthat::assert_that(is.logical(augmented))
   assertthat::assert_that(is.logical(fp))
+  
+  # Check that threads is valid
+  assertthat::assert_that(
+    is.null(threads) | 
+      ((length(threads) == 1) & (threads > 0) & (threads == as.integer(threads))),
+    msg = "threads must be null or a positive integer"
+  )
 }
 
 #' Check validity of params passed to `flock` if `type` is `single`
@@ -353,7 +360,7 @@ validate_param_combos_single_C <- function(f_occ, f_det, flocker_data,
 #' @return silent if parameters are valid
 validate_param_combos_augmented <- function(f_occ, f_det, flocker_data, 
                                          multiseason, f_col, f_ex, colex_init, f_auto,
-                                         augmented, fp) {
+                                         augmented, fp, threads) {
   assertthat::assert_that(
     is_flocker_formula(f_occ), msg = formula_error("occupancy")
   )
@@ -386,13 +393,17 @@ validate_param_combos_augmented <- function(f_occ, f_det, flocker_data,
                  "elements must be 0 or 1."
     )
   )
+  assertthat::assert_that(
+    is.null(threads),
+    msg("multithreading not supported in augmented models; set threads to NULL")
+  )
 }
 
 #' Check validity of params passed to `flock` if `type` is `multi`
 #' @return silent if parameters are valid
 validate_param_combos_multi <- function(f_occ, f_det, flocker_data, 
                                          multiseason, f_col, f_ex, colex_init, f_auto,
-                                         augmented, fp) {
+                                         augmented, fp, threads) {
   assertthat::assert_that(
     isFALSE(augmented),
     msg = paste0("flocker_data not formatted for augmented model, but ",
@@ -459,6 +470,10 @@ validate_param_combos_multi <- function(f_occ, f_det, flocker_data,
       msg = "in a multi-season model, all non-missing data must be 0 or 1."
     )
   }
+  assertthat::assert_that(
+    is.null(threads),
+    msg("multithreading not supported in multiseason models; set threads to NULL")
+  )
 }
 
 #' Create error message for formula with incorrect syntax
