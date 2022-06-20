@@ -2,12 +2,21 @@
 % Please edit documentation in R/flock.R
 \name{flocker_fit_code_util}
 \alias{flocker_fit_code_util}
-\title{Either fit a flocker model or output stancode}
+\title{Either fit a flocker model or output stancode or output standata}
 \usage{
-flocker_fit_code_util(stancode, f_use, data, data2, family, stanvars, ...)
+flocker_fit_code_util(
+  output,
+  f_use,
+  data,
+  data2,
+  family,
+  stanvars,
+  threads,
+  ...
+)
 }
 \arguments{
-\item{stancode}{logical; if TRUE return stan code, if false fit model}
+\item{output}{logical; if TRUE return stan code, if false fit model}
 
 \item{f_use}{brms formula}
 
@@ -22,8 +31,8 @@ flocker_fit_code_util(stancode, f_use, data, data2, family, stanvars, ...)
 \item{...}{brms ...}
 }
 \value{
-output of brms::make_stancode or brms::brm
+output of brms::brm or brms::make_stancode or brms::make_standata
 }
 \description{
-Either fit a flocker model or output stancode
+Either fit a flocker model or output stancode or output standata
 }

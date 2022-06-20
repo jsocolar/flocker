@@ -14,7 +14,8 @@ validate_param_combos_augmented(
   colex_init,
   f_auto,
   augmented,
-  fp
+  fp,
+  threads
 )
 }
 \value{

@@ -16,6 +16,7 @@ flocker_stancode(
   f_auto = NULL,
   augmented = FALSE,
   fp = FALSE,
+  threads = threads,
   ...
 )
 }
@@ -61,6 +62,9 @@ data-augmented multi-species model, and FALSE otherwise.}
 
 \item{fp}{logical. If data are formatted for an fp model, must be set to
 TRUE, otherwise to FALSE.}
+
+\item{threads}{NULL or positive integer. If integer, the number of threads
+to use per chain in within chain parallelization.}
 
 \item{...}{additional arguments passed to \code{brms::brm()}}
 }

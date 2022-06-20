@@ -14,7 +14,8 @@ validate_params_individually(
   colex_init,
   f_auto,
   augmented,
-  fp
+  fp,
+  threads
 )
 }
 \value{

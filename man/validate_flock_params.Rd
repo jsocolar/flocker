@@ -14,7 +14,8 @@ validate_flock_params(
   colex_init,
   f_auto,
   augmented,
-  fp
+  fp,
+  threads
 )
 }
 \value{
