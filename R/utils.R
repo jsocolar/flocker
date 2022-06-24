@@ -395,7 +395,7 @@ validate_param_combos_augmented <- function(f_occ, f_det, flocker_data,
   )
   assertthat::assert_that(
     is.null(threads),
-    msg("multithreading not supported in augmented models; set threads to NULL")
+    msg = "multithreading not supported in augmented models; set threads to NULL"
   )
 }
 
@@ -472,7 +472,7 @@ validate_param_combos_multi <- function(f_occ, f_det, flocker_data,
   }
   assertthat::assert_that(
     is.null(threads),
-    msg("multithreading not supported in multiseason models; set threads to NULL")
+    msg = "multithreading not supported in multiseason models; set threads to NULL"
   )
 }
 
