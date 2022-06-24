@@ -260,7 +260,7 @@ validate_params_individually <- function(f_occ, f_det, flocker_data,
   # Check that threads is valid
   assertthat::assert_that(
     is.null(threads) | 
-      ((length(threads) == 1) & (threads > 0) & (threads == as.integer(threads))),
+      isTRUE((length(threads) == 1) & (threads > 0) & (threads == as.integer(threads))),
     msg = "threads must be null or a positive integer"
   )
 }
