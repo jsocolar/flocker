@@ -469,7 +469,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
 #' @param ... brms ...
 #' @return output of brms::brm or brms::make_stancode or brms::make_standata
 flocker_fit_code_util <- function (
-  output, f_use, data, data2, family, stanvars, threads, ...
+  output, f_use, data, data2, family, stanvars, threads = NULL, ...
  ) {
   if (family$name == "occupancy_single_threaded") {
     if (output == "code") {
@@ -502,7 +502,7 @@ flocker_fit_code_util <- function (
                        ...)
       cmdstanr::cmdstan_make_local(cpp_options = cml, append = F)
     }
-  } else {
+  } else if (!is.null(threads)){
     if (output == "code") {
       out <- brms::make_stancode(f_use, 
                                  data = data,
@@ -512,7 +512,13 @@ flocker_fit_code_util <- function (
                                  threads = threads,
                                  ...)
     } else if (output == "data") {
-      
+      out <- brms::make_standata(f_use, 
+                                 data = data,
+                                 data2 = data2,
+                                 family = family, 
+                                 stanvars = stanvars,
+                                 threads = threads,
+                                 ...)
     } else if (output == "model") {
       out <- brms::brm(f_use, 
                        data = data,
@@ -520,6 +526,29 @@ flocker_fit_code_util <- function (
                        family = family, 
                        stanvars = stanvars,
                        threads = threads,
+                       ...)
+    }
+  } else {
+    if (output == "code") {
+      out <- brms::make_stancode(f_use, 
+                                 data = data,
+                                 data2 = data2,
+                                 family = family, 
+                                 stanvars = stanvars,
+                                 ...)
+    } else if (output == "data") {
+      out <- brms::make_standata(f_use, 
+                                 data = data,
+                                 data2 = data2,
+                                 family = family, 
+                                 stanvars = stanvars,
+                                 ...)
+    } else if (output == "model") {
+      out <- brms::brm(f_use, 
+                       data = data,
+                       data2 = data2,
+                       family = family, 
+                       stanvars = stanvars,
                        ...)
     }
   }
