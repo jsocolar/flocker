@@ -16,7 +16,7 @@ flocker_standata(
   f_auto = NULL,
   augmented = FALSE,
   fp = FALSE,
-  threads = threads,
+  threads = NULL,
   ...
 )
 }

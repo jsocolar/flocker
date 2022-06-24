@@ -64,7 +64,7 @@ flock <- function(f_occ, f_det, flocker_data, data2 = NULL,
 #' @export
 flocker_stancode <- function(f_occ, f_det, flocker_data, data2 = NULL, 
                   multiseason = NULL, f_col = NULL, f_ex = NULL, colex_init = NULL, f_auto = NULL,
-                  augmented = FALSE, fp = FALSE, threads = threads,
+                  augmented = FALSE, fp = FALSE, threads = NULL,
                   ...) {
   flock_(output = "code", f_occ = f_occ, f_det = f_det, 
          flocker_data = flocker_data, data2 = data2, 
@@ -78,7 +78,7 @@ flocker_stancode <- function(f_occ, f_det, flocker_data, data2 = NULL,
 #' @export
 flocker_standata <- function(f_occ, f_det, flocker_data, data2 = NULL, 
                              multiseason = NULL, f_col = NULL, f_ex = NULL, colex_init = NULL, f_auto = NULL,
-                             augmented = FALSE, fp = FALSE, threads = threads,
+                             augmented = FALSE, fp = FALSE, threads = NULL,
                              ...) {
   flock_(output = "data", f_occ = f_occ, f_det = f_det, 
          flocker_data = flocker_data, data2 = data2, 

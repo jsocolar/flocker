@@ -16,7 +16,7 @@ flocker_stancode(
   f_auto = NULL,
   augmented = FALSE,
   fp = FALSE,
-  threads = threads,
+  threads = NULL,
   ...
 )
 }
