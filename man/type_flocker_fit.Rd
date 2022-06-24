@@ -9,6 +9,9 @@ type_flocker_fit(x)
 \arguments{
 \item{x}{flocker_fit object}
 }
+\value{
+string giving model type
+}
 \description{
 Extract lik_type from object of class flocker_fit
 }

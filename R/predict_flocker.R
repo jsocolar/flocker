@@ -4,7 +4,7 @@
 #'     all available posterior iterations.
 #' @param new_data Optional new data at which to predict. If `NULL`, predictions
 #'     are given at the data points used for model fitting ("retrodictions")
-#' @param hist_condition Logical indicator of whether to directly condition the 
+#' @param history_condition Logical indicator of whether to directly condition the 
 #'     posterior for the occupancy state on the observed detection histories.
 #'     For example, at sites with at least one detection, the true occupancy 
 #'     state conditioned on the history is one with absolute certainty. Without 
@@ -30,16 +30,16 @@
 #' @export
 
 predict_flocker <- function(flocker_fit, n_iter=NULL, new_data = NULL, 
-                            hist_condition = FALSE, mixed = FALSE, 
+                            history_condition = FALSE, mixed = FALSE, 
                             sample_new_levels = "uncertainty") {
   if (!is_flocker_fit(flocker_fit)) {
     stop("`flocker_fit` must be an object of class `flocker_fit`")
   }
-  if (!is.logical(hist_condition)) {
-    stop("`hist_condition` must be logical")
+  if (!is.logical(history_condition)) {
+    stop("`history_condition` must be logical")
   }
-  if (hist_condition & (!is.null(new_data))) {
-    stop("`hist_condition` must be `FALSE` if new_data is supplied")
+  if (history_condition & (!is.null(new_data))) {
+    stop("`history_condition` must be `FALSE` if new_data is supplied")
   }
   if (!is.logical(mixed)) {
     stop("`mixed` must be logical")
@@ -95,7 +95,7 @@ predict_flocker <- function(flocker_fit, n_iter=NULL, new_data = NULL,
     message("`sample_new_levels` set to 'gaussian' for mixed predictive checking")
   }
   
-  Z <- get_Z(flocker_fit, n_iter = n_iter, hist_condition = hist_condition, 
+  Z <- get_Z(flocker_fit, n_iter = n_iter, history_condition = history_condition, 
              new_data = new_data2, sample_new_levels = sample_new_levels)
   Z_samp <- apply(Z, 2, function(x){rbinom(length(x), 1, x)})
   
@@ -111,7 +111,7 @@ predict_flocker <- function(flocker_fit, n_iter=NULL, new_data = NULL,
   
   lt <- type_flocker_fit(flocker_fit)
   
-  if (lt == "V") {
+  if (lt == "single") {
     n_unit <- new_data$n_unit[1]
     max_rep <- max(new_data$n_rep)
     positions <- get_positions_V(flocker_fit)
@@ -122,7 +122,7 @@ predict_flocker <- function(flocker_fit, n_iter=NULL, new_data = NULL,
       j <- positions[k, 2]
       out[i, j, ] <- rbinom(n_iter, 1, pd[, k]*Z_samp[, i])
     }
-  } else if (lt == "C") {
+  } else if (lt == "single_C") {
     n_unit <- nrow(new_data)
     out <- matrix(nrow = n_iter, ncol = n_unit)
     for (i in 1:n_unit) {

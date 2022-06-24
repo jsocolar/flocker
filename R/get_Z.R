@@ -2,7 +2,7 @@
 #' @param flocker_fit A flocker_fit object
 #' @param n_iter The number of posterior iterations desired. If `NULL`, use
 #'     all available posterior iterations.
-#' @param hist_condition Should the posterior distribution for Z directly 
+#' @param history_condition Should the posterior distribution for Z directly 
 #'     condition on the observed detection history (`TRUE`) or not (`FALSE`)?
 #'     For example, at sites with at least one detection, the true occupancy 
 #'     state conditioned on the history is one with absolute certainty. Without 
@@ -12,7 +12,7 @@
 #'     still condition indirectly on the observed history via the fitted value 
 #'     of psi, which itself depends on all of the observed detection histories.
 #' @param new_data Optional new data at which to predict the Z matrix. Generally
-#'     the output of `make_flocker_data`. Cannot be used if `hist_condition` is
+#'     the output of `make_flocker_data`. Cannot be used if `history_condition` is
 #'     set to `TRUE`.
 #' @param sample_new_levels If new_data is provided and contains random effect
 #'     levels not present in the original data, how should predictions be
@@ -22,7 +22,7 @@
 #'     of occupancy probability.
 #' @export
 
-get_Z <- function (flocker_fit, n_iter = NULL, hist_condition = TRUE, 
+get_Z <- function (flocker_fit, n_iter = NULL, history_condition = TRUE, 
                    new_data = NULL, sample_new_levels = "uncertainty") {
   if (!is_flocker_fit(flocker_fit)) {
     stop("flocker_fit must be an object of class `flocker_fit`")
@@ -44,13 +44,13 @@ get_Z <- function (flocker_fit, n_iter = NULL, hist_condition = TRUE,
     stop("requested more iterations than contained in flocker_fit")
   }
   
-  if (!is.logical(hist_condition)) {
-    stop("hist_condition must be logical")
+  if (!is.logical(history_condition)) {
+    stop("history_condition must be logical")
   }
   
   if (is.null(new_data)) {
     new_data <- flocker_fit$data
-  } else if (hist_condition) {
+  } else if (history_condition) {
     stop("cannot condition on Q if new_data is provided")
   } else if (!("flocker_data" %in% class(new_data))) {
     stop("new_data, if provided, must be a `flocker_data` object as produced by 
@@ -58,20 +58,18 @@ get_Z <- function (flocker_fit, n_iter = NULL, hist_condition = TRUE,
   } else {
     new_data <- new_data$data
   }
-  
-  
+  message("computing occupancy linear predictor")
   lpo <- t(fitted_flocker(flocker_fit, type="occupancy", ndraws = n_iter, 
                           new_data = new_data, 
                           summarise = F, allow_new_levels = TRUE, 
                           sample_new_levels = sample_new_levels,
                           response = F))
-  
+  message("computing detection linear predictor")
   lpd <- t(fitted_flocker(flocker_fit, type="detection", ndraws = n_iter, 
                           new_data = new_data, 
                           summarise = F, allow_new_levels = TRUE, 
                           sample_new_levels = sample_new_levels, 
                           response = F))
-  
   lik_type <- type_flocker_fit(flocker_fit)
   
   if (lik_type == "V") {
@@ -84,10 +82,12 @@ get_Z <- function (flocker_fit, n_iter = NULL, hist_condition = TRUE,
   psi_all <- boot::inv.logit(lpo)
   Z <- matrix(data = 1, nrow = n_iter, ncol = n_unit)
   
-  if (!hist_condition) { # if not conditioning on detection history
-    Z <- psi_all 
-  } else { # if conditioning on detection history
-    antitheta_all <- boot::inv.logit(-lpd) 
+  message("computing Z")
+  if (!history_condition) {
+    Z <- psi_all
+  } else {
+    pb <- utils::txtProgressBar(min = 0, max = n_unit, style = 3)
+    antitheta_all <- boot::inv.logit(-lpd)
     if (lik_type == "V") {
       index_matrix <- new_data[grep("^rep_index", names(new_data))] 
       Q <- as.integer(new_data$Q[1:n_unit]) # get Q
@@ -99,6 +99,7 @@ get_Z <- function (flocker_fit, n_iter = NULL, hist_condition = TRUE,
           denominator <- numerator + (1 - psi)
           Z[, i] <- numerator/denominator
         }
+        utils::setTxtProgressBar(pb, i)
       }
     } else { # lik_type == "C"
       Q <- as.integer(new_data$n_suc > 0)
@@ -111,8 +112,10 @@ get_Z <- function (flocker_fit, n_iter = NULL, hist_condition = TRUE,
           denominator <- numerator + (1 - psi) 
           Z[, i] <- numerator/denominator
         }
+        utils::setTxtProgressBar(pb, i)
       }
     }
+    close(pb)
   }
 
   class(Z) <- c("postZ", "matrix")
