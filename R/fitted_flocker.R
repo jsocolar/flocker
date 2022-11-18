@@ -1,21 +1,28 @@
-#' Get expected values of the posterior predictive distribution for the occupancy
-#' component, the detection component, or both. Note that in the case of the 
-#' detection component, you are conditioning on occupancy being 1. Note that these 
-#' are values for a hypothetical set of unit covariates rather than the ones 
-#' actually observed (some of which are known to be occupied, when Q == 1).
+#' Get expected values of the posterior predictive distribution for the modeled
+#' probabilities (occupancy, detection, colonization, extinction, autologistic). 
+#' Note that these are conditional probabilties (e.g. detection conditional on 
+#' occupancy, colonzation conditional on previous non-occupancy, etc).
+#' These probabilities are not conditioned on the observed histories (e.g. the
+#' occupancy probability is not fixed to one at sites with a detection; it is
+#' estimated only based on the covariates)
 #' @param flocker_fit A flocker_fit object.
-#' @param type Get posterior probabilities for 'occupancy', 'detection', or for 
-#' 'both'. 
+#' @param components a character vector specifying one or more of "occ",
+#'     "det", "col", "ex", or "auto" for which to obtain fitted values.
 #' @param new_data Optional new data at which to evaluate occupancy predictions. 
+#'     New data can be passed as a flocker_data object produced by 
+#'     \code{make_flocker_data} or as a simple dataframe with one row per desired
+#'     predicton.
 #'     If `NULL` (the default) expected values are generated for the original data.
+#' @param summarise if TRUE, return the expected value and upper and lower bound 
+#'     of the credible interval, otherwise return the posterior matrix. 
 #' @param CI A vector of length 2 specifying the upper and lower bounds of the 
 #'     credible interval. Defaults to c(.05, .95)
-#' @param ndraws Positive integer indicating how many poserior draws should be 
+#' @param ndraws Positive integer indicating how many posterior draws should be 
 #'     used. If `NULL` (the default) all draws are used. 
-#' @param response Should expected values be returned on the response or logit-scale? 
-#' Defaults to `TRUE`, i.e. response scale.
-#' @param summarise if TRUE, return the expected value and upper and lower bound 
-#' of the credible interval, otherwise return the posterior matrix. 
+#' @param response Should results be returned on the response or logit-scale? 
+#'     Defaults to `TRUE`, i.e. response scale. However, the autologistic
+#'     parameter is not interpretable as a probability and is always returned
+#'     on the logit scale regardless of the value of `response`
 #' @param re_formula formula containing group-level effects to be considered in 
 #'     the prediction. If `NULL` (default), include all group-level effects; if 
 #'     NA, include no group-level effects.
@@ -27,34 +34,59 @@
 #'     and the estimate and its credible interval (lower and upper bounds)
 #' @export
 #' 
-fitted_flocker <- function(flocker_fit, type, new_data = NULL, CI = c(.05, .95), 
-                         ndraws = NULL, response=TRUE, re_formula = NULL, 
-                         summarise = TRUE, allow_new_levels = FALSE, 
-                         sample_new_levels = "uncertainty") {
-  ## catch errors
-  if(!(type %in% c("occupancy", "detection", "both"))) {
-    stop("type must either be 'occupancy', 'detection', or 'both'")
-  }
-  if(length(CI) != 2 | !is.numeric(CI)) {
-    stop("CI should be numeric length 2")
-  }
-  if(any(CI < 0 | CI > 1)) {
-    stop("CI cannot have bounds <0 or >1")
-  }
+fitted_flocker <- function(
+    flocker_fit, 
+    components = c("occ", "det", "col", "ex", "auto"),
+    new_data = NULL, summarise = FALSE, CI = c(.05, .95), ndraws = NULL, 
+    response=TRUE, re_formula = NULL, allow_new_levels = FALSE, 
+    sample_new_levels = "uncertainty") {
+  
+  assertthat::assert_that(
+    is_flocker_fit(flocker_fit),
+    msg = "flocker_fit is corrupt or is not a flocker fit."
+  )
+  assertthat::assert_that(
+    is_one_logical(summarise),
+    msg = "summarise must be a single logical value"
+  )
+  assertthat::assert_that(
+    is.numeric(CI),
+    msg = "CI must be numeric"
+    )
+  assertthat::assert_that(
+    length(CI) == 2,
+    msg = "CI must be numeric"
+  )
+  assertthat::assert_that(
+    all(CI >= 0) & all(CI <= 1),
+    msg = "CI must be between zero and one inclusive"
+  )
   if(!is.null(ndraws)) {
-    if(ndraws > brms::ndraws(flocker_fit)) {
-      stop("You can't have more draws than there are samples")
-    }
+    assertthat::assert_that(
+      ndraws <= brms::ndraws(flocker_fit),
+      msg = "More draws requested than contained in flocker_fit"
+    )
   } else { # i.e. is null
     ndraws <- brms::ndraws(flocker_fit)
   }
   
+  model_type <- type_flocker_fit(flocker_fit)
+  relevant_components <- params_by_type[[model_type]]
+  
+  use_components <- components[components %in% relevant_components]
+  
+  assertthat::assert_that(
+    length(use_components) > 0,
+    msg = "none of the requested components is relevant to the supplied model type"
+  )
+  
+  old_data <- flocker_fit$data
+  
   # format new_data: add necessary flocker cols to data frame
   if(is.null(new_data)) { # new data not provided
-    new_data_fmtd <- flocker_fit$data
+    new_data_fmtd <- old_data
   } else {
-    # add cols (not relevant for getting linpred on occ, but throws error 
-    # otherwise)
+    # add cols to avoid error
     col_string <- "^y$|^Q$|^n_unit$|^unit$|^n_rep$|^rep_index"
     flocker_cols <- flocker_fit$data[grepl(col_string, names(flocker_fit$data))]
     extra_cols <- which(!(names(flocker_cols) %in% names(new_data)))

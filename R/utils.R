@@ -28,10 +28,14 @@ log1m_inv_logit <- function (x) {
 }
 
 ##### array manipulation #####
-#' convert matrix to long vector format
+#' convert matrix-like object to long vector format
 #' @param m matrix-like object to expand
 #' @return vector
 expand_matrix <- function (m) {
+  assertthat::assert_that(
+    length(dim(m)) == 2,
+    msg = "error in expand_matrix: dimension of input is not 2"
+    )
   as.vector(as.matrix(m))
 }
 
@@ -39,22 +43,29 @@ expand_matrix <- function (m) {
 #' @param a 3D array to expand
 #' @return matrix
 expand_array_3D <- function(a) {
+  assertthat::assert_that(
+    nslice(a) > 1,
+    msg = "error in expand_array_3D: input contains fewer than two slices"
+  )
   out <- a[,,1]
   for (i in 2:dim(a)[3]) {
     out <- rbind(out, a[,,i])
   }
-  return(out)
+  out
 }
 
-#' Get third dimension of an array
-#' @param x array for which third dimension is desired
+#' Get third dimension of a 3D array
+#' @param x 3D array for which third dimension is desired
 #' @return integer size of third dimension
 nslice <- function(x) {
-  if (!is.array(x)){
-    stop("x is not an array")
-  } else if (length(dim(x)) != 3) {
-    stop("x is not a 3-D array")
-  }
+  assertthat::assert_that(
+    is.array(x),
+    msg = "error in nslice: input is not an array"
+  )
+  assertthat::assert_that(
+    length(dim(x)) == 3,
+    msg = "error in nslice: input is not a 3-D array"
+  )
   dim(x)[3]
 }
 
@@ -67,10 +78,30 @@ stack_matrix <- function (m, n) {
 }
 
 ##### Bookkeeping #####
+#' column names created in flocker
+#' @param n_rep max number of repeat visits
+#' @param n_year max length of hmm series in dynamic models
+#' @return character vector of column names created internally by 
+#'    make_flocker_data
+flocker_col_names <- function(n_rep = NULL, n_year = NULL) {
+  out <- c("ff_y", 
+    "ff_n_suc", "ff_n_trial", 
+    "ff_Q", "ff_n_unit", "ff_n_rep", "ff_unit",
+    "ff_n_series", "ff_n_year", "ff_series", "ff_year", "ff_series_year",
+    "ff_n_sp", "ff_species", "ff_superQ")
+  if(!is.null(n_rep)) {
+    out <- c(out, paste0("ff_rep_index", 1:n_rep))
+  }
+  if(!is.null(n_year)) {
+    out <- c(out, paste0("ff_unit_index", 1:n_year))
+  }
+  out
+}
+
 #' Reserved names in flocker
 #' @return character vector of regexes matching reserved variable names
 flocker_reserved <- function() {
-  c("^y$", "^occ_", "^rep_", "^\\.")
+  c("^ff_", "^\\.")
 }
 
 #' Model types in flocker as outputted by `flock`
@@ -94,7 +125,7 @@ flocker_model_types <- function() {
 flocker_data_input_types <- function() {
   c("single",    # covers all model types prefixed with "single"
                  # (rep-constant versus varying is inferred from
-                 # existence of event_covs
+                 # existence of event_covs)
     "augmented", # the data-augmented single-species model
     "multi"      # covers all model types prefixed with "multi"
     )
@@ -144,18 +175,38 @@ is_flocker_fit <- function(x) {
 #' @param x flocker_fit object
 #' @return string giving model type
 type_flocker_fit <- function(x) {
-  if (!is_flocker_fit(x)) {
-    stop("x must be a flocker_fit object")
-  }
-  if (!("lik_type" %in% names(attributes(x)))){
-    stop("the attributes of the flocker_fit object have been altered or corrupted")
-  }
+  assertthat::assert_that(
+    is_flocker_fit(x),
+    msg = "x must be a flocker_fit object"
+  )
+  assertthat::assert_that(
+    "lik_type" %in% names(attributes(x)),
+    msg = "the attributes of the flocker_fit object have been altered or corrupted"
+  )
   out <- attributes(x)$lik_type
-  if (!(out %in% flocker_model_types())) {
-    stop("the attributes of the flocker_fit object have been altered or corrupted")
-  }
-  return(out)
+  
+  assertthat::assert_that(
+    out %in% flocker_model_types(),
+    msg = "the attributes of the flocker_fit object have been altered or corrupted"
+  )
+  
+  out
 }
+
+#' A list of distributional parameters by model type
+#' @return A list of distributional parameters by model type
+params_by_type <- list(
+  single = c("occ", "det"),
+  single_C = c("occ", "det"),
+  augmented = c("occ", "det"),
+  multi_colex = c("occ", "det", "col", "ex"),
+  multi_colex_eq = c("det", "col", "ex"),
+  multi_autologistic = c("occ", "det", "auto"),
+  single_fp = c("occ", "det"),
+  multi_colex_fp = c("occ", "det", "col", "ex"),
+  multi_colex_eq_fp = c("det", "col", "ex"),
+)
+
 
 #' Get matrix positions corresponding to each row of data in "single" type 
 #' flocker_fit
@@ -206,6 +257,7 @@ validate_flock_params <- function(f_occ, f_det, flocker_data,
                                 multiseason, f_col, f_ex, colex_init, f_auto,
                                 augmented, fp, threads)
   }
+  validate_unit_formula_variables(f_occ, f_col, f_ex, f_auto, flocker_data)
 }
 
 #' Check individual validity of params passed to `flock`
@@ -265,6 +317,32 @@ validate_params_individually <- function(f_occ, f_det, flocker_data,
   )
 }
 
+#' Check that no event covariates are used in unit formulas
+#' @return silent if parameters are valid
+validate_unit_formula_variables <- function(f_occ, f_col, f_ex, f_auto, flocker_data) {
+  # Check that no event covariates are used in unit formulas
+  unit_terms <- character(0)
+  if(!is.null(f_occ)){
+    unit_terms <- c(unit_terms, labels(terms(f_occ)))
+  }
+  if(!is.null(f_col)){
+    unit_terms <- c(unit_terms, labels(terms(f_col)))
+  }
+  if(!is.null(f_ex)){
+    unit_terms <- c(unit_terms, labels(terms(f_ex)))
+  }
+  if(!is.null(f_auto)){
+    unit_terms <- c(unit_terms, labels(terms(f_auto)))
+  }
+  assertthat::assert_that(
+    !any(unit_terms %in% flocker_data$event_covs),
+    msg = paste0("Variables passed to `make_flocker_data` as event ",
+                 "covariates are being used in at least one unit-level formula ",
+                 "(i.e. f_occ, f_col, f_ex, f_auto). This is disallowed for your ",
+                 "protection. Pass these variables as unit covariates.")
+  )
+}
+
 #' Check validity of params passed to `flock` if `type` is `single`
 #' @return silent if parameters are valid
 validate_param_combos_single <- function(f_occ, f_det, flocker_data, 
@@ -293,16 +371,16 @@ validate_param_combos_single <- function(f_occ, f_det, flocker_data,
   )  
   if(fp) {
     assertthat::assert_that(
-      all(is.numeric(flocker_data$data$y)) &
-        all(flocker_data$data$y >= 0) &
-        all(flocker_data$data$y <= 1),
+      all(is.numeric(flocker_data$data$ff_y)) &
+        all(flocker_data$data$ff_y >= 0) &
+        all(flocker_data$data$ff_y <= 1),
       msg = paste0("for a single-season fp model, all response elements ",
                    "must be numeric between 0 and 1 inclusive")
     )
   } else {
     assertthat::assert_that(
-      all(is.numeric(flocker_data$data$y)) &
-        all(flocker_data$data$y %in% c(0, 1)), 
+      all(is.numeric(flocker_data$data$ff_y)) &
+        all(flocker_data$data$ff_y %in% c(0, 1)), 
       msg = paste0("for a standard single-season model, all response ",
                    "elements must be 0 or 1."
       )
@@ -344,8 +422,8 @@ validate_param_combos_single_C <- function(f_occ, f_det, flocker_data,
   )
   
   assertthat::assert_that(
-    all(flocker_data$data$n_suc >= 0) &
-      all(flocker_data$data$n_suc == round(flocker_data$data$n_suc)),
+    all(flocker_data$data$ff_n_suc >= 0) &
+      all(flocker_data$data$ff_n_suc == round(flocker_data$data$ff_n_suc)),
     msg = paste0("flocker_data appers to be corrupt, with `type` set to ",
                  "single_C but response not consisting entirely of ",
                  "nonnegative integers. ",
@@ -387,8 +465,8 @@ validate_param_combos_augmented <- function(f_occ, f_det, flocker_data,
     msg = "augmented models not implemented for fp likelihoods."
   )
   assertthat::assert_that(
-    all(is.numeric(flocker_data$data$y)) &
-      all(flocker_data$data$y %in% c(0, 1)), 
+    all(is.numeric(flocker_data$data$ff_y)) &
+      all(flocker_data$data$ff_y %in% c(0, 1)), 
     msg = paste0("for an augmented model, all response ",
                  "elements must be 0 or 1."
     )
@@ -449,7 +527,7 @@ validate_param_combos_multi <- function(f_occ, f_det, flocker_data,
       !fp, msg = "fp likelihoods not yet implemented in autologistic models"
     )
   }
-  y_nonmissing <- flocker_data$data$y[flocker_data$data$y != -99]
+  y_nonmissing <- flocker_data$data$ff_y[flocker_data$data$ff_y != -99]
   if(fp) {
     assertthat::assert_that(
       all(is.numeric(y_nonmissing)) &
@@ -502,6 +580,13 @@ is_flocker_formula <- function (x) {
 #' @return logical; TRUE if x is a named list with no duplicate names
 is_named_list <- function (x) {
   is.list(x) & (length(names(x)) == length(x)) & (!any(duplicated(names(x))))
+}
+
+#' check if an object is a single logical value
+#' @param x object to test
+#' @return logical; TRUE if x is a single logical value
+is_one_logical <- function (x) {
+  identical(x, TRUE) | identical(x, FALSE)
 }
 
 #' get shared elements between two vectors

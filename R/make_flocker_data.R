@@ -99,10 +99,16 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
   
   if (type == "single") {
     out <- make_flocker_data_static(obs, unit_covs, event_covs, fp)
+    out$unit_covs <- names(unit_covs)
+    out$event_covs <- names(event_covs)
   } else if (type == "multi") {
     out <- make_flocker_data_dynamic(obs, unit_covs, event_covs, fp)
+    out$unit_covs <- names(unit_covs[[1]])
+    out$event_covs <- names(event_covs)
   } else if (type == "augmented") {
     out <- make_flocker_data_augmented(obs, n_aug, unit_covs, event_covs, fp)
+    out$unit_covs <- names(unit_covs)
+    out$event_covs <- names(event_covs)
   }
   
   out$fp <- fp
@@ -180,7 +186,7 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
     )
     assertthat::assert_that(
       !any(is.na(unit_covs)),
-      msg = "A constant covariate contains missing values."
+      msg = "A unit covariate contains missing values."
     )
   }
   if (!is.null(event_covs)) {
@@ -211,14 +217,14 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
   if (is.null(event_covs) & !fp) {
     n_trial <- rowSums(!is.na(obs))
     n_suc <- rowSums(obs, na.rm = T)
-    flocker_data <- data.frame(n_suc = n_suc, n_trial = n_trial)
+    flocker_data <- data.frame(ff_n_suc = n_suc, ff_n_trial = n_trial)
     if (!is.null(unit_covs)) {
       flocker_data <- cbind(flocker_data, unit_covs)
     }
     out <- list(data = flocker_data, n_rep = n_rep, 
                 type = "single_C")
   } else {
-    flocker_data <- data.frame(y = expand_matrix(obs))
+    flocker_data <- data.frame(ff_y = expand_matrix(obs))
     if (!is.null(unit_covs)) {
       unit_covs_stacked <- 
         do.call(rbind, replicate(n_rep, unit_covs, simplify=FALSE))
@@ -226,25 +232,25 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
     }
     event_covs <- as.data.frame(lapply(event_covs, expand_matrix))
     flocker_data <- cbind(flocker_data, event_covs)
-    flocker_data$n_unit <- c(nrow(obs), 
+    flocker_data$ff_n_unit <- c(nrow(obs), 
                              rep(-99, nrow(obs) - 1))
-    flocker_data$n_rep <- c(matrixStats::rowSums2(!is.na(obs)), 
+    flocker_data$ff_n_rep <- c(matrixStats::rowSums2(!is.na(obs)), 
                             rep(-99, nrow(obs) * (n_rep - 1)))
-    flocker_data$Q <- c(as.integer(matrixStats::rowSums2(obs, na.rm = T) > 0),
+    flocker_data$ff_Q <- c(as.integer(matrixStats::rowSums2(obs, na.rm = T) > 0),
                         rep(-99, nrow(obs) * (n_rep - 1)))
     
     # Prepare to add rep indices, and trim flocker_data to existing observations
-    flocker_data$unit <- 1:nrow(obs)
+    flocker_data$ff_unit <- 1:nrow(obs)
     
     rep_indices <- as.data.frame(matrix(data = -99, nrow = nrow(flocker_data),
                                       ncol = n_rep))
-    names(rep_indices) <- paste0("rep_index", 1:n_rep)
-    is_not_na <- !is.na(flocker_data$y)
+    names(rep_indices) <- paste0("ff_rep_index", 1:n_rep)
+    is_not_na <- !is.na(flocker_data$ff_y)
     rep_index_vec <- rep(-99, n_rep*nrow(obs))
     rep_index_vec[is_not_na] <- cumsum(is_not_na)[is_not_na]
     rep_indices[1:nrow(obs),] <- rep_index_vec
     
-    flocker_data <- flocker_data[!is.na(flocker_data$y), ]
+    flocker_data <- flocker_data[!is.na(flocker_data$ff_y), ]
     rep_indices <- rep_indices[is_not_na,]
     flocker_data <- cbind(flocker_data, rep_indices)
     
@@ -323,7 +329,7 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
     }
   }
   
-  # Check that the final rep contains at least one non-NA
+  # Check that the first and final reps contain at least one non-NA
   assertthat::assert_that(
     !all(is.na(obs[ , 1, ])),
     msg = "The first column (replicate visit) of obs contains only NAs."
@@ -452,8 +458,8 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
     }
   }
   
-  flocker_data <- data.frame(y = expand_matrix(expand_array_3D(obs)))
-  flocker_data$n_unit <- c(n_unit, rep(-99, n_total - 1))
+  flocker_data <- data.frame(ff_y = expand_matrix(expand_array_3D(obs)))
+  flocker_data$ff_n_unit <- c(n_unit, rep(-99, n_total - 1))
   if (!is.null(unit_covs)) {
     unit_covs_stacked <- stack_matrix(do.call(rbind, unit_covs), n_rep)
     flocker_data <- cbind(flocker_data, unit_covs_stacked)
@@ -461,51 +467,50 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
   event_covs <- as.data.frame(lapply(event_covs, function(x){expand_matrix(expand_array_3D((x)))}))
   flocker_data <- cbind(flocker_data, event_covs)
   # number of series (HMMs)
-  flocker_data$n_series <- c(n_series, rep(-99, n_total - 1))
+  flocker_data$ff_n_series <- c(n_series, rep(-99, n_total - 1))
   # number of units
   rep1 <- obs[ , 1, ]
   n_unit <- sum(!is.na(rep1))
-  flocker_data$n_unit <- c(n_unit, rep(-99, n_total - 1))
-  
+
   # For each series:
   # Number of units (seasons) in each series (don't marginalize over trailing
   # seasons with no observations)
   # all series have at least one unit
-  flocker_data$n_year <- c(apply(rep1, 1, max_position_not_na),
+  flocker_data$ff_n_year <- c(apply(rep1, 1, max_position_not_na),
                            rep(-99, n_total - n_series))
 
   # For each unit:
   # Number of reps in each unit
   obs_unstacked <- expand_array_3D(obs)
-  flocker_data$n_rep <- c(
+  flocker_data$ff_n_rep <- c(
     apply(obs_unstacked, 1, max_position_not_na, treat_m99_NA = TRUE),
     rep(-99, n_total - n_series*n_year)
   )
-  flocker_data$Q <- c(as.integer(apply(obs_unstacked, 1, function(x){isTRUE(any(x == 1))})),
+  flocker_data$ff_Q <- c(as.integer(apply(obs_unstacked, 1, function(x){isTRUE(any(x == 1))})),
                       rep(-99, n_total - n_series*n_year))
 
   # Prepare to add unit and rep indices:
-  flocker_data$series <- seq(n_series)
-  flocker_data$year <- rep(seq(n_year), each = n_series)
-  flocker_data$series_year <- paste0(flocker_data$series, "__", flocker_data$year)
+  flocker_data$ff_series <- seq(n_series)
+  flocker_data$ff_year <- rep(seq(n_year), each = n_series)
+  flocker_data$ff_series_year <- paste0(flocker_data$ff_series, "__", flocker_data$ff_year)
     
   # Trim flocker data to existing units
-  flocker_data <- flocker_data[!is.na(flocker_data$y), ]
+  flocker_data <- flocker_data[!is.na(flocker_data$ff_y), ]
   
   assertthat::assert_that(
-    n_unit == length(unique(flocker_data$series_year)),
+    n_unit == length(unique(flocker_data$ff_series_year)),
     msg = "error 1; this should not happen; please report a bug"
   )
   
   # Unit indices: indices for the unique units belonging to each series
   unit_indices <- as.data.frame(matrix(data = -99, nrow = nrow(flocker_data),
                                       ncol = n_year))
-  names(unit_indices) <- paste0("unit_index", seq(n_year))
+  names(unit_indices) <- paste0("ff_unit_index", seq(n_year))
   message("formatting unit indices")
   pb <- txtProgressBar(min = 0, max = n_series, style = 3)
   for (i in 1:n_series) {
-    unit_indices[i, 1:flocker_data$n_year[i]] <- 
-      which(flocker_data$series[seq(n_unit)] == flocker_data$series[i])
+    unit_indices[i, 1:flocker_data$ff_n_year[i]] <- 
+      which(flocker_data$ff_series[seq(n_unit)] == flocker_data$ff_series[i])
     setTxtProgressBar(pb, i)
   }
   close(pb)
@@ -514,17 +519,17 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
   # Rep indices: indices for the unique reps belonging to each unit
   rep_indices <- as.data.frame(matrix(data = -99, nrow = nrow(flocker_data),
                                        ncol = n_rep))
-  names(rep_indices) <- paste0("rep_index", seq(n_rep))
+  names(rep_indices) <- paste0("ff_rep_index", seq(n_rep))
   message("formatting rep indices")
   pb <- txtProgressBar(min = 0, max = n_unit, style = 3)
   for (i in seq(n_unit)) {
     assertthat::assert_that(
-      !duplicated(flocker_data$series_year)[i],
+      !duplicated(flocker_data$ff_series_year)[i],
       msg = "error 2; this should not happen; please report a bug"
     )
-    if (flocker_data$n_rep[i] > 0) {
-      rep_indices[i, 1:flocker_data$n_rep[i]] <- 
-        which(flocker_data$series_year == flocker_data$series_year[i])
+    if (flocker_data$ff_n_rep[i] > 0) {
+      rep_indices[i, 1:flocker_data$ff_n_rep[i]] <- 
+        which(flocker_data$ff_series_year == flocker_data$ff_series_year[i])
     }
     setTxtProgressBar(pb, i)
   }
@@ -648,7 +653,7 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
   
   obs <- expand_array_3D(obs)
   
-  flocker_data <- data.frame(y = expand_matrix(obs))
+  flocker_data <- data.frame(ff_y = expand_matrix(obs))
   if (!is.null(site_covs)) {
     site_covs_stacked <- stack_matrix(site_covs, n_rep*n_sp)
     flocker_data <- cbind(flocker_data, site_covs_stacked)
@@ -659,27 +664,27 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
     flocker_data <- cbind(flocker_data, event_covs)
   }
   
-  flocker_data$n_unit <- c(nrow(obs), 
+  flocker_data$ff_n_unit <- c(nrow(obs), 
                            rep(-99, nrow(obs) - 1))
-  flocker_data$n_rep <- c(apply(obs, 1, function(x){sum(!is.na(x))}), 
+  flocker_data$ff_n_rep <- c(apply(obs, 1, function(x){sum(!is.na(x))}), 
                           rep(-99, nrow(obs) * (n_rep - 1)))
-  flocker_data$Q <- c(as.integer(rowSums(obs, na.rm = T) > 0),
+  flocker_data$ff_Q <- c(as.integer(rowSums(obs, na.rm = T) > 0),
                       rep(-99, nrow(obs) * (n_rep - 1)))
   
-  flocker_data$n_sp <- c(n_sp, rep(-99, nrow(flocker_data)-1))
-  flocker_data$species <- rep(rep(c(1:n_sp), each = n_site), n_rep)
-  flocker_data$superQ <- as.integer(flocker_data$species <= n_sp_obs)
+  flocker_data$ff_n_sp <- c(n_sp, rep(-99, nrow(flocker_data)-1))
+  flocker_data$ff_species <- rep(rep(c(1:n_sp), each = n_site), n_rep)
+  flocker_data$ff_superQ <- as.integer(flocker_data$ff_species <= n_sp_obs)
   
   # Prepare to add rep indices, and trim flocker_data to existing observations
-  flocker_data$unit <- 1:nrow(obs)
-  flocker_data <- flocker_data[!is.na(flocker_data$y), ]
+  flocker_data$ff_unit <- 1:nrow(obs)
+  flocker_data <- flocker_data[!is.na(flocker_data$ff_y), ]
   rep_indices <- as.data.frame(matrix(data = -99, nrow = nrow(flocker_data),
                                       ncol = n_rep))
-  names(rep_indices) <- paste0("rep_index", 1:n_rep)
+  names(rep_indices) <- paste0("ff_rep_index", 1:n_rep)
   message("formatting rep indices")
   pb <- txtProgressBar(min = 0, max = nrow(obs), style = 3)
   for (i in 1:nrow(obs)) {
-    rep_indices[i, 1:flocker_data$n_rep[i]] <- which(flocker_data$unit == i)
+    rep_indices[i, 1:flocker_data$ff_n_rep[i]] <- which(flocker_data$ff_unit == i)
     setTxtProgressBar(pb, i)
   }
   close(pb)

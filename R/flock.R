@@ -18,7 +18,7 @@
 #' @param colex_init Must be NULL unless the model is a colonization-extinction
 #'  dynamic model, in which case must be either "explicit" or "equilibrium". 
 #'  If "explicit", then `f_occ` must be provided to model 
-#'  of year-1 occupancy probabilities. If"equilibrium", then `f_occ` must be set
+#'  of year-1 occupancy probabilities. If "equilibrium", then `f_occ` must be set
 #'  to `NULL` and the initial occupancy probabilities are assumed to 
 #'  be the (possibly site-specific) equilibrium probabilities from the 
 #'  colonization-extinction dynamics. In this case, time-varying covariates are 
@@ -154,10 +154,10 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
   
   if (flocker_data$type == "single" & !fp) {
     max_rep <- flocker_data$n_rep
-    vint_text <- paste0("rep_index", 1:max_rep, 
+    vint_text <- paste0("ff_rep_index", 1:max_rep, 
                         collapse = ", ")
     f_det_use <- stats::as.formula(
-      paste0("y | vint(n_unit, n_rep, Q, ",
+      paste0("y | vint(ff_n_unit, ff_n_rep, ff_Q, ",
              vint_text, ") ", f_det_txt))
     f_use <- brms::bf(f_det_use, f_occ_use)
     if (is.null(threads)) {
@@ -180,7 +180,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
         brms::stanvar(
           scode = make_occupancy_single_threaded_lpmf(
             max_rep = max_rep,
-            grainsize = as.integer(ceiling(flocker_data$data$n_unit[1] / threads))
+            grainsize = as.integer(ceiling(flocker_data$data$ff_n_unit[1] / threads))
           ), 
           block = "functions"
         )
@@ -195,7 +195,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     }
 
   } else if (flocker_data$type == "single_C") {
-    f_det_use <- stats::as.formula(paste0("n_suc | vint(n_trial) ", f_det_txt))
+    f_det_use <- stats::as.formula(paste0("ff_n_suc | vint(ff_n_trial) ", f_det_txt))
     f_use <- brms::bf(f_det_use, f_occ_use)
     stanvars <- brms::stanvar(
       scode = make_occupancy_single_C_lpmf(), block = "functions"
@@ -210,10 +210,10 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  ...)
   } else if (augmented) {
     max_rep <- flocker_data$n_rep
-    vint_text <- paste0("rep_index", 1:max_rep, 
+    vint_text <- paste0("ff_rep_index", 1:max_rep, 
                         collapse = ", ")
     f_det_use <- stats::as.formula(
-      paste0("y | vint(n_unit, n_rep, Q, n_sp, superQ, species, ",
+      paste0("ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ff_n_sp, ff_superQ, ff_species, ",
              vint_text, ") ", f_det_txt))
     f_Omega_use <- stats::as.formula("Omega ~ 1")
     f_use <- brms::bf(f_det_use, f_occ_use, f_Omega_use)
@@ -231,13 +231,13 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
   } else if (isTRUE(multiseason == "colex") & isTRUE(colex_init == "explicit") & !fp) {
     n_rep <- flocker_data$n_rep
     n_year <- flocker_data$n_year
-    vint_text1 <- paste0("unit_index", seq(n_year), 
+    vint_text1 <- paste0("ff_unit_index", seq(n_year), 
                          collapse = ", ")
-    vint_text2 <- paste0("rep_index", seq(n_rep), 
+    vint_text2 <- paste0("ff_rep_index", seq(n_rep), 
                         collapse = ", ")
     
     f_det_use <- stats::as.formula(
-      paste0("y | vint(n_series, n_unit, n_year, n_rep, Q, ",
+      paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
     
     f_use <- brms::bf(f_det_use, f_occ_use, f_col_use, f_ex_use)
@@ -269,12 +269,12 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
   } else if (isTRUE(multiseason == "colex") & isTRUE(colex_init == "equilibrium") & !fp) {
     n_rep <- flocker_data$n_rep
     n_year <- flocker_data$n_year
-    vint_text1 <- paste0("unit_index", seq(n_year), 
+    vint_text1 <- paste0("ff_unit_index", seq(n_year), 
                          collapse = ", ")
-    vint_text2 <- paste0("rep_index", seq(n_rep), 
+    vint_text2 <- paste0("ff_rep_index", seq(n_rep), 
                          collapse = ", ")
     f_det_use <- stats::as.formula(
-      paste0("y | vint(n_series, n_unit, n_year, n_rep, Q, ",
+      paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
     
     f_use <- brms::bf(f_det_use, f_col_use, f_ex_use)
@@ -306,12 +306,12 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
   } else if (isTRUE(multiseason == "autologistic") & !fp) {
     n_rep <- flocker_data$n_rep
     n_year <- flocker_data$n_year
-    vint_text1 <- paste0("unit_index", seq(n_year), 
+    vint_text1 <- paste0("ff_unit_index", seq(n_year), 
                          collapse = ", ")
-    vint_text2 <- paste0("rep_index", seq(n_rep), 
+    vint_text2 <- paste0("ff_rep_index", seq(n_rep), 
                          collapse = ", ")
     f_det_use <- stats::as.formula(
-      paste0("y | vint(n_series, n_unit, n_year, n_rep, Q, ",
+      paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
     
     f_use <- brms::bf(f_det_use, f_occ_use, f_auto_use)
@@ -342,10 +342,10 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  ...)
   } else if (flocker_data$type == "single" & fp) {
     max_rep <- flocker_data$n_rep
-    vint_text <- paste0("rep_index", 1:max_rep, 
+    vint_text <- paste0("ff_rep_index", 1:max_rep, 
                         collapse = ", ")
     f_det_use <- stats::as.formula(
-      paste0("y | vint(n_unit, n_rep, Q, ",
+      paste0("ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ",
              vint_text, ") ", f_det_txt))
     f_use <- brms::bf(f_det_use, f_occ_use)
     
@@ -366,12 +366,12 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
   } else if (isTRUE(multiseason == "colex") & isTRUE(colex_init == "explicit") & fp) {
     n_rep <- flocker_data$n_rep
     n_year <- flocker_data$n_year
-    vint_text1 <- paste0("unit_index", seq(n_year), 
+    vint_text1 <- paste0("ff_unit_index", seq(n_year), 
                          collapse = ", ")
-    vint_text2 <- paste0("rep_index", seq(n_rep), 
+    vint_text2 <- paste0("ff_rep_index", seq(n_rep), 
                          collapse = ", ")
     f_det_use <- stats::as.formula(
-      paste0("y | vint(n_series, n_unit, n_year, n_rep, Q, ",
+      paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
     
     f_use <- brms::bf(f_det_use, f_occ_use, f_col_use, f_ex_use)
@@ -407,12 +407,12 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
   } else if (isTRUE(multiseason == "colex") & isTRUE(colex_init == "equilibrium") & fp) {
     n_rep <- flocker_data$n_rep
     n_year <- flocker_data$n_year
-    vint_text1 <- paste0("unit_index", seq(n_year), 
+    vint_text1 <- paste0("ff_unit_index", seq(n_year), 
                          collapse = ", ")
-    vint_text2 <- paste0("rep_index", seq(n_rep), 
+    vint_text2 <- paste0("ff_rep_index", seq(n_rep), 
                          collapse = ", ")
     f_det_use <- stats::as.formula(
-      paste0("y | vint(n_series, n_unit, n_year, n_rep, Q, ",
+      paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
     
     f_use <- brms::bf(f_det_use, f_col_use, f_ex_use)
@@ -460,12 +460,13 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
 }
 
 #' Either fit a flocker model or output stancode or output standata
-#' @param output logical; if TRUE return stan code, if false fit model
+#' @param output one of "model", "code", or "data"
 #' @param f_use brms formula
 #' @param data brms data
 #' @param data2 brms data2
 #' @param family brms family
 #' @param stanvars brms stanvars
+#' @param threads brms threads
 #' @param ... brms ...
 #' @return output of brms::brm or brms::make_stancode or brms::make_standata
 flocker_fit_code_util <- function (
@@ -502,7 +503,8 @@ flocker_fit_code_util <- function (
                        ...)
       cmdstanr::cmdstan_make_local(cpp_options = cml, append = F)
     }
-  } else if (!is.null(threads)){
+  } else if (!is.null(threads)){ # this covers the rep-constant case where
+    # native brms threading is available
     if (output == "code") {
       out <- brms::make_stancode(f_use, 
                                  data = data,

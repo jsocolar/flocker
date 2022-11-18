@@ -5,16 +5,30 @@
 #' @param n_pt number of points to simulate.
 #' @param n_sp number of species to simulate.
 #' @param n_rep number of replicates to simulate.
+#' @param verbose to quiet warning about seed, set to \code{FALSE}
 #' @return A three element named list with the observation matrix ($obs), the
 #' unit covariate dataframe ($unit_covs), and the event covariate list
 #' ($rep_covs). If rep_constant is TRUE, then $rep_covs will be NULL.
 #' @export
 
-example_flocker_data <- function(rep_constant = FALSE, seed = 123, 
-                                 n_pt = 30, n_sp = 30, n_rep = 4) {
-  if (!is.null(seed)) {set.seed(seed)}
+example_flocker_data <- function(rep_constant = FALSE, seed = NULL, 
+                                 n_pt = 30, n_sp = 30, n_rep = 4, 
+                                 verbose = TRUE) {
+  if (!is.null(seed)) {
+    set.seed(seed)
+    if (verbose) {
+      warning(
+        paste0("by specifying a seed, you have altered the RNG state ",
+               "globally in your R session. Do not expect independence ",
+               "of pseudo-randomness in the remainder of your script when ",
+               "running the script multiple times, nor in intervening sections ",
+               "of your script if calling `example_flocker_data` multiple times ",
+               "with the same seed. At the expense of reproducibility, use ",
+               "`seed = NULL` to avoid this behavior.")
+      )
+    }
+  }
   n_unit <- n_pt*n_sp
-  
   backbone <- expand.grid(species = factor(paste0("sp_", 1:n_sp)), 
                           id_rep = 1:n_rep,
                           id_point = 1:n_pt)
