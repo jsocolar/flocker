@@ -204,7 +204,7 @@ params_by_type <- list(
   multi_autologistic = c("occ", "det", "auto"),
   single_fp = c("occ", "det"),
   multi_colex_fp = c("occ", "det", "col", "ex"),
-  multi_colex_eq_fp = c("det", "col", "ex"),
+  multi_colex_eq_fp = c("det", "col", "ex")
 )
 
 
