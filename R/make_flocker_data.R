@@ -1,4 +1,5 @@
-# This file contains the function `make_flocker_data`, which calls either
+# This file contains the function `make_flocker_data`, which calls one of the
+# following (also contained in this file):
 # make_flocker_data_static for a single-season model,
 # make_flocker_data_dynamic for a multi-season model, or
 # make_flocker_data_augmented for a data-augmented model.
