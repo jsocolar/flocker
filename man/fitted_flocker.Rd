@@ -2,21 +2,23 @@
 % Please edit documentation in R/fitted_flocker.R
 \name{fitted_flocker}
 \alias{fitted_flocker}
-\title{Get expected values of the posterior predictive distribution for the occupancy
-component, the detection component, or both. Note that in the case of the 
-detection component, you are conditioning on occupancy being 1. Note that these 
-are values for a hypothetical set of unit covariates rather than the ones 
-actually observed (some of which are known to be occupied, when Q == 1).}
+\title{Get expected values of the posterior predictive distribution for the modeled
+probabilities (occupancy, detection, colonization, extinction, autologistic). 
+Note that these are conditional probabilties (e.g. detection conditional on 
+occupancy, colonzation conditional on previous non-occupancy, etc).
+These probabilities are not conditioned on the observed histories (e.g. the
+occupancy probability is not fixed to one at sites with a detection; it is
+estimated only based on the covariates)}
 \usage{
 fitted_flocker(
   flocker_fit,
-  type,
+  components = c("occ", "det", "col", "ex", "auto"),
   new_data = NULL,
+  summarise = FALSE,
   CI = c(0.05, 0.95),
   ndraws = NULL,
   response = TRUE,
   re_formula = NULL,
-  summarise = TRUE,
   allow_new_levels = FALSE,
   sample_new_levels = "uncertainty"
 )
@@ -24,27 +26,32 @@ fitted_flocker(
 \arguments{
 \item{flocker_fit}{A flocker_fit object.}
 
-\item{type}{Get posterior probabilities for 'occupancy', 'detection', or for 
-'both'.}
+\item{components}{a character vector specifying one or more of "occ",
+"det", "col", "ex", or "auto" for which to obtain fitted values.}
 
 \item{new_data}{Optional new data at which to evaluate occupancy predictions. 
+New data can be passed as a flocker_data object produced by 
+\code{make_flocker_data} or as a simple dataframe with one row per desired
+predicton.
 If `NULL` (the default) expected values are generated for the original data.}
+
+\item{summarise}{if TRUE, return the expected value and upper and lower bound 
+of the credible interval, otherwise return the posterior matrix.}
 
 \item{CI}{A vector of length 2 specifying the upper and lower bounds of the 
 credible interval. Defaults to c(.05, .95)}
 
-\item{ndraws}{Positive integer indicating how many poserior draws should be 
+\item{ndraws}{Positive integer indicating how many posterior draws should be 
 used. If `NULL` (the default) all draws are used.}
 
-\item{response}{Should expected values be returned on the response or logit-scale? 
-Defaults to `TRUE`, i.e. response scale.}
+\item{response}{Should results be returned on the response or logit-scale? 
+Defaults to `TRUE`, i.e. response scale. However, the autologistic
+parameter is not interpretable as a probability and is always returned
+on the logit scale regardless of the value of `response`}
 
 \item{re_formula}{formula containing group-level effects to be considered in 
 the prediction. If `NULL` (default), include all group-level effects; if 
 NA, include no group-level effects.}
-
-\item{summarise}{if TRUE, return the expected value and upper and lower bound 
-of the credible interval, otherwise return the posterior matrix.}
 
 \item{allow_new_levels}{allow new levels in new_data?}
 
@@ -57,9 +64,11 @@ A data.frame containing the columns used to generate expected values
     and the estimate and its credible interval (lower and upper bounds)
 }
 \description{
-Get expected values of the posterior predictive distribution for the occupancy
-component, the detection component, or both. Note that in the case of the 
-detection component, you are conditioning on occupancy being 1. Note that these 
-are values for a hypothetical set of unit covariates rather than the ones 
-actually observed (some of which are known to be occupied, when Q == 1).
+Get expected values of the posterior predictive distribution for the modeled
+probabilities (occupancy, detection, colonization, extinction, autologistic). 
+Note that these are conditional probabilties (e.g. detection conditional on 
+occupancy, colonzation conditional on previous non-occupancy, etc).
+These probabilities are not conditioned on the observed histories (e.g. the
+occupancy probability is not fixed to one at sites with a detection; it is
+estimated only based on the covariates)
 }

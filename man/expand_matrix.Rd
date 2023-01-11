@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{expand_matrix}
 \alias{expand_matrix}
-\title{convert matrix to long vector format}
+\title{convert matrix-like object to long vector format}
 \usage{
 expand_matrix(m)
 }
@@ -13,5 +13,5 @@ expand_matrix(m)
 vector
 }
 \description{
-convert matrix to long vector format
+convert matrix-like object to long vector format
 }

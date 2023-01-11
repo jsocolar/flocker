@@ -47,7 +47,7 @@ colonization-extinction dynamic models. If provided, must begin with "~".}
 \item{colex_init}{Must be NULL unless the model is a colonization-extinction
 dynamic model, in which case must be either "explicit" or "equilibrium". 
 If "explicit", then `f_occ` must be provided to model 
-of year-1 occupancy probabilities. If"equilibrium", then `f_occ` must be set
+of year-1 occupancy probabilities. If "equilibrium", then `f_occ` must be set
 to `NULL` and the initial occupancy probabilities are assumed to 
 be the (possibly site-specific) equilibrium probabilities from the 
 colonization-extinction dynamics. In this case, time-varying covariates are 

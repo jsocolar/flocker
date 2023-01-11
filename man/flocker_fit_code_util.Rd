@@ -11,12 +11,12 @@ flocker_fit_code_util(
   data2,
   family,
   stanvars,
-  threads,
+  threads = NULL,
   ...
 )
 }
 \arguments{
-\item{output}{logical; if TRUE return stan code, if false fit model}
+\item{output}{one of "model", "code", or "data"}
 
 \item{f_use}{brms formula}
 
@@ -27,6 +27,8 @@ flocker_fit_code_util(
 \item{family}{brms family}
 
 \item{stanvars}{brms stanvars}
+
+\item{threads}{brms threads}
 
 \item{...}{brms ...}
 }

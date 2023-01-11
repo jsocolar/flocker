@@ -6,10 +6,11 @@
 \usage{
 example_flocker_data(
   rep_constant = FALSE,
-  seed = 123,
+  seed = NULL,
   n_pt = 30,
   n_sp = 30,
-  n_rep = 4
+  n_rep = 4,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -23,6 +24,8 @@ or data that includes event covariates (FALSE)}
 \item{n_sp}{number of species to simulate.}
 
 \item{n_rep}{number of replicates to simulate.}
+
+\item{verbose}{to quiet warning about seed, set to \code{FALSE}}
 }
 \value{
 A three element named list with the observation matrix ($obs), the

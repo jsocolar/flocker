@@ -2,16 +2,16 @@
 % Please edit documentation in R/utils.R
 \name{nslice}
 \alias{nslice}
-\title{Get third dimension of an array}
+\title{Get third dimension of a 3D array}
 \usage{
 nslice(x)
 }
 \arguments{
-\item{x}{array for which third dimension is desired}
+\item{x}{3D array for which third dimension is desired}
 }
 \value{
 integer size of third dimension
 }
 \description{
-Get third dimension of an array
+Get third dimension of a 3D array
 }
