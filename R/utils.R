@@ -10,7 +10,7 @@ log_inv_logit <- function (x) {
   out <- ifelse(x < 0.0, 
                 x - log1p(exp(x)), 
                 -log1p(exp(-x)))
-  return(out)
+  out
 }
 
 #' Numerically stable log one-minus inverse logit
@@ -33,7 +33,7 @@ log1m_inv_logit <- function (x) {
 #' @return vector
 expand_matrix <- function (m) {
   assertthat::assert_that(
-    length(dim(m)) == 2,
+    isTRUE(length(dim(m)) == 2),
     msg = "error in expand_matrix: dimension of input is not 2"
     )
   as.vector(as.matrix(m))
@@ -74,7 +74,11 @@ nslice <- function(x) {
 #' @param n number of times to rbind
 #' @return matrix
 stack_matrix <- function (m, n) {
-  do.call(rbind, replicate(n, m, simplify=FALSE))
+  assertthat::assert_that(
+    length(dim(m)) == 2, 
+    msg = "input not two-dimensional"
+  )
+  as.matrix(do.call(rbind, replicate(n, m, simplify=FALSE)))
 }
 
 ##### Bookkeeping #####
@@ -579,7 +583,10 @@ is_flocker_formula <- function (x) {
 #' @param x object to test
 #' @return logical; TRUE if x is a named list with no duplicate names
 is_named_list <- function (x) {
-  is.list(x) & (length(names(x)) == length(x)) & (!any(duplicated(names(x))))
+  is.list(x) & 
+    length(x) > 0 & 
+    (length(names(x)) == length(x)) & 
+    (!any(duplicated(names(x))))
 }
 
 #' check if an object is a single logical value

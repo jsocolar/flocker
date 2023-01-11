@@ -372,7 +372,7 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
       )
       assertthat::assert_that(
         !any(is.na(unit_covs[[k]])),
-        msg = paste0("NA unit covariates not allowed in dynamic models. ",
+        msg = paste0("NA unit covariates are not allowed in dynamic models. ",
                          "It is safe to impute dummy values in the following ",
                          "circumstances: 1) a unit covariate is used only for ",
                          "initial occupancy and not for detection, ",
@@ -380,9 +380,15 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
                          "after the first. ",
                          "2) a unit covariate is used only for colonization/",
                          "extinction and not for initial occupancy or ",
-                         "detection; impute values for the first year. ",
+                         "detection, and the model does not use an equilibrium ",
+                         "initialization; impute values for the first year. ",
                          "3) a unit covariate is used only for detection; ",
-                         "impute values at units with no visits.")
+                         "impute values at units with no visits.",
+                         "Note, however, that imputing values can interfere ",
+                         "with brms's default behavior of centering the ", 
+                         "columns of the design matrix. To avoid nonintuitive ",
+                         "prior specifications for the intercepts, impute the ", 
+                         "mean value rather than any other choice of dummy.")
       )
     }
     assertthat::assert_that(
@@ -414,8 +420,8 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
   }
   assertthat::assert_that(
     !is.null(event_covs),
-    msg = paste0("Construction alert! For now, add a dummy event covariate. ", 
-                 "This will be fixed shortly.")
+    msg = paste0("Construction alert! The model contains no event covariates. ",
+                 "For now, add a dummy event covariate.")
   )
   
   # All unit covs are guaranteed to be not NA, and all event covs are not 
@@ -470,6 +476,9 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
   flocker_data$ff_n_series <- c(n_series, rep(-99, n_total - 1))
   # number of units
   rep1 <- obs[ , 1, ]
+  
+  
+  # We have already added a dummy value for rep1 if it's NA.
   n_unit <- sum(!is.na(rep1))
 
   # For each series:
