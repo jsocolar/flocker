@@ -375,7 +375,13 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
         !any(is.na(unit_covs[[k]])),
         msg = paste0("NA unit covariates are not allowed in dynamic models. ",
                          "It is safe to impute dummy values in the following ",
-                         "circumstances: 1) a unit covariate is used only for ",
+                         "circumstances.",
+                         "Note, however, that imputing values can interfere ",
+                         "with brms's default behavior of centering the ", 
+                         "columns of the design matrix. To avoid nonintuitive ",
+                         "prior specifications for the intercepts, impute the ", 
+                         "mean value rather than any other choice of dummy.", 
+                         "1) a unit covariate is used only for ",
                          "initial occupancy and not for detection, ",
                          "colonization or extinction; impute values for years ",
                          "after the first. ",
@@ -384,12 +390,7 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
                          "detection, and the model does not use an equilibrium ",
                          "initialization; impute values for the first year. ",
                          "3) a unit covariate is used only for detection; ",
-                         "impute values at units with no visits.",
-                         "Note, however, that imputing values can interfere ",
-                         "with brms's default behavior of centering the ", 
-                         "columns of the design matrix. To avoid nonintuitive ",
-                         "prior specifications for the intercepts, impute the ", 
-                         "mean value rather than any other choice of dummy.")
+                         "impute values at units with no visits.")
       )
     }
     assertthat::assert_that(
@@ -422,7 +423,8 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
   assertthat::assert_that(
     !is.null(event_covs),
     msg = paste0("Construction alert! The model contains no event covariates. ",
-                 "For now, add a dummy event covariate.")
+                 "This is fine, but for now please add a dummy event covariate.",
+                 "You do not need to use this covariate in your model formula.")
   )
   
   # All unit covs are guaranteed to be not NA, and all event covs are not 
@@ -452,15 +454,17 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
           warning(paste0("One or more event_covariates are NA on the first ",
                          "repeat visit to one or more units. This is ",
                          "allowable as long as the units in question were ",
-                         "never visited (i.e. all visits NA ",
-                         "in that season/year). However, to ",
-                         "pass data to Stan, a covariate value of -99999 ",
-                         "will be imputed. This does not affect the fitted ",
-                         "posterior in any way, but might lead to ",
-                         "nonsensical predicted detection probabilities on ",
-                         "these never-conducted visits."))
+                         "never visited (i.e. all visits NA in that season/",
+                         "year). However, to pass data to Stan, flocker will ",
+                         "impute a covariate value corresponding to the mean of", 
+                         "the event covariate across all sites/seasons.", 
+                         "This imputation has no effect on the fitted posterior", 
+                         "in any way, but might lead to spurious predicted", 
+                         "detection probabilities on these never-conducted ", 
+                         "visits."))
         }
-        event_covs[[i]][ , 1, ][nas_replace] <- -99999
+        event_covs[[i]][ , 1, ][nas_replace] <- 
+          mean(event_covs[[i]], na.rm = TRUE)
       }
     }
   }
