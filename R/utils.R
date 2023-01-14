@@ -117,6 +117,7 @@ flocker_model_types <- function() {
     "multi_colex", # multi-season model with explicit colonization/extinction
     "multi_colex_eq", # multi_colex with equilibrium starting probabiltiies
     "multi_autologistic", # multi-season autologistic model
+    "multi_autologistic_eq", # multi_autologistic with equilibrium starting probabilities
     "single_fp", # single-season false-positive model with known fp probabilities
     "multi_colex_fp", # multi_colex with known fp rates
 #    "multi_autologistic_fp", # multi_autologistic with known fp rates
@@ -163,9 +164,9 @@ multi_types <- function() {
   c("multi")
 }
 
-#' possible values for the `colex_init` parameter if not NULL
+#' possible values for the `multi_init` parameter if not NULL
 #' @return character vector of options
-colex_init_types <- function(){c("explicit", "equilibrium")}
+multi_init_types <- function(){c("explicit", "equilibrium")}
 
 ##### flocker_fit manipulation #####
 #' Test whether an object is of class flocker_fit
@@ -205,7 +206,8 @@ params_by_type <- list(
   augmented = c("occ", "det"),
   multi_colex = c("occ", "det", "col", "ex"),
   multi_colex_eq = c("det", "col", "ex"),
-  multi_autologistic = c("occ", "det", "auto"),
+  multi_autologistic = c("occ", "det", "col", "auto"),
+  multi_autologistic_eq = c("det", "col", "auto"),
   single_fp = c("occ", "det"),
   multi_colex_fp = c("occ", "det", "col", "ex"),
   multi_colex_eq_fp = c("det", "col", "ex")
@@ -233,32 +235,32 @@ get_positions_single <- function(flocker_fit) {
 #' Check validity of params passed to `flock`
 #' @return silent if parameters are valid
 validate_flock_params <- function(f_occ, f_det, flocker_data,
-                                  multiseason, f_col, f_ex, colex_init, f_auto,
+                                  multiseason, f_col, f_ex, multi_init, f_auto,
                                   augmented, fp, threads) {
   
   # Check that inputs are valid individually
   validate_params_individually(f_occ, f_det, flocker_data,
-                               multiseason, f_col, f_ex, colex_init, f_auto,
+                               multiseason, f_col, f_ex, multi_init, f_auto,
                                augmented, fp, threads)
   
   # Check that parameters are valid in combination
   if (flocker_data$type == "single") {
     validate_param_combos_single(f_occ, f_det, flocker_data, 
-                                 multiseason, f_col, f_ex, colex_init, f_auto,
+                                 multiseason, f_col, f_ex, multi_init, f_auto,
                                  augmented, fp)
   } else if (flocker_data$type == "single_C") {
     validate_param_combos_single_C(f_occ, f_det, flocker_data, 
-                                   multiseason, f_col, f_ex, colex_init, f_auto,
+                                   multiseason, f_col, f_ex, multi_init, f_auto,
                                    augmented, fp)
   } else if (flocker_data$type == "augmented") {
     validate_param_combos_augmented(f_occ, f_det, flocker_data, 
-                                   multiseason, f_col, f_ex, colex_init, f_auto,
+                                   multiseason, f_col, f_ex, multi_init, f_auto,
                                    augmented, fp, threads)
   } else {
     assertthat::assert_that(flocker_data$type == "multi") 
     # above line is redundant but included for clarity
     validate_param_combos_multi(f_occ, f_det, flocker_data, 
-                                multiseason, f_col, f_ex, colex_init, f_auto,
+                                multiseason, f_col, f_ex, multi_init, f_auto,
                                 augmented, fp, threads)
   }
   validate_unit_formula_variables(f_occ, f_col, f_ex, f_auto, flocker_data)
@@ -267,7 +269,7 @@ validate_flock_params <- function(f_occ, f_det, flocker_data,
 #' Check individual validity of params passed to `flock`
 #' @return silent if parameters are valid
 validate_params_individually <- function(f_occ, f_det, flocker_data,
-                                         multiseason, f_col, f_ex, colex_init, f_auto,
+                                         multiseason, f_col, f_ex, multi_init, f_auto,
                                          augmented, fp, threads) {
   # Check that formulas are valid and produce informative errors otherwise
   assertthat::assert_that(
@@ -303,13 +305,13 @@ validate_params_individually <- function(f_occ, f_det, flocker_data,
                  "without errors by `make_flocker_data`, please report a bug.")
   )
   
-  # check that multiseason and colex_init are valid
+  # check that multiseason and multi_init are valid
   multiseason2 <- multiseason
   if(is.null(multiseason2)){multiseason2 <- "NULL"}
-  colex_init2 <- colex_init
-  if(is.null(colex_init2)){colex_init2 <- "NULL"}
+  multi_init2 <- multi_init
+  if(is.null(multi_init2)){multi_init2 <- "NULL"}
   assertthat::assert_that(multiseason2 %in% c("NULL", "colex", "autologistic"))
-  assertthat::assert_that(colex_init2 %in% c("NULL", "explicit", "equilibrium"))
+  assertthat::assert_that(multi_init2 %in% c("NULL", "explicit", "equilibrium"))
   assertthat::assert_that(is.logical(augmented))
   assertthat::assert_that(is.logical(fp))
   
@@ -340,18 +342,20 @@ validate_unit_formula_variables <- function(f_occ, f_col, f_ex, f_auto, flocker_
   }
   assertthat::assert_that(
     !any(unit_terms %in% flocker_data$event_covs),
-    msg = paste0("Variables passed to `make_flocker_data` as event ",
-                 "covariates are being used in at least one unit-level formula ",
-                 "(i.e. f_occ, f_col, f_ex, f_auto). This is disallowed for your ",
-                 "protection. Pass these variables as unit covariates.")
+    msg = paste0("Data passed to `make_flocker_data` as event covariates are ",
+                 "being used in at least one unit-level formula (i.e. f_occ, ",
+                 "f_col, f_ex, f_auto). If these covariates are variable ",
+                 "across visits at any unit, this doesn't make sense. If they ",
+                 "are constant across visits within every unit, pass these ",
+                 "covariates as unit covariates rather than event covariates.")
   )
 }
 
-#' Check validity of params passed to `flock` if `type` is `single`
+#' Check validity of some params passed to flock if `type` is `single` or `single_C`
 #' @return silent if parameters are valid
-validate_param_combos_single <- function(f_occ, f_det, flocker_data, 
-                                         multiseason, f_col, f_ex, colex_init, f_auto,
-                                         augmented, fp) {
+validate_param_combos_single_generic <- function(f_occ, f_det, flocker_data, 
+                                                 multiseason, f_col, f_ex, multi_init, f_auto,
+                                                 augmented, fp) {
   assertthat::assert_that(
     is_flocker_formula(f_occ), msg = formula_error("occupancy")
   )
@@ -364,8 +368,8 @@ validate_param_combos_single <- function(f_occ, f_det, flocker_data,
     msg = "flocker_data formatted for single season but `multiseason` is not NULL."
   )
   assertthat::assert_that(
-    is.null(colex_init),
-    msg = "flocker_data formatted for single season but `colex_init` is not NULL."
+    is.null(multi_init),
+    msg = "flocker_data formatted for single season but `multi_init` is not NULL."
   )
   assertthat::assert_that(
     isFALSE(augmented),
@@ -373,6 +377,16 @@ validate_param_combos_single <- function(f_occ, f_det, flocker_data,
                  "`augmented` is not FALSE."
     )
   )  
+}
+
+#' Check validity of params passed to `flock` if `type` is `single`
+#' @return silent if parameters are valid
+validate_param_combos_single <- function(f_occ, f_det, flocker_data, 
+                                         multiseason, f_col, f_ex, multi_init, f_auto,
+                                         augmented, fp) {
+  validate_param_combos_single_generic(f_occ, f_det, flocker_data, 
+                                       multiseason, f_col, f_ex, multi_init, f_auto,
+                                       augmented, fp)
   if(fp) {
     assertthat::assert_that(
       all(is.numeric(flocker_data$data$ff_y)) &
@@ -395,29 +409,11 @@ validate_param_combos_single <- function(f_occ, f_det, flocker_data,
 #' Check validity of params passed to `flock` if `type` is `single_C`
 #' @return silent if parameters are valid
 validate_param_combos_single_C <- function(f_occ, f_det, flocker_data, 
-                                         multiseason, f_col, f_ex, colex_init, f_auto,
+                                         multiseason, f_col, f_ex, multi_init, f_auto,
                                          augmented, fp) {
-  assertthat::assert_that(
-    is_flocker_formula(f_occ), msg = formula_error("occupancy")
-  )
-  assertthat::assert_that(
-    is.null(f_col) & is.null(f_ex) & is.null(f_auto),
-    msg = "colonization/extinction/autologistic formulas not allowed in single-season model"
-  )
-  assertthat::assert_that(
-    is.null(multiseason),
-    msg = "flocker_data formatted for single season but `multiseason` is not NULL."
-  )
-  assertthat::assert_that(
-    is.null(colex_init),
-    msg = "flocker_data formatted for single season but `colex_init` is not NULL."
-  )
-  assertthat::assert_that(
-    isFALSE(augmented),
-    msg = paste0("flocker_data not formatted for augmented model, but ",
-                 "`augmented` is not FALSE."
-                )
-  )  
+  validate_param_combos_single_generic(f_occ, f_det, flocker_data, 
+   multiseason, f_col, f_ex, multi_init, f_auto,
+   augmented, fp)
   assertthat::assert_that(
     !fp,
     msg = paste0("rep-constant fp likelihood not implemented; reformat data ",
@@ -441,7 +437,7 @@ validate_param_combos_single_C <- function(f_occ, f_det, flocker_data,
 #' Check validity of params passed to `flock` if `type` is `augmented`
 #' @return silent if parameters are valid
 validate_param_combos_augmented <- function(f_occ, f_det, flocker_data, 
-                                         multiseason, f_col, f_ex, colex_init, f_auto,
+                                         multiseason, f_col, f_ex, multi_init, f_auto,
                                          augmented, fp, threads) {
   assertthat::assert_that(
     is_flocker_formula(f_occ), msg = formula_error("occupancy")
@@ -455,8 +451,8 @@ validate_param_combos_augmented <- function(f_occ, f_det, flocker_data,
     msg = "flocker_data formatted for single season but `multiseason` is not NULL."
   )
   assertthat::assert_that(
-    is.null(colex_init),
-    msg = "flocker_data formatted for single season but `colex_init` is not NULL."
+    is.null(multi_init),
+    msg = "flocker_data formatted for single season but `multi_init` is not NULL."
   )
   assertthat::assert_that(
     isTRUE(augmented),
@@ -484,7 +480,7 @@ validate_param_combos_augmented <- function(f_occ, f_det, flocker_data,
 #' Check validity of params passed to `flock` if `type` is `multi`
 #' @return silent if parameters are valid
 validate_param_combos_multi <- function(f_occ, f_det, flocker_data, 
-                                         multiseason, f_col, f_ex, colex_init, f_auto,
+                                         multiseason, f_col, f_ex, multi_init, f_auto,
                                          augmented, fp, threads) {
   assertthat::assert_that(
     isFALSE(augmented),
@@ -493,44 +489,39 @@ validate_param_combos_multi <- function(f_occ, f_det, flocker_data,
     )
   ) 
   assertthat::assert_that(multiseason %in% c("colex", "autologistic"))
-  if (multiseason == "colex") {
+  assertthat::assert_that(
+    is_flocker_formula(f_col), msg = formula_error("colonization")
+  )
+  assertthat::assert_that(multi_init %in% c("explicit", "equilibrium"))
+  if (multi_init == "explicit") {
     assertthat::assert_that(
-      is_flocker_formula(f_col), msg = formula_error("colonization")
+      is_flocker_formula(f_occ), msg = formula_error("occupancy")
     )
+  } else {
+    assertthat::assert_that(
+      is.null(f_occ), msg = "f_occ must be NULL for equilibrium initialization"
+    )
+  }
+  if (multiseason == "colex") {
     assertthat::assert_that(
       is_flocker_formula(f_ex), msg = formula_error("extinction")
     )
-    assertthat::assert_that(colex_init %in% c("explicit", "equilibrium"))
-    if (colex_init == "explicit") {
-      assertthat::assert_that(
-        is_flocker_formula(f_occ), msg = formula_error("occupancy")
-      )
-    } else {
-      assertthat::assert_that(
-        is.null(f_occ), msg = "f_occ must be NULL for equilibrium initialization"
-      )
-    }
+    assertthat::assert_that(
+      is.null(f_auto), msg = "f_auto must be NULL in colex models"
+    )
   } else {
     assertthat::assert_that(
-      is.null(f_col) & is.null(f_ex),
-      msg = "colonization/extinction formulas not allowed in autologistic model"
+      is_flocker_formula(f_auto), msg = formula_error("autologistic")
     )
     assertthat::assert_that(
-      is_flocker_formula(f_occ),
-      msg = formula_error("occupancy")
+      is.null(f_ex), msg = "f_ex must be NULL in autologistic models"
     )
-    assertthat::assert_that(
-      is_flocker_formula(f_auto),
-      msg = formula_error("autologistic")
-    )
-    assertthat::assert_that(
-      is.null(colex_init),
-      msg = "colex_init must be null in autologistic model"
-    )
+
     assertthat::assert_that(
       !fp, msg = "fp likelihoods not yet implemented in autologistic models"
     )
   }
+  
   y_nonmissing <- flocker_data$data$ff_y[flocker_data$data$ff_y != -99]
   if(fp) {
     assertthat::assert_that(

@@ -15,23 +15,23 @@
 #'  colonization-extinction dynamic models. If provided, must begin with "~".
 #' @param f_ex A brms-type model formula for extinction probabilities in 
 #'  colonization-extinction dynamic models. If provided, must begin with "~".
-#' @param colex_init Must be NULL unless the model is a colonization-extinction
-#'  dynamic model, in which case must be either "explicit" or "equilibrium". 
-#'  If "explicit", then `f_occ` must be provided to model 
-#'  of year-1 occupancy probabilities. If "equilibrium", then `f_occ` must be set
-#'  to `NULL` and the initial occupancy probabilities are assumed to 
-#'  be the (possibly site-specific) equilibrium probabilities from the 
-#'  colonization-extinction dynamics. In this case, time-varying covariates are 
-#'  not allowed for colonization or extinction (but are still allowed for 
-#'  detection).
-#' @param f_auto A brms-type model formula for the autologistic offset 
-#'  parameter (theta). If provided, must begin with "~".
+#' @param multi_init Must be NULL unless the model is a dynamic (multiseason)
+#'  model, in which case must be either "explicit" or "equilibrium". 
+#'  If "explicit", then `f_occ` must be provided to model occupancy
+#'  probabilities in the first timestep. If "equilibrium", then `f_occ` must be
+#'  `NULL` and the initial occupancy probabilities are assumed to be the 
+#'  (possibly site-specific) equilibrium probabilities from the colonization-
+#'  extinction dynamics.
+#' @param f_auto Relevant only for autologistic models. A brms-type model 
+#'   formula for the autologistic offset parameter (theta). If provided, must 
+#'   begin with "~".
 #' @param augmented Logical. Must be TRUE if data are formatted for a 
 #'  data-augmented multi-species model, and FALSE otherwise.
 #' @param fp logical. If data are formatted for an fp model, must be set to
 #'  TRUE, otherwise to FALSE.
 #' @param threads NULL or positive integer. If integer, the number of threads
-#'  to use per chain in within chain parallelization.
+#'  to use per chain in within chain parallelization. Currently available only
+#'  with single-season rep-constant models, and must be set to NULL otherwise.
 #' @param ... additional arguments passed to \code{brms::brm()}
 #' @return a \code{brmsfit} containing the fitted occupancy model. 
 #' @examples
@@ -47,29 +47,27 @@
 #' }
 #' @export
 flock <- function(f_occ, f_det, flocker_data, data2 = NULL, 
-                   multiseason = NULL, f_col = NULL, f_ex = NULL, colex_init = NULL, f_auto = NULL,
+                   multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
                    augmented = FALSE, fp = FALSE, threads = NULL,
                    ...) {
   flock_(output = "model", f_occ = f_occ, f_det = f_det, 
          flocker_data = flocker_data, data2 = data2, 
          multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
-         colex_init = colex_init, f_auto = f_auto,
+         multi_init = multi_init, f_auto = f_auto,
          augmented = augmented, fp = fp, threads = threads, ...)
 }
-
-
 
 #' Generate stan code for an occupancy model
 #' @inheritParams flock
 #' @export
 flocker_stancode <- function(f_occ, f_det, flocker_data, data2 = NULL, 
-                  multiseason = NULL, f_col = NULL, f_ex = NULL, colex_init = NULL, f_auto = NULL,
+                  multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
                   augmented = FALSE, fp = FALSE, threads = NULL,
                   ...) {
   flock_(output = "code", f_occ = f_occ, f_det = f_det, 
          flocker_data = flocker_data, data2 = data2, 
          multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
-         colex_init = colex_init, f_auto = f_auto,
+         multi_init = multi_init, f_auto = f_auto,
          augmented = augmented, fp = fp, threads = threads, ...)
 }
 
@@ -77,13 +75,13 @@ flocker_stancode <- function(f_occ, f_det, flocker_data, data2 = NULL,
 #' @inheritParams flock
 #' @export
 flocker_standata <- function(f_occ, f_det, flocker_data, data2 = NULL, 
-                             multiseason = NULL, f_col = NULL, f_ex = NULL, colex_init = NULL, f_auto = NULL,
+                             multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
                              augmented = FALSE, fp = FALSE, threads = NULL,
                              ...) {
   flock_(output = "data", f_occ = f_occ, f_det = f_det, 
          flocker_data = flocker_data, data2 = data2, 
          multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
-         colex_init = colex_init, f_auto = f_auto,
+         multi_init = multi_init, f_auto = f_auto,
          augmented = augmented, fp = fp, threads = threads, ...)
 }
 
@@ -105,15 +103,13 @@ flocker_standata <- function(f_occ, f_det, flocker_data, data2 = NULL,
 #'  colonization-extinction dynamic models. If provided, must begin with "~".
 #' @param f_ex A brms-type model formula for extinction probabilities in 
 #'  colonization-extinction dynamic models. If provided, must begin with "~".
-#' @param colex_init Must be NULL unless the model is a colonization-extinction
-#'  dynamic model, in which case must be either "explicit" or "equilibrium". 
-#'  If "explicit", then `f_occ` must be provided to model 
-#'  of year-1 occupancy probabilities. If"equilibrium", then `f_occ` must be set
-#'  to `NULL` and the initial occupancy probabilities are assumed to 
-#'  be the (possibly site-specific) equilibrium probabilities from the 
-#'  colonization-extinction dynamics. In this case, time-varying covariates are 
-#'  not allowed for colonization or extinction (but are still allowed for 
-#'  detection).
+#' @param multi_init Must be NULL unless the model is a dynamic (multiseason)
+#'  model, in which case must be either "explicit" or "equilibrium". 
+#'  If "explicit", then `f_occ` must be provided to model occupancy
+#'  probabilities in the first timestep. If "equilibrium", then `f_occ` must be
+#'  `NULL` and the initial occupancy probabilities are assumed to be the 
+#'  (possibly site-specific) equilibrium probabilities from the colonization-
+#'  extinction dynamics.
 #' @param f_auto A brms-type model formula for the autologistic offset 
 #'  parameter (theta). If provided, must begin with "~".
 #' @param augmented Logical. Must be TRUE if data are formatted for a 
@@ -125,12 +121,12 @@ flocker_standata <- function(f_occ, f_det, flocker_data, data2 = NULL,
 #' @param ... additional arguments passed to \code{brms::brm()}
 #' @return stan code for brms model or a \code{brmsfit} containing the fitted occupancy model. 
 flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL, 
-                  multiseason = NULL, f_col = NULL, f_ex = NULL, colex_init = NULL, f_auto = NULL,
+                  multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
                   augmented = FALSE, fp = FALSE, threads = NULL,
                   ...) {
   ### validate parameters
   validate_flock_params(f_occ, f_det, flocker_data, multiseason, f_col, 
-                        f_ex, colex_init, f_auto, augmented, fp, threads)
+                        f_ex, multi_init, f_auto, augmented, fp, threads)
   ### create final formulas
   if (!is.null(f_occ)) {
     f_occ_txt <- paste0(deparse(f_occ), collapse = "")
@@ -228,7 +224,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  family = occupancy_augmented(max_rep), 
                                  stanvars = stanvars,
                                  ...)
-  } else if (isTRUE(multiseason == "colex") & isTRUE(colex_init == "explicit") & !fp) {
+  } else if (isTRUE(multiseason == "colex") & isTRUE(multi_init == "explicit") & !fp) {
     n_rep <- flocker_data$n_rep
     n_year <- flocker_data$n_year
     vint_text1 <- paste0("ff_unit_index", seq(n_year), 
@@ -266,7 +262,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  family = occupancy_multi_colex(n_year, n_rep), 
                                  stanvars = stanvars,
                                  ...)
-  } else if (isTRUE(multiseason == "colex") & isTRUE(colex_init == "equilibrium") & !fp) {
+  } else if (isTRUE(multiseason == "colex") & isTRUE(multi_init == "equilibrium") & !fp) {
     n_rep <- flocker_data$n_rep
     n_year <- flocker_data$n_year
     vint_text1 <- paste0("ff_unit_index", seq(n_year), 
@@ -303,7 +299,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  family = occupancy_multi_colex_eq(n_year, n_rep), 
                                  stanvars = stanvars,
                                  ...)
-  } else if (isTRUE(multiseason == "autologistic") & !fp) {
+  } else if (isTRUE(multiseason == "autologistic") & isTRUE(multi_init == "explicit") & !fp) {
     n_rep <- flocker_data$n_rep
     n_year <- flocker_data$n_year
     vint_text1 <- paste0("ff_unit_index", seq(n_year), 
@@ -314,7 +310,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
       paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
     
-    f_use <- brms::bf(f_det_use, f_occ_use, f_auto_use)
+    f_use <- brms::bf(f_det_use, f_occ_use, f_col_use, f_auto_use)
     
     stanvars <- 
       brms::stanvar(
@@ -340,6 +336,43 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  family = occupancy_multi_autologistic(n_year, n_rep), 
                                  stanvars = stanvars,
                                  ...)
+  } else if (isTRUE(multiseason == "autologistic") & isTRUE(multi_init == "equilibrium") & !fp) {
+    n_rep <- flocker_data$n_rep
+    n_year <- flocker_data$n_year
+    vint_text1 <- paste0("ff_unit_index", seq(n_year), 
+                         collapse = ", ")
+    vint_text2 <- paste0("ff_rep_index", seq(n_rep), 
+                         collapse = ", ")
+    f_det_use <- stats::as.formula(
+      paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
+             vint_text1, ", ", vint_text2, ") ", f_det_txt))
+    
+    f_use <- brms::bf(f_det_use, f_col_use, f_auto_use)
+    
+    stanvars <- 
+      brms::stanvar(
+        scode = make_emission_1(), 
+        block = "functions"
+      ) + 
+      brms::stanvar(
+        scode = make_colex_likelihoods(), 
+        block = "functions"
+      ) + 
+      brms::stanvar(
+        scode = make_forward_colex(), 
+        block = "functions"
+      ) + 
+      brms::stanvar(
+        scode = make_occupancy_multi_autologistic_eq_lpmf(max_rep = n_rep, max_year = n_year), 
+        block = "functions"
+      )
+    out <- flocker_fit_code_util(output, 
+                                 f_use, 
+                                 data = flocker_data$data,
+                                 data2 = data2,
+                                 family = occupancy_multi_autologistic_eq(n_year, n_rep), 
+                                 stanvars = stanvars,
+                                 ...)
   } else if (flocker_data$type == "single" & fp) {
     max_rep <- flocker_data$n_rep
     vint_text <- paste0("ff_rep_index", 1:max_rep, 
@@ -363,7 +396,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  family = occupancy_single_fp(max_rep), 
                                  stanvars = stanvars,
                                  ...)
-  } else if (isTRUE(multiseason == "colex") & isTRUE(colex_init == "explicit") & fp) {
+  } else if (isTRUE(multiseason == "colex") & isTRUE(multi_init == "explicit") & fp) {
     n_rep <- flocker_data$n_rep
     n_year <- flocker_data$n_year
     vint_text1 <- paste0("ff_unit_index", seq(n_year), 
@@ -404,7 +437,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  family = occupancy_multi_colex_fp(n_year, n_rep), 
                                  stanvars = stanvars,
                                  ...)
-  } else if (isTRUE(multiseason == "colex") & isTRUE(colex_init == "equilibrium") & fp) {
+  } else if (isTRUE(multiseason == "colex") & isTRUE(multi_init == "equilibrium") & fp) {
     n_rep <- flocker_data$n_rep
     n_year <- flocker_data$n_year
     vint_text1 <- paste0("ff_unit_index", seq(n_year), 
@@ -453,7 +486,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
   if (output == "model") {
     attr(out, "class") <- c(attr(out, "class"), "flocker_fit")
     attr(out, "lik_type") <- flocker_data$type
-    attr(out, "colex_init") <- flocker_data$colex_init
+    attr(out, "multi_init") <- flocker_data$multi_init
     attr(out, "fp") <- fp
   }
   out

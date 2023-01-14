@@ -24,7 +24,6 @@ occupancy_single_threaded <- function (max_rep) {
     loop = FALSE)
 }
 
-
 #' Define the rep-constant occupancy family
 #' @return a "customfamily" "brmsfamily" object from brms
 occupancy_single_C <- function() {
@@ -36,7 +35,6 @@ occupancy_single_C <- function() {
     vars = c("vint1[n]"),
     loop = TRUE)
 }
-
 
 #' Define the rep-varying augmented occupancy family
 #' @return a "customfamily" "brmsfamily" object from brms
@@ -78,14 +76,27 @@ occupancy_multi_colex_eq <- function(max_year, max_rep) {
     loop = FALSE)
 }
 
-
 #' Define the autologistic family
 #' @param max_year the maximum number of seasons at a colex unit
 #' @param max_rep the maximum number of repeat sampling events at a closure unit
 #' @return a "customfamily" "brmsfamily" object from brms
 occupancy_multi_autologistic <- function(max_year, max_rep) {
   brms::custom_family(
-    "occupancy_multi_autologistic", dpars = c("mu", "occ", "autologistic"),
+    "occupancy_multi_autologistic", dpars = c("mu", "occ", "colo", "autologistic"),
+    links = c("identity", "identity", "identity", "identity"),
+    type = "int", 
+    # Integer aterms (vint) for n_unit, n_rep, Q, rep_index1...
+    vars = c(paste0("vint", seq(5 + max_year + max_rep))),
+    loop = FALSE)
+}
+
+#' Define the autologistic_eq family
+#' @param max_year the maximum number of seasons at a colex unit
+#' @param max_rep the maximum number of repeat sampling events at a closure unit
+#' @return a "customfamily" "brmsfamily" object from brms
+occupancy_multi_autologistic_eq <- function(max_year, max_rep) {
+  brms::custom_family(
+    "occupancy_multi_autologistic_eq", dpars = c("mu", "colo", "autologistic"),
     links = c("identity", "identity", "identity"),
     type = "int", 
     # Integer aterms (vint) for n_unit, n_rep, Q, rep_index1...
@@ -121,7 +132,6 @@ occupancy_multi_colex_fp <- function(max_year, max_rep) {
     vars = c(paste0("vint", seq(5 + max_year + max_rep))),
     loop = FALSE)
 }
-
 
 #' Define the colonization-extinction family
 #' @param max_year the maximum number of seasons at a colex unit
