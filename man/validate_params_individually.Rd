@@ -11,7 +11,7 @@ validate_params_individually(
   multiseason,
   f_col,
   f_ex,
-  colex_init,
+  multi_init,
   f_auto,
   augmented,
   fp,

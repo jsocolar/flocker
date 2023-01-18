@@ -12,7 +12,7 @@ stack_matrix(m, n)
 \item{n}{number of times to rbind}
 }
 \value{
-matrix
+matrix or dataframe
 }
 \description{
 rbind a matrix to itself n times

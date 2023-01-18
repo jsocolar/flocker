@@ -11,7 +11,7 @@ validate_param_combos_multi(
   multiseason,
   f_col,
   f_ex,
-  colex_init,
+  multi_init,
   f_auto,
   augmented,
   fp,

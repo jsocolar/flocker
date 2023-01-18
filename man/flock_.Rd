@@ -13,7 +13,7 @@ flock_(
   multiseason = NULL,
   f_col = NULL,
   f_ex = NULL,
-  colex_init = NULL,
+  multi_init = NULL,
   f_auto = NULL,
   augmented = FALSE,
   fp = FALSE,
@@ -47,15 +47,13 @@ colonization-extinction dynamic models. If provided, must begin with "~".}
 \item{f_ex}{A brms-type model formula for extinction probabilities in 
 colonization-extinction dynamic models. If provided, must begin with "~".}
 
-\item{colex_init}{Must be NULL unless the model is a colonization-extinction
-dynamic model, in which case must be either "explicit" or "equilibrium". 
-If "explicit", then `f_occ` must be provided to model 
-of year-1 occupancy probabilities. If"equilibrium", then `f_occ` must be set
-to `NULL` and the initial occupancy probabilities are assumed to 
-be the (possibly site-specific) equilibrium probabilities from the 
-colonization-extinction dynamics. In this case, time-varying covariates are 
-not allowed for colonization or extinction (but are still allowed for 
-detection).}
+\item{multi_init}{Must be NULL unless the model is a dynamic (multiseason)
+model, in which case must be either "explicit" or "equilibrium". 
+If "explicit", then `f_occ` must be provided to model occupancy
+probabilities in the first timestep. If "equilibrium", then `f_occ` must be
+`NULL` and the initial occupancy probabilities are assumed to be the 
+(possibly site-specific) equilibrium probabilities from the colonization-
+extinction dynamics.}
 
 \item{f_auto}{A brms-type model formula for the autologistic offset 
 parameter (theta). If provided, must begin with "~".}

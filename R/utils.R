@@ -72,13 +72,13 @@ nslice <- function(x) {
 #' rbind a matrix to itself n times
 #' @param m a matrix or dataframe
 #' @param n number of times to rbind
-#' @return matrix
+#' @return matrix or dataframe
 stack_matrix <- function (m, n) {
   assertthat::assert_that(
     length(dim(m)) == 2, 
     msg = "input not two-dimensional"
   )
-  as.matrix(do.call(rbind, replicate(n, m, simplify=FALSE)))
+  do.call(rbind, replicate(n, m, simplify=FALSE))
 }
 
 ##### Bookkeeping #####
@@ -613,4 +613,13 @@ max_position_not_na <- function (x, treat_m99_NA = FALSE) {
   } else {
     max(which(!is.na(x)))
   }
+}
+
+
+#' remove rownames
+#' @param m object whose rownames to remove
+#' @return m with rownames removed
+remove_rownames <- function(m) {
+  rownames(m) <- NULL
+  m
 }

@@ -7,29 +7,36 @@
 
 ##### make_flocker_data ####
 #' Format data for occupancy model with \code{flock()}.
-#' @param obs If \code{dynamic = FALSE} an I x J matrix-like object where 
+#' @param obs If \code{type = "single"}, an I x J matrix-like object where 
 #'  closure is assumed across rows and columns are repeated sampling events. 
-#'      If \code{dynamic = TRUE} an I x J x K array where rows are sites or 
+#'    If \code{type = "multi"}, an I x J x K array where rows are sites or 
 #'  species-sites, columns are repeated sampling events, and slices along the 
-#'  third dimension are seasons. Allowable values are 1 (detection), 0 (no 
-#'  detection), and NA (no sampling event).
-#'   The data must be formatted so that all NAs are trailing within their rows.
-#'  If (\code{dynamic = TRUE}), this means that the data must be packed so that,
-#'  for a given unit (site-season or species-site-season) all visits in the 
-#'  data come before any missing visits.
-#' @param unit_covs If \code{type} is not \code{"multi"}, a dataframe of 
-#'    covariates for each closure-unit that are constant across repeated 
-#'    sampling events within units.
-#'    If \code{type = "multi"}, a list of such dataframes, one per period. All 
-#'    dataframes must have identical column names and types, and all
-#'    dataframes must have I rows.
-#' @param event_covs If \code{type} is not \code{"multi"}, a named list of 
-#'    I x J matrices, each one corresponding to a covariate that varies across 
-#'    repeated sampling events within closure-units.
-#'    If \code{type = "multi"}, a named list of I x J x K arrays, each one 
-#'    corresponding to a covariate that varies across repeated sampling events 
-#'    within closure-units.
-#' @param type The type of occupancy model to fit. Current options are:
+#'  third dimension are seasons. Allowable values are 1 (detection), real
+#'  numbers between 0 and 1 (detection probability in an fp model; `fp` must be
+#'  `TRUE`), 0 (no detection), and NA (no sampling event).
+#'     If \code{type = "augmented"}, an L x J x K array where rows L are sites, 
+#'  columns J are repeat sampling events, and slices K are species. 
+#'     The data must be packed so that, for a given unit (site, site-species, 
+#'  site-timestep, site-species-timestep) all realized visits come before any 
+#'  missing visits (NAs are trailing within their rows).
+#' @param unit_covs If \code{type = "single"} a dataframe of covariates for each 
+#' closure-unit that are constant across repeated sampling events within units.
+#'   If \code{type = "multi"}, a list of such dataframes, one per timestep. All 
+#' dataframes must have identical column names and types, and all
+#' dataframes must have I rows.
+#'   If \code{type = "augmented"}, a dataframe of covariates for each site that
+#' are constant across repeated sampling events within sites (no dependence on
+#' species is allowed).
+#' @param event_covs If \code{type = "single"}, a named list of I x J matrices, 
+#' each one corresponding to a covariate that varies across repeated sampling 
+#' events within closure-units.
+#'   If \code{type = "multi"}, a named list of I x J x K arrays, each one 
+#' corresponding to a covariate that varies across repeated sampling events 
+#' within closure-units.
+#'   If \code{type = "augmented"}, a named list of L x J matrices, each one
+#' corresponding to a covariate that varies across repeated sampling events
+#' within sites (no dependence on species is allowed).
+#' @param type The type of occupancy model desired. Options are:
 #'    \code{"single"} for a single_season model,
 #'    \code{"multi"} for a multi-season (dynamic) model, or
 #'    \code{"augmented"} for a single-season multi-species model with 
