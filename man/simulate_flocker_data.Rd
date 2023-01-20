@@ -30,25 +30,26 @@ season models will be `n_pt*n_sp`. The number of units for multi-season
 models will be `n_pt*n_sp*n_season`.}
 
 \item{n_sp}{number of levels to include in random effect. For compatibility
-with multispecies models, this levels of this random effect define separate
-closure units.}
+with multispecies models where the random effect represents species,
+the data get expanded such that there's a row (closure-unit) for each
+combination of sampling point and effect level (i.e. species)}
 
-\item{n_season}{A positive integer giving the number of seasons desired. 1
-yields data for a single-season model; all other positive integers yield
-multiseason models.}
+\item{n_season}{Number of seasons desired. 1 yields data for a single-season 
+model; all other positive integers yield data for multiseason models.}
 
 \item{multiseason}{if n_season is NULL, must be NULL. Otherwise, one of
-"colex" or "autologistic"}
+"colex" or "autologistic".}
 
 \item{multi_init}{if n_season is NULL, must be NULL. Otherwise, one of 
-"explicit" or "equilibrium"}
+"explicit" or "equilibrium".}
 
 \item{augmented}{logical. If `TRUE` data will be formatted for an augmented
-model; `fp` must be `NULL`, and `n_season` must be `1`; all never-observed 
-species will be trimmed out of the data before augmenting; by default 
-data will be simulated under a large random effect variance for detection 
-to encourage the existence of never-observed species; and by default data 
-will not include any covariate effects on occupancy.}
+model, which requires that `fp = NULL` and `n_season == 1`. All never-observed 
+species will be trimmed out of the data, and the default parameters will be
+modified to increase random effect variances for the detection and occupancy,
+intercepts and to decrease random effect variances for detection slopes, thus
+encouraging the existence of never-observed species. Furthermore, the data will
+be simulated without any covariate influence on occupancy.}
 
 \item{rep_constant}{logical: create data with unit covariates only (TRUE) 
 or data that includes event covariates (FALSE)}
@@ -57,17 +58,23 @@ or data that includes event covariates (FALSE)}
 (FALSE). If `TRUE`, the simulation will produce detections that correspond
 to true detections with probability 0.8.}
 
-\item{params}{a named list of parameter values to use in simulation, or NULL 
-to simulate values.}
+\item{params}{a named list containing of parameter values to use in simulation.
+Any required parameters whose names are not in this list will be assigned their
+default values. To see the parameter names and structures required, run with 
+`params = NULL` (the default) and examine the `$params` element of the output.}
 
 \item{covariates}{a dataframe of covariate values to use in simulation, or
-NULL oto simulate values.}
+NULL to simulate values. To see the covariate names and structures required,
+run with `covariates = NULL` (the default) and examine the `$covariates` element
+of the output.}
 
-\item{seed}{random seed. NULL uses (and updates) the existing RNG state.}
+\item{seed}{random seed. NULL uses (and updates) the existing RNG state. Other values
+do not update the global RNG state.}
 
 \item{ragged_rep}{logical: create data with variable (TRUE) or constant 
 (FALSE) numbers of visits per unit.  If TRUE, approximately half of units 
-will be missing approximately half of `n_rep` visits.}
+will be missing approximately half of `n_rep` visits. Intended primarily for 
+development purposes (bug-checking models with missing data).}
 
 \item{missing_seasons}{logical; relevant only if n_season is greater than 1. 
 create data with variable (TRUE) or constant (FALSE) numbers of seasons per 
@@ -75,9 +82,10 @@ series (TRUE). If TRUE, approximately half of series will be missing their
 even-numbered seasons.}
 }
 \value{
-A three element named list with the observation matrix/array ($obs), 
-  the unit covariate dataframe(s) ($unit_covs), and the event covariate list
-  ($rep_covs). If rep_constant is TRUE, then $rep_covs will be NULL.
+A named list with the observation matrix/array ($obs), the unit covariate 
+  dataframe(s) ($unit_covs), the event covariate list ($event_covs), the parameters
+  used in simulation ($params) and the covariate list used in simulation ($covariates). 
+  If rep_constant is TRUE, then $event_covs will be NULL.
 }
 \description{
 Data will be simulated with one unit covariate that affects all 

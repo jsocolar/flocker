@@ -5,46 +5,54 @@
 #' relevant terms, one event covariate that affects detection (unless 
 #' `rep_constant` is `TRUE`), and one grouping factor representing species
 #' with correlated effects on all terms.
+#' @param n_rep number of replicate visits to simulate per closure unit
+#' @param n_pt number of points to simulate. The number of units for single-
+#'   season models will be `n_pt*n_sp`. The number of units for multi-season
+#'   models will be `n_pt*n_sp*n_season`.
+#' @param n_sp number of levels to include in random effect. For compatibility
+#'   with multispecies models where the random effect represents species,
+#'   the data get expanded such that there's a row (closure-unit) for each
+#'   combination of sampling point and effect level (i.e. species)
+#' @param n_season Number of seasons desired. 1 yields data for a single-season 
+#'   model; all other positive integers yield data for multiseason models.
+#' @param multiseason if n_season is NULL, must be NULL. Otherwise, one of
+#'   "colex" or "autologistic".
+#' @param multi_init if n_season is NULL, must be NULL. Otherwise, one of 
+#'   "explicit" or "equilibrium".
+#' @param augmented logical. If `TRUE` data will be formatted for an augmented
+#'   model, which requires that `fp = NULL` and `n_season == 1`. All never-observed 
+#'   species will be trimmed out of the data, and the default parameters will be
+#'   modified to increase random effect variances for the detection and occupancy,
+#'   intercepts and to decrease random effect variances for detection slopes, thus
+#'   encouraging the existence of never-observed species. Furthermore, the data will
+#'   be simulated without any covariate influence on occupancy.
 #' @param rep_constant logical: create data with unit covariates only (TRUE) 
 #'   or data that includes event covariates (FALSE)
 #' @param fp logical: if create data for fp model (TRUE) or standard model 
 #'   (FALSE). If `TRUE`, the simulation will produce detections that correspond
 #'   to true detections with probability 0.8.
-#' @param n_pt number of points to simulate. The number of units for single-
-#'   season models will be `n_pt*n_sp`. The number of units for multi-season
-#'   models will be `n_pt*n_sp*n_season`.
-#' @param n_sp number of levels to include in random effect. For compatibility
-#'   with multispecies models, this levels of this random effect define separate
-#'   closure units.
-#' @param n_rep number of replicate visits to simulate per closure unit
+#' @param params a named list containing of parameter values to use in simulation.
+#'   Any required parameters whose names are not in this list will be assigned their
+#'   default values. To see the parameter names and structures required, run with 
+#'   `params = NULL` (the default) and examine the `$params` element of the output.
+#' @param covariates a dataframe of covariate values to use in simulation, or
+#'   NULL to simulate values. To see the covariate names and structures required,
+#'   run with `covariates = NULL` (the default) and examine the `$covariates` element
+#'   of the output.
+#' @param seed random seed. NULL uses (and updates) the existing RNG state. Other values
+#'   do not update the global RNG state.
 #' @param ragged_rep logical: create data with variable (TRUE) or constant 
 #'   (FALSE) numbers of visits per unit.  If TRUE, approximately half of units 
-#'   will be missing approximately half of `n_rep` visits.
-#' @param n_season A positive integer giving the number of seasons desired. 1
-#'   yields data for a single-season model; all other positive integers yield
-#'   multiseason models.
+#'   will be missing approximately half of `n_rep` visits. Intended primarily for 
+#'   development purposes (bug-checking models with missing data).
 #' @param missing_seasons logical; relevant only if n_season is greater than 1. 
 #'   create data with variable (TRUE) or constant (FALSE) numbers of seasons per 
 #'   series (TRUE). If TRUE, approximately half of series will be missing their
 #'   even-numbered seasons.
-#' @param multiseason if n_season is NULL, must be NULL. Otherwise, one of
-#'   "colex" or "autologistic"
-#' @param multi_init if n_season is NULL, must be NULL. Otherwise, one of 
-#'   "explicit" or "equilibrium"
-#' @param augmented logical. If `TRUE` data will be formatted for an augmented
-#'   model; `fp` must be `NULL`, and `n_season` must be `1`; all never-observed 
-#'   species will be trimmed out of the data before augmenting; by default 
-#'   data will be simulated under a large random effect variance for detection 
-#'   to encourage the existence of never-observed species; and by default data 
-#'   will not include any covariate effects on occupancy.
-#' @param params a named list of parameter values to use in simulation, or NULL 
-#'   to simulate values.
-#' @param covariates a dataframe of covariate values to use in simulation, or
-#'   NULL oto simulate values.
-#' @param seed random seed. NULL uses (and updates) the existing RNG state.
-#' @return A three element named list with the observation matrix/array ($obs), 
-#'   the unit covariate dataframe(s) ($unit_covs), and the event covariate list
-#'   ($rep_covs). If rep_constant is TRUE, then $rep_covs will be NULL.
+#' @return A named list with the observation matrix/array ($obs), the unit covariate 
+#'   dataframe(s) ($unit_covs), the event covariate list ($event_covs), the parameters
+#'   used in simulation ($params) and the covariate list used in simulation ($covariates). 
+#'   If rep_constant is TRUE, then $event_covs will be NULL. 
 #' @export
 
 simulate_flocker_data <- function(
@@ -76,10 +84,7 @@ simulate_flocker_data <- function(
 }
   
 #' util for creating example data
-#' @inheritParams simulate_flocker_data
-#' @return A three element named list with the observation matrix/array ($obs), 
-#'   the unit covariate dataframe(s) ($unit_covs), and the event covariate list
-#'   ($rep_covs). If rep_constant is TRUE, then $rep_covs will be NULL.
+#' @inherit simulate_flocker_data
 sfd <- function(
     n_rep,
     n_pt,
@@ -164,11 +169,13 @@ sfd <- function(
     species = factor(paste0("sp_", 1:n_sp), levels = paste0("sp_", 1:n_sp)),
     id_point = 1:n_pt
     )
-  if (is.null(covariates)) {
-    unit_backbone$uc1 <- rnorm(n_pt)[unit_backbone$id_point]
-  } else {
-    unit_backbone$uc1 <- covariates$uc1
+  if(is.null(covariates)) {
+    covariates <- list(
+      uc1 = rnorm(n_pt)[unit_backbone$id_point]
+    )
   }
+  
+  unit_backbone$uc1 <- covariates$uc1
   
   if (n_season > 1) {
     unit_backbone$col <- coefs$col_intercept[as.integer(unit_backbone$species)] +
@@ -240,8 +247,8 @@ sfd <- function(
     coefs$det_slope_unit[as.integer(visit_full$species)] * visit_full$uc1
   
   if (!rep_constant) {
-    if (is.null(covariates)) {
-      visit_full$vc1 <- rnorm(n_pt*n_season*n_rep)[ # we don't allow vc1 to vary by species;
+    if (!(vc1 %in% names(covariates))) {
+      covariates$vc1 <- rnorm(n_pt*n_season*n_rep)[ # we don't allow vc1 to vary by species;
         # this allows the covariate to play nicely with augmented models.
         
         # I think that visit_full is already guaranteed to be blocked by species with everything
@@ -256,9 +263,8 @@ sfd <- function(
           )
         ))
       ]
-    } else {
-      visit_full$vc1 <- covariates$vc1
     }
+    visit_full$vc1 <- covariates$vc1
     visit_full$logit_det <- visit_full$logit_det + 
       coefs$det_slope_visit[as.integer(visit_full$species)] * visit_full$vc1
   }
@@ -274,7 +280,7 @@ sfd <- function(
     # probability so as to imply that on average a fraction fp of detections 
     # are true
     n_fail <- stats::rnbinom(1, n_succ, fp) # this is approximate, but a pretty good one
-    n_zeros <- sum(!visit_full$obs) # 
+    n_zeros <- sum(!visit_full$obs)
     if(n_fail > n_zeros) {
       stop(
       "there are not enough true nondetections to accommodate the desired fp probability"
@@ -303,18 +309,22 @@ sfd <- function(
     visit_full$id_unit <- interaction(visit_full$id_point, visit_full$species)
     unit_backbone$id_unit <- interaction(unit_backbone$id_point, unit_backbone$species)
     obs <- t(unstack(visit_full[c("obs", "id_unit")], obs ~ id_unit))
-    event_covs = list(
-      vc1 = t(unstack(visit_full[c("vc1", "id_unit")], vc1 ~ id_unit))
+    event_covs <- ifelse(
+      rep_constant, 
+      NULL,
+      list(vc1 = t(unstack(visit_full[c("vc1", "id_unit")], vc1 ~ id_unit))) 
     )
-    assertthat::assert_that(all.equal(rownames(obs), rownames(event_covs$vc1)))
+    assertthat::assert_that(
+      rep_constant | 
+        isTRUE(all.equal(rownames(obs), rownames(event_covs$vc1)))
+    )
     ub2 <- unit_backbone[match(rownames(obs), paste0("X", unit_backbone$id_unit)), ]
     assertthat::assert_that(all.equal(rownames(obs), paste0("X", ub2$id_unit)))
-    
     unit_covs = ub2[c("uc1", "species")]
     
     out <- list(obs = remove_rownames(obs), 
                 unit_covs = remove_rownames(unit_covs),
-                event_covs = lapply(event_covs, remove_rownames)
+                event_covs = lapply(event_covs, remove_rownames) # this yields an empty list if event_covs is NULL
                 )
   } else if (augmented) {
     visit_full$id_unit <- interaction(visit_full$id_point, visit_full$species)
@@ -333,15 +343,20 @@ sfd <- function(
     }
 
     ec_prelim <- visit_full[visit_full$species == "sp_1", ]
-    event_covs = list(
-      vc1 = t(unstack(ec_prelim[c("vc1", "id_point")], vc1 ~ id_point))
-    )
-    assertthat::assert_that(all.equal(rownames(obs_temp[[1]]), rownames(event_covs$vc1)))
     
+    event_covs <- ifelse(
+      rep_constant, 
+      NULL,
+      list(vc1 = t(unstack(ec_prelim[c("vc1", "id_point")], vc1 ~ id_point))) 
+    )
+    
+    assertthat::assert_that(
+      rep_constant |
+        isTRUE(all.equal(rownames(obs_temp[[1]]), rownames(event_covs$vc1)))
+    )
     
     ub2 <- unit_backbone[match(rownames(obs_temp[[1]]), paste0("X", unit_backbone$id_point)), ]
     assertthat::assert_that(all.equal(rownames(obs_temp[[1]]), paste0("X", ub2$id_point)))
-    
     unit_covs = ub2[c("uc1", "species")]
     
     out <- list(
@@ -360,10 +375,12 @@ sfd <- function(
       
       obs_temp[[i]] <- t(unstack(vfi[c("obs", "id_unit")], obs ~ id_unit))
       
-      events_temp[[i]] <- t(unstack(vfi[c("vc1", "id_unit")], vc1 ~ id_unit))
+      if(!rep_constant){
+        events_temp[[i]] <- t(unstack(vfi[c("vc1", "id_unit")], vc1 ~ id_unit))
+        assertthat::assert_that(all.equal(rownames(obs_temp[[i]]), rownames(events_temp[[i]])))
+      }
       
       assertthat::assert_that(all.equal(rownames(obs_temp[[1]]), rownames(obs_temp[[i]])))
-      assertthat::assert_that(all.equal(rownames(obs_temp[[i]]), rownames(events_temp[[i]])))
       ub2 <- unit_backbone[match(rownames(obs_temp[[i]]), paste0("X", unit_backbone$id_unit)), ]
       assertthat::assert_that(all.equal(rownames(obs_temp[[i]]), paste0("X", ub2$id_unit)))
       
@@ -372,10 +389,13 @@ sfd <- function(
     out <- list(
       obs = remove_rownames(abind::abind(obs_temp, along = 3)),
       unit_covs = lapply(units_temp, remove_rownames),
-      event_covs = list(vc1 = remove_rownames(abind::abind(events_temp, along = 3)))
-      )
+      event_covs = 
+        ifelse(rep_constant, list(), list(vc1 = remove_rownames(abind::abind(events_temp, along = 3))))
+    )
   }
 
+  out$params <- params
+  out$covariates <- covariates
   out
 }
 
