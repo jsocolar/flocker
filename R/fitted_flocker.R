@@ -1,7 +1,7 @@
 #' Get expected values of the posterior predictive distribution for the modeled
 #' probabilities (occupancy, detection, colonization, extinction, autologistic). 
 #' Note that these are conditional probabilties (e.g. detection conditional on 
-#' occupancy, colonzation conditional on previous non-occupancy, etc).
+#' occupancy, colonization conditional on previous non-occupancy, etc).
 #' These probabilities are not conditioned on the observed histories (e.g. the
 #' occupancy probability is not fixed to one at sites with a detection; it is
 #' estimated only based on the covariates)
@@ -14,9 +14,9 @@
 #'     predicton.
 #'     If `NULL` (the default) expected values are generated for the original data.
 #' @param summarise if TRUE, return the expected value and upper and lower bound 
-#'     of the credible interval, otherwise return the posterior matrix. 
+#'     of the credible interval, otherwise return posterior draws. 
 #' @param CI A vector of length 2 specifying the upper and lower bounds of the 
-#'     credible interval. Defaults to c(.05, .95)
+#'     credible interval.
 #' @param ndraws Positive integer indicating how many posterior draws should be 
 #'     used. If `NULL` (the default) all draws are used. 
 #' @param response Should results be returned on the response or logit-scale? 
@@ -26,10 +26,11 @@
 #' @param re_formula formula containing group-level effects to be considered in 
 #'     the prediction. If `NULL` (default), include all group-level effects; if 
 #'     NA, include no group-level effects.
-#' @param allow_new_levels allow new levels in new_data?
+#' @param allow_new_levels allow new levels for random effect terms in `new_data`?
+#'     Will error if set to `FALSE` and new levels are provided in `new_data`.
 #' @param sample_new_levels If new_data is provided and contains random effect
 #'     levels not present in the original data, how should predictions be
-#'     handled? Passed directly to brms::prepare_predictions.
+#'     handled? Passed directly to `brms::prepare_predictions`, which see.
 #' @return A data.frame containing the columns used to generate expected values 
 #'     and the estimate and its credible interval (lower and upper bounds)
 #' @export

@@ -121,6 +121,7 @@ flocker_model_types <- function() {
     "single_fp", # single-season false-positive model with known fp probabilities
     "multi_colex_fp", # multi_colex with known fp rates
 #    "multi_autologistic_fp", # multi_autologistic with known fp rates
+#    "multi_autologistic_eq_fp", # multi_autologistic_eq with known fp rates
     "multi_colex_eq_fp" # multi_colex_eq with known fp rates
     )
 }
@@ -185,10 +186,17 @@ type_flocker_fit <- function(x) {
     msg = "x must be a flocker_fit object"
   )
   assertthat::assert_that(
-    "lik_type" %in% names(attributes(x)),
+    all(c("data_type", "multi_init", "fp") %in% names(attributes(x))),
     msg = "the attributes of the flocker_fit object have been altered or corrupted"
   )
-  out <- attributes(x)$lik_type
+  a <- attributes(x)
+  out <- a$data_type
+  if(!is.null(a$multiseason)){
+    out <- paste(out, a$multiseason, a$multi_init, sep = "_")
+  }
+  if(a$fp) {
+    out <- paste(out, "fp", sep = "_")
+  }
   
   assertthat::assert_that(
     out %in% flocker_model_types(),
