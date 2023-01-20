@@ -211,14 +211,14 @@ type_flocker_fit <- function(x) {
 params_by_type <- list(
   single = c("occ", "det"),
   single_C = c("occ", "det"),
-  augmented = c("occ", "det"),
-  multi_colex = c("occ", "det", "col", "ex"),
-  multi_colex_eq = c("det", "col", "ex"),
-  multi_autologistic = c("occ", "det", "col", "auto"),
-  multi_autologistic_eq = c("det", "col", "auto"),
+  augmented = c("occ", "det", "omega"),
+  multi_colex = c("occ", "colo", "ex", "det"),
+  multi_colex_eq = c("colo", "ex", "det"),
+  multi_autologistic = c("occ", "colo", "auto", "det"),
+  multi_autologistic_eq = c("colo", "auto", "det"),
   single_fp = c("occ", "det"),
-  multi_colex_fp = c("occ", "det", "col", "ex"),
-  multi_colex_eq_fp = c("det", "col", "ex")
+  multi_colex_fp = c("occ", "colo", "ex", "det"),
+  multi_colex_eq_fp = c("colo", "ex", "det")
 )
 
 
