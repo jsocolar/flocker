@@ -247,7 +247,7 @@ sfd <- function(
     coefs$det_slope_unit[as.integer(visit_full$species)] * visit_full$uc1
   
   if (!rep_constant) {
-    if (!(vc1 %in% names(covariates))) {
+    if (!("vc1" %in% names(covariates))) {
       covariates$vc1 <- rnorm(n_pt*n_season*n_rep)[ # we don't allow vc1 to vary by species;
         # this allows the covariate to play nicely with augmented models.
         
@@ -309,15 +309,13 @@ sfd <- function(
     visit_full$id_unit <- interaction(visit_full$id_point, visit_full$species)
     unit_backbone$id_unit <- interaction(unit_backbone$id_point, unit_backbone$species)
     obs <- t(unstack(visit_full[c("obs", "id_unit")], obs ~ id_unit))
-    event_covs <- ifelse(
-      rep_constant, 
-      NULL,
-      list(vc1 = t(unstack(visit_full[c("vc1", "id_unit")], vc1 ~ id_unit))) 
-    )
-    assertthat::assert_that(
-      rep_constant | 
-        isTRUE(all.equal(rownames(obs), rownames(event_covs$vc1)))
-    )
+    if(rep_constant){
+      event_covs <- NULL
+    } else {
+      event_covs <- list(vc1 = t(unstack(visit_full[c("vc1", "id_unit")], vc1 ~ id_unit))) 
+      assertthat::assert_that(isTRUE(all.equal(rownames(obs), rownames(event_covs$vc1))))
+    }
+
     ub2 <- unit_backbone[match(rownames(obs), paste0("X", unit_backbone$id_unit)), ]
     assertthat::assert_that(all.equal(rownames(obs), paste0("X", ub2$id_unit)))
     unit_covs = ub2[c("uc1", "species")]
@@ -344,16 +342,12 @@ sfd <- function(
 
     ec_prelim <- visit_full[visit_full$species == "sp_1", ]
     
-    event_covs <- ifelse(
-      rep_constant, 
-      NULL,
+    if(rep_constant){
+      event_covs <- NULL
+    } else {
       list(vc1 = t(unstack(ec_prelim[c("vc1", "id_point")], vc1 ~ id_point))) 
-    )
-    
-    assertthat::assert_that(
-      rep_constant |
-        isTRUE(all.equal(rownames(obs_temp[[1]]), rownames(event_covs$vc1)))
-    )
+      assertthat::assert_that(isTRUE(all.equal(rownames(obs_temp[[1]]), rownames(event_covs$vc1))))
+    }
     
     ub2 <- unit_backbone[match(rownames(obs_temp[[1]]), paste0("X", unit_backbone$id_point)), ]
     assertthat::assert_that(all.equal(rownames(obs_temp[[1]]), paste0("X", ub2$id_point)))
@@ -386,11 +380,18 @@ sfd <- function(
       
       units_temp[[i]] = ub2[c("uc1", "species")]
     }
+    
+    if(rep_constant){
+      event_covs <- list()
+    } else {
+      event_covs <- list(vc1 = remove_rownames(abind::abind(events_temp, along = 3)))
+    }
+    
+    
     out <- list(
       obs = remove_rownames(abind::abind(obs_temp, along = 3)),
       unit_covs = lapply(units_temp, remove_rownames),
-      event_covs = 
-        ifelse(rep_constant, list(), list(vc1 = remove_rownames(abind::abind(events_temp, along = 3))))
+      event_covs = event_covs
     )
   }
 
