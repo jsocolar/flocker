@@ -28,9 +28,8 @@
 #'   be simulated without any covariate influence on occupancy.
 #' @param rep_constant logical: create data with unit covariates only (TRUE) 
 #'   or data that includes event covariates (FALSE)
-#' @param fp logical: if create data for fp model (TRUE) or standard model 
-#'   (FALSE). If `TRUE`, the simulation will produce detections that correspond
-#'   to true detections with probability 0.8.
+#' @param fp NULL for a standard model. For a false-positive model, a number between
+#'   0 and 1 exclusive to simulate data under that fp probablility.
 #' @param params a named list containing of parameter values to use in simulation.
 #'   Any required parameters whose names are not in this list will be assigned their
 #'   default values. To see the parameter names and structures required, run with 
@@ -70,6 +69,55 @@ simulate_flocker_data <- function(
   seed = 123,
   ragged_rep = FALSE,
   missing_seasons = FALSE) {
+  
+  # Input checking
+  msg_str <- " is not a single positive integer"
+  assertthat::assert_that(is_one_pos_int(n_rep, 1), msg = paste0("n_rep", msg_str))
+  assertthat::assert_that(is_one_pos_int(n_pt, 0), msg = paste0("n_pt", msg_str))
+  assertthat::assert_that(is_one_pos_int(n_sp, 1), msg = paste0("n_sp", msg_str))
+  assertthat::assert_that(is_one_pos_int(n_season, 1), msg = paste0("n_season", msg_str))
+  assertthat::assert_that(
+    is.null(multiseason) | isTRUE(multiseason %in% c("colex", "autologistic")),
+    msg = "multiseason must be NULL, 'colex', or 'autologistic'"
+  )
+  assertthat::assert_that(
+    is.null(multi_init) | isTRUE(multi_init %in% c("explicit", "equilibrium")),
+    msg = "multiseason must be NULL, 'explicit', or 'equilibrium'"
+  )
+  assertthat::assert_that(is_one_logical(augmented), msg = "augmented must be a single logical")
+  assertthat::assert_that(is_one_logical(rep_constant), msg = "rep_constant must be a single logical")
+  assertthat::assert_that(
+    is.null(fp) | isTRUE(fp > 0 & fp < 1),
+    msg = "fp must be NULL or a number between 0 and 1"
+  )
+  assertthat::assert_that(is_one_logical(ragged_rep), msg = "ragged_rep must be a single logical")
+  assertthat::assert_that(is_one_logical(missing_seasons), msg = "missing_seasons must be a single logical")
+  if(n_season == 1){
+    assertthat::assert_that(
+      is.null(multiseason) & is.null(multi_init),
+      msg = "multiseason and multi_init must be NULL when n_season is 1"
+    )
+    assertthat::assert_that(
+      !missing_seasons,
+      msg = "missing_seasons must be FALSE when n_season is 1"
+    )
+  } else {
+    assertthat::assert_that(
+      !is.null(multiseason) & !is.null(multi_init),
+      msg = "multiseason and multi_init must be provide when n_season is greater than 1"
+    )
+    assertthat::assert_that(
+      !augmented, 
+      msg = "augmented must be FALSE when n_season is greater than 1"
+    )
+  }
+  if(augmented){
+    assertthat::assert_that(
+      is.null(fp),
+      msg = "fp must be NULL when augmented is TRUE"
+    )
+  }
+  
   if (is.null(seed)){
     out <- sfd(n_rep, n_pt, n_sp, n_season, multiseason, multi_init, augmented,
                rep_constant, fp, params, covariates, ragged_rep, missing_seasons)
@@ -100,10 +148,6 @@ sfd <- function(
     ragged_rep,
     missing_seasons
 ) {
-  assertthat::assert_that(
-    n_rep == floor(n_rep) & n_rep > 1,
-    msg = "n_rep must be an integer greater than 1"
-    )
   
   if (is.null(params)) {
     params <- list()
@@ -235,20 +279,22 @@ sfd <- function(
     id_rep = 1:n_rep
   )
   
-  visit_full <- merge(
+  visit_backbone$rowid <- seq_len(nrow(visit_backbone))
+  vf1 <- merge(
     visit_backbone, 
     true_Z, 
     by = c("species", "id_point", "id_season"),
     all = TRUE
   )
+  visit_full <- vf1[order(vf1$rowid), ]
   
   visit_full$logit_det <- 
     coefs$det_intercept[as.integer(visit_full$species)] +
     coefs$det_slope_unit[as.integer(visit_full$species)] * visit_full$uc1
   
   if (!rep_constant) {
-    if (!("vc1" %in% names(covariates))) {
-      covariates$vc1 <- rnorm(n_pt*n_season*n_rep)[ # we don't allow vc1 to vary by species;
+    if (!("ec1" %in% names(covariates))) {
+      covariates$ec1 <- rnorm(n_pt*n_season*n_rep)[ # we don't allow ec1 to vary by species;
         # this allows the covariate to play nicely with augmented models.
         
         # I think that visit_full is already guaranteed to be blocked by species with everything
@@ -264,9 +310,9 @@ sfd <- function(
         ))
       ]
     }
-    visit_full$vc1 <- covariates$vc1
+    visit_full$ec1 <- covariates$ec1
     visit_full$logit_det <- visit_full$logit_det + 
-      coefs$det_slope_visit[as.integer(visit_full$species)] * visit_full$vc1
+      coefs$det_slope_visit[as.integer(visit_full$species)] * visit_full$ec1
   }
   
   visit_full$obs <- visit_full$true_Z *
@@ -295,13 +341,13 @@ sfd <- function(
     visit_full$season_pt <- interaction(visit_full$id_point, visit_full$id_season)
     season_pt_missing <- sample(unique(visit_full$season_pt), floor(length(unique(visit_full$season_pt)) / 2))
     rows_missing <- which((visit_full$season_pt %in% season_pt_missing) & (visit_full$id_rep > n_rep / 2))
-    visit_full$obs[rows_missing] <- visit_full$vc1[rows_missing] <- NA
+    visit_full$obs[rows_missing] <- visit_full$ec1[rows_missing] <- NA
   }
   
   if (missing_seasons) {
     pt_missing <- sample(unique(visit_full$id_point), floor(length(unique(visit_full$id_point)) / 2))
     rows_missing <- which((visit_full$season_pt %in% pt_missing) & (visit_full$id_season %% 2 == 0))
-    visit_full$obs[rows_missing] <- visit_full$vc1[rows_missing] <- NA
+    visit_full$obs[rows_missing] <- visit_full$ec1[rows_missing] <- NA
   }
   
   # format data for return
@@ -312,8 +358,8 @@ sfd <- function(
     if(rep_constant){
       event_covs <- NULL
     } else {
-      event_covs <- list(vc1 = t(unstack(visit_full[c("vc1", "id_unit")], vc1 ~ id_unit))) 
-      assertthat::assert_that(isTRUE(all.equal(rownames(obs), rownames(event_covs$vc1))))
+      event_covs <- list(ec1 = t(unstack(visit_full[c("ec1", "id_unit")], ec1 ~ id_unit))) 
+      assertthat::assert_that(isTRUE(all.equal(rownames(obs), rownames(event_covs$ec1))))
     }
 
     ub2 <- unit_backbone[match(rownames(obs), paste0("X", unit_backbone$id_unit)), ]
@@ -345,8 +391,8 @@ sfd <- function(
     if(rep_constant){
       event_covs <- NULL
     } else {
-      list(vc1 = t(unstack(ec_prelim[c("vc1", "id_point")], vc1 ~ id_point))) 
-      assertthat::assert_that(isTRUE(all.equal(rownames(obs_temp[[1]]), rownames(event_covs$vc1))))
+      list(ec1 = t(unstack(ec_prelim[c("ec1", "id_point")], ec1 ~ id_point))) 
+      assertthat::assert_that(isTRUE(all.equal(rownames(obs_temp[[1]]), rownames(event_covs$ec1))))
     }
     
     ub2 <- unit_backbone[match(rownames(obs_temp[[1]]), paste0("X", unit_backbone$id_point)), ]
@@ -370,7 +416,7 @@ sfd <- function(
       obs_temp[[i]] <- t(unstack(vfi[c("obs", "id_unit")], obs ~ id_unit))
       
       if(!rep_constant){
-        events_temp[[i]] <- t(unstack(vfi[c("vc1", "id_unit")], vc1 ~ id_unit))
+        events_temp[[i]] <- t(unstack(vfi[c("ec1", "id_unit")], ec1 ~ id_unit))
         assertthat::assert_that(all.equal(rownames(obs_temp[[i]]), rownames(events_temp[[i]])))
       }
       
@@ -384,7 +430,7 @@ sfd <- function(
     if(rep_constant){
       event_covs <- list()
     } else {
-      event_covs <- list(vc1 = remove_rownames(abind::abind(events_temp, along = 3)))
+      event_covs <- list(ec1 = remove_rownames(abind::abind(events_temp, along = 3)))
     }
     
     

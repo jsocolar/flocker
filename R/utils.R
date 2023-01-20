@@ -587,6 +587,14 @@ is_one_logical <- function (x) {
   identical(x, TRUE) | identical(x, FALSE)
 }
 
+#' check if an object is a single integer (or integerish) > m
+#' @param x object to test
+#' @param minimum value for x
+#' @return logical; TURE if x is a single positive integer
+is_one_pos_int <- function(x, m = 0) {
+  isTRUE(x == floor(x)) & isTRUE(x > m)
+}
+
 #' get shared elements between two vectors
 #' @param x vector
 #' @param y vector

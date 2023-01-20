@@ -54,9 +54,8 @@ be simulated without any covariate influence on occupancy.}
 \item{rep_constant}{logical: create data with unit covariates only (TRUE) 
 or data that includes event covariates (FALSE)}
 
-\item{fp}{logical: if create data for fp model (TRUE) or standard model 
-(FALSE). If `TRUE`, the simulation will produce detections that correspond
-to true detections with probability 0.8.}
+\item{fp}{NULL for a standard model. For a false-positive model, a number between
+0 and 1 exclusive to simulate data under that fp probablility.}
 
 \item{params}{a named list containing of parameter values to use in simulation.
 Any required parameters whose names are not in this list will be assigned their
