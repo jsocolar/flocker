@@ -132,7 +132,7 @@ flocker_data_input_types <- function() {
   c("single",    # covers all model types prefixed with "single"
                  # (rep-constant versus varying is inferred from
                  # existence of event_covs)
-    "augmented", # the data-augmented single-species model
+    "augmented", # the data-augmented multispecies model
     "multi"      # covers all model types prefixed with "multi"
     )
 }
@@ -228,8 +228,8 @@ params_by_type <- list(
 #' @return an n_row x 2 matrix, where each row contains the indices of the 
 #'     corresponding sampling event in the observation dataframe
 get_positions_single <- function(flocker_fit) {
-  if (attributes(flocker_fit)$lik_type != "single") {
-    stop("flocker_fit type is not 'single'")
+  if (!(attributes(flocker_fit)$lik_type %in% c("single", "single_fp")) {
+    stop("flocker_fit type is not 'single' or 'single_fp'")
   }
   n_unit <- flocker_fit$data$n_unit[1]
   index_matrix <- as.matrix(flocker_fit$data[1:n_unit, grepl("^rep_index", 
@@ -280,10 +280,6 @@ validate_params_individually <- function(f_occ, f_det, flocker_data,
                                          multiseason, f_col, f_ex, multi_init, f_auto,
                                          augmented, fp, threads) {
   # Check that formulas are valid and produce informative errors otherwise
-  assertthat::assert_that(
-    !is.null(f_det),
-    msg = "detection formula must be provided"
-  )
   assertthat::assert_that(
     inherits(f_det, "formula"),
     msg = formula_error("detection")
@@ -424,9 +420,7 @@ validate_param_combos_single_C <- function(f_occ, f_det, flocker_data,
    augmented, fp)
   assertthat::assert_that(
     !fp,
-    msg = paste0("rep-constant fp likelihood not implemented; reformat data ",
-                 "for fp model or set fp to FALSE."
-                )
+    msg = paste0("reformat data for fp model or set fp to FALSE.")
   )
   
   assertthat::assert_that(
@@ -630,7 +624,6 @@ max_position_not_na <- function (x, treat_m99_NA = FALSE) {
     max(which(!is.na(x)))
   }
 }
-
 
 #' remove rownames
 #' @param m object whose rownames to remove
