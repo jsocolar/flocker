@@ -51,18 +51,20 @@ The main function in `flocker` for fitting occupancy models, called `flock()`, e
 
 Many occupancy models also include covariates that influence occupancy or detection probabilities. Unit covariates (see *Terms and definitions* above) can be passed to `make_flocker_data()` as a dataframe with the same number of rows as the observation matrix and data in the same order as the rows of the observation matrix. Columns are covariates, and we recommend using informative column names. *Event covariates* (see *Terms and definitions* above) can be passed as a named list of matrices whose elements `[i, j]` are the covariate values for the sampling event represented by the corresponding position of the observation matrix. Again, we recommend using informative names for the list elements. If the corresponding observation is `NA`, then the value of the event covariate does not matter.
 
-Here's an example of how we format data, using example data provided via the `example_flocker_data()` function:
+Here's an example of how we format data, using example data provided with the package:
 ```{r data formatting}
 library(flocker)
-ex_data <- example_flocker_data()
-names(ex_data)
-names(ex_data$event_covs)
-head(ex_data$obs) # observation matrix
-head(ex_data$unit_covs) # observation matrix
-head(ex_data$event_covs$ec1)
-flocker_data <- make_flocker_data(obs = ex_data$obs, 
-                                  unit_covs = ex_data$unit_covs, 
-                                  event_covs = ex_data$event_covs)
+names(example_flocker_data)
+names(example_flocker_data$event_covs)
+head(example_flocker_data$obs) # observation matrix
+head(example_flocker_data$unit_covs) # observation matrix
+head(example_flocker_data$event_covs$ec1)
+flocker_data <- make_flocker_data(
+  obs = example_flocker_data$obs,
+  unit_covs = example_flocker_data$unit_covs,
+  event_covs = example_flocker_data$event_covs
+  )
+
 ```
 
 ## Model formulas
