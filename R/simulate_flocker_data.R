@@ -72,10 +72,10 @@ simulate_flocker_data <- function(
   
   # Input checking
   msg_str <- " is not a single positive integer"
-  assertthat::assert_that(is_one_pos_int(n_rep, 1), msg = paste0("n_rep", msg_str))
+  assertthat::assert_that(is_one_pos_int(n_rep, 1), msg = paste0("n_rep", msg_str, " greater than one"))
   assertthat::assert_that(is_one_pos_int(n_pt, 0), msg = paste0("n_pt", msg_str))
-  assertthat::assert_that(is_one_pos_int(n_sp, 1), msg = paste0("n_sp", msg_str))
-  assertthat::assert_that(is_one_pos_int(n_season, 1), msg = paste0("n_season", msg_str))
+  assertthat::assert_that(is_one_pos_int(n_sp, 0), msg = paste0("n_sp", msg_str))
+  assertthat::assert_that(is_one_pos_int(n_season, 0), msg = paste0("n_season", msg_str))
   assertthat::assert_that(
     is.null(multiseason) | isTRUE(multiseason %in% c("colex", "autologistic")),
     msg = "multiseason must be NULL, 'colex', or 'autologistic'"

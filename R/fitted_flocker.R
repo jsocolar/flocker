@@ -11,15 +11,17 @@
 #' @param new_data Optional new data at which to evaluate occupancy predictions. 
 #'     New data can be passed as a flocker_data object produced by 
 #'     \code{make_flocker_data} or as a simple dataframe with one row per desired
-#'     predicton.
-#'     If `NULL` (the default) expected values are generated for the original data.
+#'     predicton. If `NULL` (the default) expected values are generated for the 
+#'     original data as formatted by make_flocker_data. You cannot trust that the
+#'     rows will have the same order as the covariate objects that you passed
+#'     to make_flocker_data!
 #' @param summarise if TRUE, return the expected value and upper and lower bound 
 #'     of the credible interval, otherwise return posterior draws. 
 #' @param CI A vector of length 2 specifying the upper and lower bounds of the 
 #'     credible interval.
 #' @param ndraws Positive integer indicating how many posterior draws should be 
 #'     used. If `NULL` (the default) all draws are used. 
-#' @param response Should results be returned on the response or logit-scale? 
+#' @param response Should results be returned on the response or logit scale? 
 #'     Defaults to `TRUE`, i.e. response scale. However, the autologistic
 #'     parameter is not interpretable as a probability and is always returned
 #'     on the logit scale regardless of the value of `response`
@@ -31,8 +33,7 @@
 #' @param sample_new_levels If new_data is provided and contains random effect
 #'     levels not present in the original data, how should predictions be
 #'     handled? Passed directly to `brms::prepare_predictions`, which see.
-#' @return A data.frame containing the columns used to generate expected values 
-#'     and the estimate and its credible interval (lower and upper bounds)
+#' @return A list of sets of expected values (one per component)
 #' @export
 #' 
 fitted_flocker <- function(
@@ -50,29 +51,32 @@ fitted_flocker <- function(
     is_one_logical(summarise),
     msg = "summarise must be a single logical value"
   )
-  assertthat::assert_that(
-    is.numeric(CI),
-    msg = "CI must be numeric"
+  if(summarise){
+    assertthat::assert_that(
+      is.numeric(CI),
+      msg = "CI must be numeric"
     )
-  assertthat::assert_that(
-    length(CI) == 2,
-    msg = "CI must be numeric"
-  )
-  assertthat::assert_that(
-    all(CI >= 0) & all(CI <= 1),
-    msg = "CI must be between zero and one inclusive"
-  )
+    assertthat::assert_that(
+      length(CI) == 2,
+      msg = "CI must be of length 2"
+    )
+    assertthat::assert_that(
+      all(CI >= 0) & all(CI <= 1),
+      msg = "CI must be between zero and one inclusive"
+    )
+  }
   if(!is.null(ndraws)) {
     assertthat::assert_that(
       ndraws <= brms::ndraws(flocker_fit),
       msg = "More draws requested than contained in flocker_fit"
     )
-  } else { # i.e. is null
+  } else {
     ndraws <- brms::ndraws(flocker_fit)
   }
   
   model_type <- type_flocker_fit(flocker_fit)
   relevant_components <- params_by_type[[model_type]]
+  if("col" %in% components){components[components == "col"] <- "colo"}
   
   use_components <- components[components %in% relevant_components]
   
@@ -88,7 +92,7 @@ fitted_flocker <- function(
     new_data_fmtd <- old_data
   } else {
     # add cols to avoid error
-    col_string <- "^y$|^Q$|^n_unit$|^unit$|^n_rep$|^rep_index"
+    col_string <- "^ff_y$|^ff_Q$|^ff_n_unit$|^ff_unit$|^ff_n_rep$|^ff_rep_index|^ff_n_series|^ff_series|^ff_n_year|^ff_year|^ff_series_year"
     flocker_cols <- flocker_fit$data[grepl(col_string, names(flocker_fit$data))]
     extra_cols <- which(!(names(flocker_cols) %in% names(new_data)))
     if(length(extra_cols) == 0) {
@@ -100,42 +104,84 @@ fitted_flocker <- function(
     }
   } 
   
-  if(type %in% c("occupancy", "both")) {
+  component_list <- list()
+  
+  if("occ" %in% use_components) {
     linpred_occ <- t(brms::posterior_linpred(flocker_fit, dpar = "occ", 
                                              ndraws = ndraws, 
                                              newdata = new_data_fmtd, 
                                              re_formula = re_formula, 
                                              allow_new_levels = allow_new_levels,
-                                             sample_new_levels = sample_new_levels)) 
-    linpred_occ <- boot::inv.logit(linpred_occ)
-    if(type == "occupancy") linpred <- linpred_occ
+                                             sample_new_levels = sample_new_levels))
+    if(response){
+      linpred_occ <- boot::inv.logit(linpred_occ)
+    }
+    component_list$linpred_occ <- linpred_occ
   }
-  if(type %in% c("detection", "both")) {
+  if("colo" %in% use_components) {
+    linpred_colo <- t(brms::posterior_linpred(flocker_fit, dpar = "colo", 
+                                             ndraws = ndraws, 
+                                             newdata = new_data_fmtd, 
+                                             re_formula = re_formula, 
+                                             allow_new_levels = allow_new_levels,
+                                             sample_new_levels = sample_new_levels))
+    if(response){
+      linpred_colo <- boot::inv.logit(linpred_colo)
+    }
+    component_list$linpred_col <- linpred_colo
+  }
+  if("ex" %in% use_components) {
+    linpred_ex <- t(brms::posterior_linpred(flocker_fit, dpar = "ex", 
+                                             ndraws = ndraws, 
+                                             newdata = new_data_fmtd, 
+                                             re_formula = re_formula, 
+                                             allow_new_levels = allow_new_levels,
+                                             sample_new_levels = sample_new_levels))
+    if(response){
+      linpred_ex <- boot::inv.logit(linpred_ex)
+    }
+    component_list$linpred_ex <- linpred_ex
+  }
+  if("auto" %in% use_components) {
+    linpred_auto <- t(brms::posterior_linpred(flocker_fit, dpar = "auto", 
+                                             ndraws = ndraws, 
+                                             newdata = new_data_fmtd, 
+                                             re_formula = re_formula, 
+                                             allow_new_levels = allow_new_levels,
+                                             sample_new_levels = sample_new_levels))
+    if(response){
+      linpred_auto <- boot::inv.logit(linpred_auto)
+    }
+    component_list$linpred_auto <- linpred_auto
+  }
+  if("det" %in% use_components) {
     linpred_det <- t(brms::posterior_linpred(flocker_fit, dpar = "mu", 
                                              ndraws = ndraws, 
                                              newdata = new_data_fmtd, 
                                              re_formula = re_formula, 
                                              allow_new_levels = allow_new_levels,
                                              sample_new_levels = sample_new_levels))
-    linpred_det <- boot::inv.logit(linpred_det)
-    if(type == "detection") linpred <- linpred_det
+    if(response){
+      linpred_det <- boot::inv.logit(linpred_det)
+    }
+    component_list$linpred_det <- linpred_det
   }
   
-  if(type == "both") {
-    linpred <- exp(log(linpred_occ) + log(linpred_det))
+  if(summarise) {
+    out <- lapply(component_list, summarise_fun)
+  } else {
+    out <- component_list
   }
-  
-  colnames(linpred) <- paste0("iter_", 1:ndraws)
-  
-  if(isFALSE(response)) {
-    linpred <- boot::logit(linpred)
-  }
-  
-  if(isTRUE(summarise)) {
-    linpred <- data.frame(estimate = matrixStats::rowMeans2(linpred),
-                          lwr = matrixStats::rowQuantiles(linpred, probs = min(CI)), 
-                          upr = matrixStats::rowQuantiles(linpred, probs = max(CI)))
-    names(linpred)[2:3] <- paste0("Q", c(min(CI)*100, paste0(max(CI)*100)))
-  }
-  return(linpred)
+  out
+}
+
+#' function to summarize matrix of linear predictors to its mean and CI
+#' @param x linpreds
+#' @return summary
+summarise_fun <- function(x) {
+  out <- data.frame(estimate = matrixStats::rowMeans2(x),
+             lwr = matrixStats::rowQuantiles(x, probs = min(CI)), 
+             upr = matrixStats::rowQuantiles(x, probs = max(CI)))
+  names(out)[2:3] <- paste0("Q", c(min(CI)*100, paste0(max(CI)*100)))
+  out
 }

@@ -390,7 +390,7 @@ make_forward_colex_fp <- function() {
     "  // Forward algorithm implementation",
     "  real forward_colex_fp(",
     "    int n_year, // number of years",
-    "    array[] int Q, // At least one detection in year?",
+    "    array[] int Q, // At least one certain detection in unit?",
     "    array[] int n_obs, // number of visits in year",
     "    array[,] real fp, // probability that true datum is one: rows are units, columns visits",
     "    real occ_initial, // initial occupancy logit-probability",

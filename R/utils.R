@@ -192,7 +192,10 @@ type_flocker_fit <- function(x) {
   a <- attributes(x)
   out <- a$data_type
   if(!is.null(a$multiseason)){
-    out <- paste(out, a$multiseason, a$multi_init, sep = "_")
+    out <- paste(out, a$multiseason, sep = "_")
+    if(a$multi_init == "equilibrium"){
+      out <- paste(out, "eq", sep = "_")
+    }
   }
   if(a$fp) {
     out <- paste(out, "fp", sep = "_")
@@ -228,10 +231,10 @@ params_by_type <- list(
 #' @return an n_row x 2 matrix, where each row contains the indices of the 
 #'     corresponding sampling event in the observation dataframe
 get_positions_single <- function(flocker_fit) {
-  if (!(attributes(flocker_fit)$lik_type %in% c("single", "single_fp")) {
+  if (!(attributes(flocker_fit)$lik_type %in% c("single", "single_fp"))) {
     stop("flocker_fit type is not 'single' or 'single_fp'")
   }
-  n_unit <- flocker_fit$data$n_unit[1]
+  n_unit <- flocker_fit$data$ff_n_unit[1]
   index_matrix <- as.matrix(flocker_fit$data[1:n_unit, grepl("^rep_index", 
                                                     names(flocker_fit$data))])
   n_row <- nrow(flocker_fit$data)

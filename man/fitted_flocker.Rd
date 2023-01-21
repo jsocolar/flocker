@@ -5,7 +5,7 @@
 \title{Get expected values of the posterior predictive distribution for the modeled
 probabilities (occupancy, detection, colonization, extinction, autologistic). 
 Note that these are conditional probabilties (e.g. detection conditional on 
-occupancy, colonzation conditional on previous non-occupancy, etc).
+occupancy, colonization conditional on previous non-occupancy, etc).
 These probabilities are not conditioned on the observed histories (e.g. the
 occupancy probability is not fixed to one at sites with a detection; it is
 estimated only based on the covariates)}
@@ -32,19 +32,21 @@ fitted_flocker(
 \item{new_data}{Optional new data at which to evaluate occupancy predictions. 
 New data can be passed as a flocker_data object produced by 
 \code{make_flocker_data} or as a simple dataframe with one row per desired
-predicton.
-If `NULL` (the default) expected values are generated for the original data.}
+predicton. If `NULL` (the default) expected values are generated for the 
+original data as formatted by make_flocker_data. You cannot trust that the
+rows will have the same order as the covariate objects that you passed
+to make_flocker_data!}
 
 \item{summarise}{if TRUE, return the expected value and upper and lower bound 
-of the credible interval, otherwise return the posterior matrix.}
+of the credible interval, otherwise return posterior draws.}
 
 \item{CI}{A vector of length 2 specifying the upper and lower bounds of the 
-credible interval. Defaults to c(.05, .95)}
+credible interval.}
 
 \item{ndraws}{Positive integer indicating how many posterior draws should be 
 used. If `NULL` (the default) all draws are used.}
 
-\item{response}{Should results be returned on the response or logit-scale? 
+\item{response}{Should results be returned on the response or logit scale? 
 Defaults to `TRUE`, i.e. response scale. However, the autologistic
 parameter is not interpretable as a probability and is always returned
 on the logit scale regardless of the value of `response`}
@@ -53,21 +55,21 @@ on the logit scale regardless of the value of `response`}
 the prediction. If `NULL` (default), include all group-level effects; if 
 NA, include no group-level effects.}
 
-\item{allow_new_levels}{allow new levels in new_data?}
+\item{allow_new_levels}{allow new levels for random effect terms in `new_data`?
+Will error if set to `FALSE` and new levels are provided in `new_data`.}
 
 \item{sample_new_levels}{If new_data is provided and contains random effect
 levels not present in the original data, how should predictions be
-handled? Passed directly to brms::prepare_predictions.}
+handled? Passed directly to `brms::prepare_predictions`, which see.}
 }
 \value{
-A data.frame containing the columns used to generate expected values 
-    and the estimate and its credible interval (lower and upper bounds)
+A list of sets of expected values (one per component)
 }
 \description{
 Get expected values of the posterior predictive distribution for the modeled
 probabilities (occupancy, detection, colonization, extinction, autologistic). 
 Note that these are conditional probabilties (e.g. detection conditional on 
-occupancy, colonzation conditional on previous non-occupancy, etc).
+occupancy, colonization conditional on previous non-occupancy, etc).
 These probabilities are not conditioned on the observed histories (e.g. the
 occupancy probability is not fixed to one at sites with a detection; it is
 estimated only based on the covariates)

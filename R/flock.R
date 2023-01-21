@@ -486,6 +486,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
   if (output == "model") {
     attr(out, "class") <- c(attr(out, "class"), "flocker_fit")
     attr(out, "data_type") <- flocker_data$type
+    attr(out, "multiseason") <- multiseason
     attr(out, "multi_init") <- multi_init
     attr(out, "fp") <- fp
   }
