@@ -41,7 +41,7 @@ get_Z <- function (flocker_fit, n_iter = NULL, history_condition = TRUE,
     stop("requested more iterations than contained in flocker_fit")
   }
   
-  if (!is.logical(history_condition)) {
+  if (!is_one_logical(history_condition)) {
     stop("history_condition must be logical")
   }
   
