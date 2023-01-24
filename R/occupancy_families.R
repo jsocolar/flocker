@@ -133,7 +133,7 @@ occupancy_multi_colex_fp <- function(max_year, max_rep) {
     loop = FALSE)
 }
 
-#' Define the colonization-extinction family
+#' Define the colonization-extinction-equilibrium-fp family
 #' @param max_year the maximum number of seasons at a colex unit
 #' @param max_rep the maximum number of repeat sampling events at a closure unit
 #' @return a "customfamily" "brmsfamily" object from brms

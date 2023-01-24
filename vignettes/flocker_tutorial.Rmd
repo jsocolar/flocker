@@ -1,8 +1,10 @@
 ---
 title: "Fitting occupancy models with flocker"
+author: Jacob Socolar & Simon Mills
+date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{my-vignette}
+  %\VignetteIndexEntry{Fitting occupancy models with flocker}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -20,7 +22,7 @@ knitr::opts_chunk$set(
 
 `flocker` is built on R package `brms`, which in turn is a front-end for `Stan`. Thus, mastering `flocker` is mostly a matter of mastering the formula syntax available in `brms`. 
 
-This vignette introduces `flocker` with examples focused on "standard" single-season models (including multispecies models). For help with other model types, following the links here for [the data-augmented model](), [dynamic (multiseason) models](), and [false-positive models](). In the remainder of this vignette, we
+This vignette introduces `flocker` with examples focused on "standard" single-season models (including multispecies models). For help with other model types, following the links here for [the data-augmented model](), [multiseason (dynamic) models](), and [false-positive models](). In the remainder of this vignette, we
 
 * define some useful terms 
 * explain how to format data for use with `flocker`
@@ -188,7 +190,7 @@ ff <- flock(f_occ = ~ uc1,
 get_Z(ff)
 ```
 
-`get_Z()` accepts several additional arguments that control the way that posterior is obtained and the values of returned. See `?get_Z` for details.
+`get_Z()` accepts several additional arguments that control the way that posterior is obtained and the values returned. See `?get_Z` for details.
 
 ### Posterior predictions
 The funtion `predict_flocker()` provides posterior predictions. By default, predictions are provided for the covariate data to which the model were fit, but predictions to new data are also possible via the `new_data` argument. The output differs for rep-constant and rep-varying models. For rep-constant models, a matrix where rows are iterations, columns are units, and values are the number of detections. For rep-varying models, an array whose first dimension is units, second dimension is sampling events, third dimension is iterations, and values are 1, 0, or NA, representing detection, nondetection, and no corresponding sampling event.  For example:

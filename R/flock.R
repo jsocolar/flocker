@@ -46,10 +46,11 @@
 #'           adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123)
 #' }
 #' @export
-flock <- function(f_occ, f_det, flocker_data, data2 = NULL, 
-                   multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
-                   augmented = FALSE, fp = FALSE, threads = NULL,
-                   ...) {
+flock <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL, 
+                  multiseason = NULL, f_col = NULL, f_ex = NULL, 
+                  multi_init = NULL, f_auto = NULL,
+                  augmented = FALSE, fp = FALSE, threads = NULL,
+                  ...) {
   flock_(output = "model", f_occ = f_occ, f_det = f_det, 
          flocker_data = flocker_data, data2 = data2, 
          multiseason = multiseason, f_col = f_col, f_ex = f_ex, 

@@ -1,0 +1,236 @@
+---
+title: "Multiseason models in flocker"
+author: "Jacob Socolar"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+<img align="right" src="../man/figures/flocker_sticker.png" width=30%>
+
+Multiseason occupancy models, also called dynamic occupancy models, are models 
+that assume [closure](https://jsocolar.github.io/closureOccupancy/) over units 
+that are linked by explicit colonization and extinction 
+processes.^[As we will see, this is true even of multiseason models 
+with autologistic occupancy dynamics]  That is, sites are surveyed over a series 
+of more than one timestep;^[It's fine if some sites are surveyed for just one 
+timestep, but at least some sites are surveyed for multiple timesteps.] closure
+is assumed to apply within (but not across) timesteps, but the latent occupancy
+state is linked across timesteps within a site via models of local colonization
+and extinction processes. Following the terminology introduced
+[here](https://jsocolar.github.io/flocker/articles/flocker_tutorial.html), we
+will refer to the units over which closure is assumed as *closure-units* or just
+plain *units*. Groups of units that are linked by colonization-extinction 
+dynamics (i.e. units representing different timesteps within a site) are 
+*series*.
+
+## Multiseason models as HMMs
+In `flocker`, we implement these models using a hidden markov model (HMM) 
+approach to dealing with the unobserved occupancy state in each separate series. 
+Calling our approach a HMM doesn't fundamentally change the model; it serves 
+mainly to highlight the connection between multiseason occupancy models and 
+well-developed techniques for efficiently computing the likelihood for a 
+series.^[For the curious, we use the forward algorithm to compute the 
+likelihood, and the forward-backward algorithm to compute unit-wise posterior 
+distributions for the latent occupancy state.] The HMM conceptualizes the 
+latent occupancy state as a Markov-like process (it need not be strictly 
+Markovian, because the transition probabilities can vary by timestep), where the 
+transition probabilities between the two possible states (occupied or 
+unoccupied) are a colonization probabilility $\mathcal{C}$, an extinction 
+probability $\mathcal{E}$, and their complements $1 - \mathcal{C}$ and 
+$1 - \mathcal{E}$. 
+
+To specify the HMM, we need a model for the $\mathcal{C}$, a model for 
+$\mathcal{E}$, a model for the initial occupancy probability $\mathcal{O}$ in 
+the first timestep, and a model for the probability of observing the data in 
+any particular timestep conditional on the true occupancy state in that 
+timestep (in the HMM literature, these probabilities are referred to as 
+*emission probabilities*). 
+
+#### Emission probabilities
+*Emission probabilities* are just fancy HMM terminology for the most familiar
+part of multiseason occupancy model. They are the probability of observing the
+data within a unit given the latent occupancy state, and they depend only on the
+detection sub-model, which is no different from a single-season detection 
+sub-model. In `flocker`, we assume that the detection probabilities vary 
+logit-linearly with a suite of covariates that can vary across all levels of
+organization, including down to the visit level. This is exactly the same way
+that `flocker` treats the detection sub-model in a single-season model.
+
+#### Colonization and extinction
+In the "colonization-extinction" model, colonization probabilities $\mathcal{C}$
+and extinction probabilities $\mathcal{E}$ are both assumed to vary 
+logit-linearly according to separate linear predictors, whose component 
+covariates may vary across timesteps within series but never at the visit level
+within closure-units.
+
+In "autologistic" models, the occupancy probability in timestep $t + 1$ is 
+assumed to depend on a suite of site characteristics plus a term that depends on
+the latent true occupancy state at time $t$. Some treatments write the
+autologistic model in terms of an "occupancy probability" that depends on
+covariates plus the "autologistic term" that gets added on the logit scale when
+the site was previously occupied. However, it is easier to understand this 
+model in terms of its colonization and extinction probabilities. In fact, the 
+so-called "occupancy probability" mentioned above is actually a colonization
+probability, because it reflects the probability of occupancy conditional on
+non-occupancy during the previous timestep. The logit-scale sum of the 
+colonization probability and the autologistic parameter gives the probability of
+persistence $\mathcal{P}$; i.e. the complement of the extinction probability 
+$\mathcal{P} = 1 - \mathcal{E}$.
+
+Thus, the autologistic model differs from the colonization-extinction model in
+that it assumes that colonization and extinction probabilities are related to
+one another via an offset that relates colonization to persistence. If the
+offset is modeled as constant, then we can think of this model as ascribing a
+"suitability" to each site that defines the position of a pair of probabilities
+$\mathcal{C}$ and $\mathcal{P}$ that differ by a constant on the logit scale. In
+practice, $\mathcal{P}$ is almost always larger than $\mathcal{C}$, and so the 
+offset is positive.
+
+In addition to the standard autologistic model that models the offset as a
+constant, `flocker` also affords the flexibility to model the offset via its
+own linear predictor, which reintroduces flexibility for the relationship
+between $\mathcal{P}$ and $\mathcal{C}$ to vary, but tends to retain the idea
+that these probabilities ought to be related to one another and ought to tend
+to move in tandem.
+
+#### Initial occupancy
+Most examples of multiseason occupancy models in the literature include an
+explict model for the initial occupancy probability $\mathcal{O}$ via its own
+linear predictor, which is analogous to the linear predictor in for occupancy
+in a single-season model. Thus, a colonization-extinction model would contain
+linear predictors for detection, colonization, extinction, and initial 
+occupancy; an autologistic model would contain linear predictors for detection,
+colonization, the colonization-persistence offset (often modeled as a constant),
+and initial occupancy. `flocker` is well equipped to fit these models.
+
+Borrowing from the HMM literature, `flocker` also comes with functionality to
+handle $\mathcal{O}$ a bit differently. Any set of colonization/extinction 
+probabilities, if they remain constant through time, defines an equilibrium
+proportion of sites that are occupied. Thus, if colonization and extinction
+probabilities can be assumed to have remained constant for a long time prior
+to the first timestep, the initial occupancy probability will simply be this 
+equilibrium frequency.  `flocker` is equipped to fit models without any separate
+linear predictor for initial occupancy, and instead to begin with the
+equilibrium frequencies implied by the coloniziation and extinction 
+probabilities modeled for the first timestep. This can sometimes be valid even 
+if the probabilities are time-varying over the series being modeled, for
+example if a disturbance perturbs equilbrium dynamics during the timeseries. It
+is for this reason that, when using equilibrium frequencies as intial occupancy
+probabilities, `flocker` always computes the equilibrium based on the 
+probabilites modeled for the first timestep.
+
+As an aside, it is not uncommon in the literature to see confusion that
+conflates the initial occupancy probabilities $\mathcal{O}$ with the
+colonization probabilities $\mathcal{C}$. This confusion arises from the
+notion that the autologistic model consists of a single-season occupancy model
+plus an autologistic term, which leads people to incorrectly surmise that the
+linear predictor without the autologistic term gives an occupancy 
+probability.^[Well, maybe initial occupancy probabilities and colonization 
+probabilities could be equivalent in a study of species introduction or of 
+primary succession, but otherwise no!] 
+
+## Examples
+Let's simulate some data that is valid for use with multiseason models. Here,
+we will simulate data for three seasons with one unit covariate and one event 
+covariate. The data will be simulated under a colonization-extinction model with
+explicit inits, but we will be able to fit other models (autologistic, 
+equilibrium inits) to the same data.^[note that `simulate_flocker_data()` can 
+also simulate directly from these other model types.]
+
+```{r simulate, echo = FALSE}
+library(flocker)
+multi_data <- simulate_flocker_data(
+  n_season = 3,
+  n_pt = 300,
+  n_sp = 1,
+  multiseason = "colex", 
+  multi_init = "explicit",
+  seed = 1
+  )
+
+fd <- make_flocker_data(
+  multi_data$obs, 
+  multi_data$unit_covs, 
+  multi_data$event_covs, 
+  type = "multi"
+  )
+
+```
+
+
+Here's the colonization-extinction model with an explicit model for occupancy
+in the first timestep. Depending on hardware, fitting this model might take 2-5 
+minutes.
+
+```{r colex-explicit, echo = FALSE}
+multi_colex <- flock(
+  f_occ = ~ uc1,
+  f_det = ~ uc1 + ec1,
+  f_col = ~ uc1,
+  f_ex = ~ uc1,
+  flocker_data = fd,
+  multiseason = "colex",
+  multi_init = "explicit",
+  backend = "cmdstanr",
+  cores = 4
+)
+
+```
+
+Here's the colonization-extinction model using equilibrium occupancy 
+probabilities in the first timestep:
+```{r colex-equilibrium, echo = FALSE}
+multi_colex_eq <- flock(
+  f_det = ~ uc1 + ec1,
+  f_col = ~ uc1,
+  f_ex = ~ uc1,
+  flocker_data = fd,
+  multiseason = "colex",
+  multi_init = "equilibrium",
+  backend = "cmdstanr",
+  cores = 4
+)
+
+```
+Here's the autologistic model with explicit occupancy probabilities in the 
+first timestep. To reflect the stereotypical autologistic model with a constant
+logit-scale offset separating colonization and persistence probabilities, we
+use the formula `f_auto = ~ 1`, but it is fine to relax this constraint and use,
+e.g. `f_auto = ~ uc1`.
+```{r auto-explicit, echo = FALSE}
+multi_auto <- flock(
+  f_occ = ~ uc1,
+  f_det = ~ uc1 + ec1,
+  f_col = ~ uc1,
+  f_auto = ~ 1,
+  flocker_data = fd,
+  multiseason = "autologistic",
+  multi_init = "explicit",
+  backend = "cmdstanr",
+  cores = 4
+)
+
+```
+
+And finally the autologistic model with equilibrium occupancy probabilities in
+the first timestep:
+```{r auto-equilirium, echo = FALSE}
+multi_auto_eq <- flock(
+  f_det = ~ uc1 + ec1,
+  f_col = ~ uc1,
+  f_auto = ~ 1,
+  flocker_data = fd,
+  multiseason = "autologistic",
+  multi_init = "equilibrium",
+  backend = "cmdstanr",
+  cores = 4
+)
+
+```

@@ -192,9 +192,16 @@ sfd <- function(
       }
       params$Sigma <- Sigma
     }
-    params$coefs <- as.data.frame(
-      MASS::mvrnorm(n_sp, params$coef_means, params$Sigma)
-    )
+    if (n_sp == 1) {
+      params$coefs <- as.data.frame(
+        t(as.matrix(MASS::mvrnorm(n_sp, params$coef_means, params$Sigma)))
+      )
+    } else {
+      params$coefs <- as.data.frame(
+        MASS::mvrnorm(n_sp, params$coef_means, params$Sigma)
+      )
+    }
+
     names(params$coefs) <- coef_names
   }
   assertthat::assert_that(

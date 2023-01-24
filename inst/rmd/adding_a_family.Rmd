@@ -1,0 +1,68 @@
+---
+title: "Adding a family in flocker"
+author: "Jacob Socolar"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+This document provides a guide to how families are treated in `flocker` through
+the lens of everthing that needs to happen in order to add a new family.
+
+## Data formatting and model fitting
+
+1. Add the custom family to occupancy_families.R
+1. Add a function to output the relevant Stan code in make_occupancy_lpmf.R
+1. If the Stan code requires any data that is not already available in one of
+the formats output by `make_flocker_data()`, modify `make_flocker_data()` to 
+enable this output. Check with `flocker` package maintainers before doing this,
+as complicated new options might be better suited to getting their own, separate
+formatting functions rather than adding more arguments and complexity to 
+`make_flocker_data()`.
+   * If modifiying `make_flocker_data()`, name the new output type and add to 
+`flocker_data_output_types()` in utils.R. If appropriate, add to 
+`rep_constant_types()`, `threading_types()`, or `multi_types()`.
+    * If introducing new column names in the output of `make_flocker_data()`, 
+add them to `flocker_col_names()` in utils.R.
+    * If requiring any new data input format in `make_flocker_data()`, name the 
+input format and add to `flocker_data_input_types()` in utils.R. 
+1. In utils.R, add the new model type to `flocker_model_types()` and to 
+`params_by_type()`. There should be a separate entry for every family.
+1. In flock.R, modify `flock_()` to handle the new family. 
+    * Make sure that `flock_()` assigns good distinguishing attributes to the 
+outputted flocker_fit object, identifying the important aspects of the family. 
+    * If any new arguments to `flock_()` are required, modify all functions in 
+flock.R  to pass the new arguments properly.
+1. In utils.R, update `validate_flock_params()` and any relevant helper 
+functions beginning with `validate_` to handle new arguments in `flock()` or new
+options in the arguments to `flock()`.
+1. Look over all other functions in flock.R and make sure that no changes
+are required.
+
+## Model processing
+
+1. Update `fitted_flocker()` in fitted_flocker.R:
+    * If there are any new distributional parameters, add those options.
+    * Make sure that the return from `fitted_flocker` conforms to the shape of the
+data passed to `make_flocker_data(obs = ...)`. That is, `fitted_flocker()` should 
+always return linear predictors shaped like `obs`, with posterior iterations 
+and/or summaries stacked along the $n+1$th dimension.
+2. Update `get_Z()` in get_Z.R
+3. Log_lik
+4. Loo
+5. Predict_flocker
+
+## Documentation
+
+1. Update `simulate_flocker_data()` in simulate_flocker_data.R to enable 
+accurate simulation from the new model.
+1. Make sure that the new family is treated in one of the vignettes. In some
+cases, this can be very lightweight (for example, if we add false positive
+autologistic models, then we probably just need to change a single sentence
+in the fp modesl vignette).
+1. Optionally, if the vignette uses data that are not readily simulated via
+`simulate_flocker_data()` (e.g. if illustrating the family's capabilities
+requires more/different covariates than `simulate_flocker_data()` provides),
+provide an example dataset in the data folder and document it properly in 
+data.R.
+
+    

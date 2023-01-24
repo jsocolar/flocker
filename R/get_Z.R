@@ -21,63 +21,92 @@
 
 get_Z <- function (flocker_fit, n_iter = NULL, history_condition = TRUE, 
                    new_data = NULL, sample_new_levels = "uncertainty") {
-  if (!is_flocker_fit(flocker_fit)) {
-    stop("flocker_fit must be an object of class `flocker_fit`")
-  }
-  
+  # Input checking and processing
+  assertthat::assert_that(
+    is_flocker_fit(flocker_fit),
+    msg = "flocker_fit must be an object of class `flocker_fit`"
+  )
   total_iter <- brms::niterations(flocker_fit)*brms::nchains(flocker_fit)
-  
   if (is.null(n_iter)) {
     n_iter <- total_iter
   }
-  
   n_iter <- as.integer(n_iter)
-  
-  if ((length(n_iter) != 1) | is.na(n_iter)) {
-    stop("iter, if supplied, must be a single integer")
-  }
-  
-  if (n_iter > total_iter) {
-    stop("requested more iterations than contained in flocker_fit")
-  }
-  
-  if (!is_one_logical(history_condition)) {
-    stop("history_condition must be logical")
-  }
-  
+  assertthat::assert_that(
+    is_one_pos_int(n_iter),
+    msg = "n_iter, if supplied, must be a single positive integer"
+  )
+  assertthat::assert_that(
+    n_iter <= total_iter,
+    msg = "requested number of iterations exceeds iterations contained in flocker_fit"
+  )
+  assertthat::assert_that(
+    is_one_logical(history_condition),
+    msg = "history_condition must be a single logical value"
+  )
   if (is.null(new_data)) {
     new_data <- flocker_fit$data
-  } else if (history_condition) {
-    stop("cannot condition on Q if new_data is provided")
-  } else if (!("flocker_data" %in% class(new_data))) {
-    stop("new_data, if provided, must be a `flocker_data` object as produced by 
-         `make_flocker_data`")
   } else {
+    assertthat::assert_that(
+      "flocker_data" %in% class(new_data),
+      msg = "new_data is provided but is not a `flocker_data` object"
+    )
+    assertthat::assert_that(
+      new_data$type == attributes(flocker_fit)$data_type & 
+        new_data$fp == attributes(flocker_data)$fp,
+      msg = "new_data is formatted for a different model type than flocker_fit"
+    )
     new_data <- new_data$data
   }
-  message("computing occupancy linear predictor")
-  lpo <- t(fitted_flocker(flocker_fit, type="occupancy", ndraws = n_iter, 
-                          new_data = new_data, 
-                          summarise = F, allow_new_levels = TRUE, 
-                          sample_new_levels = sample_new_levels,
-                          response = F))
-  message("computing detection linear predictor")
-  lpd <- t(fitted_flocker(flocker_fit, type="detection", ndraws = n_iter, 
-                          new_data = new_data, 
-                          summarise = F, allow_new_levels = TRUE, 
-                          sample_new_levels = sample_new_levels, 
-                          response = F))
+  
+  message("computing linear predictors")
+  
+  lps <- fitted_flocker(
+    flocker_fit, ndraws = n_iter, new_data = new_data, allow_new_levels = TRUE, 
+    sample_new_levels = sample_new_levels, response = F
+    )
   lik_type <- type_flocker_fit(flocker_fit)
   
-  if (lik_type == "V") {
+  if (lik_type == "single") {
     n_unit <- new_data$n_unit[1]
-    lpo <- lpo[, 1:n_unit]
+    lpo <- lps$linpred_occ[1:n_unit, ]
+    psi_all <- boot::inv.logit(lpo)
+    Z <- matrix(data = 1, nrow = n_iter, ncol = n_unit)
+    lpd <- lps$linpred_det
+    
+    
+  } else if (lik_type == "single_C") {
+    
+  } else if (lik_type == "augmented") {
+    
+  } else if (lik_type == "multi_colex") {
+    
+  } else if (lik_type == "multi_colex_eq") {
+    
+  } else if (lik_type == "multi_autologistic") {
+    
+  } else if (lik_type == "multi_autologistic_eq") {
+    
+  } else if (lik_type == "single_fp") {
+    
+  } else if (lik_type == "multi_colex_fp") {
+    
+  } else if (lik_type == "multi_colex_eq_fp") {
+    
+  }
+  
+  class(Z) <- c("postZ", "matrix")
+  Z
+  
+  
+  
+  if (lik_type == "V") {
+    
   } else {
     n_unit <- nrow(new_data)
   }
+
   
-  psi_all <- boot::inv.logit(lpo)
-  Z <- matrix(data = 1, nrow = n_iter, ncol = n_unit)
+
   
   message("computing Z")
   if (!history_condition) {

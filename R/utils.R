@@ -186,7 +186,7 @@ type_flocker_fit <- function(x) {
     msg = "x must be a flocker_fit object"
   )
   assertthat::assert_that(
-    all(c("data_type", "multi_init", "fp") %in% names(attributes(x))),
+    all(c("data_type", "fp") %in% names(attributes(x))),
     msg = "the attributes of the flocker_fit object have been altered or corrupted"
   )
   a <- attributes(x)
@@ -239,7 +239,7 @@ get_positions_single <- function(flocker_fit) {
                                                     names(flocker_fit$data))])
   n_row <- nrow(flocker_fit$data)
   out <- t(sapply(1:n_row, function(x){which(index_matrix == x, arr.ind = T)}))
-  return(out)
+  out
 }
 
 ##### Misc #####
