@@ -4,7 +4,7 @@
 \alias{summarise_fun}
 \title{function to summarize matrix of linear predictors to its mean and CI}
 \usage{
-summarise_fun(x)
+summarise_fun(x, CI)
 }
 \arguments{
 \item{x}{linpreds}

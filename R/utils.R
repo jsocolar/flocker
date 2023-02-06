@@ -625,11 +625,17 @@ validate_param_combos_multi <- function(f_occ, f_det, flocker_data,
                  "`augmented` is not FALSE."
     )
   ) 
-  assertthat::assert_that(multiseason %in% c("colex", "autologistic"))
+  assertthat::assert_that(
+    isTRUE(multiseason %in% c("colex", "autologistic")),
+    msg = "in a multiseason model, `multiseason` must be either 'colex' or 'autologistic'"
+  )
   assertthat::assert_that(
     is_flocker_formula(f_col), msg = formula_error("colonization")
   )
-  assertthat::assert_that(multi_init %in% c("explicit", "equilibrium"))
+  assertthat::assert_that(
+    isTRUE(multi_init %in% c("explicit", "equilibrium")),
+    msg = "in a multiseason model, `multi_init` must be either 'explicit' or 'equilibrium'"
+  )
   if (multi_init == "explicit") {
     assertthat::assert_that(
       is_flocker_formula(f_occ), msg = formula_error("occupancy")

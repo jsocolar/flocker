@@ -80,15 +80,18 @@ fitted_flocker <- function(
       msg = "CI must be between zero and one inclusive"
     )
   }
+  ndraws_total <- brms::ndraws(flocker_fit)
   if(!is.null(ndraws)) {
     assertthat::assert_that(
-      ndraws <= brms::ndraws(flocker_fit),
+      ndraws <= ndraws_total,
       msg = "More draws requested than contained in flocker_fit"
     )
   } else {
     ndraws <- brms::ndraws(flocker_fit)
   }
   
+  draw_ids <- sample(seq_len(ndraws_total), ndraws)
+
   if(!is.null(new_data)) {
     assertthat::assert_that(
       isTRUE(class(new_data == "data.frame")) | isTRUE(is_flocker_data(new_data)),
@@ -143,7 +146,7 @@ fitted_flocker <- function(
   
   if("occ" %in% use_components) {
     linpred_occ <- t(brms::posterior_linpred(flocker_fit, dpar = "occ", 
-                                             ndraws = ndraws, 
+                                             draw_ids = draw_ids, 
                                              newdata = new_data_fmtd, 
                                              re_formula = re_formula, 
                                              allow_new_levels = allow_new_levels,
@@ -155,7 +158,7 @@ fitted_flocker <- function(
   }
   if("colo" %in% use_components) {
     linpred_colo <- t(brms::posterior_linpred(flocker_fit, dpar = "colo", 
-                                             ndraws = ndraws, 
+                                             draw_ids = draw_ids, 
                                              newdata = new_data_fmtd, 
                                              re_formula = re_formula, 
                                              allow_new_levels = allow_new_levels,
@@ -167,7 +170,7 @@ fitted_flocker <- function(
   }
   if("ex" %in% use_components) {
     linpred_ex <- t(brms::posterior_linpred(flocker_fit, dpar = "ex", 
-                                             ndraws = ndraws, 
+                                             draw_ids = draw_ids, 
                                              newdata = new_data_fmtd, 
                                              re_formula = re_formula, 
                                              allow_new_levels = allow_new_levels,
@@ -179,7 +182,7 @@ fitted_flocker <- function(
   }
   if("auto" %in% use_components) {
     linpred_auto <- t(brms::posterior_linpred(flocker_fit, dpar = "auto", 
-                                             ndraws = ndraws, 
+                                             draw_ids = draw_ids, 
                                              newdata = new_data_fmtd, 
                                              re_formula = re_formula, 
                                              allow_new_levels = allow_new_levels,
@@ -191,7 +194,7 @@ fitted_flocker <- function(
   }
   if("det" %in% use_components) {
     linpred_det <- t(brms::posterior_linpred(flocker_fit, dpar = "mu", 
-                                             ndraws = ndraws, 
+                                             draw_ids = draw_ids, 
                                              newdata = new_data_fmtd, 
                                              re_formula = re_formula, 
                                              allow_new_levels = allow_new_levels,
@@ -203,7 +206,7 @@ fitted_flocker <- function(
   }
   
   if(summarise) {
-    cl2 <- lapply(component_list, summarise_fun)
+    cl2 <- lapply(component_list, summarise_fun, CI = CI)
   } else {
     cl2 <- component_list
   }
@@ -217,14 +220,47 @@ fitted_flocker <- function(
   } else {
     out <- cl2
   }
-    
+  
+  dt <- attributes(flocker_fit)$data_type
+  
+  if(is.null(new_data) | is_flocker_data(new_data)) {
+    dn <- list(
+      paste0("site_", seq_len(dim(out[[1]])[1]))
+    )
+    if(!unit_level) {
+      dn <- append(dn, list(paste0("visit_", seq_len(dim(out[[1]])[2]))))
+      multi_ind <- 3
+    } else {
+      multi_ind <- 2
+    }
+    if(dt == "augmented"){
+      dn <- append(dn, list(paste0("species_", seq_len(dim(out[[1]])[multi_ind]))))
+    }
+    if(dt == "multi"){
+      dn <- append(dn, list(paste0("timestep_", seq_len(dim(out[[1]])[multi_ind]))))
+    }
+  } else {
+    dn <- list(
+      paste0("row_", seq_len(dim(out[1])))
+    )
+  }
+  
+  if(summarise){
+    dn <- append(dn, list(c("mean", paste0("Q", c(min(CI)*100, paste0(max(CI)*100))))))
+  } else {
+    dn <- append(dn, list(paste0("draw_", draw_ids)))
+  }
+  
+  for(i in seq_along(out)){
+    dimnames(out[[i]]) <- dn
+  }
   out
 }
 
 #' function to summarize matrix of linear predictors to its mean and CI
 #' @param x linpreds
 #' @return summary
-summarise_fun <- function(x) {
+summarise_fun <- function(x, CI) {
   out <- data.frame(estimate = matrixStats::rowMeans2(x),
              lwr = matrixStats::rowQuantiles(x, probs = min(CI)), 
              upr = matrixStats::rowQuantiles(x, probs = max(CI)))
@@ -236,7 +272,7 @@ summarise_fun <- function(x) {
 #' @param x input_matrix
 #' @param gp output of get_positions
 reshape_fun <- function(x, gp) {
-  assertthat::assert_that(is.matrix(x))
+  assertthat::assert_that(is.matrix(x) | is.data.frame(x))
   ai <- list()
   for(i in seq_len(ncol(x))) {
     ai[[i]] <- array(x[,i][gp], dim = dim(gp))
