@@ -5,7 +5,7 @@
 \title{Fit an occupancy model}
 \usage{
 flock(
-  f_occ,
+  f_occ = NULL,
   f_det,
   flocker_data,
   data2 = NULL,

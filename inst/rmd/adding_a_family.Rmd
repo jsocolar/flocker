@@ -19,8 +19,9 @@ as complicated new options might be better suited to getting their own, separate
 formatting functions rather than adding more arguments and complexity to 
 `make_flocker_data()`.
    * If modifiying `make_flocker_data()`, name the new output type and add to 
-`flocker_data_output_types()` in utils.R. If appropriate, add to 
-`rep_constant_types()`, `threading_types()`, or `multi_types()`.
+`flocker_data_output_types()` in utils.R. Update `flocker_data_type_lookup()`. 
+If appropriate, add to `rep_constant_types()`, `threading_types()`, or 
+`multi_types()`.
     * If introducing new column names in the output of `make_flocker_data()`, 
 add them to `flocker_col_names()` in utils.R.
     * If requiring any new data input format in `make_flocker_data()`, name the 

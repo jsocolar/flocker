@@ -2,7 +2,7 @@
 % Please edit documentation in R/occupancy_families.R
 \name{occupancy_multi_colex_eq_fp}
 \alias{occupancy_multi_colex_eq_fp}
-\title{Define the colonization-extinction family}
+\title{Define the colonization-extinction-equilibrium-fp family}
 \usage{
 occupancy_multi_colex_eq_fp(max_year, max_rep)
 }
@@ -15,5 +15,5 @@ occupancy_multi_colex_eq_fp(max_year, max_rep)
 a "customfamily" "brmsfamily" object from brms
 }
 \description{
-Define the colonization-extinction family
+Define the colonization-extinction-equilibrium-fp family
 }

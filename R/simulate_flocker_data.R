@@ -353,7 +353,7 @@ sfd <- function(
   
   if (missing_seasons) {
     pt_missing <- sample(unique(visit_full$id_point), floor(length(unique(visit_full$id_point)) / 2))
-    rows_missing <- which((visit_full$season_pt %in% pt_missing) & (visit_full$id_season %% 2 == 0))
+    rows_missing <- which((visit_full$id_point %in% pt_missing) & (visit_full$id_season %% 2 == 0))
     visit_full$obs[rows_missing] <- visit_full$ec1[rows_missing] <- NA
   }
   
@@ -385,7 +385,7 @@ sfd <- function(
     counter <- 0
     for(i in 1:n_sp){
       ot <- t(unstack(visit_full[visit_full$species == paste0("sp_", i), c("obs", "id_point")], obs ~ id_point))
-      if (sum(ot) > 0) {
+      if (sum(ot, na.rm = TRUE) > 0) { # we only include species in the output if the species is observed
         counter <- counter + 1
         obs_temp[[counter]] <- ot
         assertthat::assert_that(all.equal(rownames(ot), rownames(obs_temp[[1]])))
@@ -398,7 +398,7 @@ sfd <- function(
     if(rep_constant){
       event_covs <- NULL
     } else {
-      list(ec1 = t(unstack(ec_prelim[c("ec1", "id_point")], ec1 ~ id_point))) 
+      event_covs <- list(ec1 = t(unstack(ec_prelim[c("ec1", "id_point")], ec1 ~ id_point))) 
       assertthat::assert_that(isTRUE(all.equal(rownames(obs_temp[[1]]), rownames(event_covs$ec1))))
     }
     

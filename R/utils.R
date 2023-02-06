@@ -147,6 +147,23 @@ flocker_data_output_types <- function() {
     )
 }
 
+#' flocker data type lookup
+#' @return dataframe giving lookup table for data input types, data output types
+#'   and model types
+fdtl <- function(){
+  data.frame(
+    model_type = flocker_model_types(),
+    data_output_type = c(
+      "single", "single_C", "augmented", "multi", "multi", "multi", "multi",
+      "single", "multi", "multi"
+    ),
+    data_input_type = c(
+      "single", "single", "augmented", "multi", "multi", "multi", "multi",
+      "single", "multi", "multi"
+    )
+  )
+}
+
 #' flocker_data_output_types that yield rep-constant models
 #' @return character vector of data output types
 rep_constant_types <- function() {
@@ -225,17 +242,124 @@ params_by_type <- list(
 )
 
 
+#' Get a matrix/array of row numbers from flocker_data$data in the shape of obs
+#' @param flocker_fit a flocker_fit object
+#' @param visits logical. If `TRUE`, returns values associated with each visit
+#'   in the shape of obs, with NAs for visits that did not occur.
+#'   If `FALSE`, returns values associated with each unit in the shape of 
+#'   the slice of obs corresponding to the first visit. This is relevant in
+#'   multiseason models, where it is possible to have units (i.e. timesteps) 
+#'   that are part of the timeseries and have linear predictors for colonization 
+#'   etc, but that received no visits. These units are dropped from the 
+#'   formatted data if they are trailing (at the end of the series) but must be 
+#'   included otherwise. If `FALSE`, the return will have NAs for the trailing 
+#'   units that are dropped, but will have row-numbers representing the rows 
+#'   giving the unit covariates for the never-visited units if the timesteps are 
+#'   not trailing.
+#' @return a matrix/array of the same shape as the observations passed to 
+#'   `make_flocker_data` (for an augmented model, in the shape of the augmented
+#'   data created after augmentation) where each element gives the row number in 
+#'   flocker_data$data where the corresponding element resides. If the data
+#'   were formatted for a data-augmented model, the returned array will have
+#'   extra slices for all of the augmented species.
+get_positions <- function(flocker_fit, visits = TRUE) {
+  assertthat::assert_that(is_flocker_fit(flocker_fit))
+  the_data <- flocker_fit$data
+  data_type <- attributes(flocker_fit)$data_type
+  if(data_type == "single") {
+    n_unit <- the_data$ff_n_unit[1]
+    n_rep <- max(the_data$ff_n_rep[seq_len(n_unit)], na.rm = TRUE)
+    
+    index_matrix <- as.matrix(
+      the_data[seq_len(n_unit), grepl("^ff_rep_index", names(the_data))]
+      )
+    assertthat::assert_that(ncol(index_matrix) == n_rep)
+    index_matrix[index_matrix == -99] <- NA
+    if(visits) {
+      return(index_matrix)
+    } else {
+      return(index_matrix[, 1])
+    }
+  } else if(data_type == "single_C") {
+    n_rows <- nrow(the_data)
+    n_cols <- max(the_data$ff_n_trial)
+    index_matrix <- matrix(rep(seq_len(n_rows), n_cols), ncol = n_cols)
+    if(visits) {
+      return(index_matrix)
+    } else {
+      return(index_matrix[, 1])
+    }
+  } else if(data_type == "augmented") {
+    n_species <- the_data$ff_n_sp[1]
+    n_site <- the_data$ff_n_unit[1] / n_species
+    max_visit <- max(the_data$ff_n_rep)
+    index_array <- array(dim = c(n_site, max_visit, n_species))
+    rep_index_frame <- the_data[paste0("ff_rep_index", seq_len(max_visit))]
+    for(r in seq_len(nrow(the_data))){
+      rep_pos <- which(rep_index_frame == r, arr.ind = TRUE)
+      unit_id <- rep_pos[1]
+      visit_id <- rep_pos[2]
+      sp_id <- the_data$ff_species[r]
+      site_id <- unit_id %% n_site
+      index_array[site_id, visit_id, sp_id] <- r
+    }
+    if(visits) {
+      return(index_array)
+    } else {
+      return(as.matrix(index_array[,1,]))
+    }
+  } else if(data_type == "multi") {
+    n_series <- the_data$ff_n_series[1]
+    n_unit <- the_data$ff_n_unit[1]
+    n_year <- the_data$ff_n_year[seq_len(n_series)]
+    n_visit <- the_data$ff_n_rep[seq_len(n_unit)]
+    max_year <- max(n_year)
+    max_visit <- max(n_visit)
+    
+    if(visits){
+      index_array <- array(dim = c(n_series, max_visit, max_year))
+      rep_index_frame <- the_data[paste0("ff_rep_index", seq_len(max_visit))]
+      unit_index_frame <- the_data[paste0("ff_unit_index", seq_len(max_year))]
+      for(r in seq_len(nrow(the_data))){
+        rep_pos <- which(rep_index_frame == r, arr.ind = TRUE)
+        unit_id <- rep_pos[1]
+        if(!is.na(unit_id)){
+          visit_id <- rep_pos[2]
+          unit_pos <- which(unit_index_frame == unit_id, arr.ind = TRUE)
+          series_id <- unit_pos[1]
+          year_id <- unit_pos[2]
+          index_array[series_id, visit_id, year_id] <- r
+        }
+      }
+      return(index_array)
+    } else {
+      index_slice <- array(dim = c(n_series, max_year))
+      unit_index_frame <- the_data[paste0("ff_unit_index", seq_len(max_year))]
+      for(r in seq_len(nrow(the_data))){
+        unit_pos <- which(unit_index_frame == r, arr.ind = TRUE)
+        series_id <- unit_pos[1]
+        if(!is.na(series_id)){
+          year_id <- unit_pos[2]
+          index_slice[series_id, year_id] <- r
+        }
+      }
+      return(index_slice)
+    }
+  }
+}
+
 #' Get matrix positions corresponding to each row of data in "single" type 
-#' flocker_fit
+#' flocker_fit$data slot
 #' @param flocker_fit a "single" type `flocker_fit` object
 #' @return an n_row x 2 matrix, where each row contains the indices of the 
 #'     corresponding sampling event in the observation dataframe
 get_positions_single <- function(flocker_fit) {
-  if (!(attributes(flocker_fit)$lik_type %in% c("single", "single_fp"))) {
-    stop("flocker_fit type is not 'single' or 'single_fp'")
-  }
+  assertthat::assert_that(
+    attributes(flocker_fit)$data_type %in% c("single", "single_fp"),
+    msg = "flocker_fit type is not 'single' or 'single_fp'"
+  )
   n_unit <- flocker_fit$data$ff_n_unit[1]
-  index_matrix <- as.matrix(flocker_fit$data[1:n_unit, grepl("^rep_index", 
+  index_matrix <- as.matrix(flocker_fit$data[1:n_unit, grepl("^ff_rep_index", 
                                                     names(flocker_fit$data))])
   n_row <- nrow(flocker_fit$data)
   out <- t(sapply(1:n_row, function(x){which(index_matrix == x, arr.ind = T)}))

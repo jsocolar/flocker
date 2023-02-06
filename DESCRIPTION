@@ -30,6 +30,6 @@ Encoding: UTF-8
 License: BSD_3_clause
 URL: https://github.com/jsocolar/flocker
 BugReports: https://github.com/jsocolar/flocker/issues
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.3
 VignetteBuilder: knitr
 LazyData: true

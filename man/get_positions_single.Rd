@@ -3,7 +3,7 @@
 \name{get_positions_single}
 \alias{get_positions_single}
 \title{Get matrix positions corresponding to each row of data in "single" type 
-flocker_fit}
+flocker_fit$data slot}
 \usage{
 get_positions_single(flocker_fit)
 }
@@ -16,5 +16,5 @@ an n_row x 2 matrix, where each row contains the indices of the
 }
 \description{
 Get matrix positions corresponding to each row of data in "single" type 
-flocker_fit
+flocker_fit$data slot
 }

@@ -220,7 +220,6 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
                      "at a position where the response is not missing.")
         )
     }
-
   }
   if (is.null(event_covs) & !fp) {
     n_trial <- rowSums(!is.na(obs))
@@ -277,7 +276,7 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
 #' @param obs An I x J x K array where closure is assumed across rows, columns 
 #'  are repeated sampling events, and slices along the third dimension are 
 #'  seasons. Allowable values are 1 (detection), 0 (no detection), and NA (no 
-#'  sampling event); or in a fp model the true prior probabiltiy that a 
+#'  sampling event); or in a fp model the true prior probability that a 
 #'  detection was obtained.
 #'  The data must be formatted so that all NAs are trailing within their rows
 #'  across repeat visits, but not necessarily across seasons. 
@@ -352,7 +351,7 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
   )
   assertthat::assert_that(
     is.null(event_covs) | is_named_list(event_covs),
-    msg = "event_covs must be a list or NULL."
+    msg = "event_covs must be a named list or NULL."
   )
   if (all(is.na(obs[ , , 1]))) {
     warning("The first slice (season) of obs contains only NAs")
@@ -388,16 +387,27 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
                          "columns of the design matrix. To avoid nonintuitive ",
                          "prior specifications for the intercepts, impute the ", 
                          "mean value rather than any other choice of dummy.", 
-                         "1) a unit covariate is used only for ",
+                         "1) the model uses explicit initial occupancy ",
+                         "probabilities, and a unit covariate is used only for ",
                          "initial occupancy and not for detection, ",
                          "colonization or extinction; impute values for years ",
                          "after the first. ",
-                         "2) a unit covariate is used only for colonization/",
-                         "extinction and not for initial occupancy or ",
-                         "detection, and the model does not use an equilibrium ",
-                         "initialization; impute values for the first year. ",
+                         "2) the model uses explicit initial occupancy ",
+                         "probabilities, and a unit covariate is used only for ",
+                         "colonization/extinction and not for initial ",
+                         "occupancy or detection; impute values for the first ",
+                         "year. ",
                          "3) a unit covariate is used only for detection; ",
-                         "impute values at units with no visits.")
+                         "impute values for the first visit at units with no ",
+                         "visits. ",
+                         "4) a unit covariate for colonization or extinction ",
+                         "is unavailable at a timestep with no observed data ",
+                         "at the end of the timeseries, or a timestep that is ",
+                         "part of a block of timesteps with no observed data ",
+                         "reaching uninterrupted to the and of the timeseries, ",
+                         "and inference on likely occupancy probabilties is ", 
+                         "not desired at any of those timesteps; impute values ",
+                         "for the trailing block of timesteps with no observations.")
       )
     }
     assertthat::assert_that(
@@ -434,23 +444,31 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
                  "You do not need to use this covariate in your model formula.")
   )
   
-  # All unit covs are guaranteed to be not NA, and all event covs are not 
-  # NA provided that the response is not missing
+  # All unit covs are guaranteed to be not NA provided the unit is not part of, 
+  # a block of trailing NAs, and all event covs are not NA provided that the 
+  # response is not missing
   
   # add dummy data for the first visit to each unit, whether the unit was
   # sampled or not, unless the unit is part of a block of trailing NAs.
   n_year_obs <- apply(obs[ , 1, ], 1, max_position_not_na)
-  n_year_obs[n_year_obs == 0] <- 1
+  assertthat::assert_that(
+    !any(n_year_obs == 0),
+    msg = paste0("at least one series (i.e. row; generally a site or a ",
+                 "species-site) has no observations at any timestep")
+  )
   for (i in seq_along(n_year_obs)) {
     obs[i, 1, 1 : n_year_obs[i]][is.na(obs[i, 1, 1 : n_year_obs[i]])] <- -99
   }
   
+  # How many units will get modeled?
   rep1 <- obs[ , 1, ]
-  n_unit <- sum(!is.na(rep1))
+  n_unit <- sum(!is.na(rep1)) # We have already added a dummy value for rep1 if 
+                              # it's NA and the unit is getting modeled.
   assertthat::assert_that(
     n_unit == sum(n_year_obs),
     msg = "error 4. This should not happen; please report a bug."
   )
+  
   if (!is.null(event_covs)) {
     for (i in seq_along(event_covs)) {
       the_nas_event <- which(is.na(event_covs[[i]][ , 1, ]))
@@ -461,12 +479,12 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
           warning(paste0("One or more event_covariates are NA on the first ",
                          "repeat visit to one or more units. This is ",
                          "allowable as long as the units in question were ",
-                         "never visited (i.e. all visits NA in that season/",
-                         "year). However, to pass data to Stan, flocker will ",
+                         "never visited (i.e. all visits NA in that site x ",
+                         "timestep. However, to pass data to Stan, flocker will ",
                          "impute a covariate value corresponding to the mean of", 
                          "the event covariate across all sites/seasons.", 
                          "This imputation has no effect on the fitted posterior", 
-                         "in any way, but might lead to spurious predicted", 
+                         "in any way, but could lead to spurious predicted", 
                          "detection probabilities on these never-conducted ", 
                          "visits."))
         }
@@ -486,12 +504,6 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
   flocker_data <- cbind(flocker_data, event_covs)
   # number of series (HMMs)
   flocker_data$ff_n_series <- c(n_series, rep(-99, n_total - 1))
-  # number of units
-  rep1 <- obs[ , 1, ]
-  
-  
-  # We have already added a dummy value for rep1 if it's NA.
-  n_unit <- sum(!is.na(rep1))
 
   # For each series:
   # Number of units (seasons) in each series (don't marginalize over trailing

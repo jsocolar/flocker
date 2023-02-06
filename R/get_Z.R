@@ -58,12 +58,11 @@ get_Z <- function (flocker_fit, n_iter = NULL, history_condition = TRUE,
     new_data <- new_data$data
   }
   
-  message("computing linear predictors")
-  
   lps <- fitted_flocker(
     flocker_fit, ndraws = n_iter, new_data = new_data, allow_new_levels = TRUE, 
     sample_new_levels = sample_new_levels, response = F
     )
+  
   lik_type <- type_flocker_fit(flocker_fit)
   
   if (lik_type == "single") {

@@ -17,7 +17,7 @@ make_flocker_data_dynamic(
 \item{obs}{An I x J x K array where closure is assumed across rows, columns 
 are repeated sampling events, and slices along the third dimension are 
 seasons. Allowable values are 1 (detection), 0 (no detection), and NA (no 
-sampling event); or in a fp model the true prior probabiltiy that a 
+sampling event); or in a fp model the true prior probability that a 
 detection was obtained.
 The data must be formatted so that all NAs are trailing within their rows
 across repeat visits, but not necessarily across seasons.}
