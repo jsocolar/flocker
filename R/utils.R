@@ -243,16 +243,16 @@ params_by_type <- list(
 
 
 #' Get a matrix/array of row numbers from flocker_data$data in the shape of obs
-#' @param flocker_fit a flocker_fit object
-#' @param visits logical. If `TRUE`, returns values associated with each visit
+#' @param data_object a flocker_fit object or a flocker_data object
+#' @param unit_level logical. If `FALSE`, returns values associated with each visit
 #'   in the shape of obs, with NAs for visits that did not occur.
-#'   If `FALSE`, returns values associated with each unit in the shape of 
+#'   If `TRUE`, returns values associated with each unit in the shape of 
 #'   the slice of obs corresponding to the first visit. This is relevant in
 #'   multiseason models, where it is possible to have units (i.e. timesteps) 
 #'   that are part of the timeseries and have linear predictors for colonization 
 #'   etc, but that received no visits. These units are dropped from the 
 #'   formatted data if they are trailing (at the end of the series) but must be 
-#'   included otherwise. If `FALSE`, the return will have NAs for the trailing 
+#'   included otherwise. If `TRUE`, the return will have NAs for the trailing 
 #'   units that are dropped, but will have row-numbers representing the rows 
 #'   giving the unit covariates for the never-visited units if the timesteps are 
 #'   not trailing.
@@ -262,10 +262,18 @@ params_by_type <- list(
 #'   flocker_data$data where the corresponding element resides. If the data
 #'   were formatted for a data-augmented model, the returned array will have
 #'   extra slices for all of the augmented species.
-get_positions <- function(flocker_fit, visits = TRUE) {
-  assertthat::assert_that(is_flocker_fit(flocker_fit))
-  the_data <- flocker_fit$data
-  data_type <- attributes(flocker_fit)$data_type
+get_positions <- function(data_object, unit_level = FALSE) {
+  assertthat::assert_that(
+    isTRUE(is_flocker_fit(data_object)) | isTRUE(is_flocker_data(data_object)),
+    msg = "the data object must either be a flocker_fit or a flocker_data object"
+  )
+  the_data <- data_object$data
+  if(is_flocker_fit(data_object)) {
+    data_type <- attributes(data_object)$data_type
+  } else {
+    data_type <- data_object$type
+  }
+  
   if(data_type == "single") {
     n_unit <- the_data$ff_n_unit[1]
     n_rep <- max(the_data$ff_n_rep[seq_len(n_unit)], na.rm = TRUE)
@@ -275,7 +283,7 @@ get_positions <- function(flocker_fit, visits = TRUE) {
       )
     assertthat::assert_that(ncol(index_matrix) == n_rep)
     index_matrix[index_matrix == -99] <- NA
-    if(visits) {
+    if(!unit_level) {
       return(index_matrix)
     } else {
       return(index_matrix[, 1])
@@ -284,7 +292,7 @@ get_positions <- function(flocker_fit, visits = TRUE) {
     n_rows <- nrow(the_data)
     n_cols <- max(the_data$ff_n_trial)
     index_matrix <- matrix(rep(seq_len(n_rows), n_cols), ncol = n_cols)
-    if(visits) {
+    if(!unit_level) {
       return(index_matrix)
     } else {
       return(index_matrix[, 1])
@@ -303,7 +311,7 @@ get_positions <- function(flocker_fit, visits = TRUE) {
       site_id <- unit_id %% n_site
       index_array[site_id, visit_id, sp_id] <- r
     }
-    if(visits) {
+    if(!unit_level) {
       return(index_array)
     } else {
       return(as.matrix(index_array[,1,]))
@@ -316,7 +324,7 @@ get_positions <- function(flocker_fit, visits = TRUE) {
     max_year <- max(n_year)
     max_visit <- max(n_visit)
     
-    if(visits){
+    if(!unit_level){
       index_array <- array(dim = c(n_series, max_visit, max_year))
       rep_index_frame <- the_data[paste0("ff_rep_index", seq_len(max_visit))]
       unit_index_frame <- the_data[paste0("ff_unit_index", seq_len(max_year))]
@@ -698,6 +706,14 @@ is_formula <- function (x) {
 is_flocker_formula <- function (x) {
   is_formula(x) & as.character(x)[1] == "~" & length(x) == 2
 }
+
+#' check that object is a flocker data object
+#' @param x object to test
+#' @return logical; TRUE if x is a flocker data object
+is_flocker_data <- function(x) {
+  "flocker_data" %in% class(x)
+}
+
 
 #' check that object is a named list with no duplicate names
 #' @param x object to test

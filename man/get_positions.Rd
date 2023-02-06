@@ -4,20 +4,20 @@
 \alias{get_positions}
 \title{Get a matrix/array of row numbers from flocker_data$data in the shape of obs}
 \usage{
-get_positions(flocker_fit, visits = TRUE)
+get_positions(data_object, unit_level = FALSE)
 }
 \arguments{
-\item{flocker_fit}{a flocker_fit object}
+\item{data_object}{a flocker_fit object or a flocker_data object}
 
-\item{visits}{logical. If `TRUE`, returns values associated with each visit
+\item{unit_level}{logical. If `FALSE`, returns values associated with each visit
 in the shape of obs, with NAs for visits that did not occur.
-If `FALSE`, returns values associated with each unit in the shape of 
+If `TRUE`, returns values associated with each unit in the shape of 
 the slice of obs corresponding to the first visit. This is relevant in
 multiseason models, where it is possible to have units (i.e. timesteps) 
 that are part of the timeseries and have linear predictors for colonization 
 etc, but that received no visits. These units are dropped from the 
 formatted data if they are trailing (at the end of the series) but must be 
-included otherwise. If `FALSE`, the return will have NAs for the trailing 
+included otherwise. If `TRUE`, the return will have NAs for the trailing 
 units that are dropped, but will have row-numbers representing the rows 
 giving the unit covariates for the never-visited units if the timesteps are 
 not trailing.}

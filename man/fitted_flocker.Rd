@@ -14,6 +14,7 @@ fitted_flocker(
   flocker_fit,
   components = c("occ", "det", "col", "ex", "auto"),
   new_data = NULL,
+  unit_level = FALSE,
   summarise = FALSE,
   CI = c(0.05, 0.95),
   ndraws = NULL,
@@ -31,11 +32,18 @@ fitted_flocker(
 
 \item{new_data}{Optional new data at which to evaluate occupancy predictions. 
 New data can be passed as a flocker_data object produced by 
-\code{make_flocker_data} or as a simple dataframe with one row per desired
+\code{make_flocker_data} or as a dataframe with one row per desired
 predicton. If `NULL` (the default) expected values are generated for the 
-original data as formatted by make_flocker_data. You cannot trust that the
-rows will have the same order as the covariate objects that you passed
-to make_flocker_data!}
+original data as formatted by make_flocker_data.}
+
+\item{unit_level}{Logical; defaults to FALSE. Relevant only when `new_data`
+is not a dataframe (i.e. it is `NULL` or a flocker_data object), and useful
+only for multiseason models with missing seasons. If FALSE, returns in the 
+shape of the observation matrix/array with NAs for missing visits. If
+TRUE, returns in the shape of the first visit, and returns values for all
+units that are not part of a trailing block of never-visited units,
+including never-visited units that are part of series with subsequent 
+visits.}
 
 \item{summarise}{if TRUE, return the expected value and upper and lower bound 
 of the credible interval, otherwise return posterior draws.}
@@ -63,7 +71,11 @@ levels not present in the original data, how should predictions be
 handled? Passed directly to `brms::prepare_predictions`, which see.}
 }
 \value{
-A list of sets of expected values (one per component)
+A list of sets of expected values (one per component). If `new_data` 
+    is a dataframe, each element contains one row per row of `new_data`.
+    Otherwise, returns in the shape of the observation matrix/array used 
+    to format the flocker_data (but see `unit_level` parameter for further
+    details).
 }
 \description{
 Get expected values of the posterior predictive distribution for the modeled

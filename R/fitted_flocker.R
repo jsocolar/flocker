@@ -10,11 +10,9 @@
 #'     "det", "col", "ex", or "auto" for which to obtain fitted values.
 #' @param new_data Optional new data at which to evaluate occupancy predictions. 
 #'     New data can be passed as a flocker_data object produced by 
-#'     \code{make_flocker_data} or as a simple dataframe with one row per desired
+#'     \code{make_flocker_data} or as a dataframe with one row per desired
 #'     predicton. If `NULL` (the default) expected values are generated for the 
-#'     original data as formatted by make_flocker_data. You cannot trust that the
-#'     rows will have the same order as the covariate objects that you passed
-#'     to make_flocker_data!
+#'     original data as formatted by make_flocker_data.
 #' @param summarise if TRUE, return the expected value and upper and lower bound 
 #'     of the credible interval, otherwise return posterior draws. 
 #' @param CI A vector of length 2 specifying the upper and lower bounds of the 
@@ -33,19 +31,36 @@
 #' @param sample_new_levels If new_data is provided and contains random effect
 #'     levels not present in the original data, how should predictions be
 #'     handled? Passed directly to `brms::prepare_predictions`, which see.
-#' @return A list of sets of expected values (one per component)
+#' @param unit_level Logical; defaults to FALSE. Relevant only when `new_data`
+#'     is not a dataframe (i.e. it is `NULL` or a flocker_data object), and useful
+#'     only for multiseason models with missing seasons. If FALSE, returns in the 
+#'     shape of the observation matrix/array with NAs for missing visits. If
+#'     TRUE, returns in the shape of the first visit, and returns values for all
+#'     units that are not part of a trailing block of never-visited units,
+#'     including never-visited units that are part of series with subsequent 
+#'     visits.
+#' @return A list of sets of expected values (one per component). If `new_data` 
+#'     is a dataframe, each element contains one row per row of `new_data`.
+#'     Otherwise, returns in the shape of the observation matrix/array used 
+#'     to format the flocker_data (but see `unit_level` parameter for further
+#'     details).
 #' @export
 #' 
 fitted_flocker <- function(
     flocker_fit, 
     components = c("occ", "det", "col", "ex", "auto"),
-    new_data = NULL, summarise = FALSE, CI = c(.05, .95), ndraws = NULL, 
+    new_data = NULL, unit_level = FALSE, 
+    summarise = FALSE, CI = c(.05, .95), ndraws = NULL, 
     response=TRUE, re_formula = NULL, allow_new_levels = FALSE, 
     sample_new_levels = "uncertainty") {
   
   assertthat::assert_that(
     is_flocker_fit(flocker_fit),
     msg = "flocker_fit is corrupt or is not a flocker fit."
+  )
+  assertthat::assert_that(
+    is_one_logical(unit_level),
+    msg = "unit_level must be a single logical value"
   )
   assertthat::assert_that(
     is_one_logical(summarise),
@@ -74,6 +89,19 @@ fitted_flocker <- function(
     ndraws <- brms::ndraws(flocker_fit)
   }
   
+  if(!is.null(new_data)) {
+    assertthat::assert_that(
+      isTRUE(class(new_data == "data.frame")) | isTRUE(is_flocker_data(new_data)),
+      msg = "new_data must be NULL, a dataframe, or a flocker_data object"
+    )
+    if(is_flocker_data(new_data)) {
+      assertthat::assert_that(
+        new_data$type == attributes(flocker_fit)$data_type,
+        msg = "new_data is formatted for a different model type than flocker_fit"
+      )
+    }
+  }
+  
   model_type <- type_flocker_fit(flocker_fit)
   relevant_components <- params_by_type[[model_type]]
   if("col" %in% components){components[components == "col"] <- "colo"}
@@ -90,6 +118,8 @@ fitted_flocker <- function(
   # format new_data: add necessary flocker cols to data frame
   if(is.null(new_data)) { # new data not provided
     new_data_fmtd <- old_data
+  } else if(is_flocker_data(new_data)) {
+    new_data_fmtd <- new_data$data
   } else {
     # add cols to avoid error
     col_string <- "^ff_y$|^ff_Q$|^ff_n_unit$|^ff_unit$|^ff_n_rep$|^ff_rep_index|^ff_n_series|^ff_series|^ff_n_year|^ff_year|^ff_series_year"
@@ -102,7 +132,12 @@ fitted_flocker <- function(
                              do.call(rbind, replicate(nrow(new_data), flocker_fit$data[1, extra_cols], F)), 
                              row.names=NULL) 
     }
-  } 
+  }
+  
+  assertthat::assert_that(
+    all(names(flocker_fit$data) %in% names(new_data_fmtd)),
+    msg = "new_data is missing columns required by flocker_fit (some covariates are missing or mis-named)"
+  )
   
   component_list <- list()
   
@@ -168,10 +203,21 @@ fitted_flocker <- function(
   }
   
   if(summarise) {
-    out <- lapply(component_list, summarise_fun)
+    cl2 <- lapply(component_list, summarise_fun)
   } else {
-    out <- component_list
+    cl2 <- component_list
   }
+  
+  if(is.null(new_data)) {
+    gp <- get_positions(flocker_fit, unit_level = unit_level)
+    out <- lapply(cl2, reshape_fun, gp = gp) ##HERE WE ARE
+  } else if (is_flocker_data(new_data)) {
+    gp <- get_positions(new_data, unit_level = unit_level)
+    out <- lapply(cl2, reshape_fun, gp = gp) ##HERE WE ARE
+  } else {
+    out <- cl2
+  }
+    
   out
 }
 
@@ -184,4 +230,21 @@ summarise_fun <- function(x) {
              upr = matrixStats::rowQuantiles(x, probs = max(CI)))
   names(out)[2:3] <- paste0("Q", c(min(CI)*100, paste0(max(CI)*100)))
   out
+}
+
+#' function to reshape a matrix of values into a stack of arrays via get_positions
+#' @param x input_matrix
+#' @param gp output of get_positions
+reshape_fun <- function(x, gp) {
+  assertthat::assert_that(is.matrix(x))
+  ai <- list()
+  for(i in seq_len(ncol(x))) {
+    ai[[i]] <- array(x[,i][gp], dim = dim(gp))
+  }
+  if(ncol(x) > 1) {
+    arr_dim <- length(dim(ai[[1]]))
+    return(abind::abind(ai, along = arr_dim + 1))
+  } else {
+    return(ai[[1]]) 
+  }
 }
