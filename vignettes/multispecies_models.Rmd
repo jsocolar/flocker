@@ -44,7 +44,9 @@ Markovian, because the transition probabilities can vary by timestep), where the
 transition probabilities between the two possible states (occupied or 
 unoccupied) are a colonization probabilility $\mathcal{C}$, an extinction 
 probability $\mathcal{E}$, and their complements $1 - \mathcal{C}$ and 
-$1 - \mathcal{E}$. 
+$1 - \mathcal{E}$. The complement of the extinction probability turns out to be
+particularly important; we call it the *persistence* probability 
+$\mathcal{P} = 1 - \mathcal{E}$.
 
 To specify the HMM, we need a model for the $\mathcal{C}$, a model for 
 $\mathcal{E}$, a model for the initial occupancy probability $\mathcal{O}$ in 
@@ -66,9 +68,9 @@ that `flocker` treats the detection sub-model in a single-season model.
 #### Colonization and extinction
 In the "colonization-extinction" model, colonization probabilities $\mathcal{C}$
 and extinction probabilities $\mathcal{E}$ are both assumed to vary 
-logit-linearly according to separate linear predictors, whose component 
-covariates may vary across timesteps within series but never at the visit level
-within closure-units.
+logit-linearly according to separate linear predictors based on  
+covariates that may vary across timesteps within series but never across
+visits within closure-units.
 
 In "autologistic" models, the occupancy probability in timestep $t + 1$ is 
 assumed to depend on a suite of site characteristics plus a term that depends on
@@ -81,8 +83,7 @@ so-called "occupancy probability" mentioned above is actually a colonization
 probability, because it reflects the probability of occupancy conditional on
 non-occupancy during the previous timestep. The logit-scale sum of the 
 colonization probability and the autologistic parameter gives the probability of
-persistence $\mathcal{P}$; i.e. the complement of the extinction probability 
-$\mathcal{P} = 1 - \mathcal{E}$.
+persistence $\mathcal{P}$.
 
 Thus, the autologistic model differs from the colonization-extinction model in
 that it assumes that colonization and extinction probabilities are related to
@@ -93,16 +94,16 @@ $\mathcal{C}$ and $\mathcal{P}$ that differ by a constant on the logit scale. In
 practice, $\mathcal{P}$ is almost always larger than $\mathcal{C}$, and so the 
 offset is positive.
 
-In addition to the standard autologistic model that models the offset as a
+In addition to the standard autologistic model that treats the offset as a
 constant, `flocker` also affords the flexibility to model the offset via its
-own linear predictor, which reintroduces flexibility for the relationship
-between $\mathcal{P}$ and $\mathcal{C}$ to vary, but tends to retain the idea
+own linear predictor, which reintroduces flexibility in the relationship
+between $\mathcal{P}$ and $\mathcal{C}$, but tends to retain the idea
 that these probabilities ought to be related to one another and ought to tend
 to move in tandem.
 
 #### Initial occupancy
 Most examples of multiseason occupancy models in the literature include an
-explict model for the initial occupancy probability $\mathcal{O}$ via its own
+explicit model for the initial occupancy probability $\mathcal{O}$ via its own
 linear predictor, which is analogous to the linear predictor in for occupancy
 in a single-season model. Thus, a colonization-extinction model would contain
 linear predictors for detection, colonization, extinction, and initial 
@@ -110,21 +111,20 @@ occupancy; an autologistic model would contain linear predictors for detection,
 colonization, the colonization-persistence offset (often modeled as a constant),
 and initial occupancy. `flocker` is well equipped to fit these models.
 
-Borrowing from the HMM literature, `flocker` also comes with functionality to
-handle $\mathcal{O}$ a bit differently. Any set of colonization/extinction 
+Borrowing from the HMM literature, `flocker` also comes with optional 
+functionality to handle $\mathcal{O}$ differently. Any pair of colonization/extinction 
 probabilities, if they remain constant through time, defines an equilibrium
-proportion of sites that are occupied. Thus, if colonization and extinction
-probabilities can be assumed to have remained constant for a long time prior
-to the first timestep, the initial occupancy probability will simply be this 
-equilibrium frequency.  `flocker` is equipped to fit models without any separate
-linear predictor for initial occupancy, and instead to begin with the
-equilibrium frequencies implied by the coloniziation and extinction 
-probabilities modeled for the first timestep. This can sometimes be valid even 
-if the probabilities are time-varying over the series being modeled, for
-example if a disturbance perturbs equilbrium dynamics during the timeseries. It
-is for this reason that, when using equilibrium frequencies as intial occupancy
-probabilities, `flocker` always computes the equilibrium based on the 
-probabilites modeled for the first timestep.
+proportion of sites that are occupied. If colonization and extinction remain
+constant for a long time prior to the first timestep, the initial occupancy 
+probability will simply be this equilibrium frequency.  `flocker` is equipped to 
+fit models without any separate linear predictor for initial occupancy, and 
+instead to begin with the equilibrium frequencies implied by the coloniziation 
+and extinction probabilities modeled for the first timestep. This can sometimes 
+be valid even if the probabilities are time-varying over the series being 
+modeled, for example if a disturbance perturbs equilbrium dynamics during the 
+timeseries. It is for this reason that, when using equilibrium frequencies as 
+initial occupancy probabilities, `flocker` always computes the equilibrium based 
+on the probabilites modeled for the first timestep.
 
 As an aside, it is not uncommon in the literature to see confusion that
 conflates the initial occupancy probabilities $\mathcal{O}$ with the
