@@ -17,7 +17,7 @@ fitted_flocker(
   unit_level = FALSE,
   summarise = FALSE,
   CI = c(0.05, 0.95),
-  ndraws = NULL,
+  draw_ids = NULL,
   response = TRUE,
   re_formula = NULL,
   allow_new_levels = FALSE,
@@ -51,8 +51,8 @@ of the credible interval, otherwise return posterior draws.}
 \item{CI}{A vector of length 2 specifying the upper and lower bounds of the 
 credible interval.}
 
-\item{ndraws}{Positive integer indicating how many posterior draws should be 
-used. If `NULL` (the default) all draws are used.}
+\item{draw_ids}{Vector of indices of the posterior draws to be 
+used. If `NULL` (the default) all draws are used in their native order.}
 
 \item{response}{Should results be returned on the response or logit scale? 
 Defaults to `TRUE`, i.e. response scale. However, the autologistic

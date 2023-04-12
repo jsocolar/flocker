@@ -17,8 +17,8 @@
 #'     of the credible interval, otherwise return posterior draws. 
 #' @param CI A vector of length 2 specifying the upper and lower bounds of the 
 #'     credible interval.
-#' @param ndraws Positive integer indicating how many posterior draws should be 
-#'     used. If `NULL` (the default) all draws are used. 
+#' @param draw_ids Vector of indices of the posterior draws to be 
+#'     used. If `NULL` (the default) all draws are used in their native order. 
 #' @param response Should results be returned on the response or logit scale? 
 #'     Defaults to `TRUE`, i.e. response scale. However, the autologistic
 #'     parameter is not interpretable as a probability and is always returned
@@ -50,7 +50,7 @@ fitted_flocker <- function(
     flocker_fit, 
     components = c("occ", "det", "col", "ex", "auto"),
     new_data = NULL, unit_level = FALSE, 
-    summarise = FALSE, CI = c(.05, .95), ndraws = NULL, 
+    summarise = FALSE, CI = c(.05, .95), draw_ids = NULL, 
     response=TRUE, re_formula = NULL, allow_new_levels = FALSE, 
     sample_new_levels = "uncertainty") {
   
@@ -81,17 +81,15 @@ fitted_flocker <- function(
     )
   }
   ndraws_total <- brms::ndraws(flocker_fit)
-  if(!is.null(ndraws)) {
+  if(!is.null(draw_ids)) {
     assertthat::assert_that(
-      ndraws <= ndraws_total,
-      msg = "More draws requested than contained in flocker_fit"
+      max(draw_ids) <= ndraws_total,
+      msg = "A requested draw id is greater than the number of draws contained in flocker_fit"
     )
   } else {
-    ndraws <- brms::ndraws(flocker_fit)
+    draw_ids <- seq_len(brms::ndraws(flocker_fit))
   }
   
-  draw_ids <- sample(seq_len(ndraws_total), ndraws)
-
   if(!is.null(new_data)) {
     assertthat::assert_that(
       isTRUE(class(new_data == "data.frame")) | isTRUE(is_flocker_data(new_data)),
@@ -139,7 +137,7 @@ fitted_flocker <- function(
   
   assertthat::assert_that(
     all(names(flocker_fit$data) %in% names(new_data_fmtd)),
-    msg = "new_data is missing columns required by flocker_fit (some covariates are missing or mis-named)"
+    msg = "new_data is missing columns required by flocker_fit (some covariates are missing or misnamed)"
   )
   
   component_list <- list()
@@ -213,10 +211,10 @@ fitted_flocker <- function(
   
   if(is.null(new_data)) {
     gp <- get_positions(flocker_fit, unit_level = unit_level)
-    out <- lapply(cl2, reshape_fun, gp = gp) ##HERE WE ARE
+    out <- lapply(cl2, reshape_fun, gp = gp)
   } else if (is_flocker_data(new_data)) {
     gp <- get_positions(new_data, unit_level = unit_level)
-    out <- lapply(cl2, reshape_fun, gp = gp) ##HERE WE ARE
+    out <- lapply(cl2, reshape_fun, gp = gp)
   } else {
     out <- cl2
   }

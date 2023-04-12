@@ -1,78 +1,60 @@
-#' Get posterior distribution of Z matrix
+#' Get posterior distribution of the Z matrix
 #' @param flocker_fit A flocker_fit object
-#' @param n_iter The number of posterior iterations desired. If `NULL`, use
-#'     all available posterior iterations.
+#' @param draw_ids Vector of indices of the posterior draws to be 
+#'     used. If `NULL` (the default) all draws are used in their native order. 
 #' @param history_condition Should the posterior distribution for Z directly 
 #'     condition on the observed detection history (`TRUE`) or not (`FALSE`)?
 #'     For example, at sites with at least one detection, the true occupancy 
 #'     state conditioned on the history is one with absolute certainty. Without 
 #'     directly conditioning on the history, the occupancy state is controlled 
 #'     by the posterior distribution for the occupancy probability psi.
-#' @param new_data Optional new data at which to predict the Z matrix. Generally
-#'     the output of `make_flocker_data`. Cannot be used if `history_condition` is
-#'     set to `TRUE`.
-#' @param sample_new_levels If new_data is provided and contains random effect
+#' @param new_data Optional new data at which to predict the Z matrix. Can be 
+#'     the output of `make_flocker_data` or the `unit_covs` input to 
+#'     `make_flocker_data` provided that `history_condition` is `FALSE`
+#' @param allow_new_levels allow new levels for random effect terms in `new_data`?
+#'     Will error if set to `FALSE` and new levels are provided in `new_data`.
+#' @param sample_new_levels If `new_data` is provided and contains random effect
 #'     levels not present in the original data, how should predictions be
-#'     handled? Passed directly to brms::prepare_predictions, which see. 
-#' @return The posterior Z matrix. Rows are iterations and columns
-#'     are closure-units. Values are samples from the posterior distribution
-#'     of occupancy probability.
+#'     handled? Passed directly to `brms::prepare_predictions`, which see. 
+#' @return The posterior Z matrix in the shape of the first slice of `obs` as
+#'     passed to make_flocker_data, with posterior iterations stacked along the
+#'     final dimension
 #' @export
 
-get_Z <- function (flocker_fit, n_iter = NULL, history_condition = TRUE, 
-                   new_data = NULL, sample_new_levels = "uncertainty") {
+get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE, 
+                   new_data = NULL, allow_new_levels = FALSE, 
+                   sample_new_levels = "uncertainty") {
   # Input checking and processing
-  assertthat::assert_that(
-    is_flocker_fit(flocker_fit),
-    msg = "flocker_fit must be an object of class `flocker_fit`"
-  )
-  total_iter <- brms::niterations(flocker_fit)*brms::nchains(flocker_fit)
-  if (is.null(n_iter)) {
-    n_iter <- total_iter
-  }
-  n_iter <- as.integer(n_iter)
-  assertthat::assert_that(
-    is_one_pos_int(n_iter),
-    msg = "n_iter, if supplied, must be a single positive integer"
-  )
-  assertthat::assert_that(
-    n_iter <= total_iter,
-    msg = "requested number of iterations exceeds iterations contained in flocker_fit"
-  )
+  
   assertthat::assert_that(
     is_one_logical(history_condition),
     msg = "history_condition must be a single logical value"
   )
-  if (is.null(new_data)) {
-    new_data <- flocker_fit$data
-  } else {
-    assertthat::assert_that(
-      "flocker_data" %in% class(new_data),
-      msg = "new_data is provided but is not a `flocker_data` object"
-    )
-    assertthat::assert_that(
-      new_data$type == attributes(flocker_fit)$data_type & 
-        new_data$fp == attributes(flocker_data)$fp,
-      msg = "new_data is formatted for a different model type than flocker_fit"
-    )
-    new_data <- new_data$data
+  assertthat::assert_that(
+    !history_condition | is_flocker_data(new_data) | is.null(new_data),
+    msg = "conditioning on observed detection histories while using the `new_data` argument requires passing a `flocker_data` object"
+  )
+  
+  if(is.null(ndraws)){
+    ndraws <- brms::niterations(flocker_fit)
   }
   
   lps <- fitted_flocker(
-    flocker_fit, ndraws = n_iter, new_data = new_data, allow_new_levels = TRUE, 
-    sample_new_levels = sample_new_levels, response = F
-    )
+    flocker_fit, draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
+    sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
+  )
   
   lik_type <- type_flocker_fit(flocker_fit)
   
   if (lik_type == "single") {
-    n_unit <- new_data$n_unit[1]
-    lpo <- lps$linpred_occ[1:n_unit, ]
+    lpo <- lps$linpred_occ[1 , ]
     psi_all <- boot::inv.logit(lpo)
-    Z <- matrix(data = 1, nrow = n_iter, ncol = n_unit)
+    Z <- matrix(data = NA, nrow = n_unit, ncol = n_iter)
     lpd <- lps$linpred_det
     
-    
+    if(!hist_condition){
+      
+    }
   } else if (lik_type == "single_C") {
     
   } else if (lik_type == "augmented") {

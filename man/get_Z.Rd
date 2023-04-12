@@ -2,21 +2,22 @@
 % Please edit documentation in R/get_Z.R
 \name{get_Z}
 \alias{get_Z}
-\title{Get posterior distribution of Z matrix}
+\title{Get posterior distribution of the Z matrix}
 \usage{
 get_Z(
   flocker_fit,
-  n_iter = NULL,
+  draw_ids = NULL,
   history_condition = TRUE,
   new_data = NULL,
+  allow_new_levels = FALSE,
   sample_new_levels = "uncertainty"
 )
 }
 \arguments{
 \item{flocker_fit}{A flocker_fit object}
 
-\item{n_iter}{The number of posterior iterations desired. If `NULL`, use
-all available posterior iterations.}
+\item{draw_ids}{Vector of indices of the posterior draws to be 
+used. If `NULL` (the default) all draws are used in their native order.}
 
 \item{history_condition}{Should the posterior distribution for Z directly 
 condition on the observed detection history (`TRUE`) or not (`FALSE`)?
@@ -25,19 +26,22 @@ state conditioned on the history is one with absolute certainty. Without
 directly conditioning on the history, the occupancy state is controlled 
 by the posterior distribution for the occupancy probability psi.}
 
-\item{new_data}{Optional new data at which to predict the Z matrix. Generally
-the output of `make_flocker_data`. Cannot be used if `history_condition` is
-set to `TRUE`.}
+\item{new_data}{Optional new data at which to predict the Z matrix. Can be 
+the output of `make_flocker_data` or the `unit_covs` input to 
+`make_flocker_data` provided that `history_condition` is `FALSE`}
 
-\item{sample_new_levels}{If new_data is provided and contains random effect
+\item{allow_new_levels}{allow new levels for random effect terms in `new_data`?
+Will error if set to `FALSE` and new levels are provided in `new_data`.}
+
+\item{sample_new_levels}{If `new_data` is provided and contains random effect
 levels not present in the original data, how should predictions be
-handled? Passed directly to brms::prepare_predictions, which see.}
+handled? Passed directly to `brms::prepare_predictions`, which see.}
 }
 \value{
-The posterior Z matrix. Rows are iterations and columns
-    are closure-units. Values are samples from the posterior distribution
-    of occupancy probability.
+The posterior Z matrix in the shape of the first slice of `obs` as
+    passed to make_flocker_data, with posterior iterations stacked along the
+    final dimension
 }
 \description{
-Get posterior distribution of Z matrix
+Get posterior distribution of the Z matrix
 }
