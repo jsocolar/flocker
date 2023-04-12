@@ -8,6 +8,8 @@
 #'     state conditioned on the history is one with absolute certainty. Without 
 #'     directly conditioning on the history, the occupancy state is controlled 
 #'     by the posterior distribution for the occupancy probability psi.
+#' @param sample Should the return be posterior probabilities of occupancy (FALSE),
+#'     or bernoulli samples from those probabilities (TRUE)
 #' @param new_data Optional new data at which to predict the Z matrix. Can be 
 #'     the output of `make_flocker_data` or the `unit_covs` input to 
 #'     `make_flocker_data` provided that `history_condition` is `FALSE`
@@ -22,6 +24,7 @@
 #' @export
 
 get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE, 
+                   sample = FALSE,
                    new_data = NULL, allow_new_levels = FALSE, 
                    sample_new_levels = "uncertainty") {
   # Input checking and processing
@@ -32,11 +35,13 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
   )
   assertthat::assert_that(
     !history_condition | is_flocker_data(new_data) | is.null(new_data),
-    msg = "conditioning on observed detection histories while using the `new_data` argument requires passing a `flocker_data` object"
+    msg = "conditioning on observed detection histories while using the `new_data` argument requires passing a `flocker_data` object, not a dataframe"
   )
   
-  if(is.null(ndraws)){
-    ndraws <- brms::niterations(flocker_fit)
+  if (is.null(draw_ids)) {
+    n_iter <- brms::ndraws(flocker_fit)
+  } else {
+    n_iter <- length(draw_ids)
   }
   
   lps <- fitted_flocker(
@@ -44,87 +49,73 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
   )
   
+  if(history_condition) {
+    if(is.null(new_data)){
+      gp <- get_positions(flocker_fit)
+      obs <- matrix(flocker_fit$data$ff_y[gp], nrow = nrow(gp), ncol = ncol(gp))
+    } else {
+      gp <- get_positions(new_data)
+      obs <- matrix(new_data$ff_y[gp], nrow = nrow(gp), ncol = ncol(gp))
+    }
+  }
+  
   lik_type <- type_flocker_fit(flocker_fit)
   
   if (lik_type == "single") {
-    lpo <- lps$linpred_occ[1 , ]
+    lpo <- lps$linpred_occ[ , 1, ] # first index is unit, second is visit, third is draw
+    n_unit <- nrow(lpo)
     psi_all <- boot::inv.logit(lpo)
-    Z <- matrix(data = NA, nrow = n_unit, ncol = n_iter)
-    lpd <- lps$linpred_det
+    Z <- matrix(nrow = n_unit, ncol = n_iter)
     
-    if(!hist_condition){
+    assertthat::assert_that(identical(dim(psi_all), dim(Z)))
+    
+    if (!history_condition){
+      if(sample) {
+        Z <- matrix(rbinom(length(psi_all), 1, psi_all), n_unit, n_iter)
+      } else {
+        Z <- psi_all
+      }
+    } else {
+      theta_all <- boot::inv.logit(lps$linpred_det)
       
+      # get emission likelihoods
+      el_0 <- el_1 <- matrix(nrow = nrow(psi_all), ncol = ncol(psi_all))
+      
+      for(i in seq_len(ncol(psi_all))){
+        el_0[ , i] <- mapply(function(a, b){emission_likelihood(0, a, b)}, asplit(obs, 1), asplit(theta_all[ , , i], 1))
+        el_1[ , i] <- mapply(function(a, b){emission_likelihood(1, a, b)}, asplit(obs, 1), asplit(theta_all[ , , i], 1))
+      }
+      
+      assertthat::assert_that(identical(dim(psi_all), dim(el_0)))
+      
+      hc <- (psi_all * el_1)/(psi_all * el_1 + (1 - psi_all) * el_0)
+      
+      if(sample) {
+        Z <- matrix(rbinom(length(hc), 1, hc), n_unit, n_iter)
+      } else {
+        Z <- hc
+      }
     }
   } else if (lik_type == "single_C") {
-    
+    stop("get_Z not yet implmented for rep-constant models")
   } else if (lik_type == "augmented") {
-    
+    stop("get_Z not yet implmented for augmented models")
   } else if (lik_type == "multi_colex") {
-    
+    stop("get_Z not yet implmented for dynamic models")
   } else if (lik_type == "multi_colex_eq") {
-    
+    stop("get_Z not yet implmented for dynamic models")
   } else if (lik_type == "multi_autologistic") {
-    
+    stop("get_Z not yet implmented for dynamic models")
   } else if (lik_type == "multi_autologistic_eq") {
-    
+    stop("get_Z not yet implmented for dynamic models")
   } else if (lik_type == "single_fp") {
-    
+    stop("get_Z not yet implmented for false positive")
   } else if (lik_type == "multi_colex_fp") {
-    
+    stop("get_Z not yet implmented for dynamic models")
   } else if (lik_type == "multi_colex_eq_fp") {
-    
+    stop("get_Z not yet implmented for dynamic models")
   }
   
   class(Z) <- c("postZ", "matrix")
   Z
-  
-  
-  
-  if (lik_type == "V") {
-    
-  } else {
-    n_unit <- nrow(new_data)
-  }
-
-  
-
-  
-  message("computing Z")
-  if (!history_condition) {
-    Z <- psi_all
-  } else {
-    pb <- utils::txtProgressBar(min = 0, max = n_unit, style = 3)
-    antitheta_all <- boot::inv.logit(-lpd)
-    if (lik_type == "V") {
-      index_matrix <- new_data[grep("^rep_index", names(new_data))] 
-      Q <- as.integer(new_data$Q[1:n_unit]) # get Q
-      for (i in 1:n_unit) {
-        if (Q[i] == 0L) { # if Q is 0
-          psi <- psi_all[ , i]
-          antitheta <- antitheta_all[ , as.integer(index_matrix[1:new_data$n_rep[i], i])]
-          numerator <- psi * matrixStats::rowProds(antitheta)
-          denominator <- numerator + (1 - psi)
-          Z[, i] <- numerator/denominator
-        }
-        utils::setTxtProgressBar(pb, i)
-      }
-    } else { # lik_type == "C"
-      Q <- as.integer(new_data$n_suc > 0)
-      Z <- matrix(data = 1, nrow = n_iter, ncol = n_unit)
-      for (i in 1:n_unit) {
-        if (Q[i] == 0L) {
-          psi <- psi_all[, i]
-          antitheta <- antitheta_all[, i]
-          numerator <- psi * antitheta^new_data$n_trial[i] 
-          denominator <- numerator + (1 - psi) 
-          Z[, i] <- numerator/denominator
-        }
-        utils::setTxtProgressBar(pb, i)
-      }
-    }
-    close(pb)
-  }
-
-  class(Z) <- c("postZ", "matrix")
-  return(Z)
 }

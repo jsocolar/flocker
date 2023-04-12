@@ -374,6 +374,40 @@ get_positions_single <- function(flocker_fit) {
   out
 }
 
+
+#' Get emission likelihoods given observations and detection probabilities
+#' @param state Compute the emission likelihood for absence (0) or presence (1)
+#' @param obs The observation history for the unit
+#' @param det The detection probabilities at the unit
+#' @return the emission likelihood
+emission_likelihood <- function(state, obs, det) {
+  assertthat::assert_that(state %in% c(0, 1), msg = "the state must be zero or one")
+  assertthat::assert_that(all(obs >= 0, na.rm = TRUE) & all(obs <= 1, na.rm = TRUE))
+  assertthat::assert_that(all(det >= 0, na.rm = TRUE) & all(det <= 1, na.rm = TRUE))
+  assertthat::assert_that(length(obs) == length(det))
+
+  nna <- !is.na(obs)
+  
+  if(sum(nna == 0)){
+    return(1)
+  }
+  
+  obs <- obs[nna]
+  det <- det[nna]
+  assertthat::assert_that(!any(is.na(det)))
+
+  if(state == 0){
+    out <- prod(1 - obs)
+  } else {
+    out <- prod((1 - obs) * (1 - det) + obs * det)
+  }
+  
+  out
+}
+
+
+
+
 ##### Misc #####
 #' Check validity of params passed to `flock`
 #' @return silent if parameters are valid

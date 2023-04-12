@@ -8,6 +8,7 @@ get_Z(
   flocker_fit,
   draw_ids = NULL,
   history_condition = TRUE,
+  sample = FALSE,
   new_data = NULL,
   allow_new_levels = FALSE,
   sample_new_levels = "uncertainty"
@@ -25,6 +26,9 @@ For example, at sites with at least one detection, the true occupancy
 state conditioned on the history is one with absolute certainty. Without 
 directly conditioning on the history, the occupancy state is controlled 
 by the posterior distribution for the occupancy probability psi.}
+
+\item{sample}{Should the return be posterior probabilities of occupancy (FALSE),
+or bernoulli samples from those probabilities (TRUE)}
 
 \item{new_data}{Optional new data at which to predict the Z matrix. Can be 
 the output of `make_flocker_data` or the `unit_covs` input to 
