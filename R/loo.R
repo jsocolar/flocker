@@ -25,7 +25,7 @@ loo_flocker <- function(x, thin = NULL) {
     }
     names(out) <- names(x)
   }
-  return(out)
+  out
 }
 
 
@@ -45,27 +45,15 @@ loo_flocker_onefit <- function(x, thin = NULL) {
   
   if(is.null(thin)) {
     draw_ids <- 1:(niter*nchains) 
-    chain_ids <- rep(c(1:dim(x$fit)[2]), each = dim(x$fit)[1])
+    chain_ids <- rep(c(1:nchains), each = niter)
   } else {
     iter_keep <- seq(1, niter, thin)
     draw_ids <- rep(seq(0, (niter-1)*nchains, niter), each=length(iter_keep)) + iter_keep
     chain_ids <- rep(1:nchains, each = length(iter_keep))
   }
   
-  if (type == "C") {
-    # if (binom_coef) {
-    #   .GlobalEnv$occupancy_C_lpmf <- occupancy_C_lpmf_with_coef
-    # } else {
-    #   .GlobalEnv$occupancy_C_lpmf <- occupancy_C_lpmf_without_coef
-    # }
-    # out <- brms::loo(x)
-    ll <- brms::log_lik(x, draw_ids = draw_ids)
-    out <- loo::loo(ll, r_eff = loo::relative_eff(ll, chain_id = chain_ids))
-  } else if (type == "V") {
-    ll <- log_lik_V(x, draw_ids = draw_ids)
-    out <- loo::loo(ll, r_eff = loo::relative_eff(ll, chain_id = chain_ids))
-  }
-  return(out)
+  ll <- log_lik_flocker(x, draw_ids = draw_ids)
+  loo::loo(ll, r_eff = loo::relative_eff(ll, chain_id = chain_ids))
 }
 
 #' LOO comparisons for flocker models. 

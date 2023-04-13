@@ -356,25 +356,6 @@ get_positions <- function(data_object, unit_level = FALSE) {
   }
 }
 
-#' Get matrix positions corresponding to each row of data in "single" type 
-#' flocker_fit$data slot
-#' @param flocker_fit a "single" type `flocker_fit` object
-#' @return an n_row x 2 matrix, where each row contains the indices of the 
-#'     corresponding sampling event in the observation dataframe
-get_positions_single <- function(flocker_fit) {
-  assertthat::assert_that(
-    attributes(flocker_fit)$data_type %in% c("single", "single_fp"),
-    msg = "flocker_fit type is not 'single' or 'single_fp'"
-  )
-  n_unit <- flocker_fit$data$ff_n_unit[1]
-  index_matrix <- as.matrix(flocker_fit$data[1:n_unit, grepl("^ff_rep_index", 
-                                                    names(flocker_fit$data))])
-  n_row <- nrow(flocker_fit$data)
-  out <- t(sapply(1:n_row, function(x){which(index_matrix == x, arr.ind = T)}))
-  out
-}
-
-
 #' Get emission likelihoods given observations and detection probabilities
 #' @param state Compute the emission likelihood for absence (0) or presence (1)
 #' @param obs The observation history for the unit

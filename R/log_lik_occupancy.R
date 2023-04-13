@@ -1,94 +1,48 @@
-#' Compute unitwise log-likelihood matrix for a rep-varying flocker_fit object
-#' @param flocker_fit_V A rep-varying flocker_fit object
+#' Compute unit-wise or series-wise log-likelihood matrix for a flocker_fit object
+#' @param flocker_fit A flocker_fit object
 #' @param draw_ids the draw ids to compute log-likelihoods for. Defaults to using the full posterior. 
-#' @return A unitwise posterior log-likelihood matrix
+#' @return A unit-wise or series-wise posterior log-likelihood matrix, where iterations are rows and 
+#'    units/series are columns
 #' @export
 
-log_lik_V <- function(flocker_fit_V, draw_ids = NULL) {
-  if (!("flocker_fit" %in% class(flocker_fit_V))) {
-    stop("flocker_fit_V must be an object of class flocker_fit.")
+log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
+  assertthat::assert_that(is_flocker_fit(flocker_fit))
+  ndraws <- brms::ndraws(flocker_fit)
+  assertthat::assert_that(
+    max(draw_ids) <= ndraws,
+    msg = "some requested draw ids greater than total number of available draws"
+  )
+  
+  lps <- fitted_flocker(
+    flocker_fit, draw_ids = draw_ids, new_data = NULL, allow_new_levels = FALSE, 
+    response = TRUE, unit_level = FALSE
+  )
+  
+  lik_type <- type_flocker_fit(flocker_fit)
+  
+  if (lik_type == "single") {
+    psi_all <- lps$linpred_occ[ , 1, ] # first index is unit, second is visit, third is draw
+    n_unit <- nrow(psi_all)
+    theta_all <- lps$linpred_det
+      
+    # get emission likelihoods
+    el_0 <- el_1 <- matrix(nrow = nrow(psi_all), ncol = ncol(psi_all))
+      
+    for(i in seq_len(ncol(psi_all))){
+      el_0[ , i] <- mapply(function(a, b){emission_likelihood(0, a, b)}, asplit(obs, 1), asplit(theta_all[ , , i], 1))
+      el_1[ , i] <- mapply(function(a, b){emission_likelihood(1, a, b)}, asplit(obs, 1), asplit(theta_all[ , , i], 1))
+    }
+      
+    assertthat::assert_that(identical(dim(psi_all), dim(el_0)))
+      
+    ll <- log((psi_all * el_1) + (1 - psi_all) * el_0) |>
+      t()
+  } else {
+    stop("log_lik_flocker is currently implemented only for standard single-season models")
   }
-  if (type_flocker_fit(flocker_fit_V) != "V") {
-    stop("flocker_fit_V works only for rep-varying flocker_fits")
-  }
-
-  if(is.null(draw_ids)) draw_ids <- 1:brms::ndraws(flocker_fit_V)
-    
-  # dimensions
-  n_unit <- flocker_fit_V$data$n_unit[1]
-  ndraws <- length(draw_ids)
-  max_rep <- max(flocker_fit_V$data$n_rep)
-  
-  rep_index_matrix <- 
-    as.matrix(flocker_fit_V$data[1:n_unit, grepl("rep_index", names(flocker_fit_V$data))])
-  
-  lpo_t <- t(brms::posterior_linpred(flocker_fit_V, dpar = "occ", draw_ids = draw_ids))
-  lpd_t <- t(brms::posterior_linpred(flocker_fit_V, dpar = "mu", draw_ids = draw_ids))
-  
-  # create long-format dataframe (with iterations stacked down rows)
-  # note: missed reps are inserted as -99s
-  all_iters <- data.frame(resp = -99,
-                          unit_index = rep(1:n_unit, max_rep), 
-                          rep_index = c(rep_index_matrix),
-                          Q = rep(flocker_fit_V$data$Q[1:n_unit], max_rep), 
-                          # note: everything above this is getting duplicated ndraws times
-                          draw_id = rep(draw_ids, each = n_unit*max_rep), 
-                          lpo = NA, 
-                          lpd = NA)
-  all_iters$resp[all_iters$rep_index != -99] <- flocker_fit_V$data$y
-  all_iters$lpo[all_iters$rep_index != -99] <- c(lpo_t)
-  all_iters$lpd[all_iters$rep_index != -99] <- c(lpd_t)
-  
-  # calculate rep-level component of likelihood
-  all_iters$ll <- calc_log_lik_partial(all_iters$resp, all_iters$Q, all_iters$lpd)
-  
-  # spread this to wide format (i.e. 1 column per rep)
-  rep_index <- rep(rep(1:max_rep, each=n_unit), ndraws)
-  
-  ll_partial_V <- do.call("cbind", 
-                          lapply(1:max_rep, function(x) matrix(all_iters$ll[rep_index == x])))
-  
-  ll_partial_S <- data.frame(Q = rep(all_iters$Q[1:n_unit], ndraws),
-                             lpo = all_iters$lpo[rep_index == 1], # note: duplicated across reps 
-                             draw_id = all_iters$draw_id[rep_index == 1]) 
-  
-  # finish likelihood calculation
-  Q_index <- as.logical(ll_partial_S$Q)
-  ll_partial_S$log_lik <- NA
-  ll_partial_S$log_lik[Q_index] <- log_inv_logit(ll_partial_S$lpo[Q_index]) + 
-    rowSums(ll_partial_V[Q_index,])
-  ll_partial_S$log_lik[!Q_index] <- matrixStats::rowLogSumExps(
-    cbind(log1m_inv_logit(ll_partial_S$lpo[!Q_index]),
-          log_inv_logit(ll_partial_S$lpo[!Q_index]) + rowSums(ll_partial_V[!Q_index,])))
-  
-  # unstack to matrix [n_iter, n_unit]
-  log_lik_mat <- t(unstack(ll_partial_S[c("log_lik", "draw_id")], log_lik ~ draw_id))
-  row.names(log_lik_mat) <- gsub("X", "", row.names(log_lik_mat))
-  
-  return(log_lik_mat)
+  ll
 }
 
-
-#' Compute the part of the log-likelihood relating to sampling events. To be used 
-#' internally in log_lik_V(). Missing events are returned as 0s
-#' @param resp the response vector (detection/non-detection) at the unit. Missing 
-#' events are represented as -99
-#' @param Q whether there is at least one detection at a species:point combination
-#' @param lpd the logit-scale linear predictor
-
-calc_log_lik_partial <- function(resp, Q, lpd) {
-  Q_index <- as.logical(Q)
-  ll <- rep(NA, length(Q))
-  
-  ll[Q_index] <- ifelse(as.logical(resp[Q_index]),
-                        log_inv_logit(lpd[Q_index]),
-                        log1m_inv_logit(lpd[Q_index]))
-  
-  ll[!Q_index] <- log1m_inv_logit(lpd[!Q_index])
-  
-  ll[resp == -99] <- 0
-  return(ll)
-}
 
 
 #' A log-likelihood function for the rep-constant occupancy model, sufficient for
