@@ -42,7 +42,7 @@ levels not present in the original data, how should predictions be
 handled? Passed directly to `brms::prepare_predictions`, which see.}
 }
 \value{
-The posterior Z matrix in the shape of the first slice of `obs` as
+The posterior Z matrix in the shape of the first visit in `obs` as
     passed to make_flocker_data, with posterior iterations stacked along the
     final dimension
 }
