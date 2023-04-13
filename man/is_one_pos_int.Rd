@@ -9,10 +9,10 @@ is_one_pos_int(x, m = 0)
 \arguments{
 \item{x}{object to test}
 
-\item{minimum}{value for x}
+\item{m}{minimum value for x}
 }
 \value{
-logical; TURE if x is a single positive integer
+logical; TRUE if x is a single positive integer
 }
 \description{
 check if an object is a single integer (or integerish) > m

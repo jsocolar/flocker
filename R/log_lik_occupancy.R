@@ -8,10 +8,12 @@
 log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
   assertthat::assert_that(is_flocker_fit(flocker_fit))
   ndraws <- brms::ndraws(flocker_fit)
-  assertthat::assert_that(
-    max(draw_ids) <= ndraws,
-    msg = "some requested draw ids greater than total number of available draws"
-  )
+  if(!is.null(draw_ids)){
+    assertthat::assert_that(
+      max(draw_ids) <= ndraws,
+      msg = "some requested draw ids greater than total number of available draws"
+    )
+  }
   
   lps <- fitted_flocker(
     flocker_fit, draw_ids = draw_ids, new_data = NULL, allow_new_levels = FALSE, 
@@ -24,6 +26,10 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
     psi_all <- lps$linpred_occ[ , 1, ] # first index is unit, second is visit, third is draw
     n_unit <- nrow(psi_all)
     theta_all <- lps$linpred_det
+    
+
+    gp <- get_positions(flocker_fit)
+    obs <- matrix(flocker_fit$data$ff_y[gp], nrow = nrow(gp), ncol = ncol(gp))
       
     # get emission likelihoods
     el_0 <- el_1 <- matrix(nrow = nrow(psi_all), ncol = ncol(psi_all))

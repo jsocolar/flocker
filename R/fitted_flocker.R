@@ -92,7 +92,7 @@ fitted_flocker <- function(
   
   if(!is.null(new_data)) {
     assertthat::assert_that(
-      isTRUE(class(new_data == "data.frame")) | isTRUE(is_flocker_data(new_data)),
+      isTRUE(class(new_data) == "data.frame") | isTRUE(is_flocker_data(new_data)),
       msg = "new_data must be NULL, a dataframe, or a flocker_data object"
     )
     if(is_flocker_data(new_data)) {
@@ -133,6 +133,13 @@ fitted_flocker <- function(
                              do.call(rbind, replicate(nrow(new_data), flocker_fit$data[1, extra_cols], F)), 
                              row.names=NULL) 
     }
+  }
+  
+  # Handle models fitted via 0 + Intercept syntax with newdata
+  if(
+    ("Intercept" %in% names(flocker_fit$data)) &
+    !("Intercept" %in% names(new_data_fmtd))){
+    new_data_fmtd$Intercept <- 1
   }
   
   assertthat::assert_that(
@@ -239,7 +246,7 @@ fitted_flocker <- function(
     }
   } else {
     dn <- list(
-      paste0("row_", seq_len(dim(out[1])))
+      paste0("row_", seq_len(dim(out[[1]])[1]))
     )
   }
   
@@ -257,6 +264,7 @@ fitted_flocker <- function(
 
 #' function to summarize matrix of linear predictors to its mean and CI
 #' @param x linpreds
+#' @param CI fractional bounds of credible interval between 0 and 1 inclusive
 #' @return summary
 summarise_fun <- function(x, CI) {
   out <- data.frame(estimate = matrixStats::rowMeans2(x),

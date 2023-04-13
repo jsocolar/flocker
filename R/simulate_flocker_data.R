@@ -222,7 +222,7 @@ sfd <- function(
     )
   if(is.null(covariates)) {
     covariates <- list(
-      uc1 = rnorm(n_pt)[unit_backbone$id_point]
+      uc1 = stats::rnorm(n_pt)[unit_backbone$id_point]
     )
   }
   
@@ -257,7 +257,7 @@ sfd <- function(
     unit_backbone,
     data.frame(
       id_season = 1,
-      true_Z = rbinom(n_sp * n_pt, 1, boot::inv.logit(unit_backbone$occ))
+      true_Z = stats::rbinom(n_sp * n_pt, 1, boot::inv.logit(unit_backbone$occ))
     )
   )
   
@@ -272,7 +272,7 @@ sfd <- function(
             unit_backbone,
             data.frame(
               id_season = i, 
-              true_Z = rbinom(n_pt * n_sp, 1, psi_i)
+              true_Z = stats::rbinom(n_pt * n_sp, 1, psi_i)
             )
           )
         )
@@ -301,7 +301,7 @@ sfd <- function(
   
   if (!rep_constant) {
     if (!("ec1" %in% names(covariates))) {
-      covariates$ec1 <- rnorm(n_pt*n_season*n_rep)[ # we don't allow ec1 to vary by species;
+      covariates$ec1 <- stats::rnorm(n_pt*n_season*n_rep)[ # we don't allow ec1 to vary by species;
         # this allows the covariate to play nicely with augmented models.
         
         # I think that visit_full is already guaranteed to be blocked by species with everything
@@ -323,7 +323,7 @@ sfd <- function(
   }
   
   visit_full$obs <- visit_full$true_Z *
-    rbinom(nrow(visit_full), 1, boot::inv.logit(visit_full$logit_det))
+    stats::rbinom(nrow(visit_full), 1, boot::inv.logit(visit_full$logit_det))
   
   if (!is.null(fp)) {
     # true detections are categorized as such with probability fp
@@ -361,11 +361,11 @@ sfd <- function(
   if (! augmented & n_season == 1) {
     visit_full$id_unit <- interaction(visit_full$id_point, visit_full$species)
     unit_backbone$id_unit <- interaction(unit_backbone$id_point, unit_backbone$species)
-    obs <- t(unstack(visit_full[c("obs", "id_unit")], obs ~ id_unit))
+    obs <- t(utils::unstack(visit_full[c("obs", "id_unit")], obs ~ id_unit))
     if(rep_constant){
       event_covs <- NULL
     } else {
-      event_covs <- list(ec1 = t(unstack(visit_full[c("ec1", "id_unit")], ec1 ~ id_unit))) 
+      event_covs <- list(ec1 = t(utils::unstack(visit_full[c("ec1", "id_unit")], ec1 ~ id_unit))) 
       assertthat::assert_that(isTRUE(all.equal(rownames(obs), rownames(event_covs$ec1))))
     }
 
@@ -384,7 +384,7 @@ sfd <- function(
     obs_temp <- list()
     counter <- 0
     for(i in 1:n_sp){
-      ot <- t(unstack(visit_full[visit_full$species == paste0("sp_", i), c("obs", "id_point")], obs ~ id_point))
+      ot <- t(utils::unstack(visit_full[visit_full$species == paste0("sp_", i), c("obs", "id_point")], obs ~ id_point))
       if (sum(ot, na.rm = TRUE) > 0) { # we only include species in the output if the species is observed
         counter <- counter + 1
         obs_temp[[counter]] <- ot
@@ -398,7 +398,7 @@ sfd <- function(
     if(rep_constant){
       event_covs <- NULL
     } else {
-      event_covs <- list(ec1 = t(unstack(ec_prelim[c("ec1", "id_point")], ec1 ~ id_point))) 
+      event_covs <- list(ec1 = t(utils::unstack(ec_prelim[c("ec1", "id_point")], ec1 ~ id_point))) 
       assertthat::assert_that(isTRUE(all.equal(rownames(obs_temp[[1]]), rownames(event_covs$ec1))))
     }
     
@@ -420,10 +420,10 @@ sfd <- function(
       
       vfi <- visit_full[visit_full$id_season == i, ]
       
-      obs_temp[[i]] <- t(unstack(vfi[c("obs", "id_unit")], obs ~ id_unit))
+      obs_temp[[i]] <- t(utils::unstack(vfi[c("obs", "id_unit")], obs ~ id_unit))
       
       if(!rep_constant){
-        events_temp[[i]] <- t(unstack(vfi[c("ec1", "id_unit")], ec1 ~ id_unit))
+        events_temp[[i]] <- t(utils::unstack(vfi[c("ec1", "id_unit")], ec1 ~ id_unit))
         assertthat::assert_that(all.equal(rownames(obs_temp[[i]]), rownames(events_temp[[i]])))
       }
       

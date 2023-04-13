@@ -7,7 +7,7 @@
 
 make_occupancy_single_lpmf <- function (max_rep) {
   assertthat::assert_that(
-    is.integer(max_rep) & (max_rep > 1),
+    is_one_pos_int(max_rep, m = 1),
     msg = "max_rep must be an integer greater than 1"
   )
   
@@ -84,10 +84,9 @@ make_occupancy_single_C_lpmf <- function () {
 #' @param max_rep Literal integer maximum number of repeated sampling events at 
 #'    any unit.
 #' @return Character string of Stan code corresponding to occupancy_V_lpmf
-
 make_occupancy_augmented_lpmf <- function (max_rep) {
   assertthat::assert_that(
-    is.integer(max_rep) & (max_rep > 1),
+    is_one_pos_int(max_rep, m = 1),
     msg = "max_rep must be an integer greater than 1"
   )
   
@@ -475,14 +474,16 @@ make_forward_colex_fp <- function() {
 #' Create Stan code for likelihood function occupancy_multi_colex_lpmf.
 #' @param max_rep Literal integer maximum number of repeated sampling events at 
 #'    any unit.
+#' @param max_year Literal integer maximum number of years (or seasons) visited
+#'    in any series
 #' @return Character string of Stan code corresponding to occupancy_multi_colex_lpmf
 make_occupancy_multi_colex_lpmf <- function (max_rep, max_year) {
   assertthat::assert_that(
-    is.integer(max_rep) & (max_rep > 1),
+    is_one_pos_int(max_rep, m = 1),
     msg = "max_rep must be an integer greater than 1"
   )
   assertthat::assert_that(
-    is.integer(max_year) & (max_year > 1),
+    is_one_pos_int(max_year, m = 1),
     msg = "max_year must be an integer greater than 1"
   )
   
@@ -567,14 +568,16 @@ make_occupancy_multi_colex_lpmf <- function (max_rep, max_year) {
 #' Create Stan code for likelihood function occupancy_multi_colex_eq_lpmf.
 #' @param max_rep Literal integer maximum number of repeated sampling events at 
 #'    any unit.
+#' @param max_year Literal integer maximum number of years (or seasons) visited
+#'    in any series
 #' @return Character string of Stan code corresponding to occupancy_multi_colex_eq_lpmf
 make_occupancy_multi_colex_eq_lpmf <- function (max_rep, max_year) {
   assertthat::assert_that(
-    is.integer(max_rep) & (max_rep > 1),
+    is_one_pos_int(max_rep, m = 1),
     msg = "max_rep must be an integer greater than 1"
   )
   assertthat::assert_that(
-    is.integer(max_year) & (max_year > 1),
+    is_one_pos_int(max_year, m = 1),
     msg = "max_year must be an integer greater than 1"
   )
   
@@ -660,14 +663,16 @@ make_occupancy_multi_colex_eq_lpmf <- function (max_rep, max_year) {
 #' Create Stan code for likelihood function occupancy_multi_autologistic_lpmf.
 #' @param max_rep Literal integer maximum number of repeated sampling events at 
 #'    any unit.
+#' @param max_year Literal integer maximum number of years (or seasons) visited
+#'    in any series
 #' @return Character string of Stan code corresponding to occupancy_multi_autologistic_lpmf
 make_occupancy_multi_autologistic_lpmf <- function (max_rep, max_year) {
   assertthat::assert_that(
-    is.integer(max_rep) & (max_rep > 1),
+    is_one_pos_int(max_rep, m = 1),
     msg = "max_rep must be an integer greater than 1"
   )
   assertthat::assert_that(
-    is.integer(max_year) & (max_year > 1),
+    is_one_pos_int(max_year, m = 1),
     msg = "max_year must be an integer greater than 1"
   )
   
@@ -754,14 +759,16 @@ make_occupancy_multi_autologistic_lpmf <- function (max_rep, max_year) {
 #' Create Stan code for likelihood function occupancy_multi_autologistic_eq_lpmf.
 #' @param max_rep Literal integer maximum number of repeated sampling events at 
 #'    any unit.
+#' @param max_year Literal integer maximum number of years (or seasons) visited
+#'    in any series
 #' @return Character string of Stan code corresponding to occupancy_multi_autologistic_eq_lpmf
 make_occupancy_multi_autologistic_eq_lpmf <- function (max_rep, max_year) {
   assertthat::assert_that(
-    is.integer(max_rep) & (max_rep > 1),
+    is_one_pos_int(max_rep, m = 1),
     msg = "max_rep must be an integer greater than 1"
   )
   assertthat::assert_that(
-    is.integer(max_year) & (max_year > 1),
+    is_one_pos_int(max_year, m = 1),
     msg = "max_year must be an integer greater than 1"
   )
   
@@ -850,7 +857,7 @@ make_occupancy_multi_autologistic_eq_lpmf <- function (max_rep, max_year) {
 #' @return Character string of Stan code corresponding to occupancy_single_fp_lpmf
 make_occupancy_single_fp_lpdf <- function (max_rep) {
   assertthat::assert_that(
-    is.integer(max_rep) & (max_rep > 1),
+    is_one_pos_int(max_rep, m = 1),
     msg = "max_rep must be an integer greater than 1"
   )
   
@@ -904,14 +911,16 @@ make_occupancy_single_fp_lpdf <- function (max_rep) {
 #' Create Stan code for likelihood function occupancy_multi_colex_fp_lpdf.
 #' @param max_rep Literal integer maximum number of repeated sampling events at 
 #'    any unit.
+#' @param max_year Literal integer maximum number of years (or seasons) visited
+#'    in any series
 #' @return Character string of Stan code corresponding to occupancy_multi_colex_fp_lpdf
 make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
   assertthat::assert_that(
-    is.integer(max_rep) & (max_rep > 1),
+    is_one_pos_int(max_rep, m = 1),
     msg = "max_rep must be an integer greater than 1"
   )
   assertthat::assert_that(
-    is.integer(max_year) & (max_year > 1),
+    is_one_pos_int(max_year, m = 1),
     msg = "max_year must be an integer greater than 1"
   )
   
@@ -995,14 +1004,16 @@ make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
 #' Create Stan code for likelihood function occupancy_multi_colex_eq_fp_lpdf.
 #' @param max_rep Literal integer maximum number of repeated sampling events at 
 #'    any unit.
+#' @param max_year Literal integer maximum number of years (or seasons) visited
+#'    in any series
 #' @return Character string of Stan code corresponding to occupancy_multi_colex_eq_fp_lpmf
 make_occupancy_multi_colex_eq_fp_lpdf <- function (max_rep, max_year) {
   assertthat::assert_that(
-    is.integer(max_rep) & (max_rep > 1),
+    is_one_pos_int(max_rep, m = 1),
     msg = "max_rep must be an integer greater than 1"
   )
   assertthat::assert_that(
-    is.integer(max_year) & (max_year > 1),
+    is_one_pos_int(max_year, m = 1),
     msg = "max_year must be an integer greater than 1"
   )
   sf_text1 <- "  real occupancy_multi_colex_eq_fp_lpdf(
@@ -1088,13 +1099,14 @@ make_occupancy_multi_colex_eq_fp_lpdf <- function (max_rep, max_year) {
 ##### Single threaded #####
 make_occupancy_single_threaded_lpmf <- function (max_rep, grainsize) {
   assertthat::assert_that(
-    is.integer(max_rep) & (max_rep > 1),
+    is_one_pos_int(max_rep, m = 1),
     msg = "max_rep must be an integer greater than 1"
   )
   assertthat::assert_that(
-    is.integer(grainsize) & (grainsize > 0),
+    is_one_pos_int(grainsize),
     msg = "grainsize must be an integer greater than 0"
   )
+
   
   sf_text0.1 <- "  real occupancy_single_threaded_lpmf(
     array[] int y, // detection data
@@ -1146,7 +1158,7 @@ make_occupancy_single_threaded_lpmf <- function (max_rep, grainsize) {
 
 make_occupancy_single_partial_sum <- function (max_rep) {
   assertthat::assert_that(
-    is.integer(max_rep) & (max_rep > 1),
+    is_one_pos_int(max_rep, m = 1),
     msg = "max_rep must be an integer greater than 1"
   )
   

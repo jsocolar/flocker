@@ -113,7 +113,7 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
     msg = "this shouldn't happen; please report a bug"
   )
   
-  predictions <- array(rbinom(length(theta_all), 1, theta_all * Z_samp_array), dim = dim(theta_all))
+  predictions <- array(stats::rbinom(length(theta_all), 1, theta_all * Z_samp_array), dim = dim(theta_all))
   
   predictions
 }

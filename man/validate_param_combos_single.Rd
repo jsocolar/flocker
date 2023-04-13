@@ -17,6 +17,27 @@ validate_param_combos_single(
   fp
 )
 }
+\arguments{
+\item{f_occ}{occupancy formula}
+
+\item{f_det}{detection formula}
+
+\item{flocker_data}{flocker_data object}
+
+\item{multiseason}{multiseason flag}
+
+\item{f_col}{colonization formula}
+
+\item{f_ex}{extinction formula}
+
+\item{multi_init}{multi_init flag}
+
+\item{f_auto}{autologistic formula}
+
+\item{augmented}{augmented flag}
+
+\item{fp}{false positive flag}
+}
 \value{
 silent if parameters are valid
 }

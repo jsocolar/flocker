@@ -540,11 +540,11 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
                                       ncol = n_year))
   names(unit_indices) <- paste0("ff_unit_index", seq(n_year))
   message("formatting unit indices")
-  pb <- txtProgressBar(min = 0, max = n_series, style = 3)
+  pb <- utils::txtProgressBar(min = 0, max = n_series, style = 3)
   for (i in 1:n_series) {
     unit_indices[i, 1:flocker_data$ff_n_year[i]] <- 
       which(flocker_data$ff_series[seq(n_unit)] == flocker_data$ff_series[i])
-    setTxtProgressBar(pb, i)
+    utils::setTxtProgressBar(pb, i)
   }
   close(pb)
   flocker_data <- cbind(flocker_data, unit_indices)
@@ -554,7 +554,7 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
                                        ncol = n_rep))
   names(rep_indices) <- paste0("ff_rep_index", seq(n_rep))
   message("formatting rep indices")
-  pb <- txtProgressBar(min = 0, max = n_unit, style = 3)
+  pb <- utils::txtProgressBar(min = 0, max = n_unit, style = 3)
   for (i in seq(n_unit)) {
     assertthat::assert_that(
       !duplicated(flocker_data$ff_series_year)[i],
@@ -564,7 +564,7 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
       rep_indices[i, 1:flocker_data$ff_n_rep[i]] <- 
         which(flocker_data$ff_series_year == flocker_data$ff_series_year[i])
     }
-    setTxtProgressBar(pb, i)
+    utils::setTxtProgressBar(pb, i)
   }
   close(pb)
   
@@ -715,10 +715,10 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
                                       ncol = n_rep))
   names(rep_indices) <- paste0("ff_rep_index", 1:n_rep)
   message("formatting rep indices")
-  pb <- txtProgressBar(min = 0, max = nrow(obs), style = 3)
+  pb <- utils::txtProgressBar(min = 0, max = nrow(obs), style = 3)
   for (i in 1:nrow(obs)) {
     rep_indices[i, 1:flocker_data$ff_n_rep[i]] <- which(flocker_data$ff_unit == i)
-    setTxtProgressBar(pb, i)
+    utils::setTxtProgressBar(pb, i)
   }
   close(pb)
   flocker_data <- cbind(flocker_data, rep_indices)

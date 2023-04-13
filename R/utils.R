@@ -69,7 +69,7 @@ nslice <- function(x) {
   dim(x)[3]
 }
 
-#' rbind a matrix to itself n times
+#' rbind a matrix or dataframe to itself n times
 #' @param m a matrix or dataframe
 #' @param n number of times to rbind
 #' @return matrix or dataframe
@@ -391,6 +391,17 @@ emission_likelihood <- function(state, obs, det) {
 
 ##### Misc #####
 #' Check validity of params passed to `flock`
+#' @param f_occ occupancy formula
+#' @param f_det detection formula
+#' @param flocker_data flocker_data object
+#' @param multiseason multiseason flag
+#' @param f_col colonization formula
+#' @param f_ex extinction formula
+#' @param multi_init multi_init flag
+#' @param f_auto autologistic formula
+#' @param augmented augmented flag
+#' @param fp false positive flag
+#' @param threads threads flag
 #' @return silent if parameters are valid
 validate_flock_params <- function(f_occ, f_det, flocker_data,
                                   multiseason, f_col, f_ex, multi_init, f_auto,
@@ -425,6 +436,7 @@ validate_flock_params <- function(f_occ, f_det, flocker_data,
 }
 
 #' Check individual validity of params passed to `flock`
+#' @inheritParams validate_flock_params
 #' @return silent if parameters are valid
 validate_params_individually <- function(f_occ, f_det, flocker_data,
                                          multiseason, f_col, f_ex, multi_init, f_auto,
@@ -478,21 +490,22 @@ validate_params_individually <- function(f_occ, f_det, flocker_data,
 }
 
 #' Check that no event covariates are used in unit formulas
+#' @inheritParams validate_flock_params
 #' @return silent if parameters are valid
 validate_unit_formula_variables <- function(f_occ, f_col, f_ex, f_auto, flocker_data) {
   # Check that no event covariates are used in unit formulas
   unit_terms <- character(0)
   if(!is.null(f_occ)){
-    unit_terms <- c(unit_terms, labels(terms(f_occ)))
+    unit_terms <- c(unit_terms, labels(stats::terms(f_occ)))
   }
   if(!is.null(f_col)){
-    unit_terms <- c(unit_terms, labels(terms(f_col)))
+    unit_terms <- c(unit_terms, labels(stats::terms(f_col)))
   }
   if(!is.null(f_ex)){
-    unit_terms <- c(unit_terms, labels(terms(f_ex)))
+    unit_terms <- c(unit_terms, labels(stats::terms(f_ex)))
   }
   if(!is.null(f_auto)){
-    unit_terms <- c(unit_terms, labels(terms(f_auto)))
+    unit_terms <- c(unit_terms, labels(stats::terms(f_auto)))
   }
   assertthat::assert_that(
     !any(unit_terms %in% flocker_data$event_covs),
@@ -506,6 +519,7 @@ validate_unit_formula_variables <- function(f_occ, f_col, f_ex, f_auto, flocker_
 }
 
 #' Check validity of some params passed to flock if `type` is `single` or `single_C`
+#' @inheritParams validate_flock_params
 #' @return silent if parameters are valid
 validate_param_combos_single_generic <- function(f_occ, f_det, flocker_data, 
                                                  multiseason, f_col, f_ex, multi_init, f_auto,
@@ -534,6 +548,7 @@ validate_param_combos_single_generic <- function(f_occ, f_det, flocker_data,
 }
 
 #' Check validity of params passed to `flock` if `type` is `single`
+#' @inheritParams validate_flock_params
 #' @return silent if parameters are valid
 validate_param_combos_single <- function(f_occ, f_det, flocker_data, 
                                          multiseason, f_col, f_ex, multi_init, f_auto,
@@ -561,6 +576,7 @@ validate_param_combos_single <- function(f_occ, f_det, flocker_data,
 }
 
 #' Check validity of params passed to `flock` if `type` is `single_C`
+#' @inheritParams validate_flock_params
 #' @return silent if parameters are valid
 validate_param_combos_single_C <- function(f_occ, f_det, flocker_data, 
                                          multiseason, f_col, f_ex, multi_init, f_auto,
@@ -587,6 +603,7 @@ validate_param_combos_single_C <- function(f_occ, f_det, flocker_data,
 }
 
 #' Check validity of params passed to `flock` if `type` is `augmented`
+#' @inheritParams validate_flock_params
 #' @return silent if parameters are valid
 validate_param_combos_augmented <- function(f_occ, f_det, flocker_data, 
                                          multiseason, f_col, f_ex, multi_init, f_auto,
@@ -630,6 +647,7 @@ validate_param_combos_augmented <- function(f_occ, f_det, flocker_data,
 }
 
 #' Check validity of params passed to `flock` if `type` is `multi`
+#' @inheritParams validate_flock_params
 #' @return silent if parameters are valid
 validate_param_combos_multi <- function(f_occ, f_det, flocker_data, 
                                          multiseason, f_col, f_ex, multi_init, f_auto,
@@ -755,10 +773,10 @@ is_one_logical <- function (x) {
 
 #' check if an object is a single integer (or integerish) > m
 #' @param x object to test
-#' @param minimum value for x
-#' @return logical; TURE if x is a single positive integer
+#' @param m minimum value for x
+#' @return logical; TRUE if x is a single positive integer
 is_one_pos_int <- function(x, m = 0) {
-  isTRUE(x == floor(x)) & isTRUE(x > m)
+  isTRUE(x == floor(x)) & isTRUE(x > m) & length(x) == 1
 }
 
 #' get shared elements between two vectors

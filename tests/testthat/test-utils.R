@@ -26,8 +26,7 @@ test_that("array utils work properly", {
   # stack_matrix
   expect_error(stack_matrix(testarray, 2))
   expect_equal(stack_matrix(testmat, 2), matrix(c(NA, 1, NA, 1, 2, 3, 2, 3), ncol = 2))
-  expect_equivalent(stack_matrix(testdf, 2), matrix(c(NA, 1, NA, 1, 2, 3, 2, 3), ncol = 2))
-  
+  expect_equivalent(as.matrix(stack_matrix(testdf, 2)), matrix(c(NA, 1, NA, 1, 2, 3, 2, 3), ncol = 2))
 })
 
 

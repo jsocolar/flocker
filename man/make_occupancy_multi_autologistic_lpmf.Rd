@@ -9,6 +9,9 @@ make_occupancy_multi_autologistic_lpmf(max_rep, max_year)
 \arguments{
 \item{max_rep}{Literal integer maximum number of repeated sampling events at 
 any unit.}
+
+\item{max_year}{Literal integer maximum number of years (or seasons) visited
+in any series}
 }
 \value{
 Character string of Stan code corresponding to occupancy_multi_autologistic_lpmf

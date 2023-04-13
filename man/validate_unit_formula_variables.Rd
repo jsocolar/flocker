@@ -6,6 +6,17 @@
 \usage{
 validate_unit_formula_variables(f_occ, f_col, f_ex, f_auto, flocker_data)
 }
+\arguments{
+\item{f_occ}{occupancy formula}
+
+\item{f_col}{colonization formula}
+
+\item{f_ex}{extinction formula}
+
+\item{f_auto}{autologistic formula}
+
+\item{flocker_data}{flocker_data object}
+}
 \value{
 silent if parameters are valid
 }

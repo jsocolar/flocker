@@ -8,6 +8,8 @@ summarise_fun(x, CI)
 }
 \arguments{
 \item{x}{linpreds}
+
+\item{CI}{fractional bounds of credible interval between 0 and 1 inclusive}
 }
 \value{
 summary

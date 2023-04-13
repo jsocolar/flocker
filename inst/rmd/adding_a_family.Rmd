@@ -6,7 +6,7 @@ output: html_document
 ---
 
 This document provides a guide to how families are treated in `flocker` through
-the lens of everthing that needs to happen in order to add a new family.
+the lens of everything that needs to happen in order to add a new family.
 
 ## Data formatting and model fitting
 
@@ -59,11 +59,11 @@ accurate simulation from the new model.
 1. Make sure that the new family is treated in one of the vignettes. In some
 cases, this can be very lightweight (for example, if we add false positive
 autologistic models, then we probably just need to change a single sentence
-in the fp modesl vignette).
+in the fp models vignette).
 1. Optionally, if the vignette uses data that are not readily simulated via
 `simulate_flocker_data()` (e.g. if illustrating the family's capabilities
 requires more/different covariates than `simulate_flocker_data()` provides),
-provide an example dataset in the data folder and document it properly in 
-data.R.
+create an example dataset in the data folder, put the script to generate the
+dataset in data.R, and document appropriately.
 
     

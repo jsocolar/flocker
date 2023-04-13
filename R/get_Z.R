@@ -71,7 +71,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     
     if (!history_condition){
       if(sample) {
-        Z <- matrix(rbinom(length(psi_all), 1, psi_all), n_unit, n_iter)
+        Z <- matrix(stats::rbinom(length(psi_all), 1, psi_all), n_unit, n_iter)
       } else {
         Z <- psi_all
       }
@@ -91,7 +91,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
       hc <- (psi_all * el_1)/(psi_all * el_1 + (1 - psi_all) * el_0)
       
       if(sample) {
-        Z <- matrix(rbinom(length(hc), 1, hc), n_unit, n_iter)
+        Z <- matrix(stats::rbinom(length(hc), 1, hc), n_unit, n_iter)
       } else {
         Z <- hc
       }

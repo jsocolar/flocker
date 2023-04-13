@@ -37,6 +37,7 @@ occupancy_single_C <- function() {
 }
 
 #' Define the rep-varying augmented occupancy family
+#' @param max_rep the maximum number of repeat sampling events at a unit
 #' @return a "customfamily" "brmsfamily" object from brms
 occupancy_augmented <- function(max_rep) {
   brms::custom_family(

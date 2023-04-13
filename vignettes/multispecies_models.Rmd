@@ -3,6 +3,12 @@ title: "Multiseason models in flocker"
 author: "Jacob Socolar"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Multiseason models in flocker}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+params:
+  iter: 100
 ---
 
 ```{r, include = FALSE}
@@ -60,17 +66,16 @@ timestep (in the HMM literature, these probabilities are referred to as
 part of multiseason occupancy model. They are the probability of observing the
 data within a unit given the latent occupancy state, and they depend only on the
 detection sub-model, which is no different from a single-season detection 
-sub-model. In `flocker`, we assume that the detection probabilities vary 
-logit-linearly with a suite of covariates that can vary across all levels of
+sub-model. In `flocker`, we assume that the logit-scale detection probabilities 
+vary according to a suite of covariates that can vary across all levels of
 organization, including down to the visit level. This is exactly the same way
 that `flocker` treats the detection sub-model in a single-season model.
 
 #### Colonization and extinction
-In the "colonization-extinction" model, colonization probabilities $\mathcal{C}$
-and extinction probabilities $\mathcal{E}$ are both assumed to vary 
-logit-linearly according to separate linear predictors based on  
-covariates that may vary across timesteps within series but never across
-visits within closure-units.
+In the "colonization-extinction" model, logit colonization probabilities 
+$\mathcal{C}$ and logit extinction probabilities $\mathcal{E}$ are both assumed 
+to vary according to separate predictors based on covariates that may vary 
+across timesteps within series but never across visits within closure-units.
 
 In "autologistic" models, the occupancy probability in timestep $t + 1$ is 
 assumed to depend on a suite of site characteristics plus a term that depends on
@@ -96,35 +101,41 @@ offset is positive.
 
 In addition to the standard autologistic model that treats the offset as a
 constant, `flocker` also affords the flexibility to model the offset via its
-own linear predictor, which reintroduces flexibility in the relationship
-between $\mathcal{P}$ and $\mathcal{C}$, but tends to retain the idea
-that these probabilities ought to be related to one another and ought to tend
-to move in tandem.
+own covariate-based predictor, which reintroduces flexibility in the 
+relationship between $\mathcal{P}$ and $\mathcal{C}$, but tends to retain the 
+idea that these probabilities ought to be related to one another and ought to 
+tend to move in tandem.
 
 #### Initial occupancy
 Most examples of multiseason occupancy models in the literature include an
 explicit model for the initial occupancy probability $\mathcal{O}$ via its own
-linear predictor, which is analogous to the linear predictor in for occupancy
+covariate-based predictor, which is analogous to the occupancy predictor 
 in a single-season model. Thus, a colonization-extinction model would contain
-linear predictors for detection, colonization, extinction, and initial 
+predictors for detection, colonization, extinction, and initial 
 occupancy; an autologistic model would contain linear predictors for detection,
 colonization, the colonization-persistence offset (often modeled as a constant),
 and initial occupancy. `flocker` is well equipped to fit these models.
 
 Borrowing from the HMM literature, `flocker` also comes with optional 
-functionality to handle $\mathcal{O}$ differently. Any pair of colonization/extinction 
-probabilities, if they remain constant through time, defines an equilibrium
-proportion of sites that are occupied. If colonization and extinction remain
-constant for a long time prior to the first timestep, the initial occupancy 
-probability will simply be this equilibrium frequency.  `flocker` is equipped to 
-fit models without any separate linear predictor for initial occupancy, and 
-instead to begin with the equilibrium frequencies implied by the coloniziation 
-and extinction probabilities modeled for the first timestep. This can sometimes 
-be valid even if the probabilities are time-varying over the series being 
-modeled, for example if a disturbance perturbs equilbrium dynamics during the 
-timeseries. It is for this reason that, when using equilibrium frequencies as 
-initial occupancy probabilities, `flocker` always computes the equilibrium based 
-on the probabilites modeled for the first timestep.
+functionality to handle $\mathcal{O}$ differently. Any pair of 
+colonization/extinction probabilities, if they remain constant through time, 
+defines an equilibrium proportion of sites that are occupied. If colonization 
+and extinction remain constant for a long time prior to the first timestep, the 
+initial occupancy probability will simply be this equilibrium frequency.  
+`flocker` is equipped to fit models without any separate predictor for initial 
+occupancy, and instead to begin with the equilibrium frequencies implied by the 
+coloniziation and extinction probabilities modeled for the first timestep. 
+This can sometimes be valid even if the probabilities are time-varying over the 
+series being modeled, for example if a some sites are subject to a disturbance 
+that perturbs equilbrium dynamics during the timeseries. For a concrete
+example, consider a study system that is initially in equilibrium, but in which
+some sites burn in a forest fire partway through the study. If the impact of 
+the burn on colonization and extinction probabilities is modeled adequately, 
+then the modeled probabilites prior to the burn will reflect the equilibrium
+colonization and extinction probabilities in the pre-burn state. It is for this 
+reason that, when using equilibrium frequencies as initial occupancy 
+probabilities, `flocker` always computes the equilibrium based on the 
+probabilites modeled for the first timestep.
 
 As an aside, it is not uncommon in the literature to see confusion that
 conflates the initial occupancy probabilities $\mathcal{O}$ with the

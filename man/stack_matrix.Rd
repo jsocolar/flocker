@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{stack_matrix}
 \alias{stack_matrix}
-\title{rbind a matrix to itself n times}
+\title{rbind a matrix or dataframe to itself n times}
 \usage{
 stack_matrix(m, n)
 }
@@ -15,5 +15,5 @@ stack_matrix(m, n)
 matrix or dataframe
 }
 \description{
-rbind a matrix to itself n times
+rbind a matrix or dataframe to itself n times
 }

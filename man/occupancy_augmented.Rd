@@ -6,6 +6,9 @@
 \usage{
 occupancy_augmented(max_rep)
 }
+\arguments{
+\item{max_rep}{the maximum number of repeat sampling events at a unit}
+}
 \value{
 a "customfamily" "brmsfamily" object from brms
 }

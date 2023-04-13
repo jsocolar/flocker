@@ -48,4 +48,6 @@ efd <- function(rep_constant = FALSE, seed = 123, n_pt = 30, n_sp = 30,
 example_flocker_data <- efd()
 example_flocker_data_constant <- efd(TRUE)
 
-usethis::use_data(example_flocker_data, overwrite = TRUE)
+usethis::use_data(example_flocker_data)
+usethis::use_data(example_flocker_data_constant)
+
