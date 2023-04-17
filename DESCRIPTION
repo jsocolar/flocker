@@ -21,7 +21,6 @@ Suggests:
     knitr,
     rmarkdown,
     ape,
-    rstan (>= 2.26.0),
     posterior (>= 1.0.0)
 Remotes: 
 	stan-dev/cmdstanr
