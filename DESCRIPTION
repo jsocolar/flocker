@@ -15,7 +15,10 @@ Imports:
 	stats,
 	boot,
 	matrixStats,
-	assertthat
+	assertthat,
+	abind,
+	withr,
+	MASS
 Suggests:
     testthat (>= 2.1.0),
     knitr,
