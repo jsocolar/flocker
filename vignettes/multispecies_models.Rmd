@@ -7,8 +7,6 @@ vignette: >
   %\VignetteIndexEntry{Multiseason models in flocker}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
-params:
-  iter: 100
 ---
 
 ```{r, include = FALSE}
@@ -180,7 +178,7 @@ Here's the colonization-extinction model with an explicit model for occupancy
 in the first timestep. Depending on hardware, fitting this model might take 2-5 
 minutes.
 
-```{r colex-explicit, echo = FALSE}
+```{r colex-explicit, echo = FALSE, eval = FALSE}
 multi_colex <- flock(
   f_occ = ~ uc1,
   f_det = ~ uc1 + ec1,
@@ -197,7 +195,7 @@ multi_colex <- flock(
 
 Here's the colonization-extinction model using equilibrium occupancy 
 probabilities in the first timestep:
-```{r colex-equilibrium, echo = FALSE}
+```{r colex-equilibrium, echo = FALSE, eval = FALSE}
 multi_colex_eq <- flock(
   f_det = ~ uc1 + ec1,
   f_col = ~ uc1,
@@ -206,7 +204,8 @@ multi_colex_eq <- flock(
   multiseason = "colex",
   multi_init = "equilibrium",
   backend = "cmdstanr",
-  cores = 4
+  cores = 4,
+  iter = params$iter
 )
 
 ```
@@ -215,7 +214,7 @@ first timestep. To reflect the stereotypical autologistic model with a constant
 logit-scale offset separating colonization and persistence probabilities, we
 use the formula `f_auto = ~ 1`, but it is fine to relax this constraint and use,
 e.g. `f_auto = ~ uc1`.
-```{r auto-explicit, echo = FALSE}
+```{r auto-explicit, echo = FALSE, eval = FALSE}
 multi_auto <- flock(
   f_occ = ~ uc1,
   f_det = ~ uc1 + ec1,
@@ -225,14 +224,15 @@ multi_auto <- flock(
   multiseason = "autologistic",
   multi_init = "explicit",
   backend = "cmdstanr",
-  cores = 4
+  cores = 4,
+  iter = params$iter
 )
 
 ```
 
 And finally the autologistic model with equilibrium occupancy probabilities in
 the first timestep:
-```{r auto-equilirium, echo = FALSE}
+```{r auto-equilirium, echo = FALSE, eval = FALSE}
 multi_auto_eq <- flock(
   f_det = ~ uc1 + ec1,
   f_col = ~ uc1,
@@ -241,7 +241,8 @@ multi_auto_eq <- flock(
   multiseason = "autologistic",
   multi_init = "equilibrium",
   backend = "cmdstanr",
-  cores = 4
+  cores = 4,
+  iter = params$iter
 )
 
 ```
