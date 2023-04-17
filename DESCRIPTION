@@ -27,7 +27,15 @@ Suggests:
     posterior (>= 1.0.0)
 Remotes: 
 	stan-dev/cmdstanr
-Description: flocker provides functionality to fit flexible occupancy models
+Description: Fit flexible occupancy models in Stan via brms. Flocker brings 
+   the full variety of brms effects structures to the relevant distributional 
+   terms in multiple classes of occupancy model, including standard 
+   single-season models, models with data augmentation for never-observed 
+   species, dynamic (multiseason) models with explicit colonization and 
+   extinction processes, and dynamic models with autologistic occupancy 
+   dynamics. Depending on the model class, flocker can specify formulas for any 
+   of occupancy, detection, colonization, extinction, and/or the autologistic 
+   term.
 Encoding: UTF-8
 License: BSD_3_clause
 URL: https://github.com/jsocolar/flocker
