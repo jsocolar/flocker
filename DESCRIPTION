@@ -1,13 +1,13 @@
 Package: flocker
 Version: 0.1-0
-Title: Flexible occupancy estimation in R
+Title: Flexible Occupancy Estimation in R
 Authors@R: 
     c(person("Jacob B.", "Socolar", email = "jacob.socolar@gmail.com",
              role = c("aut", "cre")),
       person("Simon C.", "Mills", role = c("aut")),
       person("Paul-Christian", "Bürkner", role = c("ctb")))
 Depends: 
-	R (>= 4.0.0)
+	R (>= 4.1.0)
 Imports:
 	brms (>= 2.16.0),
 	cmdstanr (>= 0.4.0),
