@@ -2,7 +2,7 @@
 % Please edit documentation in R/fitted_flocker.R
 \name{reshape_fun}
 \alias{reshape_fun}
-\title{function to reshape a matrix of values into a stack of arrays via get_positions}
+\title{reshape a matrix of values into a stack of arrays via get_positions}
 \usage{
 reshape_fun(x, gp)
 }
@@ -12,5 +12,5 @@ reshape_fun(x, gp)
 \item{gp}{output of get_positions}
 }
 \description{
-function to reshape a matrix of values into a stack of arrays via get_positions
+reshape a matrix of values into a stack of arrays via get_positions
 }

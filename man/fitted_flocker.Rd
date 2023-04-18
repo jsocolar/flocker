@@ -2,13 +2,7 @@
 % Please edit documentation in R/fitted_flocker.R
 \name{fitted_flocker}
 \alias{fitted_flocker}
-\title{Get expected values of the posterior predictive distribution for the modeled
-probabilities (occupancy, detection, colonization, extinction, autologistic). 
-Note that these are conditional probabilties (e.g. detection conditional on 
-occupancy, colonization conditional on previous non-occupancy, etc).
-These probabilities are not conditioned on the observed histories (e.g. the
-occupancy probability is not fixed to one at sites with a detection; it is
-estimated only based on the covariates)}
+\title{Posterior predictive distributions for modeled probabilities}
 \usage{
 fitted_flocker(
   flocker_fit,
@@ -79,10 +73,16 @@ A list of sets of expected values (one per component). If `new_data`
 }
 \description{
 Get expected values of the posterior predictive distribution for the modeled
-probabilities (occupancy, detection, colonization, extinction, autologistic). 
-Note that these are conditional probabilties (e.g. detection conditional on 
-occupancy, colonization conditional on previous non-occupancy, etc).
-These probabilities are not conditioned on the observed histories (e.g. the
-occupancy probability is not fixed to one at sites with a detection; it is
-estimated only based on the covariates)
+probabilities (occupancy, detection, colonization, extinction, autologistic).
+}
+\details{
+The probabilities returned are conditional probabilties (e.g. detection 
+conditional on occupancy, colonization conditional on previous 
+non-occupancy, etc). These probabilities are not conditioned on the 
+observed histories (e.g. the occupancy probability is not fixed to one 
+at sites with a detection; it is estimated only based on the covariates).
+}
+\examples{
+fitted_flocker(example_flocker_model_single, summarise = TRUE)
+
 }

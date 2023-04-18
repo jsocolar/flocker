@@ -1,10 +1,13 @@
+#' Posterior predictive distributions for modeled probabilities
+#' 
 #' Get expected values of the posterior predictive distribution for the modeled
-#' probabilities (occupancy, detection, colonization, extinction, autologistic). 
-#' Note that these are conditional probabilties (e.g. detection conditional on 
-#' occupancy, colonization conditional on previous non-occupancy, etc).
-#' These probabilities are not conditioned on the observed histories (e.g. the
-#' occupancy probability is not fixed to one at sites with a detection; it is
-#' estimated only based on the covariates)
+#' probabilities (occupancy, detection, colonization, extinction, autologistic).
+#' 
+#' The probabilities returned are conditional probabilties (e.g. detection 
+#' conditional on occupancy, colonization conditional on previous 
+#' non-occupancy, etc). These probabilities are not conditioned on the 
+#' observed histories (e.g. the occupancy probability is not fixed to one 
+#' at sites with a detection; it is estimated only based on the covariates).
 #' @param flocker_fit A flocker_fit object.
 #' @param components a character vector specifying one or more of "occ",
 #'     "det", "col", "ex", or "auto" for which to obtain fitted values.
@@ -45,6 +48,8 @@
 #'     to format the flocker_data (but see `unit_level` parameter for further
 #'     details).
 #' @export
+#' @examples 
+#' fitted_flocker(example_flocker_model_single, summarise = TRUE)
 #' 
 fitted_flocker <- function(
     flocker_fit, 
@@ -262,7 +267,7 @@ fitted_flocker <- function(
   out
 }
 
-#' function to summarize matrix of linear predictors to its mean and CI
+#' summarize matrix of linear predictors to its mean and CI
 #' @param x linpreds
 #' @param CI fractional bounds of credible interval between 0 and 1 inclusive
 #' @return summary
@@ -274,7 +279,7 @@ summarise_fun <- function(x, CI) {
   out
 }
 
-#' function to reshape a matrix of values into a stack of arrays via get_positions
+#' reshape a matrix of values into a stack of arrays via get_positions
 #' @param x input_matrix
 #' @param gp output of get_positions
 reshape_fun <- function(x, gp) {

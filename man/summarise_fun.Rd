@@ -2,7 +2,7 @@
 % Please edit documentation in R/fitted_flocker.R
 \name{summarise_fun}
 \alias{summarise_fun}
-\title{function to summarize matrix of linear predictors to its mean and CI}
+\title{summarize matrix of linear predictors to its mean and CI}
 \usage{
 summarise_fun(x, CI)
 }
@@ -15,5 +15,5 @@ summarise_fun(x, CI)
 summary
 }
 \description{
-function to summarize matrix of linear predictors to its mean and CI
+summarize matrix of linear predictors to its mean and CI
 }
