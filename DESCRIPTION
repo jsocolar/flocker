@@ -38,7 +38,7 @@ Description: Fit flexible occupancy models in Stan via brms. Flocker brings
    of occupancy, detection, colonization, extinction, and/or the autologistic 
    term.
 Encoding: UTF-8
-License: BSD_3_clause
+License: BSD_3_clause + file LICENSE
 URL: https://github.com/jsocolar/flocker
 BugReports: https://github.com/jsocolar/flocker/issues
 RoxygenNote: 7.2.3
