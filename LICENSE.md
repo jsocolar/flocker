@@ -1,6 +1,6 @@
 BSD 3-Clause License
 
-Copyright (c) 2021, Jacob B. Socolar
+Copyright (c) 2021, Jacob B. Socolar & Simon C. Mills
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
