@@ -49,7 +49,11 @@
 #'     details).
 #' @export
 #' @examples 
-#' fitted_flocker(example_flocker_model_single, summarise = TRUE)
+#' fitted_flocker(
+#'   example_flocker_model_single, 
+#'   summarise = TRUE, 
+#'   draw_ids = 1:10
+#' )
 #' 
 fitted_flocker <- function(
     flocker_fit, 
