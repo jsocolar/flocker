@@ -49,3 +49,8 @@ The posterior Z matrix in the shape of the first visit in `obs` as
 \description{
 Get posterior distribution of the Z matrix
 }
+\examples{
+\dontrun{
+get_Z(example_flocker_model_single)
+}
+}

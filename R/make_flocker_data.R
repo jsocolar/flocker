@@ -47,6 +47,12 @@
 #' @param verbose Show informational messages?
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
+#' @examples
+#' make_flocker_data(
+#'  example_flocker_data$obs,
+#'  example_flocker_data$unit_covs,
+#'  example_flocker_data$event_covs
+#' )
 make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
                               type = "single", n_aug = NULL, fp = FALSE,
                               verbose = TRUE) {
@@ -121,7 +127,7 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
   
   out$fp <- fp
   
-  return(out)
+  out
 }
 
 
@@ -140,6 +146,12 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
 #' @param fp logical
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
+#' @examples
+#' make_flocker_data(
+#'  example_flocker_data$obs,
+#'  example_flocker_data$unit_covs,
+#'  example_flocker_data$event_covs
+#' )
 make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
                                      fp = FALSE) {
   assertthat::assert_that(
@@ -592,7 +604,6 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
 #' @param fp logical
 #' @return A flocker_data list that can be passed as data to \code{flocker()}.
 #' @export
-
 make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL, 
                                         event_covs = NULL, fp = FALSE) {
   assertthat::assert_that(

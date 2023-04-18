@@ -66,3 +66,10 @@ A flocker_data list that can be passed as data to \code{flock()}.
 \description{
 Format data for occupancy model with \code{flock()}.
 }
+\examples{
+make_flocker_data(
+ example_flocker_data$obs,
+ example_flocker_data$unit_covs,
+ example_flocker_data$event_covs
+)
+}

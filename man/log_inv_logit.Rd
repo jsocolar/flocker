@@ -15,3 +15,6 @@ the logarithm of the inverse logit of x
 \description{
 Numerically stable log inverse logit
 }
+\examples{
+log_inv_logit(0)
+}

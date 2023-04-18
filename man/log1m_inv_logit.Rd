@@ -15,3 +15,6 @@ the logarithm of one minus the inverse logit of x
 \description{
 Numerically stable log one-minus inverse logit
 }
+\examples{
+log1m_inv_logit(0)
+}

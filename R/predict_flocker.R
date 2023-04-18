@@ -28,7 +28,14 @@
 #'     and the value is 1, 0, or NA indicating detection, non-detection, or 
 #'     non-existence of the sampling event.
 #' @export
-
+#' @examples 
+#' \dontrun{
+#' unconditioned_preds <- predict_flocker(example_flocker_model_single)
+#' conditioned_preds <- predict_flocker(
+#'  example_flocker_model_single, 
+#'  history_condition = TRUE
+#' )
+#' }
 predict_flocker <- function(flocker_fit, draw_ids = NULL,  
                             history_condition = FALSE, 
                             new_data = NULL,

@@ -55,3 +55,12 @@ An array of posterior predictions. For a single-season rep-varying
 \description{
 Get posterior predictions from a flocker model
 }
+\examples{
+\dontrun{
+unconditioned_preds <- predict_flocker(example_flocker_model_single)
+conditioned_preds <- predict_flocker(
+ example_flocker_model_single, 
+ history_condition = TRUE
+)
+}
+}

@@ -71,3 +71,18 @@ with single-season rep-constant models, and must be set to NULL otherwise.}
 \description{
 Generate stan code for an occupancy model
 }
+\examples{
+\dontrun{
+fd <- make_flocker_data(
+ example_flocker_data$obs, 
+ example_flocker_data$unit_covs,
+ example_flocker_data$event_covs
+)
+flocker_stancode(f_occ = ~ uc1 + s(uc2) + (1|grp),
+          f_det = ~ uc1 + ec1 + s(ec2) + (1|grp),
+          flocker_data = fd,
+          refresh = 50, chains = 1, warmup = 5, iter = 200,
+          adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123,
+          backend = "cmdstanr")
+}
+}

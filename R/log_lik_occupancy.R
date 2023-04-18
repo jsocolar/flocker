@@ -4,6 +4,10 @@
 #' @return A unit-wise or series-wise posterior log-likelihood matrix, where iterations are rows and 
 #'    units/series are columns
 #' @export
+#' @examples 
+#' \dontrun{
+#' log_lik_flocker(example_flocker_model_single)
+#' }
 
 log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
   assertthat::assert_that(is_flocker_fit(flocker_fit))
@@ -58,7 +62,6 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
 #' vignette at 
 #' https://cran.r-project.org/web/packages/brms/vignettes/brms_customfamilies.html
 #' @return The log-likelihood for observation i
-
 log_lik_occupancy_C <- function(i, prep) {
   mu <- brms::get_dpar(prep, "mu", i = i)
   occ <- brms::get_dpar(prep, "occ", i = i)
@@ -74,7 +77,6 @@ log_lik_occupancy_C <- function(i, prep) {
 #' @param occ logit-scale occupancy probability
 #' @param trials number of reps
 #' @return The log-likelihood
-
 occupancy_C_lpmf <- Vectorize(
   function (y, mu, occ, trials) {
     if (y == 0) {
@@ -100,7 +102,6 @@ occupancy_C_lpmf <- Vectorize(
 #' @param occ logit-scale occupancy probability
 #' @param trials number of reps
 #' @return The log-likelihood
-
 occupancy_C_lpmf_with_coef <- Vectorize(
   function (y, mu, occ, trials) {
     if (y == 0) {

@@ -36,14 +36,17 @@
 #' @return a \code{brmsfit} containing the fitted occupancy model. 
 #' @examples
 #' \dontrun{
-#' example_data <- example_flocker_data()
-#' fd <- make_flocker_data(example_data$obs, example_data$unit_covs, 
-#'                         example_data$event_covs)
+#' fd <- make_flocker_data(
+#'  example_flocker_data$obs, 
+#'  example_flocker_data$unit_covs,
+#'  example_flocker_data$event_covs
+#' )
 #' flock(f_occ = ~ uc1 + s(uc2) + (1|grp),
 #'           f_det = ~ uc1 + ec1 + s(ec2) + (1|grp),
 #'           flocker_data = fd,
 #'           refresh = 50, chains = 1, warmup = 5, iter = 200,
-#'           adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123)
+#'           adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123,
+#'           backend = "cmdstanr")
 #' }
 #' @export
 flock <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL, 
@@ -61,6 +64,20 @@ flock <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL,
 #' Generate stan code for an occupancy model
 #' @inheritParams flock
 #' @export
+#' @examples
+#' \dontrun{
+#' fd <- make_flocker_data(
+#'  example_flocker_data$obs, 
+#'  example_flocker_data$unit_covs,
+#'  example_flocker_data$event_covs
+#' )
+#' flocker_stancode(f_occ = ~ uc1 + s(uc2) + (1|grp),
+#'           f_det = ~ uc1 + ec1 + s(ec2) + (1|grp),
+#'           flocker_data = fd,
+#'           refresh = 50, chains = 1, warmup = 5, iter = 200,
+#'           adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123,
+#'           backend = "cmdstanr")
+#' }
 flocker_stancode <- function(f_occ, f_det, flocker_data, data2 = NULL, 
                   multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
                   augmented = FALSE, fp = FALSE, threads = NULL,
@@ -75,6 +92,20 @@ flocker_stancode <- function(f_occ, f_det, flocker_data, data2 = NULL,
 #' Generate stan data for an occupancy model
 #' @inheritParams flock
 #' @export
+#' @examples
+#' \dontrun{
+#' fd <- make_flocker_data(
+#'  example_flocker_data$obs, 
+#'  example_flocker_data$unit_covs,
+#'  example_flocker_data$event_covs
+#' )
+#' flocker_standata(f_occ = ~ uc1 + s(uc2) + (1|grp),
+#'           f_det = ~ uc1 + ec1 + s(ec2) + (1|grp),
+#'           flocker_data = fd,
+#'           refresh = 50, chains = 1, warmup = 5, iter = 200,
+#'           adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123,
+#'           backend = "cmdstanr")
+#' }
 flocker_standata <- function(f_occ, f_det, flocker_data, data2 = NULL, 
                              multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
                              augmented = FALSE, fp = FALSE, threads = NULL,

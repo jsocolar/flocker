@@ -22,13 +22,15 @@
 #'     passed to make_flocker_data, with posterior iterations stacked along the
 #'     final dimension
 #' @export
-
+#' @examples
+#' \dontrun{
+#' get_Z(example_flocker_model_single)
+#' }
 get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE, 
                    sample = FALSE,
                    new_data = NULL, allow_new_levels = FALSE, 
                    sample_new_levels = "uncertainty") {
   # Input checking and processing
-  
   assertthat::assert_that(
     is_one_logical(history_condition),
     msg = "history_condition must be a single logical value"

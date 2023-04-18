@@ -17,3 +17,8 @@ a loo object or a list of loo objects
 \description{
 Compute loo for flocker_fit objects
 }
+\examples{
+\dontrun{
+loo_flocker(example_flocker_model_single)
+}
+}

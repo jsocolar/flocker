@@ -53,7 +53,8 @@
 #'   used in simulation ($params) and the covariate list used in simulation ($covariates). 
 #'   If rep_constant is TRUE, then $event_covs will be NULL. 
 #' @export
-
+#' @examples 
+#' simulate_flocker_data()
 simulate_flocker_data <- function(
   n_rep = 4,
   n_pt = 50,

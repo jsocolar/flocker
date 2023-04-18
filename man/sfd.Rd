@@ -87,3 +87,6 @@ relevant terms, one event covariate that affects detection (unless
 `rep_constant` is `TRUE`), and one grouping factor representing species
 with correlated effects on all terms.
 }
+\examples{
+simulate_flocker_data()
+}

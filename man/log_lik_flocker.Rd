@@ -18,3 +18,8 @@ A unit-wise or series-wise posterior log-likelihood matrix, where iterations are
 \description{
 Compute unit-wise or series-wise log-likelihood matrix for a flocker_fit object
 }
+\examples{
+\dontrun{
+log_lik_flocker(example_flocker_model_single)
+}
+}

@@ -3,6 +3,8 @@
 #' @param x real number or vector of reals
 #' @return the logarithm of the inverse logit of x
 #' @export
+#' @examples
+#' log_inv_logit(0)
 log_inv_logit <- function (x) {
   if (!is.numeric(x)) {
     stop("x must be numeric")
@@ -17,6 +19,8 @@ log_inv_logit <- function (x) {
 #' @param x real number or vector of reals
 #' @return the logarithm of one minus the inverse logit of x
 #' @export
+#' @examples
+#' log1m_inv_logit(0)
 log1m_inv_logit <- function (x) {
   if (!is.numeric(x)) {
     stop("x must be numeric")
