@@ -13,6 +13,7 @@ test_that("log_inv_logit handles extreme values", {
   expect_equal(log_inv_logit(100), log(1 / (1 + exp(-100))))
   expect_equal(log_inv_logit(-100), log(1 / (1 + exp(100))))
   expect_false(identical(log_inv_logit(100), log(1 / (1 + exp(-100)))))
+  expect_true(is.finite(log_inv_logit(-10000)))
 })
 
 test_that("log_inv_logit throws error for non-numeric input", {
