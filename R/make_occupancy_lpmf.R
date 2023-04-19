@@ -560,7 +560,7 @@ make_occupancy_multi_colex_lpmf <- function (max_rep, max_year) {
   
   out <- paste(sf_text1, sf_text2, sf_text3, sf_text4, sf_text5, sf_text6, 
                sf_text7, sf_text8, sf_text9, sep = "\n")
-  return(out)
+  out
 }
 
 ##### multi_colex_eq_lpmf #####
@@ -850,7 +850,7 @@ make_occupancy_multi_autologistic_eq_lpmf <- function (max_rep, max_year) {
   return(out)
 }
 
-##### single-fp lpmf #####
+##### single-fp lpdf #####
 #' Create Stan code for likelihood function occupancy_single_fp_lpmf
 #' @param max_rep Literal integer maximum number of repeated sampling events at 
 #'    any unit.
@@ -907,7 +907,7 @@ make_occupancy_single_fp_lpdf <- function (max_rep) {
   return(out)
 }
 
-##### multi-colex-fp lpmf #####
+##### multi-colex-fp lpdf #####
 #' Create Stan code for likelihood function occupancy_multi_colex_fp_lpdf.
 #' @param max_rep Literal integer maximum number of repeated sampling events at 
 #'    any unit.
@@ -1000,7 +1000,7 @@ make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
   return(out)
 }
 
-##### multi-colex-eq-fp lpmf #####
+##### multi-colex-eq-fp lpdf #####
 #' Create Stan code for likelihood function occupancy_multi_colex_eq_fp_lpdf.
 #' @param max_rep Literal integer maximum number of repeated sampling events at 
 #'    any unit.
@@ -1155,7 +1155,6 @@ make_occupancy_single_threaded_lpmf <- function (max_rep, grainsize) {
 #' @param max_rep Literal integer maximum number of repeated sampling events at 
 #'    any unit.
 #' @return Character string of Stan code corresponding to occupancy_single_lpmf
-
 make_occupancy_single_partial_sum <- function (max_rep) {
   assertthat::assert_that(
     is_one_pos_int(max_rep, m = 1),
