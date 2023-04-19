@@ -195,7 +195,7 @@ multi_init_types <- function(){c("explicit", "equilibrium")}
 #' @param x object to be tested
 #' @return logical
 is_flocker_fit <- function(x) {
-  return("flocker_fit" %in% class(x))
+  inherits(x, "flocker_fit")
 }
 
 #' Extract lik_type from object of class flocker_fit
@@ -373,7 +373,7 @@ emission_likelihood <- function(state, obs, det) {
 
   nna <- !is.na(obs)
   
-  if(sum(nna == 0)){
+  if(sum(nna) == 0){
     return(1)
   }
   
@@ -754,7 +754,7 @@ is_flocker_formula <- function (x) {
 #' @param x object to test
 #' @return logical; TRUE if x is a flocker data object
 is_flocker_data <- function(x) {
-  "flocker_data" %in% class(x)
+  inherits(x, "flocker_data")
 }
 
 
@@ -762,10 +762,12 @@ is_flocker_data <- function(x) {
 #' @param x object to test
 #' @return logical; TRUE if x is a named list with no duplicate names
 is_named_list <- function (x) {
+  names <- names(x)
   is.list(x) & 
     length(x) > 0 & 
-    (length(names(x)) == length(x)) & 
-    (!any(duplicated(names(x))))
+    (length(names) == length(x)) & 
+    (!any(duplicated(names))) &
+    !("" %in% names)
 }
 
 #' check if an object is a single logical value
@@ -780,7 +782,9 @@ is_one_logical <- function (x) {
 #' @param m minimum value for x
 #' @return logical; TRUE if x is a single positive integer
 is_one_pos_int <- function(x, m = 0) {
-  isTRUE(x == floor(x)) & isTRUE(x > m) & length(x) == 1
+  if(!is.numeric(x)){return(FALSE)}
+  if(length(x) != 1){return(FALSE)}
+  isTRUE(x == floor(x)) & isTRUE(x > m)
 }
 
 #' get shared elements between two vectors
@@ -795,6 +799,8 @@ shared_elements <- function (x, y) {
 #' get largest index in a vector that is not NA
 #' @param x vector to test
 #' @param treat_m99_NA logical; should -99 be treated as NA?
+#' @details if `treat_m99_NA` is `TRUE`, then character `"-99"` will be treated
+#'   as `NA` just as numeric `-99` would be.
 #' @return 0 if all elements are NA; otherwise the largest index that is not NA
 max_position_not_na <- function (x, treat_m99_NA = FALSE) {
   assertthat::assert_that(

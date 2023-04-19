@@ -25,7 +25,8 @@ Suggests:
     rmarkdown,
     ape,
     posterior (>= 1.0.0),
-    rstan
+    rstan,
+    tibble
 Remotes: 
 	stan-dev/cmdstanr
 Description: Fit flexible occupancy models in Stan via brms. Flocker brings 
