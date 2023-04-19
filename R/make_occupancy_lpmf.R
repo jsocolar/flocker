@@ -52,7 +52,7 @@ make_occupancy_single_lpmf <- function (max_rep) {
 "
 
   out <- paste(sf_text1, sf_text2, sf_text3, sf_text4, sf_text5, sep = "\n")
-  return(out)
+  out
 }
 
 ##### single_C #####
