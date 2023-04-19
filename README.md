@@ -14,8 +14,9 @@ included are functions to format data for occupancy modeling and functions
 for model post-processing, including posterior predictions, the posterior
 distribution of the latent true occupancy state, and model comparison. 
 `flocker` is under active development: development priorities include better 
-direct functionality for posterior predictive checking and implementation of 
-dynamic (multiseason) occupancy models and N-mixture models.
+integrated functionality for posterior predictive checking in single-season
+models and integration of multiple post-processing tools on for other model 
+types.
 
 Compared to existing R packages for fitting occupancy models, `flocker` is 
 substantially more flexible in the variety of single-season models that can 
