@@ -37,10 +37,10 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
       
     # get emission likelihoods
     el_0 <- el_1 <- matrix(nrow = nrow(psi_all), ncol = ncol(psi_all))
-      
+    
     for(i in seq_len(ncol(psi_all))){
-      el_0[ , i] <- mapply(function(a, b){emission_likelihood(0, a, b)}, asplit(obs, 1), asplit(theta_all[ , , i], 1))
-      el_1[ , i] <- mapply(function(a, b){emission_likelihood(1, a, b)}, asplit(obs, 1), asplit(theta_all[ , , i], 1))
+      el_0[ , i] <- emission_likelihood(0, obs, theta_all[,,i])
+      el_1[ , i] <- emission_likelihood(1, obs, theta_all[,,i])
     }
       
     assertthat::assert_that(identical(dim(psi_all), dim(el_0)))
@@ -71,12 +71,14 @@ log_lik_occupancy_C <- function(i, prep) {
 }
 
 
-#' An R implementation of the rep constant lpmf without the binomial coefficient
+#' An R implementation of the rep constant lpmf without the binomial coefficient.
 #' @param y number of detections
 #' @param mu logit-scale detection probability
 #' @param occ logit-scale occupancy probability
 #' @param trials number of reps
 #' @return The log-likelihood
+#' @details By omitting the binomial coefficient, the log-likelihood is directly
+#'   comparable to log-likelihoods from rep-varying models.
 occupancy_C_lpmf <- Vectorize(
   function (y, mu, occ, trials) {
     if (y == 0) {

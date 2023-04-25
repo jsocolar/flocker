@@ -2,7 +2,7 @@
 % Please edit documentation in R/log_lik_occupancy.R
 \name{occupancy_C_lpmf}
 \alias{occupancy_C_lpmf}
-\title{An R implementation of the rep constant lpmf without the binomial coefficient}
+\title{An R implementation of the rep constant lpmf without the binomial coefficient.}
 \usage{
 occupancy_C_lpmf(y, mu, occ, trials)
 }
@@ -19,5 +19,9 @@ occupancy_C_lpmf(y, mu, occ, trials)
 The log-likelihood
 }
 \description{
-An R implementation of the rep constant lpmf without the binomial coefficient
+An R implementation of the rep constant lpmf without the binomial coefficient.
+}
+\details{
+By omitting the binomial coefficient, the log-likelihood is directly
+  comparable to log-likelihoods from rep-varying models.
 }
