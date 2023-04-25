@@ -4,12 +4,12 @@
 \alias{backward_algorithm}
 \title{Backward algorithm}
 \usage{
-backward_algorithm(e0, e1, colo, ex)
+backward_algorithm(el0, el1, colo, ex)
 }
 \arguments{
-\item{e0}{the emission probabilities given non-occupancy}
+\item{el0}{the emission probabilities given non-occupancy}
 
-\item{e1}{the emission probabilities given occupancy}
+\item{el1}{the emission probabilities given occupancy}
 
 \item{colo}{a vector giving the colonization probs}
 

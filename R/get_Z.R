@@ -149,19 +149,19 @@ get_Z_single <- function(lps, sample, history_condition, obs = NULL){
 #' @param ex array of extinction probabilities (rows are sites, columns are
 #'  timesteps, slices are draws)
 #' @param history_condition should we condition on the observed history
+#' @param sample Should the return be posterior probabilities of occupancy (FALSE),
+#'  valid posterior predictive samples (TRUE). 
 #' @param obs Array of observations. Ignored (and defaults to NULL) if history_condition
 #'   is FALSE. Rows are sites, columns are visits, and slices are timesteps.
 #' @param det Array of detection probabilities. Ignored (and defaults to NULL) if
 #'   history_condition is FALSE. Rows are sites, columns are visits, slices
 #'   are timesteps, and slice_2s are draws.
-#' @param sample Should the return be posterior probabilities of occupancy (FALSE),
-#'  valid posterior predictive samples (TRUE). 
 #' @return an array of occupancy probabilities or Z samples. Rows are sites, 
 #'   columns are timesteps, and slices are draws.
 #' @details History-conditioning is via the forward-backward algorithm (forward
 #'  filter backward sample when sample is TRUE)
 get_Z_dynamic <- function(
-    init, colo, ex, history_condition, obs = NULL, det = NULL
+    init, colo, ex, history_condition, sample, obs = NULL, det = NULL
     ){
   assertthat::assert_that(is_one_logical(history_condition))
   assertthat::assert_that(is.matrix(init))
@@ -218,18 +218,18 @@ forward_sim <- function(init, colo, ex, sample = FALSE){
   assertthat::assert_that(identical(length(colo), length(ex)))
   assertthat::assert_that(identical(colo, NA) | !(NA %in% colo))
   assertthat::assert_that(is.numeric(init))
-  assertthat::assert_that(lenth(init) == 1)
+  assertthat::assert_that(length(init) == 1)
   assertthat::assert_that(init >= 0 & init <= 1)
   
   out <- rep(NA, length(colo) + 1)
   if(sample){
-    out[1] <- rbinom(1, 1, init)
+    out[1] <- stats::rbinom(1, 1, init)
     if(length(colo) > 1){
       for(i in 2:length(colo)){
         if(out[i - 1] == 0){
-          out[i] <- rbinom(1, 1, colo[i])
+          out[i] <- stats::rbinom(1, 1, colo[i])
         } else {
-          out[i] <- rbinom(1, 1, 1 - ex[i])
+          out[i] <- stats::rbinom(1, 1, 1 - ex[i])
         }
       }
     }
@@ -246,18 +246,18 @@ forward_sim <- function(init, colo, ex, sample = FALSE){
 }
 
 #' forward backward algorithm
-#' @param e0 the emission probabilities given non-occupancy
-#' @param e1 the emission probabilities given occupancy
+#' @param el0 the emission probabilities given non-occupancy
+#' @param el1 the emission probabilities given occupancy
 #' @param init the initial state probabilities
 #' @param colo a vector giving the colonization probs
 #' @param ex a vector giving the extinction probs
 #' @return a vector of posterior Z probabilities
-forward_backward_algorithm <- function(e0, e1, init, colo, ex) {
+forward_backward_algorithm <- function(el0, el1, init, colo, ex) {
   # Run the forward algorithm to get forward probabilities
-  forward_probs <- forward_algorithm(obs, init, trans)
+  forward_probs <- forward_algorithm(el0, el1, init, colo, ex)
   
   # Run the backward algorithm to get backward probabilities
-  backward_probs <- backward_algorithm(obs, trans)
+  backward_probs <- backward_algorithm(el0, el1, colo, ex)
   
   # Compute the smoothed state probabilities
   smoothed_probs <- forward_probs * backward_probs
@@ -270,12 +270,12 @@ forward_backward_algorithm <- function(e0, e1, init, colo, ex) {
 
 #' Forward filtering backward sampling algorithm
 #' @inheritParams forward_backward_algorithm
-forward_backward_sampling <- function(e0, e1, init, colo, ex) {
+forward_backward_sampling <- function(el0, el1, init, colo, ex) {
   # Run the forward algorithm to get forward probabilities
-  forward_probs <- forward_algorithm(e0, e1, init, colo, ex)
+  forward_probs <- forward_algorithm(el0, el1, init, colo, ex)
   
   # Initialize the sampled state sequence
-  n <- length(e0)
+  n <- length(el0)
   sampled_states <- numeric(n)
   
   # Sample the last state based on the forward probabilities
@@ -302,9 +302,9 @@ forward_backward_sampling <- function(e0, e1, init, colo, ex) {
 #' @inheritParams forward_backward_algorithm
 #' @return an n x 2 matrix giving the forward probabilities associated with 
 #'   non-occupancy (first column) and occupancy (second column)
-forward_algorithm <- function(e0, e1, init, colo, ex) {
-  n <- length(e0)
-  assertthat::assert_that(length(e1) == n)
+forward_algorithm <- function(el0, el1, init, colo, ex) {
+  n <- length(el0)
+  assertthat::assert_that(length(el1) == n)
   assertthat::assert_that(length(colo) == n)
   assertthat::assert_that(length(ex) == n)
   assertthat::assert_that(length(init) == 2)
@@ -313,7 +313,7 @@ forward_algorithm <- function(e0, e1, init, colo, ex) {
   forward_probs <- matrix(NA, nrow = n, ncol = 2)
   
   # Compute the forward probabilities for the first timestep
-  forward_probs[1,] <- init * c(e0[1], e1[1])
+  forward_probs[1,] <- init * c(el0[1], el1[1])
   
   if(n > 1){
     # get transition probabilties matrix
@@ -334,9 +334,9 @@ forward_algorithm <- function(e0, e1, init, colo, ex) {
 #' Backward algorithm
 #' @inheritParams forward_backward_algorithm
 #' @return an n x 2 matrix giving the backward probabilities
-backward_algorithm <- function(e0, e1, colo, ex) {
-  n <- length(e0)
-  assertthat::assert_that(length(e1) == n)
+backward_algorithm <- function(el0, el1, colo, ex) {
+  n <- length(el0)
+  assertthat::assert_that(length(el1) == n)
   assertthat::assert_that(length(colo) == n)
   assertthat::assert_that(length(ex) == n)
   assertthat::assert_that(n > 1)

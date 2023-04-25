@@ -390,9 +390,9 @@ emission_likelihood <- function(state, obs, det) {
   assertthat::assert_that(all(which(is.na(det)) %in% which(is.na(obs))))
 
   if(state == 0){
-    out <- apply(1 - obs, 1, prod)
+    out <- apply(1 - obs, 1, prod, na.rm = TRUE)
   } else {
-    out <- apply((1 - obs) * (1 - det) + (obs * det), 1, prod)
+    out <- apply((1 - obs) * (1 - det) + (obs * det), 1, prod, na.rm = TRUE)
   }
   out
 }

@@ -4,7 +4,15 @@
 \alias{get_Z_dynamic}
 \title{get Z matrix for dynamic model}
 \usage{
-get_Z_dynamic(init, colo, ex, history_condition, obs = NULL, det = NULL)
+get_Z_dynamic(
+  init,
+  colo,
+  ex,
+  history_condition,
+  sample,
+  obs = NULL,
+  det = NULL
+)
 }
 \arguments{
 \item{init}{matrix of initial occupancy probabilities (rows are sites and 
@@ -18,15 +26,15 @@ timesteps, slices are draws)}
 
 \item{history_condition}{should we condition on the observed history}
 
+\item{sample}{Should the return be posterior probabilities of occupancy (FALSE),
+valid posterior predictive samples (TRUE).}
+
 \item{obs}{Array of observations. Ignored (and defaults to NULL) if history_condition
 is FALSE. Rows are sites, columns are visits, and slices are timesteps.}
 
 \item{det}{Array of detection probabilities. Ignored (and defaults to NULL) if
 history_condition is FALSE. Rows are sites, columns are visits, slices
 are timesteps, and slice_2s are draws.}
-
-\item{sample}{Should the return be posterior probabilities of occupancy (FALSE),
-valid posterior predictive samples (TRUE).}
 }
 \value{
 an array of occupancy probabilities or Z samples. Rows are sites, 

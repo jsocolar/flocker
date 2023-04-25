@@ -4,12 +4,12 @@
 \alias{forward_algorithm}
 \title{Forward algorithm}
 \usage{
-forward_algorithm(e0, e1, init, colo, ex)
+forward_algorithm(el0, el1, init, colo, ex)
 }
 \arguments{
-\item{e0}{the emission probabilities given non-occupancy}
+\item{el0}{the emission probabilities given non-occupancy}
 
-\item{e1}{the emission probabilities given occupancy}
+\item{el1}{the emission probabilities given occupancy}
 
 \item{init}{the initial state probabilities}
 
