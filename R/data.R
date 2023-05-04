@@ -24,5 +24,17 @@
 #'
 #' @format ## `example_flocker_model_single`
 #' A flocker_fit and brmsfit object
-#' @source data-raw/example_flocker_model_single.R
+#' @source data-raw/example_flocker_model.R
 "example_flocker_model_single"
+
+
+#' Example multi-season flocker model
+#'
+#' A fitted multi-season occupancy model from flocker.
+#' One species 200 point, four season, four rep, missing seasons, missing reps.
+#' colex parameterization with explicit init.
+#'
+#' @format ## `example_flocker_model_multi`
+#' A flocker_fit and brmsfit object
+#' @source data-raw/example_flocker_model.R
+"example_flocker_model_multi"

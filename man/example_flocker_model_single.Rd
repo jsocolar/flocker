@@ -9,7 +9,7 @@
 A flocker_fit and brmsfit object
 }
 \source{
-data-raw/example_flocker_model_single.R
+data-raw/example_flocker_model.R
 }
 \usage{
 example_flocker_model_single
