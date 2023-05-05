@@ -132,7 +132,7 @@ fitted_flocker <- function(
     new_data_fmtd <- new_data$data
   } else {
     # add cols to avoid error
-    col_string <- "^ff_y$|^ff_Q$|^ff_n_unit$|^ff_unit$|^ff_n_rep$|^ff_rep_index|^ff_n_series|^ff_series|^ff_n_year|^ff_year|^ff_series_year"
+    col_string <- "^ff_y$|^ff_Q$|^ff_n_unit$|^ff_unit|^ff_n_rep$|^ff_rep_index|^ff_n_series|^ff_series|^ff_n_year|^ff_year|^ff_series_year"
     flocker_cols <- flocker_fit$data[grepl(col_string, names(flocker_fit$data))]
     extra_cols <- which(!(names(flocker_cols) %in% names(new_data)))
     if(length(extra_cols) == 0) {
@@ -201,9 +201,7 @@ fitted_flocker <- function(
                                              re_formula = re_formula, 
                                              allow_new_levels = allow_new_levels,
                                              sample_new_levels = sample_new_levels))
-    if(response){
-      linpred_auto <- boot::inv.logit(linpred_auto)
-    }
+
     component_list$linpred_auto <- linpred_auto
   }
   if("det" %in% use_components) {

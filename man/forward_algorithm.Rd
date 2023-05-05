@@ -11,7 +11,7 @@ forward_algorithm(el0, el1, init, colo, ex)
 
 \item{el1}{the emission probabilities given occupancy}
 
-\item{init}{the initial state probabilities}
+\item{init}{the initial occupancy probability}
 
 \item{colo}{a vector giving the colonization probs}
 

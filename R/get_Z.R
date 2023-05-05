@@ -12,7 +12,8 @@
 #'     or bernoulli samples from those probabilities (TRUE)
 #' @param new_data Optional new data at which to predict the Z matrix. Can be 
 #'     the output of `make_flocker_data` or the `unit_covs` input to 
-#'     `make_flocker_data` provided that `history_condition` is `FALSE`
+#'     `make_flocker_data` provided that `history_condition` is `FALSE` and the 
+#'     occupancy model is for a single season.
 #' @param allow_new_levels allow new levels for random effect terms in `new_data`?
 #'     Will error if set to `FALSE` and new levels are provided in `new_data`.
 #' @param sample_new_levels If `new_data` is provided and contains random effect
@@ -39,6 +40,12 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     !history_condition | is_flocker_data(new_data) | is.null(new_data),
     msg = "conditioning on observed detection histories while using the `new_data` argument requires passing a `flocker_data` object, not a dataframe"
   )
+  lik_type <- type_flocker_fit(flocker_fit)
+  is_multi <- fdtl()$data_output_type[fdtl()$model_type == lik_type] == "multi"
+  assertthat::assert_that(
+    !is_multi | is_flocker_data(new_data) | is.null(new_data),
+    msg = "using the `new_data` argument for a multiseason model requires passing a `flocker_data` object, not a dataframe"
+  )
   
   if (is.null(draw_ids)) {
     n_iter <- brms::ndraws(flocker_fit)
@@ -46,55 +53,99 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     n_iter <- length(draw_ids)
   }
   
-  lps <- fitted_flocker(
-    flocker_fit, draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
-    sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
-  )
-  
   if(history_condition) {
     if(is.null(new_data)){
       gp <- get_positions(flocker_fit)
-      obs <- matrix(flocker_fit$data$ff_y[gp], nrow = nrow(gp), ncol = ncol(gp))
+      obs <- new_array(gp, flocker_fit$data$ff_y[gp])
     } else {
       gp <- get_positions(new_data)
-      obs <- matrix(new_data$ff_y[gp], nrow = nrow(gp), ncol = ncol(gp))
+      obs <- new_array(gp, flocker_fit$data$ff_y[gp])
     }
+  } else {
+    obs <- NULL
   }
   
-  lik_type <- type_flocker_fit(flocker_fit)
-  
-  if (lik_type == "single") {
+  if (lik_type %in% c("single", "single_fp")) {
+    lps <- fitted_flocker(
+      flocker_fit, draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
+      sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
+    )
     Z <- get_Z_single(lps, sample, history_condition, obs)
   } else if (lik_type == "single_C") {
+    lps <- fitted_flocker(
+      flocker_fit, draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
+      sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
+    )
     Z <- get_Z_single(lps, sample, history_condition, obs)
   } else if (lik_type == "augmented") {
     stop("get_Z not yet implmented for augmented models")
-  } else if (lik_type == "multi_colex") {
-    init <- lps$occ
-    Z <- get_Z_dynamic(init, lps$colo, lps$ex, history_condition, obs, lps$det)
-  } else if (lik_type == "multi_colex_eq") {
-    init <- lps$colo[,1,] / (lps$colo[,1,] + lps$ex[,1,])
-    Z <- get_Z_dynamic(init, lps$colo, lps$ex, history_condition, obs, lps$det)
-  } else if (lik_type == "multi_autologistic") {
-    init <- lps$occ
-    colo <- lps$colo
-    ex <- 1 - boot::inv.logit(boot::logit(lps$colo) + lps$auto)
-    Z <- get_Z_dynamic(init, colo, ex, history_condition, obs, lps$det)
-  } else if (lik_type == "multi_autologistic_eq") {
-    colo <- lps$colo
-    ex <- 1 - boot::inv.logit(boot::logit(lps$colo) + lps$auto)
+  } else if (lik_type %in% c("multi_colex", "multi_colex_fp")) {
+    lps1 <- fitted_flocker(
+      flocker_fit, components = c("det"),
+      draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
+      sample_new_levels = sample_new_levels, response = TRUE, unit_level = FALSE
+    )
+    lps2 <- fitted_flocker(
+      flocker_fit, components = c("occ", "colo", "ex"),
+      draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
+      sample_new_levels = sample_new_levels, response = TRUE, unit_level = TRUE
+    )
+    init <- lps2$linpred_occ[,1,]
+    colo <- lps2$linpred_col
+    ex <- lps2$linpred_ex
+    if(history_condition){
+      det <- lps1$linpred_det
+    } else {
+      det <- NULL
+    }
+    Z <- get_Z_dynamic(init, colo, ex, history_condition, sample, obs, det)
+  } else if (lik_type %in% c("multi_colex_eq", "multi_colex_eq_fp")) {
+    lps1 <- fitted_flocker(
+      flocker_fit, components = c("det"),
+      draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
+      sample_new_levels = sample_new_levels, response = TRUE, unit_level = FALSE
+    )
+    lps2 <- fitted_flocker(
+      flocker_fit, components = c("col", "ex"),
+      draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
+      sample_new_levels = sample_new_levels, response = TRUE, unit_level = TRUE
+    )
+    colo <- lps2$linpred_col
+    ex <- lps2$linpred_ex
     init <- colo[,1,] / (colo[,1,] + ex[,1,])
-    Z <- get_Z_dynamic(init, colo, ex, history_condition, obs, lps$det)
-  } else if (lik_type == "single_fp") {
-    Z <- get_Z_single(lps, sample, history_condition, obs)
-  } else if (lik_type == "multi_colex_fp") {
-    init <- lps$occ
-    Z <- get_Z_dynamic(init, lps$colo, lps$ex, history_condition, obs, lps$det)
-  } else if (lik_type == "multi_colex_eq_fp") {
-    init <- lps$colo[,1,] / (lps$colo[,1,] + lps$ex[,1,])
-    Z <- get_Z_dynamic(init, lps$colo, lps$ex, history_condition, obs, lps$det)
+    Z <- get_Z_dynamic(init, colo, ex, history_condition, obs, lps1$det)
+  } else if (lik_type == "multi_autologistic") {
+    lps1 <- fitted_flocker(
+      flocker_fit, components = c("det"),
+      draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
+      sample_new_levels = sample_new_levels, response = TRUE, unit_level = FALSE
+    )
+    lps2 <- fitted_flocker(
+      flocker_fit, components = c("occ", "colo", "auto"),
+      draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
+      sample_new_levels = sample_new_levels, response = TRUE, unit_level = TRUE
+    )
+    init <- lps2$linpred_occ[,1,]
+    colo <- lps2$linpred_col
+    ex <- 1 - boot::inv.logit(boot::logit(colo) + lps2$linpred_auto)
+    Z <- get_Z_dynamic(init, colo, ex, history_condition, obs, lps1$linpred_det)
+  } else if (lik_type == "multi_autologistic_eq") {
+    lps1 <- fitted_flocker(
+      flocker_fit, components = c("det"),
+      draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
+      sample_new_levels = sample_new_levels, response = TRUE, unit_level = FALSE
+    )
+    lps2 <- fitted_flocker(
+      flocker_fit, components = c("col", "auto"),
+      draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
+      sample_new_levels = sample_new_levels, response = TRUE, unit_level = TRUE
+    )
+    colo <- lps2$linpred_col
+    ex <- 1 - boot::inv.logit(boot::logit(colo) + lps2$linpred_auto)
+    init <- colo[,1,] / (colo[,1,] + ex[,1,])
+    Z <- get_Z_dynamic(init, colo, ex, history_condition, obs, lps1$linpred_det)
   }
-  class(Z) <- c("postZ", "matrix")
+  class(Z) <- c("postZ", class(Z))
   Z
 }
 
@@ -172,13 +223,18 @@ get_Z_dynamic <- function(
   ntimestep <- ncol(colo)
   ndraw <- ncol(init)
   
-  assertthat::assert_that(identical(dim(obs), dim(det)[1:3]))
+  if(history_condition){
+    assertthat::assert_that(identical(dim(obs), dim(det)[1:3]))
+    assertthat::assert_that(isTRUE(dim(det)[4] == ndraw))
+  } else {
+    assertthat::assert_that(is.null(obs))
+    assertthat::assert_that(is.null(det))
+  }
   assertthat::assert_that(identical(dim(colo), dim(ex)))
   assertthat::assert_that(isTRUE(nrow(colo) == nsite))
-  assertthat::assert_that(isTRUE(nslice(colo)) == ndraw)
-  assertthat::assert_that(isTRUE(dim(det)[4] == ndraw))
+  assertthat::assert_that(isTRUE(nslice(colo) == ndraw))
   
-  out <- array(dim = dim(colo))
+  out <- new_array(colo)
   
   if(history_condition){
     assertthat::assert_that(isTRUE(nrow(obs) == nrow(colo)))
@@ -216,12 +272,18 @@ get_Z_dynamic <- function(
 forward_sim <- function(init, colo, ex, sample = FALSE){
   assertthat::assert_that(identical(is.na(colo), is.na(ex)))
   assertthat::assert_that(identical(length(colo), length(ex)))
-  assertthat::assert_that(identical(colo, NA) | !(NA %in% colo))
+  length_out <- length(colo)
+  if(!identical(colo, NA)){
+    assertthat::assert_that(!all(is.na(colo)))
+    colo <- colo[1:max(which(!is.na(colo)))]
+    ex <- ex[1:max(which(!is.na(colo)))]
+    assertthat::assert_that(!any(is.na(colo)))
+  }
   assertthat::assert_that(is.numeric(init))
   assertthat::assert_that(length(init) == 1)
   assertthat::assert_that(init >= 0 & init <= 1)
   
-  out <- rep(NA, length(colo) + 1)
+  out <- rep(NA, length_out)
   if(sample){
     out[1] <- stats::rbinom(1, 1, init)
     if(length(colo) > 1){
@@ -237,8 +299,8 @@ forward_sim <- function(init, colo, ex, sample = FALSE){
     out[1] <- init
     if(length(colo) > 1){
       for(i in 2:length(colo)){
-        out[i] <- (out[i - 1] == 0) * colo[i] +
-          (out[i - 1] == 1) * (1 - ex[i])
+        out[i] <- (1 - out[i - 1]) * colo[i] +
+          (out[i - 1]) * (1 - ex[i])
       }
     }
   }
@@ -248,7 +310,7 @@ forward_sim <- function(init, colo, ex, sample = FALSE){
 #' forward backward algorithm
 #' @param el0 the emission probabilities given non-occupancy
 #' @param el1 the emission probabilities given occupancy
-#' @param init the initial state probabilities
+#' @param init the initial occupancy probability
 #' @param colo a vector giving the colonization probs
 #' @param ex a vector giving the extinction probs
 #' @return a vector of posterior Z probabilities
@@ -275,16 +337,27 @@ forward_backward_sampling <- function(el0, el1, init, colo, ex) {
   forward_probs <- forward_algorithm(el0, el1, init, colo, ex)
   
   # Initialize the sampled state sequence
-  n <- length(el0)
-  sampled_states <- numeric(n)
+  n_tot <- n <- length(el0)
+  sampled_states <- rep(NA, n_tot)
+  
+  while(TRUE){
+    probs <- forward_probs[n, ]
+    if(any(is.na(probs))){
+      assertthat::assert_that(all(is.na(probs)))
+      n <- n - 1
+    } else {
+      break
+    }
+  }
+
   
   # Sample the last state based on the forward probabilities
-  sampled_states[n] <- sample(c(0, 1), size = 1, prob = forward_probs[n,])
+  sampled_states[n] <- sample(c(0, 1), size = 1, prob = probs)
     # we use sample rather than stats::rbinom to avoid the need to normalize the probs
   
   if(n > 1){
     # get transition probabilities matrix
-    trans <- matrix(c(1 - colo, colo, ex, 1 - ex), nrow = n)[2:n, ]
+    trans <- matrix(c(1 - colo, colo, ex, 1 - ex), nrow = n_tot)[2:n, ]
     
     # Iterate over the timesteps in reverse, starting from the second-to-last timestep
     for (t in (n - 1):1) {
@@ -307,7 +380,8 @@ forward_algorithm <- function(el0, el1, init, colo, ex) {
   assertthat::assert_that(length(el1) == n)
   assertthat::assert_that(length(colo) == n)
   assertthat::assert_that(length(ex) == n)
-  assertthat::assert_that(length(init) == 2)
+  assertthat::assert_that(length(init) == 1)
+  init <- c(1-init, init)
   
   # Initialize the forward probabilities matrix
   forward_probs <- matrix(NA, nrow = n, ncol = 2)
@@ -356,7 +430,12 @@ backward_algorithm <- function(el0, el1, colo, ex) {
     trans_t <- matrix(c(trans[t, 1], trans[t, 2], trans[t, 3], trans[t, 4]), nrow = 2, byrow = TRUE)
     
     # Compute the backward probabilities for the current timestep
-    backward_probs[t,] <- (trans_t %*% c(el0[t + 1], el1[t + 1])) * backward_probs[t + 1,]
+    if(any(is.na(trans_t))){
+      assertthat::assert_that(all(is.na(trans_t)))
+      backward_probs[t,] <- c(1,1)
+    } else {
+      backward_probs[t,] <- (trans_t %*% c(el0[t + 1], el1[t + 1])) * backward_probs[t + 1,]
+    }
   }
   backward_probs
 }

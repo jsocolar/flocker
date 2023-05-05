@@ -94,6 +94,14 @@ new_matrix <- function(m, data = NA, byrow = FALSE){
   matrix(data, nrow = nrow(m), ncol = ncol(m), byrow = byrow)
 }
 
+#' create a new array with the dimensions of an old array
+#' @param m old array
+#' @param data passed to the data argument of array()
+#' @return new array
+new_array <- function(m, data = NA){
+  array(data, dim = dim(m))
+}
+
 ##### Bookkeeping #####
 #' column names created in flocker
 #' @param n_rep max number of repeat visits
