@@ -54,14 +54,22 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
   }
   
   if(history_condition) {
-    if(is.null(new_data)){
-      gp <- get_positions(flocker_fit)
-      obs <- new_array(gp, flocker_fit$data$ff_y[gp])
-    } else {
-      gp <- get_positions(new_data)
-      obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+    if(lik_type != "single_C"){
+      if(is.null(new_data)){
+        gp <- get_positions(flocker_fit)
+        obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+      } else {
+        gp <- get_positions(new_data)
+        obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+      }
+    } else { # lik_type is single_C
+      if(is.null(new_data)){
+        obs <- flocker_fit$data[c("ff_n_suc", "ff_n_trial")]
+      } else {
+        obs <- new_data[c("ff_n_suc", "ff_n_trial")]
+      }
     }
-  } else {
+  } else { # history_condition is FALSE
     obs <- NULL
   }
   
@@ -76,15 +84,10 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
       flocker_fit, draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
       sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
     )
-    Z <- get_Z_single(lps, sample, history_condition, obs)
+    Z <- get_Z_single_C(lps, sample, history_condition, obs)
   } else if (lik_type == "augmented") {
     stop("get_Z not yet implmented for augmented models")
   } else if (lik_type %in% c("multi_colex", "multi_colex_fp")) {
-    lps1 <- fitted_flocker(
-      flocker_fit, components = c("det"),
-      draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
-      sample_new_levels = sample_new_levels, response = TRUE, unit_level = FALSE
-    )
     lps2 <- fitted_flocker(
       flocker_fit, components = c("occ", "colo", "ex"),
       draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
@@ -94,17 +97,27 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     colo <- lps2$linpred_col
     ex <- lps2$linpred_ex
     if(history_condition){
+      lps1 <- fitted_flocker(
+        flocker_fit, components = c("det"),
+        draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
+        sample_new_levels = sample_new_levels, response = TRUE, unit_level = FALSE
+      )
       det <- lps1$linpred_det
     } else {
       det <- NULL
     }
     Z <- get_Z_dynamic(init, colo, ex, history_condition, sample, obs, det)
   } else if (lik_type %in% c("multi_colex_eq", "multi_colex_eq_fp")) {
-    lps1 <- fitted_flocker(
-      flocker_fit, components = c("det"),
-      draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
-      sample_new_levels = sample_new_levels, response = TRUE, unit_level = FALSE
-    )
+    if(history_condition){
+      lps1 <- fitted_flocker(
+        flocker_fit, components = c("det"),
+        draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
+        sample_new_levels = sample_new_levels, response = TRUE, unit_level = FALSE
+      )
+      det <- lps1$linpred_det
+    } else {
+      det <- NULL
+    }
     lps2 <- fitted_flocker(
       flocker_fit, components = c("col", "ex"),
       draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
@@ -113,13 +126,18 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     colo <- lps2$linpred_col
     ex <- lps2$linpred_ex
     init <- colo[,1,] / (colo[,1,] + ex[,1,])
-    Z <- get_Z_dynamic(init, colo, ex, history_condition, obs, lps1$det)
+    Z <- get_Z_dynamic(init, colo, ex, history_condition, sample, obs, lps1$det)
   } else if (lik_type == "multi_autologistic") {
-    lps1 <- fitted_flocker(
-      flocker_fit, components = c("det"),
-      draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
-      sample_new_levels = sample_new_levels, response = TRUE, unit_level = FALSE
-    )
+    if(history_condition){
+      lps1 <- fitted_flocker(
+        flocker_fit, components = c("det"),
+        draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
+        sample_new_levels = sample_new_levels, response = TRUE, unit_level = FALSE
+      )
+      det <- lps1$linpred_det
+    } else {
+      det <- NULL
+    }
     lps2 <- fitted_flocker(
       flocker_fit, components = c("occ", "colo", "auto"),
       draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
@@ -128,13 +146,18 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     init <- lps2$linpred_occ[,1,]
     colo <- lps2$linpred_col
     ex <- 1 - boot::inv.logit(boot::logit(colo) + lps2$linpred_auto)
-    Z <- get_Z_dynamic(init, colo, ex, history_condition, obs, lps1$linpred_det)
+    Z <- get_Z_dynamic(init, colo, ex, history_condition, sample, obs, lps1$linpred_det)
   } else if (lik_type == "multi_autologistic_eq") {
-    lps1 <- fitted_flocker(
-      flocker_fit, components = c("det"),
-      draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
-      sample_new_levels = sample_new_levels, response = TRUE, unit_level = FALSE
-    )
+    if(history_condition){
+      lps1 <- fitted_flocker(
+        flocker_fit, components = c("det"),
+        draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
+        sample_new_levels = sample_new_levels, response = TRUE, unit_level = FALSE
+      )
+      det <- lps1$linpred_det
+    } else {
+      det <- NULL
+    }
     lps2 <- fitted_flocker(
       flocker_fit, components = c("col", "auto"),
       draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
@@ -143,7 +166,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     colo <- lps2$linpred_col
     ex <- 1 - boot::inv.logit(boot::logit(colo) + lps2$linpred_auto)
     init <- colo[,1,] / (colo[,1,] + ex[,1,])
-    Z <- get_Z_dynamic(init, colo, ex, history_condition, obs, lps1$linpred_det)
+    Z <- get_Z_dynamic(init, colo, ex, history_condition, sample, obs, lps1$linpred_det)
   }
   class(Z) <- c("postZ", class(Z))
   Z
@@ -189,6 +212,53 @@ get_Z_single <- function(lps, sample, history_condition, obs = NULL){
   Z
 }
 
+#' get Z matrix for single-season rep-constant model
+#' @param lps the linear predictors from the model
+#' @param sample logical: return fitted probabilities or bernoulli samples
+#' @param history_condition logical: condition on the observed history?
+#' @param obs if history_condition is true, the observed histories
+#' @return a matrix of fitted Z probabilities or sampled Z values. Rows are
+#'   units and columns are posterior iterations.
+get_Z_single_C <- function(lps, sample, history_condition, obs = NULL){
+  lpo <- lps$linpred_occ[ , 1, ] # first index is unit, second is visit, third is draw
+  n_unit <- nrow(lpo)
+  psi_all <- boot::inv.logit(lpo)
+  
+  if (!history_condition){
+    if(sample) {
+      Z <- new_matrix(psi_all, stats::rbinom(length(psi_all), 1, psi_all))
+    } else {
+      Z <- psi_all
+    }
+  } else {
+    theta_all <- boot::inv.logit(lps$linpred_det[ , 1, ])
+    
+    # get emission likelihoods
+    el_0 <- el_1 <- new_matrix(psi_all)
+    
+    theta_c_all <- 1 - theta_all
+    n_fail <- obs$ff_n_trial - obs$ff_n_suc
+    for(i in seq_len(ncol(psi_all))){
+      el_0[ , i] <- as.numeric(obs$ff_n_suc == 0)
+      # we don't need to worry about the binomial coefficient here, because
+      # the only time we care about the actual emission likelihood for a 1 is
+      # when the history is all zeros (otherwise we care only that the
+      # likelihood is nonzero)
+      el_1[ , i] <- theta_all[,i]^obs$ff_n_suc * theta_c_all[,i]^n_fail
+    }
+    
+    hc <- Z_from_emission(el_0, el_1, psi_all)
+    
+    if(sample) {
+      Z <- new_matrix(psi_all, stats::rbinom(length(hc), 1, hc))
+    } else {
+      Z <- hc
+    }
+  }
+  Z
+}
+
+
 # PLACEHOLDER: Z MATRIX FOR AUGMENTED MODEL
 
 
@@ -202,15 +272,15 @@ get_Z_single <- function(lps, sample, history_condition, obs = NULL){
 #' @param history_condition should we condition on the observed history
 #' @param sample Should the return be posterior probabilities of occupancy (FALSE),
 #'  valid posterior predictive samples (TRUE). 
-#' @param obs Array of observations. Ignored (and defaults to NULL) if history_condition
+#' @param obs Array of observations. Must be NULL if history_condition
 #'   is FALSE. Rows are sites, columns are visits, and slices are timesteps.
 #' @param det Array of detection probabilities. Ignored (and defaults to NULL) if
 #'   history_condition is FALSE. Rows are sites, columns are visits, slices
 #'   are timesteps, and slice_2s are draws.
 #' @return an array of occupancy probabilities or Z samples. Rows are sites, 
 #'   columns are timesteps, and slices are draws.
-#' @details History-conditioning is via the forward-backward algorithm (forward
-#'  filter backward sample when sample is TRUE)
+#' @details History-conditioning is via the forward-backward algorithm (forward-
+#'  filtering-backward-sampling when sample is TRUE)
 get_Z_dynamic <- function(
     init, colo, ex, history_condition, sample, obs = NULL, det = NULL
     ){
@@ -228,7 +298,7 @@ get_Z_dynamic <- function(
     assertthat::assert_that(isTRUE(dim(det)[4] == ndraw))
   } else {
     assertthat::assert_that(is.null(obs))
-    assertthat::assert_that(is.null(det))
+    det <- NULL
   }
   assertthat::assert_that(identical(dim(colo), dim(ex)))
   assertthat::assert_that(isTRUE(nrow(colo) == nsite))

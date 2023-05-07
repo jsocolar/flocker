@@ -29,7 +29,7 @@ timesteps, slices are draws)}
 \item{sample}{Should the return be posterior probabilities of occupancy (FALSE),
 valid posterior predictive samples (TRUE).}
 
-\item{obs}{Array of observations. Ignored (and defaults to NULL) if history_condition
+\item{obs}{Array of observations. Must be NULL if history_condition
 is FALSE. Rows are sites, columns are visits, and slices are timesteps.}
 
 \item{det}{Array of detection probabilities. Ignored (and defaults to NULL) if
@@ -44,6 +44,6 @@ an array of occupancy probabilities or Z samples. Rows are sites,
 get Z matrix for dynamic model
 }
 \details{
-History-conditioning is via the forward-backward algorithm (forward
- filter backward sample when sample is TRUE)
+History-conditioning is via the forward-backward algorithm (forward-
+ filtering-backward-sampling when sample is TRUE)
 }

@@ -195,7 +195,7 @@ fitted_flocker <- function(
     component_list$linpred_ex <- linpred_ex
   }
   if("auto" %in% use_components) {
-    linpred_auto <- t(brms::posterior_linpred(flocker_fit, dpar = "auto", 
+    linpred_auto <- t(brms::posterior_linpred(flocker_fit, dpar = "autologistic", 
                                              draw_ids = draw_ids, 
                                              newdata = new_data_fmtd, 
                                              re_formula = re_formula, 
