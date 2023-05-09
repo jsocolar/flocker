@@ -10,7 +10,7 @@
 #' at sites with a detection; it is estimated only based on the covariates).
 #' @param flocker_fit A flocker_fit object.
 #' @param components a character vector specifying one or more of "occ",
-#'     "det", "col", "ex", or "auto" for which to obtain fitted values.
+#'     "det", "col", "ex", "auto", and "Omega" for which to obtain fitted values.
 #' @param new_data Optional new data at which to evaluate occupancy predictions. 
 #'     New data can be passed as a flocker_data object produced by 
 #'     \code{make_flocker_data} or as a dataframe with one row per desired
@@ -57,7 +57,7 @@
 #' 
 fitted_flocker <- function(
     flocker_fit, 
-    components = c("occ", "det", "col", "ex", "auto"),
+    components = c("occ", "det", "col", "ex", "auto", "Omega"),
     new_data = NULL, unit_level = FALSE, 
     summarise = FALSE, CI = c(.05, .95), draw_ids = NULL, 
     response=TRUE, re_formula = NULL, allow_new_levels = FALSE, 
@@ -215,6 +215,19 @@ fitted_flocker <- function(
       linpred_det <- boot::inv.logit(linpred_det)
     }
     component_list$linpred_det <- linpred_det
+  }
+  
+  if("Omega" %in% use_components) {
+    linpred_Omega <- t(brms::posterior_linpred(flocker_fit, dpar = "Omega", 
+                                             draw_ids = draw_ids, 
+                                             newdata = new_data_fmtd, 
+                                             re_formula = re_formula, 
+                                             allow_new_levels = allow_new_levels,
+                                             sample_new_levels = sample_new_levels))
+    if(response){
+      linpred_Omega <- boot::inv.logit(linpred_Omega)
+    }
+    component_list$linpred_Omega <- linpred_Omega
   }
   
   if(summarise) {

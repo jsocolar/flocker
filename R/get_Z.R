@@ -86,7 +86,12 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     )
     Z <- get_Z_single_C(lps, sample, history_condition, obs)
   } else if (lik_type == "augmented") {
-    stop("get_Z not yet implmented for augmented models")
+    lps <- fitted_flocker(
+      flocker_fit,
+      draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
+      sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
+    )
+    Z <- get_Z_augmented(lps, sample, history_condition, obs)
   } else if (lik_type %in% c("multi_colex", "multi_colex_fp")) {
     lps2 <- fitted_flocker(
       flocker_fit, components = c("occ", "colo", "ex"),
@@ -258,9 +263,67 @@ get_Z_single_C <- function(lps, sample, history_condition, obs = NULL){
   Z
 }
 
-
-# PLACEHOLDER: Z MATRIX FOR AUGMENTED MODEL
-
+#' get Z matrix for data-augmented model
+#' @param lps the linear predictors from the model
+#' @param sample logical: return fitted probabilities or bernoulli samples
+#' @param history_condition logical: condition on the observed history?
+#' @param obs if history_condition is true, the observed histories
+#' @return an array of fitted Z probabilities or sampled Z values. Rows are
+#'   units and columns are posterior iterations.
+get_Z_augmented <- function(lps, sample, history_condition, obs = NULL){
+  lpo <- lps$linpred_occ[ , 1, , ] # first index is point, second is visit, third is species, fourth is draw
+  n_point <- nrow(lpo)
+  n_species <- ncol(lpo)
+  n_unit <- n_point * n_species
+  psi_all <- boot::inv.logit(lpo)
+  Omega <- boot::inv.logit(lps$linpred_Omega[1,1,,])
+  
+  if (!history_condition){
+    if(sample) {
+      Z1 <- new_array(psi_all, stats::rbinom(length(psi_all), 1, psi_all))
+      Z2 <- new_matrix(Omega, stats::rbinom(length(Omega), 1, Omega))
+    } else {
+      Z1 <- psi_all
+      Z2 <- Omega
+    }
+  } else {
+    theta_all <- boot::inv.logit(lps$linpred_det)
+    
+    # get emission likelihoods
+    el_0 <- el_1 <- new_array(psi_all)
+    
+    message("computing emission probabilities")
+    pb <- utils::txtProgressBar(max = ncol(psi_all))
+    for(j in seq_len(ncol(psi_all))){
+      utils::setTxtProgressBar(pb, j)
+      for(i in seq_len(nslice(psi_all))){
+        el_0[ , j, i] <- emission_likelihood(0, obs[,,j], theta_all[,,j,i])
+        el_1[ , j, i] <- emission_likelihood(1, obs[,,j], theta_all[,,j,i])
+      }
+    }
+    # history-conditioned probabilities, given species is in metacommunity
+    hc <- Z_from_emission(el_0, el_1, psi_all)
+    if(sample) {
+      Z1 <- new_array(psi_all, stats::rbinom(length(hc), 1, hc))
+    } else {
+      Z1 <- hc
+    }
+    # history-conditioned Omegas
+    log_lik_absent <- apply(log(el_0), c(2,3), sum)
+    log_lik_present <- apply(log(el_1), c(2,3), sum)
+    hc2 <- exp(log_lik_present - apply(abind::abind(log_lik_absent, log_lik_present, along = 3), c(1,2), matrixStats::logSumExp))
+    if(sample){
+      Z2 <- new_matrix(hc2, stats::rbinom(length(hc2), 1, hc2))
+    } else {
+      Z2 <- hc2
+    }
+  }
+  Z <- new_array(Z1)
+  for(i in seq_len(nrow(Z))){
+    Z[i,,] <- Z1[i,,] * Z2
+  }
+  Z
+}
 
 #' get Z matrix for dynamic model
 #' @param init matrix of initial occupancy probabilities (rows are sites and 

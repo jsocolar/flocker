@@ -6,7 +6,7 @@
 \usage{
 fitted_flocker(
   flocker_fit,
-  components = c("occ", "det", "col", "ex", "auto"),
+  components = c("occ", "det", "col", "ex", "auto", "Omega"),
   new_data = NULL,
   unit_level = FALSE,
   summarise = FALSE,
@@ -22,7 +22,7 @@ fitted_flocker(
 \item{flocker_fit}{A flocker_fit object.}
 
 \item{components}{a character vector specifying one or more of "occ",
-"det", "col", "ex", or "auto" for which to obtain fitted values.}
+"det", "col", "ex", "auto", and "Omega" for which to obtain fitted values.}
 
 \item{new_data}{Optional new data at which to evaluate occupancy predictions. 
 New data can be passed as a flocker_data object produced by 

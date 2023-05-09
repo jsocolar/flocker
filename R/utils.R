@@ -252,7 +252,7 @@ type_flocker_fit <- function(x) {
 params_by_type <- list(
   single = c("occ", "det"),
   single_C = c("occ", "det"),
-  augmented = c("occ", "det", "omega"),
+  augmented = c("occ", "det", "Omega"),
   multi_colex = c("occ", "colo", "ex", "det"),
   multi_colex_eq = c("colo", "ex", "det"),
   multi_autologistic = c("occ", "colo", "auto", "det"),
@@ -330,6 +330,9 @@ get_positions <- function(data_object, unit_level = FALSE) {
       visit_id <- rep_pos[2]
       sp_id <- the_data$ff_species[r]
       site_id <- unit_id %% n_site
+      if(site_id == 0){
+        site_id <- n_site
+      }
       index_array[site_id, visit_id, sp_id] <- r
     }
     if(!unit_level) {

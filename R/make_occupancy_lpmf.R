@@ -100,7 +100,7 @@ make_occupancy_augmented_lpmf <- function (max_rep) {
     array[] int vint3, // Indicator for > 0 detections (Q). Elements after vint1[1] irrelevant.
     
     array[] int vint4, // # species (observed + augmented). Elements after 1 irrelevant.
-    array[] int vint5, // # Indicator for species was observed.  Elements after vint4[1] irrelevant
+    array[] int vint5, // Indicator for species was observed.  Elements after vint4[1] irrelevant
     
     array[] int vint6, // species
   
