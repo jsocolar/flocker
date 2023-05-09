@@ -43,7 +43,7 @@ extended_binomial_rng <- function(p, s) {
   assertthat::assert_that(is_one_pos_int(s))
   assertthat::assert_that(p > 0 & p <= 1)
   
-  r <- runif(length(p))
+  r <- stats::runif(length(p))
   c <- 0
   y <- s - 1
   while(c < r){
