@@ -31,6 +31,28 @@ log1m_inv_logit <- function (x) {
   return(out)
 }
 
+
+#' extended binomial RNG
+#' @param p binomial probability
+#' @param s number of successes
+#' @return a sample representing a possible number of trials
+#' @details random samples `y` from the distribution proportional to 
+#'   binomial_pmf(y | n, s)
+extended_binomial_rng <- function(p, s) {
+  assertthat::assert_that(is.numeric(p) & length(p) == 1)
+  assertthat::assert_that(is_one_pos_int(s))
+  assertthat::assert_that(p > 0 & p <= 1)
+  
+  r <- runif(length(p))
+  c <- 0
+  y <- s - 1
+  while(c < r){
+    y <- y + 1
+    c <- c + p*dbinom(s, y, p)
+  }
+  y
+}
+
 ##### array manipulation #####
 #' convert matrix-like object to long vector format
 #' @param m matrix-like object to expand

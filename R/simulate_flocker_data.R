@@ -333,7 +333,7 @@ sfd <- function(
     # other detections are categorized as {true detections with prob. fp} with
     # probability so as to imply that on average a fraction fp of detections 
     # are true
-    n_fail <- stats::rnbinom(1, n_succ, fp) # this is approximate, but a pretty good one
+    n_fail <- extended_binomial_rng(fp, n_succ) - n_succ
     n_zeros <- sum(!visit_full$obs)
     if(n_fail > n_zeros) {
       stop(
