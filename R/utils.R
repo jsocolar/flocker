@@ -48,7 +48,7 @@ extended_binomial_rng <- function(p, s) {
   y <- s - 1
   while(c < r){
     y <- y + 1
-    c <- c + p*dbinom(s, y, p)
+    c <- c + p * stats::dbinom(s, y, p)
   }
   y
 }
