@@ -1,8 +1,13 @@
 #' Compute unit-wise or series-wise log-likelihood matrix for a flocker_fit object
 #' @param flocker_fit A flocker_fit object
 #' @param draw_ids the draw ids to compute log-likelihoods for. Defaults to using the full posterior. 
-#' @return A unit-wise or series-wise posterior log-likelihood matrix, where iterations are rows and 
-#'    units/series are columns
+#' @return A posterior log-likelihood matrix, where iterations are rows and 
+#'    units, series, or species are columns.
+#' @details In single-season models, rows are units (e.g. points or 
+#'   species-points; suitable for leave-one-unit-out CV). In multiseason models, 
+#'   rows are series (i.e. points or species-points, suitable for 
+#'   leave-one-series-out CV). In augmented models, rows are species (suitable
+#'   for leave-one-species-out CV).
 #' @export
 #' @examples 
 #' \dontrun{
@@ -17,7 +22,9 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
       max(draw_ids) <= ndraws,
       msg = "some requested draw ids greater than total number of available draws"
     )
+    ndraws <- length(draw_ids)
   }
+  
   
   lik_type <- type_flocker_fit(flocker_fit)
   
@@ -49,7 +56,35 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
   } else if (lik_type == "single_C") {
     ll <- brms::log_lik(flocker_fit, draw_ids = draw_ids)
   } else if (lik_type == "augmented") {
-    stop("log_likelihood computation not yet implmented for augmented models")
+    lps <- fitted_flocker(
+      flocker_fit, draw_ids = draw_ids, new_data = NULL, allow_new_levels = FALSE, 
+      response = TRUE, unit_level = FALSE
+    )
+    lpo <- lps$linpred_occ[ , 1, , ] # first index is point, second is visit, third is species, fourth is draw
+    n_point <- nrow(lpo)
+    n_species <- ncol(lpo)
+    n_unit <- n_point * n_species
+    psi_all <- boot::inv.logit(lpo)
+    Omega <- boot::inv.logit(lps$linpred_Omega[1,1,,])
+    theta_all <- boot::inv.logit(lps$linpred_det)
+
+    # get emission likelihoods
+    el_0 <- el_1 <- new_array(psi_all)
+    message("computing emission probabilities")
+    pb <- utils::txtProgressBar(max = ncol(psi_all))
+    for(j in seq_len(ncol(psi_all))){
+      utils::setTxtProgressBar(pb, j)
+      for(i in seq_len(nslice(psi_all))){
+        el_0[ , j, i] <- emission_likelihood(0, obs[,,j], theta_all[,,j,i])
+        el_1[ , j, i] <- emission_likelihood(1, obs[,,j], theta_all[,,j,i])
+      }
+    }
+    
+    elw1 <- apply(log(el_0*(1 - psi_all) + el_1*psi_all), c(2, 3), function(x){exp(sum(x))})
+    elw0 <- replicate(ndraws, apply(obs, 3, function(x){prod(1 - x)}))
+    
+    ll <- log(elw1 * Omega + elw0 * (1 - Omega)) |>
+      t()
   } else if (lik_type %in% c("multi_colex", "multi_colex_fp")) {
     lps1 <- fitted_flocker(
       flocker_fit, components = c("det"),

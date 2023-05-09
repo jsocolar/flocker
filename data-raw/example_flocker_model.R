@@ -12,9 +12,7 @@ example_flocker_model_single <- flock(
   f_det = ~ 0 + Intercept + uc1 + ec1 + (1 + uc1 + ec1 | species),
   flocker_data = fd,
   backend = "cmdstanr",
-  cores = 4,
-  iter = 500,
-  warmup = 480
+  cores = 4
 )
 
 #### single-season rep-constant model ####
@@ -27,9 +25,7 @@ example_flocker_model_single_C <- flock(
   f_det = ~ 0 + Intercept + uc1 + (1 + uc1 | species),
   flocker_data = fd,
   backend = "cmdstanr",
-  cores = 4,
-  iter = 500,
-  warmup = 480
+  cores = 4
 )
 
 #### data augmented model ####
@@ -53,7 +49,6 @@ example_flocker_model_aug <- flock(
   backend = "cmdstanr",
   cores = 4
   )
-example_flocker_model_aug
 
 #### multiseason colex with explicit inits ####
 md <- simulate_flocker_data(
