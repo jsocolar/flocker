@@ -131,7 +131,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     colo <- lps2$linpred_col
     ex <- lps2$linpred_ex
     init <- colo[,1,] / (colo[,1,] + ex[,1,])
-    Z <- get_Z_dynamic(init, colo, ex, history_condition, sample, obs, lps1$det)
+    Z <- get_Z_dynamic(init, colo, ex, history_condition, sample, obs, det)
   } else if (lik_type == "multi_autologistic") {
     if(history_condition){
       lps1 <- fitted_flocker(

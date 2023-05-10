@@ -39,8 +39,8 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
     theta_all <- lps$linpred_det
     
     gp <- get_positions(flocker_fit)
-    obs <- matrix(flocker_fit$data$ff_y[gp], nrow = nrow(gp), ncol = ncol(gp))
-      
+    obs <- new_matrix(gp, flocker_fit$data$ff_y[gp])
+
     # get emission likelihoods
     el_0 <- el_1 <- matrix(nrow = nrow(psi_all), ncol = ncol(psi_all))
     
@@ -56,6 +56,9 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
   } else if (lik_type == "single_C") {
     ll <- brms::log_lik(flocker_fit, draw_ids = draw_ids)
   } else if (lik_type == "augmented") {
+    gp <- get_positions(flocker_fit)
+    obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+    
     lps <- fitted_flocker(
       flocker_fit, draw_ids = draw_ids, new_data = NULL, allow_new_levels = FALSE, 
       response = TRUE, unit_level = FALSE
@@ -86,6 +89,9 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
     ll <- log(elw1 * Omega + elw0 * (1 - Omega)) |>
       t()
   } else if (lik_type %in% c("multi_colex", "multi_colex_fp")) {
+    gp <- get_positions(flocker_fit)
+    obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+    
     lps1 <- fitted_flocker(
       flocker_fit, components = c("det"),
       draw_ids = draw_ids
@@ -101,6 +107,9 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
     ll <- log_lik_dynamic(init, colo, ex, obs, det) |>
       t()
   } else if (lik_type %in% c("multi_colex_eq", "multi_colex_eq_fp")) {
+    gp <- get_positions(flocker_fit)
+    obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+    
     lps1 <- fitted_flocker(
       flocker_fit, components = c("det"),
       draw_ids = draw_ids
@@ -116,6 +125,9 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
     ll <- log_lik_dynamic(init, colo, ex, obs, det) |>
       t()
   } else if (lik_type == "multi_autologistic") {
+    gp <- get_positions(flocker_fit)
+    obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+    
     lps1 <- fitted_flocker(flocker_fit, components = c("det"), 
                            draw_ids = draw_ids
     )
@@ -130,6 +142,9 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
     ll <- log_lik_dynamic(init, colo, ex, obs, det) |>
       t()
   } else if (lik_type == "multi_autologistic_eq") {
+    gp <- get_positions(flocker_fit)
+    obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+    
     lps1 <- fitted_flocker(flocker_fit, components = c("det"), 
                            draw_ids = draw_ids
     )
@@ -183,10 +198,9 @@ occupancy_single_C_lpmf <- Vectorize(
         (trials - y) * log1m_inv_logit(mu)
       
     }
-    return(out)
+    out
   }
 )
-
 
 #' An R implementation of occupancy_C_lpmf including the binomial coefficient.
 #' Not currently in use.
@@ -209,10 +223,9 @@ occupancy_single_C_lpmf_with_coef <- Vectorize(
         (trials - y) * log1m_inv_logit(mu)
       
     }
-    return(out)
+    out
   }
 )
-
 
 #' log_lik_dynamic
 #' @param init matrix of initial occupancy probabilities (rows are series and 
