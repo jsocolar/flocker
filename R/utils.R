@@ -752,10 +752,6 @@ validate_param_combos_multi <- function(f_occ, f_det, flocker_data,
     assertthat::assert_that(
       is.null(f_ex), msg = "f_ex must be NULL in autologistic models"
     )
-
-    assertthat::assert_that(
-      !fp, msg = "fp likelihoods not yet implemented in autologistic models"
-    )
   }
   
   y_nonmissing <- flocker_data$data$ff_y[flocker_data$data$ff_y != -99]
