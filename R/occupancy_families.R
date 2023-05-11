@@ -116,7 +116,7 @@ occupancy_single_fp <- function(max_rep) {
     links = c("identity", "identity"),
     type = "real", 
     # Integer aterms (vint) for n_unit, n_rep, rep_index1...
-    vars = c(paste0("vint", seq(3 + max_rep))),
+    vars = c(paste0("vint", seq(3 + max_rep)), "vreal1"),
     loop = FALSE)
 }
 

@@ -156,7 +156,7 @@ explicit inits, but we will be able to fit other models (autologistic,
 equilibrium inits) to the same data.^[note that `simulate_flocker_data()` can 
 also simulate directly from these other model types.]
 
-```{r simulate, echo = FALSE}
+```{r simulate, eval = FALSE}
 library(flocker)
 multi_data <- simulate_flocker_data(
   n_season = 3,
@@ -181,7 +181,7 @@ Here's the colonization-extinction model with an explicit model for occupancy
 in the first timestep. Depending on hardware, fitting this model might take 1-5 
 minutes.
 
-```{r colex-explicit, echo = FALSE, eval = FALSE}
+```{r colex-explicit, eval = FALSE}
 multi_colex <- flock(
   f_occ = ~ uc1,
   f_det = ~ uc1 + ec1,
@@ -198,7 +198,7 @@ multi_colex <- flock(
 
 Here's the colonization-extinction model using equilibrium occupancy 
 probabilities in the first timestep:
-```{r colex-equilibrium, echo = FALSE, eval = FALSE}
+```{r colex-equilibrium, eval = FALSE}
 multi_colex_eq <- flock(
   f_det = ~ uc1 + ec1,
   f_col = ~ uc1,
@@ -217,7 +217,7 @@ first timestep. To reflect the stereotypical autologistic model with a constant
 logit-scale offset separating colonization and persistence probabilities, we
 use the formula `f_auto = ~ 1`, but it is fine to relax this constraint and use,
 e.g. `f_auto = ~ uc1`.
-```{r auto-explicit, echo = FALSE, eval = FALSE}
+```{r auto-explicit, eval = FALSE}
 multi_auto <- flock(
   f_occ = ~ uc1,
   f_det = ~ uc1 + ec1,
@@ -234,7 +234,7 @@ multi_auto <- flock(
 
 And finally the autologistic model with equilibrium occupancy probabilities in
 the first timestep:
-```{r auto-equilirium, echo = FALSE, eval = FALSE}
+```{r auto-equilirium, eval = FALSE}
 multi_auto_eq <- flock(
   f_det = ~ uc1 + ec1,
   f_col = ~ uc1,
@@ -247,26 +247,122 @@ multi_auto_eq <- flock(
 )
 
 ```
+## Extracting posterior probabilities of occupancy
 
 We can reconstruct the occupancy probabilities at every unit using the 
 `get_Z` function:
-```{r Z, echo = FALSE, eval = FALSE}
-Z <- get_Z(multi_colex_eq)
+```{r Z, eval = FALSE}
+Z <- get_Z(multi_colex)
 
 ```
 
-We can generate posterior predictions:
-```{r predict, echo = FALSE, eval = FALSE}
-pp <- predic
+### history conditioning
+As with other model types, by default get_Z generates posterior Z probabilities 
+that are conditioned on the true observation history. For example, if there is 
+an observation at a closture-unit, the posterior occupancy probability for that 
+site will be one. To achieve this in a way that is valid across the entire
+state sequence, we use the forward-backward algorithm.
+
+If we want the unconditional occupancy probabilities, simulated just from the 
+fitted probabilities of initial occupancy, colonization, and extinction, we can 
+supply the `history_condition = FALSE` argument, which computes the probabilities
+using the forward algorithm with no likelihood information.
+
+```{r Z-hist-false, eval = FALSE}
+Z <- get_Z(multi_colex, history_condition = FALSE)
+
 ```
 
-We can compare the fit of these various models using approxiamte leave-one-out
+
+### sampling
+Like other model types, we provide the option to either return the occupancy
+probabilities themselves, or to return samples (i.e. ones and zeros) from the
+occupancy probabilities. However, unlike in single-season models, in 
+multiseason models obtaining valid samples is not as simple as sampling 
+independent Bernoulli draws from the modeled occupancy probabilities.
+For example, suppose that the fitted initial occupancy probabilitity is 0.5,
+and the fitted colonization and extinction probabilities are both effectively 
+zero. Then the possible histories are {0, 0} and {1, 1}, each with probability
+0.5. But independent sampling from the underlying timestep-specific probabilities
+of occupancy would frequently yield histories like {0, 1} and {1, 0}. Thus,
+when sampling the occupancy status in these models, we sample carefully from
+the full distribution of entire state-sequences, ensuring that we sample entire
+sequences in accordance with their relative probabilities. When 
+`history_condition = FALSE`, we achieve this by simulating the dynamic 
+colonization/extinction process across timesteps. When `history_condition = TRUE`,
+we achieve this using a variation of the forward-backward algorithm where we 
+sample the states during the backward pass (this algorithm is sometimes called
+the *forward filtering backward sampling* algorithm).
+```{r Z-hist-false, eval = FALSE}
+Z <- get_Z(multi_colex, sample = TRUE)
+
+```
+
+
+### new data
+Like other model types, `get_Z` accepts a `newdata` argument when called on a
+multiseason model. Leaving the default `newdata = NULL` argument supplies the 
+predictions for the true occupancy state at the locations of the data used to
+fit the model. 
+
+Unlike in single-season models, it is not possible to supply a
+simple dataframe of unit-covariate values as `newdata`; instead, it is required
+to supply the output of `make_flocker_data` formatted for a multiseason model.
+Note that if predictions are desired at sites without observations, it is 
+acceptable to pass an array of dummy observations (e.g. all zeros) to 
+`make_flocker_data` and then to set `history_condition = FALSE` in the call to
+`get_Z` (see above). The arguments `allow_new_levels` and `sample_new_levels` 
+behave exactly as in `brms::prepare_predictions.brmsfit`.
+
+```{r new-data, eval = FALSE}
+new_data_sim <- simulate_flocker_data(n_season = 6, multiseason = "colex", 
+                                  multi_init = "equilibrium") 
+new_data <- make_flocker_data(
+  new_data_sim$obs, new_data_sim$unit_covs, new_data_sim$event_covs,
+  type = "multi"
+)
+
+get_Z(multi_colex, new_data = new_data)
+
+```
+
+## Posterior prediction
+Posterior predictions function exactly as for single-season models using
+`predict_flocker`. Under the hood, these predictions involve calling 
+`get_Z(... , sample = TRUE)`, and the same considerations mentioned above about 
+`history_condition` and `new_data` apply. As for single-season models, 
+`history_condition` defaults to `FALSE` in posterior prediction (note, this is
+a *different default* from the `get_Z`, where `history_condition` defaults to 
+`TRUE`). The reason for these different defaults is because `get_Z` is commonly
+used for inference about the occupancy state at the study sites, whereas 
+`predict_flocker` is commonly used for posterior predictive checking.
+
+```{r predict, eval = FALSE}
+pp <- predict_flocker(multi_colex)
+
+```
+
+## Model comparison
+We can compare the fit of models using approxiamte leave-one-out
 cross-validation, where the holdouts consist of entire series 
 (leave-one-series-out cross-validation).
 
-```{r loo, echo = FALSE, eval = FALSE}
+```{r loo, eval = FALSE}
 loo_out <- loo_compare_flocker(
   list(multi_colex, multi_colex_eq, multi_auto, multi_auto_eq)
 )
+
+```
+
+As expected, the colonization-extinction model with explicit initialization
+performs best:
+```{r loo-output, eval = FALSE}
+loo_out
+
+       elpd_diff se_diff
+model1   0.0       0.0  
+model3 -14.4       5.6  
+model2 -35.2       8.0  
+model4 -48.9       9.0  
 
 ```

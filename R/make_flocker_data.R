@@ -44,6 +44,8 @@
 #' @param n_aug Number of pseudo-species to augment. Only applicable if 
 #'    \code{type = "augmented"}.
 #' @param fp logical. TRUE if model is an fp model
+#' @param fop An I x J matrix-like object giving the unconditional probability that a 
+#'   true zero in that position of `obs` would be treated as potentially nonzero
 #' @param verbose Show informational messages?
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
@@ -55,6 +57,7 @@
 #' )
 make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
                               type = "single", n_aug = NULL, fp = FALSE,
+                              fop = NULL,
                               verbose = TRUE) {
   assertthat::assert_that(
     type %in% flocker_data_input_types(),
@@ -112,7 +115,7 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
   }
   
   if (type == "single") {
-    out <- make_flocker_data_static(obs, unit_covs, event_covs, fp)
+    out <- make_flocker_data_static(obs, unit_covs, event_covs, fp, fop)
     out$unit_covs <- names(unit_covs)
     out$event_covs <- names(event_covs)
   } else if (type == "multi") {
@@ -144,6 +147,8 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
 #' @param event_covs A named list of I x J matrices, each one corresponding to a covariate
 #' that varies across repeated sampling events within closure-units
 #' @param fp logical
+#' @param fop An I x J matrix-like object giving the unconditional probability that a 
+#'   true zero in that position of `obs` would be treated as potentially nonzero
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 #' @examples
@@ -153,7 +158,7 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
 #'  example_flocker_data$event_covs
 #' )
 make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
-                                     fp = FALSE) {
+                                     fp = FALSE, fop = NULL) {
   assertthat::assert_that(
     length(dim(obs)) == 2,
     msg = "in a single-season model, obs must have exactly two dimensions"
@@ -243,7 +248,10 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
     out <- list(data = flocker_data, n_rep = n_rep, 
                 type = "single_C")
   } else {
-    flocker_data <- data.frame(ff_y = expand_matrix(obs))
+    flocker_data <- data.frame(
+      ff_y = expand_matrix(obs),
+      ff_fop = expand_matrix(fop)
+    )
     if (!is.null(unit_covs)) {
       unit_covs_stacked <- 
         do.call(rbind, replicate(n_rep, unit_covs, simplify=FALSE))
@@ -255,8 +263,8 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
                              rep(-99, nrow(obs) - 1))
     flocker_data$ff_n_rep <- c(matrixStats::rowSums2(!is.na(obs)), 
                             rep(-99, nrow(obs) * (n_rep - 1)))
-    flocker_data$ff_Q <- c(as.integer(matrixStats::rowSums2(obs, na.rm = T) > 0),
-                        rep(-99, nrow(obs) * (n_rep - 1)))
+    flocker_data$ff_Q <- c(as.integer(apply(obs, 1, function(x){isTRUE(any(x == 1))})),
+                           rep(-99, nrow(obs) * (n_rep - 1)))
     
     # Prepare to add rep indices, and trim flocker_data to existing observations
     flocker_data$ff_unit <- 1:nrow(obs)

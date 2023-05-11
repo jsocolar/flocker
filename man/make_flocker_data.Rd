@@ -11,6 +11,7 @@ make_flocker_data(
   type = "single",
   n_aug = NULL,
   fp = FALSE,
+  fop = NULL,
   verbose = TRUE
 )
 }
@@ -57,6 +58,9 @@ data-augmentation for never-observed pseudospecies.}
 \code{type = "augmented"}.}
 
 \item{fp}{logical. TRUE if model is an fp model}
+
+\item{fop}{An I x J matrix-like object giving the unconditional probability that a 
+true zero in that position of `obs` would be treated as potentially nonzero}
 
 \item{verbose}{Show informational messages?}
 }

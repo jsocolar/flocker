@@ -195,12 +195,13 @@ make_emission_1_C <- function() {
 #' @return Character string of Stan code corresponding to emission_0_fp
 make_emission_0_fp <- function () {
   paste("  // Emission likelihood given that the true state is zero",
-        "  real emission_0_fp(array[] real fp){",
-        "    return(sum(log1m(fp)));",
+        "  real emission_0_fp(array[] real fop){",
+        "    // fop gives the likelihood of the observation given a true zero.",
+        "    real out = sum(log(fop)); // the likelihood when the true history is all zeros",
+        "    return(out);",
         "  }",
         sep = "\n")
 }
-
 
 
 #' Create Stan code for the emission log-likelihood given that the true state 
@@ -209,8 +210,9 @@ make_emission_0_fp <- function () {
 make_emission_1_fp <- function() {
   paste(
     "  // emission likelihood given that state equals one",
-    "  real emission_1_fp(array[] real fp, row_vector det) {",
-    "    // fp gives the probability that the true data is a one.",
+    "  real emission_1_fp(array[] real fp, row_vector det, array[] real fop) {",
+    "    // fp gives the likelihood of the observation given a true one",
+    "    // fop gives the likelihood of the observation given a true zero",
     "    // det gives logit-detection probabilities",
     "    ",
     "    int n = size(fp); // number of reps",
@@ -218,10 +220,14 @@ make_emission_1_fp <- function() {
     "    real out = 0;",
     "    ",
     "    for(i in 1:n){",
-    "      out += log_sum_exp(",
-    "        log(fp[i]) + bernoulli_logit_lpmf(1 | det[i]),",
-    "        log1m(fp[i]) + bernoulli_logit_lpmf(0 | det[i])",
-    "      );",
+    "      real ll_true_one = log(fp[i]) + bernoulli_logit_lpmf(1 | det[i]);",
+    "      real ll_true_zero;",
+    "      if(fp[i] == 0){",
+    "        ll_true_zero = log1m(fop[i]) + bernoulli_logit_lpmf(0 | det[i]);",
+    "      } else {",
+    "        ll_true_zero = log(fop[i]) + bernoulli_logit_lpmf(0 | det[i]);",
+    "      }",
+    "      out += log_sum_exp(ll_true_zero, ll_true_one);",
     "    }",
     "    ",
     "    return(out);",
@@ -908,8 +914,12 @@ make_occupancy_single_fp_lpdf <- function (max_rep) {
 
   // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):"
   
-  sf_text2 <- paste0("    array[] int vint", 3 + (1:max_rep), collapse = ",\n")
-  
+  sf_text2.1 <- paste0("    array[] int vint", 3 + (1:max_rep), collapse = ",\n")
+  sf_text2.2 <- ",\n"
+  sf_text2.3 <- "    array[] real vreal1 // unconditional probability that a true zero gets sampled as a false one. Elements after vint1[1] irrelevant."
+  sf_text2 <- paste0(sf_text2.1, sf_text2.2, sf_text2.3)
+
+
   sf_text3 <- paste0(") {
   // Create array of the rep indices that correspond to each unit.
     array[vint1[1], ", max_rep, "] int index_array;")
@@ -927,13 +937,13 @@ make_occupancy_single_fp_lpdf <- function (max_rep) {
       array[vint2[i]] int indices = index_array[i, 1:vint2[i]];
       if (vint3[i] == 1) {
         lp += bernoulli_logit_lpmf(1 | occ[i]) + 
-          emission_1_fp(to_array_1d(fp[indices]), to_row_vector(mu[indices]));
+          emission_1_fp(to_array_1d(fp[indices]), to_row_vector(mu[indices]), vreal1[indices]);
       } else {
         lp += log_sum_exp(
           bernoulli_logit_lpmf(1 | occ[i]) + 
-            emission_1_fp(to_array_1d(fp[indices]), to_row_vector(mu[indices])),
+            emission_1_fp(to_array_1d(fp[indices]), to_row_vector(mu[indices]), vreal1[indices]),
           bernoulli_logit_lpmf(0 | occ[i]) +
-            emission_0_fp(to_array_1d(fp[indices]))
+            emission_0_fp(to_array_1d(vreal1[indices]))
         );
       }
     }

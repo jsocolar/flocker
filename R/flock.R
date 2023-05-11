@@ -411,7 +411,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                         collapse = ", ")
     f_det_use <- stats::as.formula(
       paste0("ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ",
-             vint_text, ") ", f_det_txt))
+             vint_text, ") + vreal(ff_fop)", f_det_txt))
     f_use <- brms::bf(f_det_use, f_occ_use)
     
     stanvars <- 
