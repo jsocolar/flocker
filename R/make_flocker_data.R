@@ -249,9 +249,11 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
                 type = "single_C")
   } else {
     flocker_data <- data.frame(
-      ff_y = expand_matrix(obs),
-      ff_fop = expand_matrix(fop)
+      ff_y = expand_matrix(obs)
     )
+    if(fp){
+      flocker_data$ff_fop = expand_matrix(fop)
+    }
     if (!is.null(unit_covs)) {
       unit_covs_stacked <- 
         do.call(rbind, replicate(n_rep, unit_covs, simplify=FALSE))

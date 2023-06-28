@@ -452,6 +452,7 @@ sfd <- function(
 
   out$params <- params
   out$covariates <- covariates
+  attr(out, "visit_full") <- visit_full
   out
 }
 

@@ -1,0 +1,648 @@
+---
+title: "Occupancy models with false-positive misclassification"
+author: Jacob Socolar
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Occupancy models with false-positive misclassification}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r compute-env}
+# devtools::install_github("stan-dev/cmdstanr")
+# devtools::install_github("hyunjimoon/sbc")
+# devtools::install_github("jsocolar/flocker")
+# install.packages("/users/jacob/dropbox/work/code/flocker", repos = NULL, type = "source")
+library(cmdstanr)
+library(SBC)
+library(flocker)
+register_knitr_engine()
+set.seed(2)
+```
+
+## Motivation
+Consider a data stream consisting of automatically classified images or sound recordings, such that each image or recording is classified according to whether or not it contains a given species. By manually validating a subset of the putative detections, it is possible to constrain the probability $\rho$ that an in-sample image classified as containing a species genuinely contains an identifiable example of that species.
+
+In an occupancy modeling context, define "detection" as "an image is classified as containing the species AND genuinely contains the species". This notion of detection can be expected to have a well-defined probability conditional on site occupancy. Note that we are unconcerned with images that genuinely contain the species but are NOT classified as detections. These are simply non-detections. Thus, there are three possibilities:
+
+1.  The image does not contain the species and is correctly classified (the image is a zero and is classified as a zero).
+
+1.  The image does not contain the species and is incorrectly classified (the image is a zero and is misclassified as a one).
+
+1.  The image does contain the species and is correctly classified (the image is a one and is classified as a one).
+
+When we see a classification of 0, we know that truth is 0. When we see a classification of 1, we believe that truth is 1 with probability $\rho$ and that truth is 0 with probability $1 - \rho$.
+
+As we will show below, we can create a useful model to recover the underlying probability that an image truly contains the species of interest, conditional on a few additional assumptions.
+
+## Roadmap
+In this vignette, we:
+
+1. Consider the case of a simple Bernoulli model with misclassification and construct and validate a model to recover true probabilities in this base case, with a discussion of the necessary assumptions.
+
+1. Describe what these assumptions mean in an occupancy modeling context, explore how they might apply to real-world data, and validate a full-blown occupancy model that recovers true occupancy probabilities in the presence of false-positive misclassification.
+
+1. Extend these models to settings with non-uniform $\rho$.
+
+## The simple Bernoulli case
+As an entry point, we will consider the estimation of a single Bernoulli probability from a datastream consisting of ones and zeros, where any given 1 represents a misclassified true zero with probability $1 - \rho$. To simulate data under such a model, we begin by simulating the underlying truth:
+```{r bmc-truth}
+N <- 5000 # sample size
+theta <- 0.3 # bernoulli probability
+true_y <- rbinom(N, 1, theta)
+
+```
+
+To extend to the Bernoulli misclassification (bmc) model, we first introduce a random number generator that samples from the sampling distribution of the number of binomial trials `n` that resulted in an observed number of successes `s` given success probability $\rho$ and a flat prior.
+```{r rng, eval = FALSE}
+flocker:::extended_binomial_rng
+
+```
+
+We use this function to figure out how many false detections to add to the dataset, and we simulate data as follows:
+
+```{r first-sim, eval=FALSE}
+  # generate the true data, and initialize a container for the observed data
+  true_data <- obs_data <- rbinom(N, 1, theta)
+  
+  # number of underlying ones
+  n_one_true <- sum(true_data)
+  
+  # number of underlying zeros
+  n_zero_true <- N - n_one_true
+  
+  # number of misclassified zeros
+  n_one_false <- flocker:::extended_binomial_rng(rho, n_one_true) - n_one_true
+  
+  # update some of the underlying zeros in obs data
+  f_inds <- sample(seq_len(n_zero_true), n_one_false)
+  obs_data[which(obs_data == 0)[f_inds]] <- 1
+  
+  # encode obs_data as the probability that the observation reflects a true one.
+  obs_data[obs_data == 1] <- rho
+  
+```
+
+Here is a version of this simulation written for use with the `SBC` package for simulation-based calibration.
+
+```{r bmc-simulate, eval=FALSE}
+# a generator from the bernoulli misclassified distribution
+bmc_generator_single <- function(N, rho = .9, theta_min = 0.05, theta_max = .7){  
+  # N is the number of data points we are generating;
+  #   rho is the probability that any given observed one is a true one.
+  
+  # sample the bernoulli probability theta from its prior
+  # the prior must be chosen so that it doesn't approach one too closely,
+  # which would risk needing to sample in more false ones than there are 
+  # zeros to falsify.
+  theta <- runif(1, theta_min, theta_max)
+  
+  # generate the true data, and initialize a container for the observed data
+  true_data <- obs_data <- rbinom(N, 1, theta)
+  
+  # number of underlying ones, number of underlying zeros, 
+  #   number of false ones
+  n_one_true <- sum(true_data)
+  n_zero_true <- N - n_one_true
+  n_one_false <- flocker:::extended_binomial_rng(rho, n_one_true) - n_one_true
+  
+  # update some of the true zeros in obs data
+  f_inds <- sample(seq_len(n_zero_true), n_one_false)
+  obs_data[which(obs_data == 0)[f_inds]] <- 1
+  
+  # encode obs_data as the probability that the observation reflects
+  # a true one.
+  obs_data[obs_data == 1] <- rho
+  
+  # format for return
+  list(
+    variables = list(
+      theta = theta
+    ),
+    generated = list(
+      N = N,
+      obs = obs_data
+    )
+  )
+}
+
+```
+
+Explicitly recapitulating this simulation process in Stan code would require marginalizing over the possible outputs of `extended_binomial_rng`, but fortunately substantial shortcuts are available. Below, we validate that these shortcuts preserve adequate inference via simulation-based calibration (SBC). Stan code for the model is:
+
+```{stan bmc-stan1, output.var = "bmc_model1", eval=FALSE}
+data {
+  int N;
+  array[N] real obs;
+}
+
+transformed data {
+  real expected_true_ones = sum(obs);
+  real expected_true_zeros = N - expected_true_ones;
+  int observed_zeros = 0;
+  for(i in 1:N){
+    if(obs[i] == 0){
+      observed_zeros += 1;
+    }
+  }
+  int observed_nonzeros = N - observed_zeros;
+  real expected_false_ones = observed_nonzeros - expected_true_ones;
+}
+
+parameters {
+  real<lower = 0.05, upper = 0.7> theta;
+}
+
+model {
+  for(i in 1:N){
+    if(obs[i] == 0){
+      target += log1m(theta) + // generative process yields zero
+        log(observed_zeros / expected_true_zeros); // we don't see a false one.
+    } else {
+      real ll_given_false_one = log1m(theta) + // generative process yields zero
+        log(expected_false_ones / expected_true_zeros); // we don't get a false one
+      real ll_given_true_one = log(theta); // generative process yields a one 
+      target += log_sum_exp(ll_given_false_one, ll_given_true_one);
+    }
+  }
+}
+
+```
+
+When $\rho$ is high, the model returns well calibrated inference across a wide range of sample sizes and values of $\theta$. Note that we cannot explore values of $\theta$ that approach one, because eventually there would not be enough underlying zeros to accommodate a number of false-positive detections consistent with $\rho$. Here are results for a relatively large sample size.
+
+```{r bmc-SBC-1, eval=FALSE}
+n_sims <- 200
+bmc_generator <- SBC_generator_function(
+  bmc_generator_single, 
+  N = 5000
+  )
+bmc_dataset <- generate_datasets(bmc_generator, n_sims)
+bmc_backend <- SBC_backend_cmdstan_sample(bmc_model1)
+results <- compute_SBC(bmc_dataset, bmc_backend)
+
+plot_ecdf(results)
+plot_rank_hist(results)
+plot_ecdf_diff(results)
+
+```
+
+And here are results from a relatively small sample size:
+```{r bmc-SBC-2, eval=FALSE}
+bmc_generator <- SBC_generator_function(
+  bmc_generator_single, 
+  N = 50
+  )
+bmc_dataset <- generate_datasets(bmc_generator, n_sims)
+bmc_backend <- SBC_backend_cmdstan_sample(bmc_model1)
+results <- compute_SBC(bmc_dataset, bmc_backend)
+
+plot_ecdf(results)
+plot_rank_hist(results)
+plot_ecdf_diff(results)
+
+```
+
+Both sets of results indicate that inference is well calibrated. At much smaller $\rho$, the calibration becomes poorer, but fortunately it becomes conservative, yielding unnecessarily uncertian estimates for $\theta$. We need to shrink the range considered for the prior on $\theta$ to accommodate the misclassifications:
+
+```{stan bmc-stan-2, output.var = "bmc_model2", eval=FALSE}
+data {
+  int N;
+  array[N] real obs;
+}
+
+transformed data {
+  real expected_true_ones = sum(obs);
+  real expected_true_zeros = N - expected_true_ones;
+  int observed_zeros = 0;
+  for(i in 1:N){
+    if(obs[i] == 0){
+      observed_zeros += 1;
+    }
+  }
+  int observed_nonzeros = N - observed_zeros;
+  real expected_false_ones = observed_nonzeros - expected_true_ones;
+}
+
+parameters {
+  real<lower = 0.05, upper = 0.3> theta;
+}
+
+model {
+  for(i in 1:N){
+    if(obs[i] == 0){
+      target += log1m(theta) + // generative process yields zero
+        log(observed_zeros / expected_true_zeros); // we don't see a false one.
+    } else {
+      real ll_given_false_one = log1m(theta) + // generative process yields zero
+        log(expected_false_ones / expected_true_zeros); // we don't get a false one
+      real ll_given_true_one = log(theta); // generative process yields a one 
+      target += log_sum_exp(ll_given_false_one, ll_given_true_one);
+    }
+  }
+}
+
+```
+
+```{r bmc-SBC-3, eval=FALSE}
+bmc_generator <- SBC_generator_function(
+  bmc_generator_single, 
+  N = 5000, rho = 0.4, theta_max = 0.3
+  )
+bmc_dataset <- generate_datasets(bmc_generator, n_sims)
+bmc_backend <- SBC_backend_cmdstan_sample(bmc_model2)
+results <- compute_SBC(bmc_dataset, bmc_backend)
+
+plot_ecdf(results)
+plot_rank_hist(results)
+plot_ecdf_diff(results)
+
+```
+
+Let's double-check to confirm that the poor fit above is due to a a low value of $\rho$ and not due to adopting a prior that focuses on a low range for $\theta$. We confirm that the issue is due to low $\rho$.
+```{r bmc-SBC-4, eval=FALSE}
+bmc_generator <- SBC_generator_function(
+  bmc_generator_single, 
+  N = 5000, rho = 0.9, theta_max = 0.3
+  )
+bmc_dataset <- generate_datasets(bmc_generator, n_sims)
+bmc_backend <- SBC_backend_cmdstan_sample(bmc_model2)
+results <- compute_SBC(bmc_dataset, bmc_backend)
+
+plot_ecdf(results)
+plot_rank_hist(results)
+plot_ecdf_diff(results)
+
+```
+
+We also confirm that the issue is progressively ameliorated as $\rho$ increases.
+
+```{r bmc-SBC-5, eval=FALSE}
+bmc_generator <- SBC_generator_function(
+  bmc_generator_single, 
+  N = 5000, rho = 0.6, theta_max = 0.3
+  )
+bmc_dataset <- generate_datasets(bmc_generator, n_sims)
+bmc_backend <- SBC_backend_cmdstan_sample(bmc_model2)
+results <- compute_SBC(bmc_dataset, bmc_backend)
+
+plot_ecdf(results)
+plot_rank_hist(results)
+plot_ecdf_diff(results)
+
+```
+
+### Assumptions
+We make several important assumptions above.
+
+1. We assume that we can construct a likelihood for the probability of observing a zero or a nonzero, conditional on a true zero, based only on the expectation of the fraction of underlying zeros that are recorded as zeros in the data stream.
+
+1. We assume that the probability $\rho$ is known with sufficient fidelity to neglect uncertainty.
+
+## The occupancy model
+Suppose we use our automated classifier on a stream of images or recordings that we group into secondary sampling periods, and we assume closure across secondary sampling periods within sites. We define a "detection" to occur when the single image/recording with the highest classification score (indicating probability of containing the focal species) genuinely contains that species. Thus, detections can occur only when the species is genuinely present, and detection data of this sort can be treated in an occupancy modeling framework.
+
+Note that we have defined whether a detection has occurred in such a way that we need not concern ourselves with whether the species is genuinely present in any images other than the single most probable image.  Thus, we need not consider how to assess the overall probability of at least one detection across a large number of uncertain images.
+
+To simulate data, we begin from an ordinary occupancy model, but we again convert nondetections to detections based on the expected total number of false-presence detections implied by the value of $\rho$. In doing so, we assume that false detections occur independently of whether the species occupies the site, conditional on no true detection occurring.
+
+```{r omc-simulate, eval = FALSE}
+# a generator from the occupancy misclassified distribution
+omc_generator_single <- function(
+    N, rho = .9, covariates
+  ){  
+  # N is the number of sites we are generating;
+  #   rho is the probability that any given observed one is a true one.
+  
+  fd <- simulate_flocker_data(
+    n_pt = N, n_sp = 1, fp = rho, 
+    params = list(
+      det_intercept = rnorm(1, -1, .5),
+      det_slope_unit = rnorm(1, 0, .5),
+      det_slope_visit = rnorm(1, 0, .5),
+      occ_intercept = rnorm(1, -1, .5),
+      occ_slope_unit = rnorm(1, 0, .5)
+    ),
+    covariates = covariates, 
+    seed = NULL
+  )
+  
+  expected_real_ones <- sum(fd$obs)
+  obs_ones <- sum(fd$obs != 0)
+  excess_ones <- obs_ones - expected_real_ones
+  expected_real_zeros <- 
+    sum(!is.na(fd$obs)) - expected_real_ones
+  L1_given_0 <- excess_ones / expected_real_zeros
+  L0_given_0 <- 1 - L1_given_0
+  fop <- flocker:::new_matrix(
+    fd$obs, 
+    (fd$obs == 0) * L0_given_0 + 
+      (fd$obs != 0) * L1_given_0
+    )
+  
+  # format for return
+  list(
+    variables = list(
+      `b[1]` = fd$params$coefs$det_intercept,
+      `b[2]` = fd$params$coefs$det_slope_unit,
+      `b[3]` = fd$params$coefs$det_slope_visit,
+      `b_occ[1]` = fd$params$coefs$occ_intercept,
+      `b_occ[2]` = fd$params$coefs$occ_slope_unit
+    ),
+    generated = flocker_standata(
+      f_occ = ~ 0 + Intercept + uc1,
+      f_det = ~ 0 + Intercept + uc1 + ec1,
+      flocker_data = make_flocker_data(
+        fd$obs, fd$unit_covs, fd$event_covs,
+        fp = TRUE, fop = fop),
+      fp = TRUE
+    )
+  )
+}
+
+```
+
+
+
+```{r omc-simulate-2}
+# a generator from the occupancy misclassified distribution
+omc_generator_single2 <- function(
+    N, rho = .9, covariates
+  ){  
+  # N is the number of sites we are generating;
+  #   rho is the probability that any given observed one is a true one.
+  
+  fd_null <- simulate_flocker_data(
+    n_pt = N, n_sp = 1, fp = NULL, 
+    params = list(
+      det_intercept = rnorm(1, -1, .5),
+      det_slope_unit = rnorm(1, -1, .5),
+      det_slope_visit = rnorm(1, -1, .5),
+      occ_intercept = rnorm(1, -1, .5),
+      occ_slope_unit = rnorm(1, -1, .5)
+    ),
+    covariates = covariates, 
+    seed = NULL
+  )
+  
+  vf <- attributes(fd_null)$visit_full
+  
+  expected_real_ones_prop <- 
+    sum(boot::inv.logit(vf$occ) * boot::inv.logit(vf$logit_det)) /
+    (4 * N)
+  expected_real_zeros_prop <- 1 - expected_real_ones_prop
+  expected_false_ones_prop <- (expected_real_ones_prop / rho) - expected_real_ones_prop
+#  p_false_one_given_real_zero <- expected_false_ones_prop / expected_real_zeros_prop
+  p_false_one_given_real_zero <- 0.1
+  assertthat::assert_that(
+    p_false_one_given_real_zero < 1,
+    msg = "there are not enough real zeros to accommodate the false ones!"
+    )
+  
+  fd <- fd_null
+  for(i in seq_len(nrow(fd$obs))){
+    for(j in seq_len(ncol(fd$obs))){
+      if((fd$obs[i,j] == 1) | (runif(1) < p_false_one_given_real_zero)){
+        fd$obs[i,j] <- rho
+      }
+    }
+  }
+  L1_given_0 <- p_false_one_given_real_zero
+  L0_given_0 <- 1 - L1_given_0
+  fop <- flocker:::new_matrix(
+    fd$obs, 
+    (fd$obs == 0) * L0_given_0 + 
+      (fd$obs != 0) * L1_given_0
+    )
+  
+  # format for return
+  list(
+    variables = list(
+      `b[1]` = fd$params$coefs$det_intercept,
+      `b[2]` = fd$params$coefs$det_slope_unit,
+      `b[3]` = fd$params$coefs$det_slope_visit,
+      `b_occ[1]` = fd$params$coefs$occ_intercept,
+      `b_occ[2]` = fd$params$coefs$occ_slope_unit
+    ),
+    generated = flocker_standata(
+      f_occ = ~ 0 + Intercept + uc1,
+      f_det = ~ 0 + Intercept + uc1 + ec1,
+      flocker_data = make_flocker_data(
+        fd$obs, fd$unit_covs, fd$event_covs,
+        fp = TRUE, fop = fop),
+      fp = TRUE
+    )
+  )
+}
+
+```
+
+
+
+
+```{stan omc-stan1, output.var = "omc_model1"}
+// generated with brms 2.19.0
+functions {
+    // Emission likelihood given that the true state is zero
+  real emission_0_fp(array[] real zol){
+    // zol gives the likelihood of the observation given a true zero.
+    real out = sum(log(zol)); // the likelihood when the true history is all zeros
+    return(out);
+  }
+    // emission likelihood given that state equals one
+  real emission_1_fp(array[] real fp, row_vector det, array[] real zl) {
+    // fp gives the fp prob
+    // det gives logit-detection probabilities
+    // zl gives the likelihood of the observation given a true zero
+    
+    int n = size(fp); // number of reps
+    real out = 0;
+    for(i in 1:n){
+      real ll_true_zero = log(zl[i]) + bernoulli_logit_lpmf(0 | det[i]);
+      if(fp[i] == 0){
+        out += ll_true_zero;  // a true 1 cannot yield an observed 0
+      } else {
+        real ll_true_one = bernoulli_logit_lpmf(1 | det[i]);
+        out += log_sum_exp(ll_true_zero, ll_true_one);
+      }
+    }
+    return(out);
+  }
+  
+  real occupancy_single_fp_lpdf(
+    vector fp, // fp data
+    vector mu, // lin pred for detection
+    vector occ, // lin pred for occupancy. Elements after vint1[1] irrelevant.
+    array[] int vint1, // # units (n_unit). Elements after 1 irrelevant.
+    array[] int vint2, // # sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
+    array[] int vint3, // Indicator for > 0 certain detections (Q). Elements after vint1[1] irrelevant.
+
+  // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):
+    array[] int vint4,
+    array[] int vint5,
+    array[] int vint6,
+    array[] int vint7,
+    real prop_ones_true
+  ) {
+  // Create array of the rep indices that correspond to each unit.
+    array[vint1[1], 4] int index_array;
+      index_array[,1] = vint4[1:vint1[1]];
+      index_array[,2] = vint5[1:vint1[1]];
+      index_array[,3] = vint6[1:vint1[1]];
+      index_array[,4] = vint7[1:vint1[1]];
+
+  // find expected number of real ones
+    real eno = 0;
+    for(i in 1:vint1[1]){
+      array[vint2[i]] int indices = index_array[i, 1:vint2[i]];
+      eno += sum(inv_logit(mu[indices])) * inv_logit(occ[i]);
+    }
+    
+  // expected number of real zeros
+    int N = size(mu);
+    real enz = N - eno;
+    
+  // expected number of false ones
+    real excess_ones = (eno / prop_ones_true) - eno;
+    
+  // likelihoods given true zero for 0 and 1
+  //  real vr1 = excess_ones / enz; // population prop of true 0s that are misclassified
+  //  real vr0 = 1 - vr1; // population prop of true 0s that are not misclassified
+  real vr1 = .1;
+  real vr0 = .9;
+    
+    array[N] real vr;
+    for(i in 1:N){
+      if(fp[i] == 0){
+        vr[i] = vr0;
+      } else {
+        vr[i] = vr1;
+      }
+    }
+    
+  // Initialize and compute log-likelihood
+    real lp = 0;
+    for (i in 1:vint1[1]) {
+      array[vint2[i]] int indices = index_array[i, 1:vint2[i]];
+      if (vint3[i] == 1) { // if there is a one with certainty
+        lp += bernoulli_logit_lpmf(1 | occ[i]) + 
+          emission_1_fp(to_array_1d(fp[indices]), to_row_vector(mu[indices]), vr[indices]);
+      } else {
+        lp += log_sum_exp(
+          // case where there site is occupied
+          bernoulli_logit_lpmf(1 | occ[i]) + 
+            emission_1_fp(to_array_1d(fp[indices]), to_row_vector(mu[indices]), vr[indices]),
+          // case where site is unoccupied
+          bernoulli_logit_lpmf(0 | occ[i]) +
+            emission_0_fp(to_array_1d(vr[indices]))
+        );
+      }
+    }
+    return(lp);
+  }
+
+}
+data {
+  int<lower=1> N;  // total number of observations
+  vector[N] Y;  // response variable
+  // data for custom real vectors
+  real vreal1[N];
+  // data for custom integer vectors
+  int vint1[N];
+  // data for custom integer vectors
+  int vint2[N];
+  // data for custom integer vectors
+  int vint3[N];
+  // data for custom integer vectors
+  int vint4[N];
+  // data for custom integer vectors
+  int vint5[N];
+  // data for custom integer vectors
+  int vint6[N];
+  // data for custom integer vectors
+  int vint7[N];
+  int<lower=1> K;  // number of population-level effects
+  matrix[N, K] X;  // population-level design matrix
+  int<lower=1> K_occ;  // number of population-level effects
+  matrix[N, K_occ] X_occ;  // population-level design matrix
+  int prior_only;  // should the likelihood be ignored?
+}
+transformed data {
+  // get the expected number of false ones per apparent one
+  real exp_true_ones = 0;
+  int n_apparent_ones = 0;
+  
+  for(i in 1:N){
+    if(Y[i] > 0){
+      n_apparent_ones += 1;
+      exp_true_ones += Y[i];
+    }
+  }
+  //real<lower=0, upper=1> prop_ones_true = exp_true_ones / n_apparent_ones;
+  real prop_ones_true = 0.8;
+}
+parameters {
+  vector[K] b;  // population-level effects
+  vector[K_occ] b_occ;  // population-level effects
+}
+transformed parameters {
+  real lprior = 0;  // prior contributions to the log posterior
+  lprior += normal_lpdf(b[1] | -1,.5);
+  lprior += normal_lpdf(b[2] | -1,.5);
+  lprior += normal_lpdf(b[3] | -1,.5);
+  lprior += normal_lpdf(b_occ[1] | -1,.5);
+  lprior += normal_lpdf(b_occ[2] | -1,.5);
+}
+model {
+  // likelihood including constants
+  if (!prior_only) {
+    // initialize linear predictor term
+    vector[N] mu = rep_vector(0.0, N);
+    // initialize linear predictor term
+    vector[N] occ = rep_vector(0.0, N);
+    mu += X * b;
+    occ += X_occ * b_occ;
+    target += occupancy_single_fp_lpdf(Y | mu, occ, vint1, vint2, vint3, vint4, vint5, vint6, vint7, prop_ones_true);
+  }
+  // priors including constants
+  target += lprior;
+}
+generated quantities {
+}
+
+```
+
+```{r omc-SBC-1}
+n_sims <- 100
+omc_generator <- SBC_generator_function(
+  omc_generator_single2, 
+  N = 500,
+  rho = .8,
+  covariates =   
+    list(
+      ec1 = rnorm(500*4),
+      uc1 = rnorm(500)
+    )
+  )
+omc_dataset <- suppressMessages(
+  generate_datasets(omc_generator, n_sims)
+)
+  
+omc_backend <- SBC_backend_cmdstan_sample(omc_model1)
+results <- compute_SBC(omc_dataset, omc_backend)
+
+plot_ecdf(results)
+plot_rank_hist(results)
+plot_ecdf_diff(results)
+
+```
+
+
+
+
+## Non-uniform misclassification probabilities

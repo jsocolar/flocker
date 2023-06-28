@@ -195,38 +195,49 @@ make_emission_1_C <- function() {
 #' @return Character string of Stan code corresponding to emission_0_fp
 make_emission_0_fp <- function () {
   paste("  // Emission likelihood given that the true state is zero",
-        "  real emission_0_fp(array[] real fop){",
-        "    // fop gives the likelihood of the observation given a true zero.",
-        "    real out = sum(log(fop)); // the likelihood when the true history is all zeros",
+        "  real emission_0_fp(array[] real zl){",
+        "    // zl gives the likelihood of the observation given a true zero.",
+        "    real out = sum(log(zl)); // the likelihood when the true history is all zeros",
         "    return(out);",
         "  }",
         sep = "\n")
 }
 
 
+
+
+real emission_1_fp(row_vector det, array[] real zl, array[] real ol) {
+  // det gives logit-detection probabilities
+  // zl gives the likelihood of the observation given a true zero
+  // ol gives the likelihood of the observation given a true one
+  
+  int n = size(det); // number of reps
+  real out = 0;
+  for(i in 1:n){
+    real ll_true_zero = log(zl[i]) + bernoulli_logit_lpmf(0 | det[i]);
+    real ll_true_one = log(ol[i]) + bernoulli_logit_lpmf(1 | det[i]);
+    out += log_sum_exp(ll_true_zero, ll_true_one);
+  }
+  return(out);
+}
 #' Create Stan code for the emission log-likelihood given that the true state 
 #'   equals one in a fp model.
 #' @return Character string of Stan code corresponding to emission_1_fp
 make_emission_1_fp <- function() {
   paste(
     "  // emission likelihood given that state equals one",
-    "  real emission_1_fp(array[] real fp, row_vector det, array[] real fop) {",
-    "    // fp gives the likelihood of the observation given a true one",
-    "    // fop gives the likelihood of the observation given a true zero",
+    "  real emission_1_fp(row_vector det, array[] real zl, array[] real ol) {",
     "    // det gives logit-detection probabilities",
+    "    // zl gives the likelihood of the observation given a true zero",
+    "    // ol gives the likelihood of the observation given a true one",
     "    ",
-    "    int n = size(fp); // number of reps",
+    "    int n = size(det); // number of reps",
     "    ",
     "    real out = 0;",
     "    ",
     "    for(i in 1:n){",
-    "      real ll_true_one = log(fp[i]) + bernoulli_logit_lpmf(1 | det[i]);",
-    "      real ll_true_zero;",
-    "      if(fp[i] == 0){",
-    "        ll_true_zero = log1m(fop[i]) + bernoulli_logit_lpmf(0 | det[i]);",
-    "      } else {",
-    "        ll_true_zero = log(fop[i]) + bernoulli_logit_lpmf(0 | det[i]);",
-    "      }",
+    "      real ll_true_zero = log(zl[i]) + bernoulli_logit_lpmf(0 | det[i]);",
+    "      real ll_true_one = log(ol[i]) + bernoulli_logit_lpmf(1 | det[i]);",
     "      out += log_sum_exp(ll_true_zero, ll_true_one);",
     "    }",
     "    ",
