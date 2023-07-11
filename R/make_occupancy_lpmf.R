@@ -1085,8 +1085,10 @@ make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
   for(i in 1:N){
     if(fp[i] == 0){
       vr[i] = vr0[vint7[i]];
-    } else {
+    } else if (fp[i] > 0) {
       vr[i] = vr1[vint7[i]] * vreal3[i];
+    } else {
+      vr[i] = 1;
     }
   }
   // Likelihood given a true one for 0 and 1
@@ -1094,8 +1096,10 @@ make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
   for(i in 1:N){
     if(fp[i] == 0){
       vor[i] = 0;
-    } else {
+    } else if (fp[i] > 0) {
       vor[i] = vreal2[i];
+    } else {
+      vor[i] = 1;
     }
   }
   "
