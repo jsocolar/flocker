@@ -410,8 +410,8 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     vint_text <- paste0("ff_rep_index", 1:max_rep, 
                         collapse = ", ")
     f_det_use <- stats::as.formula(
-      paste0("ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ",
-             vint_text, ") + vreal(ff_fop)", f_det_txt))
+      paste0("ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ff_nblocks, ff_block, ",
+             vint_text, ") + vreal(ff_frac_true, ff_P, ff_QQ)", f_det_txt))
     f_use <- brms::bf(f_det_use, f_occ_use)
     
     stanvars <- 
@@ -436,8 +436,8 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     vint_text2 <- paste0("ff_rep_index", seq(n_rep), 
                          collapse = ", ")
     f_det_use <- stats::as.formula(
-      paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
-             vint_text1, ", ", vint_text2, ") ", f_det_txt))
+      paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ff_nblocks, ff_block, ",
+             vint_text1, ", ", vint_text2, ") + vreal(ff_frac_true, ff_P, ff_QQ)", f_det_txt))
     
     f_use <- brms::bf(f_det_use, f_occ_use, f_col_use, f_ex_use)
     
@@ -477,8 +477,8 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     vint_text2 <- paste0("ff_rep_index", seq(n_rep), 
                          collapse = ", ")
     f_det_use <- stats::as.formula(
-      paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
-             vint_text1, ", ", vint_text2, ") ", f_det_txt))
+      paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ff_nblocks, ff_block, ",
+             vint_text1, ", ", vint_text2, ") + vreal(ff_frac_true, ff_P, ff_QQ)", f_det_txt))
     
     f_use <- brms::bf(f_det_use, f_col_use, f_ex_use)
     

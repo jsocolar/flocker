@@ -1,0 +1,339 @@
+---
+title: "Occupancy models with false-positive misclassification"
+author: Jacob Socolar
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Occupancy models with false-positive misclassification}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r compute-env}
+# devtools::install_github("stan-dev/cmdstanr")
+# devtools::install_github("hyunjimoon/sbc")
+# devtools::install_github("jsocolar/flocker")
+install.packages("/users/jacob/dropbox/work/code/flocker", repos = NULL, type = "source")
+library(cmdstanr)
+library(SBC)
+library(flocker)
+register_knitr_engine()
+set.seed(3)
+```
+
+```{r omc-simulate-2}
+omc_generator_single2 <- function(
+    N, rho = .85, covariates
+){  
+  rho.1 <- rho + .05
+  rho.2 <- rho - .05
+  
+  p_rho1_given_1 <- rho.1/(rho.1 + rho.2)
+  p_rho1_given_0 <- (1 - rho.1)/(2 - rho.1 - rho.2)
+  # N is the number of sites we are generating;
+  #   rho is the probability that any given observed one is a true one.
+  det_intercept <- rnorm(1, -1, .5)
+  det_slope_unit <- rnorm(1, -1, .5)
+  det_slope_visit <- rnorm(1, -1, .5)
+  occ_intercept <- rnorm(1, -1, .5)
+  occ_slope_unit <- rnorm(1, -1, .5)
+  
+  psi <- occ_intercept + occ_slope_unit * covariates$uc1
+  theta <- matrix(
+    det_intercept + det_slope_unit * covariates$uc1 + det_slope_visit * covariates$ec1,
+    nrow = N
+  )
+  
+  true_occ <- rbinom(N, 1, boot::inv.logit(psi))
+  
+  expected_prop_ones <- sum(boot::inv.logit(theta) * boot::inv.logit(psi))/(4*N)
+  expected_prop_zeros <- 1 - expected_prop_ones
+  expected_prop_false_ones <- expected_prop_ones / rho - expected_prop_ones
+  pfo <- expected_prop_false_ones / expected_prop_zeros
+  assertthat::assert_that(pfo < 1)
+  
+  obs <- true_occ * flocker:::new_matrix(theta, rbinom(N*4, 1, boot::inv.logit(theta)))
+  for(i in 1:N){
+    for(j in 1:4){
+      if(obs[i, j] == 1){
+        obs[i, j] <- sample(c(rho.1, rho.2), 1, prob = c(p_rho1_given_1, 1 - p_rho1_given_1))
+      } else if(runif(1) < pfo){
+        obs[i, j] <- sample(c(rho.1, rho.2), 1, prob = c(p_rho1_given_0, 1 - p_rho1_given_0))
+      }
+    }
+  }
+  
+  
+  fp_data <- list(
+          block = flocker:::new_matrix(obs, c(1,2)),
+          frac_true = flocker:::new_matrix(obs, .85),
+          P = flocker:::new_matrix(
+            obs, 
+            (obs == rho.2) * .8/(.8+.9) + (obs == rho.1) * .9/(.8+.9)
+            ),
+          QQ = flocker:::new_matrix(
+            obs, 
+            (obs == rho.2) * .2/.3 + (obs == rho.1) * .1/.3
+            )
+          )
+  
+  # format for return
+  list(
+    variables = list(
+      `b[1]` = det_intercept,
+      `b[2]` = det_slope_unit,
+      `b[3]` = det_slope_visit,
+      `b_occ[1]` = occ_intercept,
+      `b_occ[2]` = occ_slope_unit
+    ),
+    generated = flocker_standata(
+      f_occ = ~ 0 + Intercept + uc1,
+      f_det = ~ 0 + Intercept + uc1 + ec1,
+      flocker_data = make_flocker_data(
+        obs, 
+        unit_covs = data.frame(uc1 = covariates$uc1), 
+        event_covs = list(ec1 = flocker:::new_matrix(obs, covariates$ec1)),
+        fp = TRUE,
+        fp_data = fp_data
+      ),
+      fp = TRUE
+    )
+  )
+}
+
+```
+
+
+
+
+```{stan omc-stan1, output.var = "omc_model1"}
+// generated with brms 2.19.0
+functions {
+  // Emission likelihood given that the true state is zero
+  real emission_0_fp(array[] real zl) {
+    // zl gives the likelihood of the observation given a true zero.
+    real out = sum(log(zl)); // the likelihood when the true history is all zeros
+    return out;
+  }
+  // emission likelihood given that state equals one
+  real emission_1_fp(row_vector det, array[] real zl, array[] real ol) {
+    // det gives logit-detection probabilities
+    // zl gives the likelihood of the observation given a true zero
+    // ol gives the likelihood of the observation given a true one
+    
+    int n = size(det); // number of reps
+    
+    real out = 0;
+    
+    for (i in 1 : n) {
+      real ll_true_zero = log(zl[i]) + bernoulli_logit_lpmf(0 | det[i]);
+      real ll_true_one = log(ol[i]) + bernoulli_logit_lpmf(1 | det[i]);
+      out += log_sum_exp(ll_true_zero, ll_true_one);
+    }
+    
+    return out;
+  }
+  real occupancy_single_fp_lpdf(vector fp, // the fp probs
+                                vector mu,
+                                // lin pred for detection
+                                vector occ,
+                                // lin pred for occupancy. Elements after vint1[1] irrelevant.
+                                array[] int vint1,
+                                // # units (n_unit). Elements after 1 irrelevant.
+                                array[] int vint2,
+                                // # sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
+                                array[] int vint3,
+                                // Indicator for > 0 certain detections (Q). Elements after vint1[1] irrelevant.
+                                array[] int vint4,
+                                // number of blocks. elements after 1 irrelevant
+                                array[] int vint5,
+                                // integer identifying the block 
+                                // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):
+                                array[] int vint6, array[] int vint7,
+                                array[] int vint8, array[] int vint9,
+                                array[] real vreal1,
+                                // expected fraction of obs 1s that are true. Elements after vint4[1] irrelevant
+                                array[] real vreal2, // P
+                                array[] real vreal3 // QQ
+                                ) {
+    // Create array of the rep indices that correspond to each unit.
+    array[vint1[1], 4] int index_array;
+    index_array[ : , 1] = vint6[1 : vint1[1]];
+    index_array[ : , 2] = vint7[1 : vint1[1]];
+    index_array[ : , 3] = vint8[1 : vint1[1]];
+    index_array[ : , 4] = vint9[1 : vint1[1]];
+    
+    // find expected number of real ones
+    vector[vint4[1]] eno;
+    vector[vint4[1]] total_size;
+    for (i in 1 : vint4[1]) {
+      eno[i] = 0;
+      total_size[i] = 0;
+    }
+    
+    for (i in 1 : vint1[1]) {
+      array[vint2[i]] int indices = index_array[i, 1 : vint2[i]];
+      eno[vint5[i]] += sum(inv_logit(mu[indices])) * inv_logit(occ[i]);
+      total_size[vint5[i]] += vint2[i];
+    }
+    
+    // expected number of real zeros
+    vector[vint4[1]] enz = total_size - eno;
+    
+    // expected number of false ones
+    vector[vint4[1]] excess_ones = (eno ./ to_vector(vreal1[1 : vint4[1]]))
+                                   - eno;
+    
+    // likelihoods given true zero for 0 and 1
+    vector[vint4[1]] vr1 = excess_ones ./ enz; // population prop of true 0s that are misclassified
+    vector[vint4[1]] vr0 = 1 - vr1; // population prop of true 0s that are not misclassified
+    
+    int N = size(mu);
+    array[N] real vr;
+    for (i in 1 : N) {
+      if (fp[i] == 0) {
+        vr[i] = vr0[vint5[i]];
+      } else {
+        vr[i] = vr1[vint5[i]] * vreal3[i];
+      }
+    }
+    
+    // Likelihood given a true one for 0 and 1
+    array[N] real vor;
+    for (i in 1 : N) {
+      if (fp[i] == 0) {
+        vor[i] = 0;
+      } else {
+        vor[i] = vreal2[i];
+      }
+    }
+    
+    // Initialize and compute log-likelihood
+    real lp = 0;
+    for (i in 1 : vint1[1]) {
+      array[vint2[i]] int indices = index_array[i, 1 : vint2[i]];
+      lp += log_sum_exp(bernoulli_logit_lpmf(1 | occ[i])
+                        + emission_1_fp(to_row_vector(mu[indices]),
+                                        vr[indices], vor[indices]),
+                        bernoulli_logit_lpmf(0 | occ[i])
+                        + emission_0_fp(vr[indices]));
+    }
+    return lp;
+  }
+}
+data {
+  int<lower=1> N; // total number of observations
+  vector[N] Y; // response variable
+  // data for custom real vectors
+  array[N] real vreal1;
+  // data for custom real vectors
+  array[N] real vreal2;
+  // data for custom real vectors
+  array[N] real vreal3;
+  // data for custom integer vectors
+  array[N] int vint1;
+  // data for custom integer vectors
+  array[N] int vint2;
+  // data for custom integer vectors
+  array[N] int vint3;
+  // data for custom integer vectors
+  array[N] int vint4;
+  // data for custom integer vectors
+  array[N] int vint5;
+  // data for custom integer vectors
+  array[N] int vint6;
+  // data for custom integer vectors
+  array[N] int vint7;
+  // data for custom integer vectors
+  array[N] int vint8;
+  // data for custom integer vectors
+  array[N] int vint9;
+  int<lower=1> K; // number of population-level effects
+  matrix[N, K] X; // population-level design matrix
+  int<lower=1> K_occ; // number of population-level effects
+  matrix[N, K_occ] X_occ; // population-level design matrix
+  int prior_only; // should the likelihood be ignored?
+}
+transformed data {
+  
+}
+parameters {
+  vector[K] b; // population-level effects
+  vector[K_occ] b_occ; // population-level effects
+}
+transformed parameters {
+  real lprior = 0; // prior contributions to the log posterior
+}
+model {
+  // likelihood including constants
+  if (!prior_only) {
+    // initialize linear predictor term
+    vector[N] mu = rep_vector(0.0, N);
+    // initialize linear predictor term
+    vector[N] occ = rep_vector(0.0, N);
+    mu += X * b;
+    occ += X_occ * b_occ;
+    target += occupancy_single_fp_lpdf(Y | mu, occ, vint1, vint2, vint3, vint4, vint5, vint6, vint7, vint8, vint9, vreal1, vreal2, vreal3);
+  }
+  // priors including constants
+  target += lprior;
+}
+generated quantities {
+  
+}
+
+```
+
+```{r omc-SBC-prep}
+n_sims <- 200
+omc_generator <- SBC_generator_function(
+  omc_generator_single2, 
+  N = 500,
+  rho = .85,
+  covariates =   
+    list(
+      ec1 = rnorm(500*4),
+      uc1 = rnorm(500)
+    )
+  )
+omc_dataset <- suppressMessages(
+  generate_datasets(omc_generator, n_sims)
+)
+  
+omc_backend <- SBC_backend_cmdstan_sample(omc_model1)
+```
+
+```{r omc-SBC-sample}
+results <- compute_SBC(omc_dataset, omc_backend)
+
+```
+
+```{r omc-SBC-plot, fig.width=10}
+plot_ecdf(results)
+plot_rank_hist(results)
+plot_ecdf_diff(results)
+
+```
+
+
+## Non-uniform misclassification probabilities
+In the case where the misclassification probabilities are variable, we assume 
+that we know the exact probability density function for the misclassification
+probabilities (and their complements) conditional on the observation being classified as a detection.
+Let $R(x)$ denote this pdf, where $x$ is the complement of the misclassification probability.
+Then the pdf for misclassification probabilities given that the true observation
+is a detection is proportional to $xR(x)$ and the pdf given that the true observation
+is nondetection is proportional to $(1-x)R(x)$.
+
+Thus, the pmf for observed 0's are unchanged, but the pmf for observed nonzeros
+picks up extra terms.
+
+We'll have the likelihood given that a true 0 and the likelihood given a true 1,
+and both will pick up new terms when the observation is nonzero.
+
+
+

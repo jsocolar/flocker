@@ -44,8 +44,7 @@
 #' @param n_aug Number of pseudo-species to augment. Only applicable if 
 #'    \code{type = "augmented"}.
 #' @param fp logical. TRUE if model is an fp model
-#' @param fop An I x J matrix-like object giving the unconditional probability that a 
-#'   true zero in that position of `obs` would be treated as potentially nonzero
+#' @param fp_data A list of matrices giving extra data needed in an fp model
 #' @param verbose Show informational messages?
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
@@ -57,7 +56,7 @@
 #' )
 make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
                               type = "single", n_aug = NULL, fp = FALSE,
-                              fop = NULL,
+                              fp_data = NULL,
                               verbose = TRUE) {
   assertthat::assert_that(
     type %in% flocker_data_input_types(),
@@ -115,11 +114,11 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
   }
   
   if (type == "single") {
-    out <- make_flocker_data_static(obs, unit_covs, event_covs, fp, fop)
+    out <- make_flocker_data_static(obs, unit_covs, event_covs, fp, fp_data)
     out$unit_covs <- names(unit_covs)
     out$event_covs <- names(event_covs)
   } else if (type == "multi") {
-    out <- make_flocker_data_dynamic(obs, unit_covs, event_covs, fp)
+    out <- make_flocker_data_dynamic(obs, unit_covs, event_covs, fp, fp_data)
     out$unit_covs <- names(unit_covs[[1]])
     out$event_covs <- names(event_covs)
   } else if (type == "augmented") {
@@ -147,8 +146,7 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
 #' @param event_covs A named list of I x J matrices, each one corresponding to a covariate
 #' that varies across repeated sampling events within closure-units
 #' @param fp logical
-#' @param fop An I x J matrix-like object giving the unconditional probability that a 
-#'   true zero in that position of `obs` would be treated as potentially nonzero
+#' @param fp_data Extra data needed for fp model
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 #' @examples
@@ -158,7 +156,7 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
 #'  example_flocker_data$event_covs
 #' )
 make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
-                                     fp = FALSE, fop = NULL) {
+                                     fp = FALSE, fp_data = NULL) {
   assertthat::assert_that(
     length(dim(obs)) == 2,
     msg = "in a single-season model, obs must have exactly two dimensions"
@@ -252,7 +250,11 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
       ff_y = expand_matrix(obs)
     )
     if(fp){
-      flocker_data$ff_fop = expand_matrix(fop)
+      flocker_data$ff_nblocks <- max(fp_data$block, na.rm = TRUE)
+      flocker_data$ff_block <- expand_matrix(fp_data$block)
+      flocker_data$ff_frac_true <- expand_matrix(fp_data$frac_true)
+      flocker_data$ff_P <- expand_matrix(fp_data$P)
+      flocker_data$ff_QQ <- expand_matrix(fp_data$QQ)
     }
     if (!is.null(unit_covs)) {
       unit_covs_stacked <- 
@@ -309,11 +311,12 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
 #' @param event_covs A named list of I x J x K arrays, each one corresponding to 
 #' a covariate that varies across repeated sampling events within closure-units
 #' @param fp logical
+#' @param fp_data additional data for fp model
 #' @param verbose logical
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
-                                      fp = FALSE, verbose = TRUE) {
+                                      fp = FALSE, fp_data = NULL, verbose = TRUE) {
   n_year <- nslice(obs) # nslice checks that obs is a 3-D array
   n_series <- nrow(obs)
   n_rep <- ncol(obs)
@@ -517,6 +520,13 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
   }
   
   flocker_data <- data.frame(ff_y = expand_matrix(expand_array_3D(obs)))
+  if(fp){
+    flocker_data$ff_nblocks <- max(fp_data$block, na.rm = TRUE)
+    flocker_data$ff_block <- expand_matrix(expand_array_3D(fp_data$block))
+    flocker_data$ff_frac_true <- expand_matrix(expand_array_3D(fp_data$frac_true))
+    flocker_data$ff_P <- expand_matrix(expand_array_3D(fp_data$P))
+    flocker_data$ff_QQ <- expand_matrix(expand_array_3D(fp_data$QQ))
+  }
   flocker_data$ff_n_unit <- c(n_unit, rep(-99, n_total - 1))
   if (!is.null(unit_covs)) {
     unit_covs_stacked <- stack_matrix(do.call(rbind, unit_covs), n_rep)

@@ -195,103 +195,47 @@ make_emission_1_C <- function() {
 #' @return Character string of Stan code corresponding to emission_0_fp
 make_emission_0_fp <- function () {
   paste("  // Emission likelihood given that the true state is zero",
-        "  real emission_0_fp(array[] real zl){",
+        "  real emission_0_fp(row_vector zl){",
         "    // zl gives the likelihood of the observation given a true zero.",
-        "    real out = sum(log(zl)); // the likelihood when the true history is all zeros",
+        "    real out = prod(zl); // the likelihood when the true history is all zeros",
         "    return(out);",
         "  }",
         sep = "\n")
 }
 
-
-
-
-real emission_1_fp(row_vector det, array[] real zl, array[] real ol) {
-  // det gives logit-detection probabilities
-  // zl gives the likelihood of the observation given a true zero
-  // ol gives the likelihood of the observation given a true one
-  
-  int n = size(det); // number of reps
-  real out = 0;
-  for(i in 1:n){
-    real ll_true_zero = log(zl[i]) + bernoulli_logit_lpmf(0 | det[i]);
-    real ll_true_one = log(ol[i]) + bernoulli_logit_lpmf(1 | det[i]);
-    out += log_sum_exp(ll_true_zero, ll_true_one);
-  }
-  return(out);
-}
 #' Create Stan code for the emission log-likelihood given that the true state 
 #'   equals one in a fp model.
 #' @return Character string of Stan code corresponding to emission_1_fp
 make_emission_1_fp <- function() {
   paste(
     "  // emission likelihood given that state equals one",
-    "  real emission_1_fp(row_vector det, array[] real zl, array[] real ol) {",
+    "  real emission_1_fp(row_vector det, row_vector zl, row_vector ol) {",
     "    // det gives logit-detection probabilities",
     "    // zl gives the likelihood of the observation given a true zero",
     "    // ol gives the likelihood of the observation given a true one",
     "    ",
     "    int n = size(det); // number of reps",
     "    ",
-    "    real out = 0;",
+    "    real out = 1;",
     "    ",
-    "    for(i in 1:n){",
-    "      real ll_true_zero = log(zl[i]) + bernoulli_logit_lpmf(0 | det[i]);",
-    "      real ll_true_one = log(ol[i]) + bernoulli_logit_lpmf(1 | det[i]);",
-    "      out += log_sum_exp(ll_true_zero, ll_true_one);",
-    "    }",
+    "    for (i in 1 : n) {
+          if (zl[i] < 0)
+            reject(zl[i]);
+          if (ol[i] < 0)
+            reject(ol[i]);
+          if (ol[i] + zl[i] == 0)
+            reject(ol[i] + zl[i]);
+      
+          real l_true_zero = zl[i] * exp(bernoulli_logit_lpmf(0 | det[i]));
+          real l_true_one = ol[i] * exp(bernoulli_logit_lpmf(1 | det[i]));
+      
+          out = out * (l_true_one + l_true_zero);
+        }",
     "    ",
     "    return(out);",
     "  }",
     sep = "\n"
   )
-}
-
-#' Create legacy Stan code for the emission log-likelihood given that the true state 
-#'   equals one in a fp model.
-#' @return Character string of Stan code corresponding to emission_1_fp
-#' @details this legacy function is deprecated; it has been verified to be
-#'   numberically equivalent to the much simpler and more efficient 
-#'   `make_emission_1_fp`. I'm keeping it around because I can imagine a
-#'   possibility that it could be useful to directly marginalize over all the 
-#'   possible histories in a model where detections conditional on occupancy
-#'   are expected to be autocorrelated. As of renaming and deprecation of this, 
-#'   function in April 2023, there are no plans to enable such a model in 
-#'   flocker.
-make_emission_1_fp_legacy <- function() {
-  paste("  // emission likelihood given that state equals one",
-        "  real emission_1_fp(array[] real fp, row_vector det) {",
-        "    // fp gives the probability that the true data is a one.",
-        "    // det gives logit-detection probabilities",
-        "  ",    
-        "    int n = size(fp); // number of reps",
-        "   ",    
-        "    int pow_2_n = 1;",
-        "    for (k in 1:n) {",
-        "     pow_2_n = pow_2_n * 2;",
-        "    }",
-        "    vector[pow_2_n] lps; // log-probabilities",
-        "    array[n] int yx; // true history",
-        "    vector[n] fpx; // prior probability of true history",
-        "    ",
-        "    for(i in 1:(pow_2_n)){",
-        "      int pow_2_j = 1;",
-        "      for(j in 1:n){",
-        "        pow_2_j = 2*pow_2_j;",
-        "        if((i % (pow_2_j)) >= (2^(j-1))){",
-        "          yx[j] = 0;",
-        "          fpx[j] = 1 - fp[j];",
-        "        } else {",
-        "          yx[j] = 1;",
-        "          fpx[j] = fp[j];",
-        "        }",
-        "      }",
-        "      lps[i] = sum(log(fpx)) + // the log-probability that this is the true history",
-        "        bernoulli_logit_lpmf(yx | det); // the log-probability associated with this detection history",
-        "    }",
-        "    return(log_sum_exp(lps));",
-        "  }",
-        sep = "\n")
 }
 
 ##### multi-season: transition probabilities #####
@@ -445,7 +389,8 @@ make_forward_colex_fp <- function() {
     "    int n_year, // number of years",
     "    array[] int Q, // At least one certain detection in unit?",
     "    array[] int n_obs, // number of visits in year",
-    "    array[,] real fp, // probability that true datum is one: rows are units, columns visits",
+    "    array[] row_vector zl, // likelihood if true datum is zero: rows are units, columns visits",
+    "    array[] row_vector ol, // likelihood if true datum is one",
     "    real occ_initial, // initial occupancy logit-probability",
     "    vector colo, // colonization logit-probabilities (with initial dummy)",
     "    vector ex, // extinction logit-probabilities (with initial dummy)",
@@ -463,11 +408,11 @@ make_forward_colex_fp <- function() {
     "      alpha_0 = bernoulli_logit_lpmf(0 | occ_initial);",
     "      alpha_1 = bernoulli_logit_lpmf(1 | occ_initial);",
     "    } else {",
-    "      e1 = emission_1_fp(fp[1, 1:n_obs[1]], det[1, 1:n_obs[1]]);",
-    "      alpha_1 = bernoulli_logit_lpmf(1 | occ_initial) + e1;",
+    "      e1 = emission_1_fp(det[1, 1:n_obs[1]], zl[1, 1:n_obs[1]], ol[1, 1:n_obs[1]]);",
+    "      alpha_1 = bernoulli_logit_lpmf(1 | occ_initial) + log(e1);",
     "      if (Q[1] == 0) {",
-    "        e0 = emission_0_fp(fp[1, 1:n_obs[1]]);",
-    "        alpha_0 = bernoulli_logit_lpmf(0 | occ_initial) + e0;",
+    "        e0 = emission_0_fp(zl[1, 1:n_obs[1]]);",
+    "        alpha_0 = bernoulli_logit_lpmf(0 | occ_initial) + log(e0);",
     "      }",
     "    }",
     "    ",
@@ -491,21 +436,21 @@ make_forward_colex_fp <- function() {
     "            alpha_1 = alpha_1_prev + bernoulli_logit_lpmf(0 | ex[i]);",
     "          }",
     "        } else { // year with observations",
-    "          e1 = emission_1_fp(fp[i, 1:n_obs[i]], det[i, 1:n_obs[i]]);",
-    "          e0 = emission_0_fp(fp[i, 1:n_obs[i]]);",
+    "          e1 = emission_1_fp(det[i, 1:n_obs[i]], zl[i, 1:n_obs[i]], ol[i, 1:n_obs[i]]);",
+    "          e0 = emission_0_fp(zl[i, 1:n_obs[i]]);",
     "          if ((Q[i - 1] == 0) && (Q[i] == 0)) { // now years with at least one observation",
-    "            alpha_0 = log_sum_exp(alpha_0_prev + zero_zero(colo[i], e0),",  
-    "                                  alpha_1_prev + one_zero(ex[i], e0));",
-    "            alpha_1 = log_sum_exp(alpha_0_prev + zero_one(colo[i], e1),",
-    "                                  alpha_1_prev + one_one(ex[i], e1));",
+    "            alpha_0 = log_sum_exp(alpha_0_prev + zero_zero(colo[i], log(e0)),",  
+    "                                  alpha_1_prev + one_zero(ex[i], log(e0)));",
+    "            alpha_1 = log_sum_exp(alpha_0_prev + zero_one(colo[i], log(e1)),",
+    "                                  alpha_1_prev + one_one(ex[i], log(e1)));",
     "          } else if ((Q[i - 1] == 0) && (Q[i] == 1)) {",
-    "            alpha_1 = log_sum_exp(alpha_0_prev + zero_one(colo[i], e1),",
-    "                                  alpha_1_prev + one_one(ex[i], e1));",
+    "            alpha_1 = log_sum_exp(alpha_0_prev + zero_one(colo[i], log(e1)),",
+    "                                  alpha_1_prev + one_one(ex[i], log(e1)));",
     "          } else if ((Q[i - 1] == 1) && (Q[i] == 0)) {",
-    "            alpha_0 = alpha_1_prev + one_zero(ex[i], e0);",
-    "            alpha_1 = alpha_1_prev + one_one(ex[i], e1);",
+    "            alpha_0 = alpha_1_prev + one_zero(ex[i], log(e0));",
+    "            alpha_1 = alpha_1_prev + one_one(ex[i], log(e1));",
     "          } else if ((Q[i - 1] == 1) && (Q[i] == 1)) {",
-    "            alpha_1 = alpha_1_prev + one_one(ex[i], e1);",
+    "            alpha_1 = alpha_1_prev + one_one(ex[i], log(e1));",
     "          }",
     "        }",
     "      }",
@@ -916,18 +861,22 @@ make_occupancy_single_fp_lpdf <- function (max_rep) {
   )
   
   sf_text1 <- "  real occupancy_single_fp_lpdf(
-    vector fp, // fp data
+    vector fp, // the fp probs
     vector mu, // lin pred for detection
     vector occ, // lin pred for occupancy. Elements after vint1[1] irrelevant.
     array[] int vint1, // # units (n_unit). Elements after 1 irrelevant.
     array[] int vint2, // # sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
     array[] int vint3, // Indicator for > 0 certain detections (Q). Elements after vint1[1] irrelevant.
+    array[] int vint4, // number of blocks. elements after 1 irrelevant
+    array[] int vint5, // integer identifying the block 
 
   // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):"
   
-  sf_text2.1 <- paste0("    array[] int vint", 3 + (1:max_rep), collapse = ",\n")
+  sf_text2.1 <- paste0("    array[] int vint", 5 + (1:max_rep), collapse = ",\n")
   sf_text2.2 <- ",\n"
-  sf_text2.3 <- "    array[] real vreal1 // unconditional probability that a true zero gets sampled as a false one. Elements after vint1[1] irrelevant."
+  sf_text2.3 <- "    array[] real vreal1, // expected fraction of obs 1s that are true. Elements after vint4[1] irrelevant
+    array[] real vreal2, // P
+    array[] real vreal3 // QQ"
   sf_text2 <- paste0(sf_text2.1, sf_text2.2, sf_text2.3)
 
 
@@ -938,25 +887,64 @@ make_occupancy_single_fp_lpdf <- function (max_rep) {
   sf_text4.1 <- "      index_array[,"
   sf_text4.2 <- 1:max_rep
   sf_text4.3 <- "] = vint"
-  sf_text4.4 <- 3 + (1:max_rep)
+  sf_text4.4 <- 5 + (1:max_rep)
   sf_text4.5 <- "[1:vint1[1]];\n"
   sf_text4 <- paste0(sf_text4.1, sf_text4.2, sf_text4.3, sf_text4.4, sf_text4.5, collapse = "")
   
-  sf_text5 <- "  // Initialize and compute log-likelihood
+  sf_text5 <- "  // find expected number of real ones
+    vector[vint4[1]] eno;
+    vector[vint4[1]] total_size;
+    for(i in 1:vint4[1]){
+      eno[i] = 0;
+      total_size[i] = 0;
+    }
+    
+    for(i in 1:vint1[1]){
+      array[vint2[i]] int indices = index_array[i, 1:vint2[i]];
+      eno[vint5[i]] += sum(inv_logit(mu[indices])) * inv_logit(occ[i]);
+      total_size[vint5[i]] += vint2[i];
+    }
+    
+  // expected number of real zeros
+    vector[vint4[1]] enz = total_size - eno;
+    
+  // expected number of false ones
+    vector[vint4[1]] excess_ones = (eno ./ to_vector(vreal1[1:vint4[1]])) - eno;
+    
+  // likelihoods given true zero for 0 and 1
+    vector[vint4[1]] vr1 = excess_ones ./ enz; // population prop of true 0s that are misclassified
+    vector[vint4[1]] vr0 = 1 - vr1; // population prop of true 0s that are not misclassified
+
+    int N = size(mu);
+    array[N] real vr;
+    for(i in 1:N){
+      if(fp[i] == 0){
+        vr[i] = vr0[vint5[i]];
+      } else {
+        vr[i] = vr1[vint5[i]] * vreal3[i];
+      }
+    }
+    
+  // Likelihood given a true one for 0 and 1
+    array[N] real vor;
+    for(i in 1:N){
+      if(fp[i] == 0){
+        vor[i] = 0;
+      } else {
+        vor[i] = vreal2[i];
+      }
+    }
+  
+  // Initialize and compute log-likelihood
     real lp = 0;
     for (i in 1:vint1[1]) {
       array[vint2[i]] int indices = index_array[i, 1:vint2[i]];
-      if (vint3[i] == 1) {
-        lp += bernoulli_logit_lpmf(1 | occ[i]) + 
-          emission_1_fp(to_array_1d(fp[indices]), to_row_vector(mu[indices]), vreal1[indices]);
-      } else {
-        lp += log_sum_exp(
-          bernoulli_logit_lpmf(1 | occ[i]) + 
-            emission_1_fp(to_array_1d(fp[indices]), to_row_vector(mu[indices]), vreal1[indices]),
-          bernoulli_logit_lpmf(0 | occ[i]) +
-            emission_0_fp(to_array_1d(vreal1[indices]))
+      lp += log_sum_exp(
+        bernoulli_logit_lpmf(1 | occ[i]) + 
+          emission_1_fp(to_row_vector(mu[indices]), vr[indices], vor[indices]),
+        bernoulli_logit_lpmf(0 | occ[i]) +
+          emission_0_fp(vr[indices])
         );
-      }
     }
     return(lp);
   }
@@ -983,7 +971,7 @@ make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
   )
   
   sf_text1 <- "  real occupancy_multi_colex_fp_lpdf(
-    vector fp, // fp data
+    vector fp,
     vector mu, // linear predictor for detection
     vector occ, // linear predictor for initial occupancy. Elements after vint1[1] irrelevant.
     vector colo, // linear predictor for colonization. Elements after vint2[1] irrelevant.
@@ -993,10 +981,11 @@ make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
     array[] int vint3, // # years per series. Elements after vint1[1] irrelevant.
     array[] int vint4, // # sampling events per unit (n_rep). Elements after vint2[1] irrelevant.
     array[] int vint5, // Indicator for > 0 certain detections (Q). Elements after vint2[1] irrelevant.
-
+    array[] int vint6, // number of blocks. elements after 1 irrelevant
+    array[] int vint7, // integer identifying the block
   // indices for jth unit (first rep) for each series. Elements after vint1[1] irrelevant."
   
-  sf_text2.1 <- paste0("    array[] int vint", 5 + (1:max_year), collapse = ",\n")
+  sf_text2.1 <- paste0("    array[] int vint", 7 + (1:max_year), collapse = ",\n")
   
   sf_text2.2 <- ",\n"
   
@@ -1004,7 +993,11 @@ make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
   
   sf_text3 <- "// indices for jth repeated sampling event to each unit (elements after vint2[1] irrelevant):"
   
-  sf_text4 <- paste0("    array[] int vint", 5 + max_year + (1:max_rep), collapse = ",\n")
+  sf_text4 <- paste0(paste0("    array[] int vint", 7 + max_year + (1:max_rep), collapse = ",\n"), ",")
+  
+  sf_text4.5 <- "    array[] real vreal1, // expected fraction of obs 1s that are true. Elements after vint4[1] irrelevant
+    array[] real vreal2, // P, the PDF for a 1 given true 1
+    array[] real vreal3 // QQ, the PDF for a 1 given true 0 \n"
   
   sf_text5 <- paste0(") {
   // Create array of the unit indices that correspond to each series.
@@ -1013,7 +1006,7 @@ make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
   sf_text6.1 <- "      unit_index_array[,"
   sf_text6.2 <- 1:max_year
   sf_text6.3 <- "] = vint"
-  sf_text6.4 <- 5 + (1:max_year)
+  sf_text6.4 <- 7 + (1:max_year)
   sf_text6.5 <- "[1:vint1[1]];\n"
   sf_text6 <- paste0(sf_text6.1, sf_text6.2, sf_text6.3, sf_text6.4, sf_text6.5, collapse = "")
   
@@ -1024,9 +1017,90 @@ make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
   sf_text8.1 <- "      visit_index_array[,"
   sf_text8.2 <- 1:max_rep
   sf_text8.3 <- "] = vint"
-  sf_text8.4 <- 5 + max_year + (1:max_rep)
+  sf_text8.4 <- 7 + max_year + (1:max_rep)
   sf_text8.5 <- "[1:vint2[1]];\n"
   sf_text8 <- paste0(sf_text8.1, sf_text8.2, sf_text8.3, sf_text8.4, sf_text8.5, collapse = "")
+  
+  
+  sf_text_extra.1 <- "    // find expected number of real ones
+  // first, get occupancy probs for every unit...
+  array[vint1[1], "
+  sf_text_extra.2 <- max_year
+  sf_text_extra.3 <- "] real psi;
+  for(i in 1:vint1[1]){
+    psi[i , 1] = inv_logit(occ[i]);
+  }
+  for(j in 2:"
+  sf_text_extra.4 <- max_year
+  sf_text_extra.5 <- "){
+    for(i in 1:vint1[1]){
+      if(unit_index_array[i, j] != -99){
+        psi[i, j] = psi[i, j-1]*inv_logit(colo[unit_index_array[i,j]]) + (1 - psi[i, j-1])*inv_logit(ex[unit_index_array[i,j]]);
+      }
+    }
+  }
+  // then multiply by the sum of the detection probabilities at that unit
+  array[vint1[1], "
+  sf_text_extra.6 <- max_year
+  sf_text_extra.7 <- "] real expected_ones;
+  for(i in 1:vint1[1]){
+    for(j in 1:"
+  sf_text_extra.8 <- max_year
+  sf_text_extra.9 <- "){
+      if(unit_index_array[i, j] != -99){
+        if(vint4[unit_index_array[i,j]] > 0){
+          expected_ones[i, j] = psi[i, j]*sum(inv_logit(mu[visit_index_array[unit_index_array[i, j], 1:vint4[unit_index_array[i,j]]]]));
+        } else {
+          expected_ones[i, j] = 0;
+        }
+      }
+    }
+  }
+  vector[vint6[1]] eno;
+  vector[vint6[1]] total_size;
+  for(i in 1:vint6[1]){
+    eno[i] = 0;
+    total_size[i] = 0;
+  }
+  for(i in 1:vint1[1]){
+    for(j in 1:"
+  sf_text_extra.10 <- max_year
+  sf_text_extra.11 <- "){
+      if(unit_index_array[i,j] != -99){
+        eno[vint7[unit_index_array[i,j]]] += expected_ones[i, j];
+        total_size[vint7[unit_index_array[i,j]]] += vint4[unit_index_array[i,j]];
+      }
+
+    }
+  }  
+  // expected number of real zeros
+  vector[vint6[1]] enz = total_size - eno;
+  // expected number of false ones
+  vector[vint6[1]] excess_ones = (eno ./ to_vector(vreal1[1:vint6[1]])) - eno;
+  // likelihoods given true zero for 0 and 1
+  vector[vint6[1]] vr1 = excess_ones ./ enz; // population prop of true 0s that are misclassified
+  vector[vint6[1]] vr0 = 1 - vr1; // population prop of true 0s that are not misclassified
+  int N = size(mu);
+  array[N] real vr;
+  for(i in 1:N){
+    if(fp[i] == 0){
+      vr[i] = vr0[vint7[i]];
+    } else {
+      vr[i] = vr1[vint7[i]] * vreal3[i];
+    }
+  }
+  // Likelihood given a true one for 0 and 1
+  array[N] real vor;
+  for(i in 1:N){
+    if(fp[i] == 0){
+      vor[i] = 0;
+    } else {
+      vor[i] = vreal2[i];
+    }
+  }
+  "
+  
+  sf_text_extra <- paste0(sf_text_extra.1,sf_text_extra.2,sf_text_extra.3,sf_text_extra.4,sf_text_extra.5,sf_text_extra.6,sf_text_extra.7,sf_text_extra.8,sf_text_extra.9,sf_text_extra.10,sf_text_extra.11)
   
   sf_text9 <- "  // Initialize and compute log-likelihood
     real lp = 0;
@@ -1040,23 +1114,27 @@ make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
       vector[n_year] colo_i = to_vector(colo[unit_index_array[i,1:n_year]]);
       vector[n_year] ex_i = to_vector(ex[unit_index_array[i,1:n_year]]);
       array[n_year] row_vector[max_obs] det_i;
+      array[n_year] row_vector[max_obs] zl_i;
+      array[n_year] row_vector[max_obs] ol_i;
       
       for (j in 1:n_year) {
         if (n_obs[j] > 0) {
-          fp_i[j, 1:n_obs[j]] = to_array_1d(fp[visit_index_array[unit_index_array[i, j], 1:n_obs[j]]]);
+          zl_i[j, 1:n_obs[j]] = to_row_vector(vr[visit_index_array[unit_index_array[i, j], 1:n_obs[j]]]);
+          ol_i[j, 1:n_obs[j]] = to_row_vector(vor[visit_index_array[unit_index_array[i, j], 1:n_obs[j]]]);
           det_i[j, 1:n_obs[j]] = to_row_vector(mu[visit_index_array[unit_index_array[i, j], 1:n_obs[j]]]);
         }
       }
-      lp += forward_colex_fp(n_year, Q, n_obs, fp_i, occ_i, colo_i, ex_i, det_i);
+      lp += forward_colex_fp(n_year, Q, n_obs, zl_i, ol_i, occ_i, colo_i, ex_i, det_i);
     }
     return(lp);
   }
 "
   
-  out <- paste(sf_text1, sf_text2, sf_text3, sf_text4, sf_text5, sf_text6, 
-               sf_text7, sf_text8, sf_text9, sep = "\n")
+  out <- paste(sf_text1, sf_text2, sf_text3, sf_text4, sf_text4.5, sf_text5, sf_text6, 
+               sf_text7, sf_text8, sf_text_extra, sf_text9, sep = "\n")
   return(out)
 }
+
 
 ##### multi-colex-eq-fp lpdf #####
 #' Create Stan code for likelihood function occupancy_multi_colex_eq_fp_lpdf.
@@ -1075,7 +1153,8 @@ make_occupancy_multi_colex_eq_fp_lpdf <- function (max_rep, max_year) {
     msg = "max_year must be an integer greater than 1"
   )
   sf_text1 <- "  real occupancy_multi_colex_eq_fp_lpdf(
-    vector fp, // fp data
+    vector zl_vec, // likelihood conditional on true zero
+    vector ol_vec, // likelihood conditional on true one
     vector mu, // linear predictor for detection
     vector colo, // linear predictor for colonization. Elements after vint2[1] irrelevant.
     vector ex, // linear predictor for extinction. Elements after vint2[1] irrelevant.
@@ -1139,6 +1218,9 @@ make_occupancy_multi_colex_eq_fp_lpdf <- function (max_rep, max_year) {
         if (n_obs[j] > 0) {
           fp_i[j, 1:n_obs[j]] = to_array_1d(fp[visit_index_array[unit_index_array[i, j], 1:n_obs[j]]]);
           det_i[j, 1:n_obs[j]] = to_row_vector(mu[visit_index_array[unit_index_array[i, j], 1:n_obs[j]]]);
+
+          
+          
         }
       }
       lp += forward_colex_fp(n_year, Q, n_obs, fp_i, occ_i, colo_i, ex_i, det_i);
@@ -1264,7 +1346,3 @@ make_occupancy_single_partial_sum <- function (max_rep) {
   out <- paste(sf_text1, sf_text2, sf_text3, sf_text4, sf_text5, sep = "\n")
   return(out)
 }
-
-
-
-

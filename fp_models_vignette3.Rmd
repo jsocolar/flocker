@@ -306,33 +306,29 @@ and both will pick up new terms when the observation is nonzero.
 
 
 
+```{stan}
 
-
-real emission_0_fp(array[] real zol){
-    // zol gives the likelihood of the observation given a true zero.
-    real out = sum(log(zol)); // the likelihood when the true history is all zeros
+  real emission_0_fp(array[] real zl){
+    // zl gives the likelihood of the observation given a true zero.
+    real out = sum(log(zl)); // the likelihood when the true history is all zeros
     return(out);
   }
     // emission likelihood given that state equals one
-  real emission_1_fp(array[] real fp, row_vector det, array[] real zl) {
-    // fp gives the fp prob
+  real emission_1_fp(row_vector det, array[] real zl, array[] real ol) {
     // det gives logit-detection probabilities
     // zl gives the likelihood of the observation given a true zero
+    // ol gives the likelihood of the observation given a true one
     
     int n = size(fp); // number of reps
     real out = 0;
     for(i in 1:n){
       real ll_true_zero = log(zl[i]) + bernoulli_logit_lpmf(0 | det[i]);
-      if(fp[i] == 0){
-        out += ll_true_zero;  // a true 1 cannot yield an observed 0
-      } else {
-        real ll_true_one = bernoulli_logit_lpmf(1 | det[i]) + R1[i]; // R1 is the normalized pdf given a true 1
-        out += log_sum_exp(ll_true_zero, ll_true_one);
-      }
+      real ll_true_one = log(ol[i]) + bernoulli_logit_lpmf(1 | det[i]);
+      out += log_sum_exp(ll_true_zero, ll_true_one);
     }
     return(out);
   }
 
 
-
+```
 

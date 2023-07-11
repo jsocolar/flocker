@@ -116,7 +116,7 @@ occupancy_single_fp <- function(max_rep) {
     links = c("identity", "identity"),
     type = "real", 
     # Integer aterms (vint) for n_unit, n_rep, rep_index1...
-    vars = c(paste0("vint", seq(3 + max_rep)), "vreal1"),
+    vars = c(paste0("vint", seq(5 + max_rep)), "vreal1, vreal2, vreal3"),
     loop = FALSE)
 }
 
@@ -130,7 +130,7 @@ occupancy_multi_colex_fp <- function(max_year, max_rep) {
     links = c("identity", "identity", "identity", "identity"),
     type = "real", 
     # Integer aterms (vint) for n_unit, n_rep, rep_index1...
-    vars = c(paste0("vint", seq(5 + max_year + max_rep))),
+    vars = c(paste0("vint", seq(7 + max_year + max_rep)), paste0("vreal", seq(3))),
     loop = FALSE)
 }
 
