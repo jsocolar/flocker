@@ -1035,7 +1035,8 @@ make_occupancy_multi_colex_fp_lpdf <- function (max_rep, max_year) {
   sf_text_extra.5 <- "){
     for(i in 1:vint1[1]){
       if(unit_index_array[i, j] != -99){
-        psi[i, j] = psi[i, j-1]*inv_logit(colo[unit_index_array[i,j]]) + (1 - psi[i, j-1])*inv_logit(ex[unit_index_array[i,j]]);
+        psi[i, j] = (1 - psi[i, j-1]) * inv_logit(colo[unit_index_array[i,j]]) + 
+           psi[i, j-1] * (1 - inv_logit(ex[unit_index_array[i,j]]));
       }
     }
   }
