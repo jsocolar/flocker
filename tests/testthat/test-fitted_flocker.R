@@ -1,57 +1,69 @@
 test_that("fitted_flocker works correctly", {
-  # read test-case flocker fit
-  test_fit <- readRDS("../test_data/test_fit.rds")
-
   # new data
   newdat <- expand.grid(uc1 = rnorm(10), 
                         uc2 = rnorm(10), 
-                        species = unique(test_fit$data$species))
+                        ec1 = rnorm(10),
+                        species = unique(example_flocker_model_single$data$species))
   
-  # check default return
-  test_out <- fitted_flocker(test_fit, type = "occupancy")
-  expect_equal(names(test_out), c("estimate", "Q5", "Q95"))
-  # dimensions
-  expect_equal(nrow(test_out), nrow(test_fit$data))
+  # check default CI return
+  test_out <- fitted_flocker(example_flocker_model_single, summarise = TRUE)
+  expect_equal(names(test_out), c("linpred_occ", "linpred_det"))
+  
+  expect_equal(dimnames(test_out$linpred_occ)[[3]], c("mean", "Q5", "Q95"))
   
   # check varying CIs 
-  expect_error(fitted_flocker(test_fit, type = "occupancy", CI = c(0, 2)), 
-               "CI cannot have bounds <0 or >1")
-  expect_error(fitted_flocker(test_fit, type = "occupancy", CI = c(-1, 1)), 
-               "CI cannot have bounds <0 or >1")
-  expect_error(fitted_flocker(test_fit, type = "occupancy", CI = "x"), 
-               "CI should be numeric length 2")
-  expect_error(fitted_flocker(test_fit, type = "occupancy", CI = 1), 
-               "CI should be numeric length 2")
-  test_out <- fitted_flocker(test_fit, type = "occupancy", CI = c(.1, .8))
-  expect_equal(names(test_out), c("estimate", "Q10", "Q80"))
+  
+  expect_error(fitted_flocker(example_flocker_model_single, summarise = TRUE, CI = c(0, 2)), 
+               "CI must be between zero and one inclusive")
+  expect_error(fitted_flocker(example_flocker_model_single, summarise = TRUE, CI = c(-1, 1)), 
+               "CI must be between zero and one inclusive")
+  expect_error(fitted_flocker(example_flocker_model_single, summarise = TRUE, CI = "x"), 
+               "CI must be numeric")
+  expect_error(fitted_flocker(example_flocker_model_single, summarise = TRUE, CI = 1), 
+               "CI must be of length 2")
+  test_out <- fitted_flocker(example_flocker_model_single, summarise = TRUE, CI = c(.1, .8))
+  expect_equal(dimnames(test_out$linpred_occ)[[3]], c("mean", "Q10", "Q80"))
+  
+  test_out <- fitted_flocker(example_flocker_model_single, summarise = TRUE, CI = c(.111, .88))
+  expect_equal(dimnames(test_out$linpred_occ)[[3]], c("mean", "Q11.1", "Q88"))
   
   # check new_data 
-  test_out <- fitted_flocker(test_fit, type = "occupancy", new_data = newdat)
-  expect_equal(names(test_out), c("estimate", "Q5", "Q95"))
-  expect_equal(nrow(test_out), nrow(newdat))
+  test_out <- fitted_flocker(example_flocker_model_single, summarise = TRUE, new_data = newdat)
+  expect_equal(names(test_out), c("linpred_occ", "linpred_det"))
+  expect_equal(names(test_out$linpred_occ), c("mean", "Q5", "Q95"))
+  expect_equal(names(test_out$linpred_det), c("mean", "Q5", "Q95"))
   
-  test_out2 <- fitted_flocker(test_fit, type = "occupancy", new_data = test_fit$data)
-  test_out3 <- fitted_flocker(test_fit, type = "occupancy")
+  expect_equal(nrow(test_out$linpred_occ), nrow(newdat))
+  expect_equal(nrow(test_out$linpred_det), nrow(newdat))
+  
+  new_flocker_dat <- list(data = example_flocker_model_single$data, type = "single")
+  class(new_flocker_dat) <- "flocker_data"
+  
+  test_out2 <- fitted_flocker(example_flocker_model_single, new_data = new_flocker_dat)
+  test_out3 <- fitted_flocker(example_flocker_model_single)
   expect_identical(test_out2, test_out3)
   
   # check error for missing predictor column
-  expect_error(fitted_flocker(test_fit, type = "occupancy", new_data = newdat[,-1]), 
-               "The following variables can neither be found in 'data' nor in 'data2':\n'uc1'")
+  expect_error(fitted_flocker(example_flocker_model_single, new_data = newdat[,-1]), 
+               "new_data is missing columns required by flocker_fit")
   
   # check non-summary version: 
-  test_out <- fitted_flocker(test_fit, type = "occupancy", summarise = F)
-  expect_equal(colnames(test_out), paste0("iter_", 1:brms::ndraws(test_fit)))
-  expect_equal(dim(test_out), c(nrow(test_fit$data), brms::ndraws(test_fit)))
+  test_out <- fitted_flocker(example_flocker_model_single)
+  expect_equal(dimnames(test_out$linpred_occ)[[3]], paste0("draw_", 1:brms::ndraws(example_flocker_model_single)))
+  expect_equal(
+    dim(test_out$linpred_occ), 
+    c(
+      example_flocker_model_single$data$ff_n_unit[1], 
+      max(example_flocker_model_single$data$ff_n_rep),
+      brms::ndraws(example_flocker_model_single)))
   
   # check new levels
-  newdat2 <- expand.grid(uc1 = rnorm(10),
-                        uc2 = rnorm(10),
-                        species = "A")
-  expect_error(fitted_flocker(test_fit, type = "occupancy", new_data = newdat2),
-               "Levels 'A' of grouping factor 'species' cannot be found in the fitted model")
+  newdat2 <- newdat
+  levels(newdat2$species) <- c(levels(newdat2$species), "Morphnus_guianensis")
+  newdat2$species[1] <- "Morphnus_guianensis"
+  expect_error(fitted_flocker(example_flocker_model_single, new_data = newdat2),
+               "Levels 'Morphnus_guianensis' of grouping factor 'species' cannot be found in the fitted model")
 
-  expect_equal(names(fitted_flocker(test_fit, type = "occupancy", new_data = newdat2, allow_new_levels = T)),
-               c("estimate", "Q5", "Q95"))
-
-  # to add: detection and both checks
+  expect_equal(names(fitted_flocker(example_flocker_model_single, new_data = newdat2, allow_new_levels = T)),
+               c("linpred_occ", "linpred_det"))
 })

@@ -1,33 +1,47 @@
 Package: flocker
 Version: 0.1-0
-Title: Flexible occupancy estimation in R
+Title: Flexible Occupancy Estimation in R
 Authors@R: 
     c(person("Jacob B.", "Socolar", email = "jacob.socolar@gmail.com",
              role = c("aut", "cre")),
       person("Simon C.", "Mills", role = c("aut")),
       person("Paul-Christian", "Bürkner", role = c("ctb")))
 Depends: 
-	R (>= 3.5.0)
+	R (>= 4.1.0)
 Imports:
 	brms (>= 2.16.0),
-	rstan (>= 2.21.0),
-	posterior (>= 1.0.0),
+	cmdstanr (>= 0.4.0),
 	loo (>= 2.0.0),
 	stats,
 	boot,
-	matrixStats
+	matrixStats,
+	assertthat,
+	abind,
+	withr,
+	MASS
 Suggests:
     testthat (>= 2.1.0),
-    cmdstanr (>= 0.4.0),
     knitr,
     rmarkdown,
-    ape
+    ape,
+    posterior (>= 1.0.0),
+    rstan,
+    tibble
 Remotes: 
 	stan-dev/cmdstanr
-Description: flocker provides functionality to fit flexible occupancy models
+Description: Fit flexible occupancy models in Stan via brms. Flocker brings 
+   the full variety of brms effects structures to the relevant distributional 
+   terms in multiple classes of occupancy model, including standard 
+   single-season models, models with data augmentation for never-observed 
+   species, dynamic (multiseason) models with explicit colonization and 
+   extinction processes, and dynamic models with autologistic occupancy 
+   dynamics. Depending on the model class, flocker can specify formulas for any 
+   of occupancy, detection, colonization, extinction, and/or the autologistic 
+   term.
 Encoding: UTF-8
-License: BSD_3_clause
+License: BSD_3_clause + file LICENSE
 URL: https://github.com/jsocolar/flocker
 BugReports: https://github.com/jsocolar/flocker/issues
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.3
 VignetteBuilder: knitr
+LazyData: true

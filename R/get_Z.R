@@ -1,120 +1,123 @@
-#' Get posterior distribution of Z matrix
+#' Get posterior distribution of the Z matrix
 #' @param flocker_fit A flocker_fit object
-#' @param n_iter The number of posterior iterations desired. If `NULL`, use
-#'     all available posterior iterations.
-#' @param hist_condition Should the posterior distribution for Z directly 
+#' @param draw_ids Vector of indices of the posterior draws to be 
+#'     used. If `NULL` (the default) all draws are used in their native order. 
+#' @param history_condition Should the posterior distribution for Z directly 
 #'     condition on the observed detection history (`TRUE`) or not (`FALSE`)?
 #'     For example, at sites with at least one detection, the true occupancy 
 #'     state conditioned on the history is one with absolute certainty. Without 
 #'     directly conditioning on the history, the occupancy state is controlled 
-#'     by the posterior distribution for the occupancy probability psi. Of 
-#'     course even without conditioning directly on the detection history, we 
-#'     still condition indirectly on the observed history via the fitted value 
-#'     of psi, which itself depends on all of the observed detection histories.
-#' @param new_data Optional new data at which to predict the Z matrix. Generally
-#'     the output of `make_flocker_data`. Cannot be used if `hist_condition` is
-#'     set to `TRUE`.
-#' @param sample_new_levels If new_data is provided and contains random effect
+#'     by the posterior distribution for the occupancy probability psi.
+#' @param sample Should the return be posterior probabilities of occupancy (FALSE),
+#'     or bernoulli samples from those probabilities (TRUE)
+#' @param new_data Optional new data at which to predict the Z matrix. Can be 
+#'     the output of `make_flocker_data` or the `unit_covs` input to 
+#'     `make_flocker_data` provided that `history_condition` is `FALSE`
+#' @param allow_new_levels allow new levels for random effect terms in `new_data`?
+#'     Will error if set to `FALSE` and new levels are provided in `new_data`.
+#' @param sample_new_levels If `new_data` is provided and contains random effect
 #'     levels not present in the original data, how should predictions be
-#'     handled? Passed directly to brms::prepare_predictions, which see. 
-#' @return The posterior Z matrix. Rows are iterations and columns
-#'     are closure-units. Values are samples from the posterior distribution
-#'     of occupancy probability.
+#'     handled? Passed directly to `brms::prepare_predictions`, which see. 
+#' @return The posterior Z matrix in the shape of the first visit in `obs` as
+#'     passed to make_flocker_data, with posterior iterations stacked along the
+#'     final dimension
 #' @export
-
-get_Z <- function (flocker_fit, n_iter = NULL, hist_condition = TRUE, 
-                   new_data = NULL, sample_new_levels = "uncertainty") {
-  if (!is_flocker_fit(flocker_fit)) {
-    stop("flocker_fit must be an object of class `flocker_fit`")
-  }
+#' @examples
+#' \dontrun{
+#' get_Z(example_flocker_model_single)
+#' }
+get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE, 
+                   sample = FALSE,
+                   new_data = NULL, allow_new_levels = FALSE, 
+                   sample_new_levels = "uncertainty") {
+  # Input checking and processing
+  assertthat::assert_that(
+    is_one_logical(history_condition),
+    msg = "history_condition must be a single logical value"
+  )
+  assertthat::assert_that(
+    !history_condition | is_flocker_data(new_data) | is.null(new_data),
+    msg = "conditioning on observed detection histories while using the `new_data` argument requires passing a `flocker_data` object, not a dataframe"
+  )
   
-  total_iter <- brms::niterations(flocker_fit)*brms::nchains(flocker_fit)
-  
-  if (is.null(n_iter)) {
-    n_iter <- total_iter
-  }
-  
-  n_iter <- as.integer(n_iter)
-  
-  if ((length(n_iter) != 1) | is.na(n_iter)) {
-    stop("iter, if supplied, must be a single integer")
-  }
-  
-  if (n_iter > total_iter) {
-    stop("requested more iterations than contained in flocker_fit")
-  }
-  
-  if (!is.logical(hist_condition)) {
-    stop("hist_condition must be logical")
-  }
-  
-  if (is.null(new_data)) {
-    new_data <- flocker_fit$data
-  } else if (hist_condition) {
-    stop("cannot condition on Q if new_data is provided")
-  } else if (!("flocker_data" %in% class(new_data))) {
-    stop("new_data, if provided, must be a `flocker_data` object as produced by 
-         `make_flocker_data`")
+  if (is.null(draw_ids)) {
+    n_iter <- brms::ndraws(flocker_fit)
   } else {
-    new_data <- new_data$data
+    n_iter <- length(draw_ids)
   }
   
+  lps <- fitted_flocker(
+    flocker_fit, draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
+    sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
+  )
   
-  lpo <- t(fitted_flocker(flocker_fit, type="occupancy", ndraws = n_iter, 
-                          new_data = new_data, 
-                          summarise = F, allow_new_levels = TRUE, 
-                          sample_new_levels = sample_new_levels,
-                          response = F))
-  
-  lpd <- t(fitted_flocker(flocker_fit, type="detection", ndraws = n_iter, 
-                          new_data = new_data, 
-                          summarise = F, allow_new_levels = TRUE, 
-                          sample_new_levels = sample_new_levels, 
-                          response = F))
+  if(history_condition) {
+    if(is.null(new_data)){
+      gp <- get_positions(flocker_fit)
+      obs <- matrix(flocker_fit$data$ff_y[gp], nrow = nrow(gp), ncol = ncol(gp))
+    } else {
+      gp <- get_positions(new_data)
+      obs <- matrix(new_data$ff_y[gp], nrow = nrow(gp), ncol = ncol(gp))
+    }
+  }
   
   lik_type <- type_flocker_fit(flocker_fit)
   
-  if (lik_type == "V") {
-    n_unit <- new_data$n_unit[1]
-    lpo <- lpo[, 1:n_unit]
-  } else {
-    n_unit <- nrow(new_data)
-  }
-  
-  psi_all <- boot::inv.logit(lpo)
-  Z <- matrix(data = 1, nrow = n_iter, ncol = n_unit)
-  
-  if (!hist_condition) { # if not conditioning on detection history
-    Z <- psi_all 
-  } else { # if conditioning on detection history
-    antitheta_all <- boot::inv.logit(-lpd) 
-    if (lik_type == "V") {
-      index_matrix <- new_data[grep("^rep_index", names(new_data))] 
-      Q <- as.integer(new_data$Q[1:n_unit]) # get Q
-      for (i in 1:n_unit) {
-        if (Q[i] == 0L) { # if Q is 0
-          psi <- psi_all[ , i]
-          antitheta <- antitheta_all[ , as.integer(index_matrix[1:new_data$n_rep[i], i])]
-          numerator <- psi * matrixStats::rowProds(antitheta)
-          denominator <- numerator + (1 - psi)
-          Z[, i] <- numerator/denominator
-        }
+  if (lik_type == "single") {
+    lpo <- lps$linpred_occ[ , 1, ] # first index is unit, second is visit, third is draw
+    n_unit <- nrow(lpo)
+    psi_all <- boot::inv.logit(lpo)
+    Z <- matrix(nrow = n_unit, ncol = n_iter)
+    
+    assertthat::assert_that(identical(dim(psi_all), dim(Z)))
+    
+    if (!history_condition){
+      if(sample) {
+        Z <- matrix(stats::rbinom(length(psi_all), 1, psi_all), n_unit, n_iter)
+      } else {
+        Z <- psi_all
       }
-    } else { # lik_type == "C"
-      Q <- as.integer(new_data$n_suc > 0)
-      Z <- matrix(data = 1, nrow = n_iter, ncol = n_unit)
-      for (i in 1:n_unit) {
-        if (Q[i] == 0L) {
-          psi <- psi_all[, i]
-          antitheta <- antitheta_all[, i]
-          numerator <- psi * antitheta^new_data$n_trial[i] 
-          denominator <- numerator + (1 - psi) 
-          Z[, i] <- numerator/denominator
-        }
+    } else {
+      theta_all <- boot::inv.logit(lps$linpred_det)
+      
+      # get emission likelihoods
+      el_0 <- el_1 <- matrix(nrow = nrow(psi_all), ncol = ncol(psi_all))
+      
+      for(i in seq_len(ncol(psi_all))){
+        el_0[ , i] <- mapply(function(a, b){emission_likelihood(0, a, b)}, asplit(obs, 1), asplit(theta_all[ , , i], 1))
+        el_1[ , i] <- mapply(function(a, b){emission_likelihood(1, a, b)}, asplit(obs, 1), asplit(theta_all[ , , i], 1))
+      }
+      
+      assertthat::assert_that(identical(dim(psi_all), dim(el_0)))
+      
+      hc <- (psi_all * el_1)/(psi_all * el_1 + (1 - psi_all) * el_0)
+      
+      if(sample) {
+        Z <- matrix(stats::rbinom(length(hc), 1, hc), n_unit, n_iter)
+      } else {
+        Z <- hc
       }
     }
+  } else if (lik_type == "single_C") {
+    stop("get_Z not yet implmented for rep-constant models")
+  } else if (lik_type == "augmented") {
+    stop("get_Z not yet implmented for augmented models")
+  } else if (lik_type == "multi_colex") {
+    stop("get_Z not yet implmented for dynamic models")
+  } else if (lik_type == "multi_colex_eq") {
+    stop("get_Z not yet implmented for dynamic models")
+  } else if (lik_type == "multi_autologistic") {
+    stop("get_Z not yet implmented for dynamic models")
+  } else if (lik_type == "multi_autologistic_eq") {
+    stop("get_Z not yet implmented for dynamic models")
+  } else if (lik_type == "single_fp") {
+    stop("get_Z not yet implmented for false positive")
+  } else if (lik_type == "multi_colex_fp") {
+    stop("get_Z not yet implmented for dynamic models")
+  } else if (lik_type == "multi_colex_eq_fp") {
+    stop("get_Z not yet implmented for dynamic models")
   }
-
+  
   class(Z) <- c("postZ", "matrix")
-  return(Z)
+  Z
 }

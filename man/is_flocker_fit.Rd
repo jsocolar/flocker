@@ -9,6 +9,9 @@ is_flocker_fit(x)
 \arguments{
 \item{x}{object to be tested}
 }
+\value{
+logical
+}
 \description{
 Test whether an object is of class flocker_fit
 }

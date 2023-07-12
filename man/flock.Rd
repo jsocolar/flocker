@@ -4,19 +4,67 @@
 \alias{flock}
 \title{Fit an occupancy model}
 \usage{
-flock(f_occ, f_det, flocker_data, data2 = NULL, rep_constant = FALSE, ...)
+flock(
+  f_occ = NULL,
+  f_det,
+  flocker_data,
+  data2 = NULL,
+  multiseason = NULL,
+  f_col = NULL,
+  f_ex = NULL,
+  multi_init = NULL,
+  f_auto = NULL,
+  augmented = FALSE,
+  fp = FALSE,
+  threads = NULL,
+  ...
+)
 }
 \arguments{
-\item{f_occ}{A brms-type model formula for occupancy. Must begin with "~".}
+\item{f_occ}{A brms-type model formula for occupancy. If provided, must begin 
+with "~".}
 
 \item{f_det}{A brms-type model formula for detection. Must begin with "~".}
 
 \item{flocker_data}{data, generally the output of \code{make_flocker_data()}.}
 
-\item{data2}{additional data (e.g. a covariance matrix for a phylogenetic effect)}
+\item{data2}{additional data (e.g. a covariance matrix for a phylogenetic 
+effect)}
 
-\item{rep_constant}{A logical indicator. Are detection probabilities constant 
-across repeated sampling events within closure units?}
+\item{multiseason}{Must be NULL (the default) or one of "colex" or 
+"autologistic". If NULL, data must be formatted for a single-season model.
+Otherwise, the data must be formatted for a multiseason model. If "colex", a 
+colonization-extinction model will be fit, and `f_col` and `f_ex` must be 
+specified. If "autologistic", an autologistic model will be fit, and `f_col`
+and `f_ex` must both be NULL.}
+
+\item{f_col}{A brms-type model formula for colonization in 
+colonization-extinction dynamic models. If provided, must begin with "~".}
+
+\item{f_ex}{A brms-type model formula for extinction probabilities in 
+colonization-extinction dynamic models. If provided, must begin with "~".}
+
+\item{multi_init}{Must be NULL unless the model is a dynamic (multiseason)
+model, in which case must be either "explicit" or "equilibrium". 
+If "explicit", then `f_occ` must be provided to model occupancy
+probabilities in the first timestep. If "equilibrium", then `f_occ` must be
+`NULL` and the initial occupancy probabilities are assumed to be the 
+(possibly site-specific) equilibrium probabilities from the colonization-
+extinction dynamics.}
+
+\item{f_auto}{Relevant only for autologistic models. A brms-type model 
+formula for the autologistic offset parameter (theta). If provided, must 
+begin with "~".}
+
+\item{augmented}{Logical. Must be TRUE if data are formatted for a 
+data-augmented multi-species model, and FALSE otherwise.}
+
+\item{fp}{logical. If data are formatted for an fp model, must be set to
+TRUE, otherwise to FALSE.}
+
+\item{threads}{NULL or positive integer. If integer, the number of threads
+to use per chain in within chain parallelization. Currently available only
+with single-season rep-constant models, and must be set to NULL otherwise.}
 
 \item{...}{additional arguments passed to \code{brms::brm()}}
 }
@@ -28,12 +76,16 @@ Fit an occupancy model
 }
 \examples{
 \dontrun{
-example_data <- example_flocker_data()
-fd <- make_flocker_data(example_data$obs, example_data$unit_covs, example_data$event_covs)
+fd <- make_flocker_data(
+ example_flocker_data$obs, 
+ example_flocker_data$unit_covs,
+ example_flocker_data$event_covs
+)
 flock(f_occ = ~ uc1 + s(uc2) + (1|grp),
           f_det = ~ uc1 + ec1 + s(ec2) + (1|grp),
           flocker_data = fd,
           refresh = 50, chains = 1, warmup = 5, iter = 200,
-          adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123)
+          adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123,
+          backend = "cmdstanr")
 }
 }

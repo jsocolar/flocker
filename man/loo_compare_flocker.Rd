@@ -11,8 +11,15 @@ loo_compare_flocker(model_list, model_names = NULL, thin = NULL)
 
 \item{model_names}{An optional vector of names for the models.}
 
-\item{thin}{specify the amount of thinning required. 1 or NULL implies no thinning, 2 implies every other value, 3 every third, etc.}
+\item{thin}{specify the amount of thinning required. 1 or NULL results in no 
+thinning, 2 retains every other value, 3 every third, etc.}
 }
 \description{
 LOO comparisons for flocker models.
+}
+\examples{
+\dontrun{
+ml <- rep(list(example_flocker_model_single), 3)
+loo_compare_flocker(ml)
+}
 }
