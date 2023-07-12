@@ -100,7 +100,7 @@ make_occupancy_augmented_lpmf <- function (max_rep) {
     array[] int vint3, // Indicator for > 0 detections (Q). Elements after vint1[1] irrelevant.
     
     array[] int vint4, // # species (observed + augmented). Elements after 1 irrelevant.
-    array[] int vint5, // # Indicator for species was observed.  Elements after vint4[1] irrelevant
+    array[] int vint5, // Indicator for species was observed.  Elements after vint4[1] irrelevant
     
     array[] int vint6, // species
   
@@ -201,10 +201,47 @@ make_emission_0_fp <- function () {
         sep = "\n")
 }
 
+
+
 #' Create Stan code for the emission log-likelihood given that the true state 
 #'   equals one in a fp model.
 #' @return Character string of Stan code corresponding to emission_1_fp
 make_emission_1_fp <- function() {
+  paste(
+    "  // emission likelihood given that state equals one",
+    "  real emission_1_fp(array[] real fp, row_vector det) {",
+    "    // fp gives the probability that the true data is a one.",
+    "    // det gives logit-detection probabilities",
+    "    ",
+    "    int n = size(fp); // number of reps",
+    "    ",
+    "    real out = 0;",
+    "    ",
+    "    for(i in 1:n){",
+    "      out += log_sum_exp(",
+    "        log(fp[i]) + bernoulli_logit_lpmf(1 | det[i]),",
+    "        log1m(fp[i]) + bernoulli_logit_lpmf(0 | det[i])",
+    "      );",
+    "    }",
+    "    ",
+    "    return(out);",
+    "  }",
+    sep = "\n"
+  )
+}
+
+#' Create legacy Stan code for the emission log-likelihood given that the true state 
+#'   equals one in a fp model.
+#' @return Character string of Stan code corresponding to emission_1_fp
+#' @details this legacy function is deprecated; it has been verified to be
+#'   numberically equivalent to the much simpler and more efficient 
+#'   `make_emission_1_fp`. I'm keeping it around because I can imagine a
+#'   possibility that it could be useful to directly marginalize over all the 
+#'   possible histories in a model where detections conditional on occupancy
+#'   are expected to be autocorrelated. As of renaming and deprecation of this, 
+#'   function in April 2023, there are no plans to enable such a model in 
+#'   flocker.
+make_emission_1_fp_legacy <- function() {
   paste("  // emission likelihood given that state equals one",
         "  real emission_1_fp(array[] real fp, row_vector det) {",
         "    // fp gives the probability that the true data is a one.",

@@ -114,13 +114,12 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
   Z_samp_array <- abind::abind(rep(list(Z_samp), dim(theta_all)[2]), along = ndim) |>
     aperm(perm = c(1, ndim, (2:(ndim - 1))))
   
-  
   assertthat::assert_that(
     identical(dim(theta_all), dim(Z_samp_array)),
     msg = "this shouldn't happen; please report a bug"
   )
   
-  predictions <- array(stats::rbinom(length(theta_all), 1, theta_all * Z_samp_array), dim = dim(theta_all))
+  predictions <- new_array(theta_all, stats::rbinom(length(theta_all), 1, theta_all * Z_samp_array))
   
   predictions
 }

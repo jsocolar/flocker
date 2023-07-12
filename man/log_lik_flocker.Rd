@@ -12,11 +12,18 @@ log_lik_flocker(flocker_fit, draw_ids = NULL)
 \item{draw_ids}{the draw ids to compute log-likelihoods for. Defaults to using the full posterior.}
 }
 \value{
-A unit-wise or series-wise posterior log-likelihood matrix, where iterations are rows and 
-   units/series are columns
+A posterior log-likelihood matrix, where iterations are rows and 
+   units, series, or species are columns.
 }
 \description{
 Compute unit-wise or series-wise log-likelihood matrix for a flocker_fit object
+}
+\details{
+In single-season models, rows are units (e.g. points or 
+  species-points; suitable for leave-one-unit-out CV). In multiseason models, 
+  rows are series (i.e. points or species-points, suitable for 
+  leave-one-series-out CV). In augmented models, rows are species (suitable
+  for leave-one-species-out CV).
 }
 \examples{
 \dontrun{

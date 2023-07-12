@@ -180,15 +180,15 @@ sfd <- function(
       Sigma <- matrix(.5, nrow = n_coef, ncol = n_coef)
       diag(Sigma) <- 1
       if(augmented){ # fiddle with variances to encourage never-detected species in the data
-        Sigma[which(coef_names == "det_intercept"), ] <- 3 * Sigma[which(coef_names == "det_intercept"), ]
-        Sigma[, which(coef_names == "det_intercept")] <- 3 * Sigma[, which(coef_names == "det_intercept")]
-        Sigma[which(coef_names == "occ_intercept"), ] <- 3 * Sigma[which(coef_names == "occ_intercept"), ]
-        Sigma[, which(coef_names == "occ_intercept")] <- 3 * Sigma[, which(coef_names == "occ_intercept")]
-        Sigma[which(coef_names == "det_slope_unit"), ] <- .1 * Sigma[which(coef_names == "det_slope_unit"), ]
-        Sigma[, which(coef_names == "det_slope_unit")] <- .1 * Sigma[, which(coef_names == "det_slope_unit")]
+        Sigma[which(coef_names == "det_intercept"), ] <- 1.7 * Sigma[which(coef_names == "det_intercept"), ]
+        Sigma[, which(coef_names == "det_intercept")] <- 1.7 * Sigma[, which(coef_names == "det_intercept")]
+        Sigma[which(coef_names == "occ_intercept"), ] <- 1.7 * Sigma[which(coef_names == "occ_intercept"), ]
+        Sigma[, which(coef_names == "occ_intercept")] <- 1.7 * Sigma[, which(coef_names == "occ_intercept")]
+        Sigma[which(coef_names == "det_slope_unit"), ] <- .3 * Sigma[which(coef_names == "det_slope_unit"), ]
+        Sigma[, which(coef_names == "det_slope_unit")] <- .3 * Sigma[, which(coef_names == "det_slope_unit")]
         if(!rep_constant) {
-          Sigma[which(coef_names == "det_slope_visit"), ] <- .1 * Sigma[which(coef_names == "det_slope_visit"), ]
-          Sigma[, which(coef_names == "det_slope_visit")] <- .1 * Sigma[, which(coef_names == "det_slope_visit")]
+          Sigma[which(coef_names == "det_slope_visit"), ] <- .3 * Sigma[which(coef_names == "det_slope_visit"), ]
+          Sigma[, which(coef_names == "det_slope_visit")] <- .3 * Sigma[, which(coef_names == "det_slope_visit")]
         }
       }
       params$Sigma <- Sigma
@@ -333,7 +333,7 @@ sfd <- function(
     # other detections are categorized as {true detections with prob. fp} with
     # probability so as to imply that on average a fraction fp of detections 
     # are true
-    n_fail <- stats::rnbinom(1, n_succ, fp) # this is approximate, but a pretty good one
+    n_fail <- extended_binomial_rng(fp, n_succ) - n_succ
     n_zeros <- sum(!visit_full$obs)
     if(n_fail > n_zeros) {
       stop(
@@ -403,9 +403,10 @@ sfd <- function(
       assertthat::assert_that(isTRUE(all.equal(rownames(obs_temp[[1]]), rownames(event_covs$ec1))))
     }
     
+    # match just returns the positions of the first match
     ub2 <- unit_backbone[match(rownames(obs_temp[[1]]), paste0("X", unit_backbone$id_point)), ]
     assertthat::assert_that(all.equal(rownames(obs_temp[[1]]), paste0("X", ub2$id_point)))
-    unit_covs = ub2[c("uc1", "species")]
+    unit_covs = ub2[c("uc1")]
     
     out <- list(
       obs = remove_rownames(abind::abind(obs_temp, along = 3)),

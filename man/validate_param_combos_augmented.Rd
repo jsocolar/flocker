@@ -39,7 +39,7 @@ validate_param_combos_augmented(
 
 \item{fp}{false positive flag}
 
-\item{threads}{threads flag}
+\item{threads}{threads number}
 }
 \value{
 silent if parameters are valid

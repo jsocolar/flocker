@@ -9,12 +9,12 @@ emission_likelihood(state, obs, det)
 \arguments{
 \item{state}{Compute the emission likelihood for absence (0) or presence (1)}
 
-\item{obs}{The observation history for the unit}
+\item{obs}{A matrix of observation histories. Rows are units, columns are visits.}
 
-\item{det}{The detection probabilities at the unit}
+\item{det}{A matrix of detection probabilities}
 }
 \value{
-the emission likelihood
+a vector of emission likelihoods (one per row)
 }
 \description{
 Get emission likelihoods given observations and detection probabilities

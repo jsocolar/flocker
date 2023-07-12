@@ -31,6 +31,28 @@ log1m_inv_logit <- function (x) {
   return(out)
 }
 
+
+#' extended binomial RNG
+#' @param p binomial probability
+#' @param s number of successes
+#' @return a sample representing a possible number of trials
+#' @details random samples `y` from the distribution proportional to 
+#'   binomial_pmf(y | n, s)
+extended_binomial_rng <- function(p, s) {
+  assertthat::assert_that(is.numeric(p) & length(p) == 1)
+  assertthat::assert_that(is_one_pos_int(s))
+  assertthat::assert_that(p > 0 & p <= 1)
+  
+  r <- stats::runif(length(p))
+  c <- 0
+  y <- s - 1
+  while(c < r){
+    y <- y + 1
+    c <- c + p * stats::dbinom(s, y, p)
+  }
+  y
+}
+
 ##### array manipulation #####
 #' convert matrix-like object to long vector format
 #' @param m matrix-like object to expand
@@ -83,6 +105,23 @@ stack_matrix <- function (m, n) {
     msg = "input not two-dimensional"
   )
   do.call(rbind, replicate(n, m, simplify=FALSE))
+}
+
+#' create a new matrix with the dimensions of an old matrix
+#' @param m old matrix
+#' @param data passed to the data argument of matrix()
+#' @param byrow passed to the byrow argument of matrix()
+#' @return new matrix
+new_matrix <- function(m, data = NA, byrow = FALSE){
+  matrix(data, nrow = nrow(m), ncol = ncol(m), byrow = byrow)
+}
+
+#' create a new array with the dimensions of an old array
+#' @param m old array
+#' @param data passed to the data argument of array()
+#' @return new array
+new_array <- function(m, data = NA){
+  array(data, dim = dim(m))
 }
 
 ##### Bookkeeping #####
@@ -235,7 +274,7 @@ type_flocker_fit <- function(x) {
 params_by_type <- list(
   single = c("occ", "det"),
   single_C = c("occ", "det"),
-  augmented = c("occ", "det", "omega"),
+  augmented = c("occ", "det", "Omega"),
   multi_colex = c("occ", "colo", "ex", "det"),
   multi_colex_eq = c("colo", "ex", "det"),
   multi_autologistic = c("occ", "colo", "auto", "det"),
@@ -313,6 +352,9 @@ get_positions <- function(data_object, unit_level = FALSE) {
       visit_id <- rep_pos[2]
       sp_id <- the_data$ff_species[r]
       site_id <- unit_id %% n_site
+      if(site_id == 0){
+        site_id <- n_site
+      }
       index_array[site_id, visit_id, sp_id] <- r
     }
     if(!unit_level) {
@@ -362,36 +404,51 @@ get_positions <- function(data_object, unit_level = FALSE) {
 
 #' Get emission likelihoods given observations and detection probabilities
 #' @param state Compute the emission likelihood for absence (0) or presence (1)
-#' @param obs The observation history for the unit
-#' @param det The detection probabilities at the unit
-#' @return the emission likelihood
+#' @param obs A matrix of observation histories. Rows are units, columns are visits.
+#' @param det A matrix of detection probabilities
+#' @return a vector of emission likelihoods (one per row)
 emission_likelihood <- function(state, obs, det) {
-  assertthat::assert_that(state %in% c(0, 1), msg = "the state must be zero or one")
+  assertthat::assert_that(is.numeric(state))
+  assertthat::assert_that(
+    isTRUE(state == 0) | isTRUE(state == 1), 
+    msg = "the state must be zero or one"
+  )
+  assertthat::assert_that(inherits(obs, "matrix"))
+  assertthat::assert_that(inherits(det, "matrix"))
   assertthat::assert_that(all(obs >= 0, na.rm = TRUE) & all(obs <= 1, na.rm = TRUE))
   assertthat::assert_that(all(det >= 0, na.rm = TRUE) & all(det <= 1, na.rm = TRUE))
-  assertthat::assert_that(length(obs) == length(det))
-
-  nna <- !is.na(obs)
+  assertthat::assert_that(identical(dim(obs), dim(det)))
   
-  if(sum(nna) == 0){
-    return(1)
-  }
-  
-  obs <- obs[nna]
-  det <- det[nna]
-  assertthat::assert_that(!any(is.na(det)))
+  # make sure there are no obs for which det is NA.
+  assertthat::assert_that(all(which(is.na(det)) %in% which(is.na(obs))))
 
   if(state == 0){
-    out <- prod(1 - obs)
+    out <- apply(1 - obs, 1, prod, na.rm = TRUE)
   } else {
-    out <- prod((1 - obs) * (1 - det) + obs * det)
+    out <- apply((1 - obs) * (1 - det) + (obs * det), 1, prod, na.rm = TRUE)
   }
-  
   out
 }
 
 
-
+#' get Z given emission likelihoods and state probability
+#' @param el0 emission likelihood given state 0
+#' @param el1 emission likelihood given state 1
+#' @param psi_unconditional occupancy probability not conditioned on observation
+#' @return occupancy probability conditioned on observation
+Z_from_emission <- function(el0, el1, psi_unconditional){
+  assertthat::assert_that(length(el0) == length(el1))
+  assertthat::assert_that(length(el0) == length(psi_unconditional))
+  
+  all_vals <- c(el0, el1, psi_unconditional)
+  assertthat::assert_that(!any(is.na(all_vals)))
+  assertthat::assert_that(all(all_vals >= 0))
+  assertthat::assert_that(all(all_vals <= 1))
+  
+  out <- psi_unconditional * el1 / 
+    (psi_unconditional * el1 + (1 - psi_unconditional) * el0)
+  out
+}
 
 ##### Misc #####
 #' Check validity of params passed to `flock`
@@ -405,7 +462,7 @@ emission_likelihood <- function(state, obs, det) {
 #' @param f_auto autologistic formula
 #' @param augmented augmented flag
 #' @param fp false positive flag
-#' @param threads threads flag
+#' @param threads threads number
 #' @return silent if parameters are valid
 validate_flock_params <- function(f_occ, f_det, flocker_data,
                                   multiseason, f_col, f_ex, multi_init, f_auto,
@@ -487,8 +544,7 @@ validate_params_individually <- function(f_occ, f_det, flocker_data,
   
   # Check that threads is valid
   assertthat::assert_that(
-    is.null(threads) | 
-      isTRUE((length(threads) == 1) & (threads > 0) & (threads == as.integer(threads))),
+    is.null(threads) | is_one_pos_int(threads),
     msg = "threads must be null or a positive integer"
   )
 }
@@ -695,10 +751,6 @@ validate_param_combos_multi <- function(f_occ, f_det, flocker_data,
     )
     assertthat::assert_that(
       is.null(f_ex), msg = "f_ex must be NULL in autologistic models"
-    )
-
-    assertthat::assert_that(
-      !fp, msg = "fp likelihoods not yet implemented in autologistic models"
     )
   }
   

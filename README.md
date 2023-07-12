@@ -14,9 +14,8 @@ included are functions to format data for occupancy modeling and functions
 for model post-processing, including posterior predictions, the posterior
 distribution of the latent true occupancy state, and model comparison. 
 `flocker` is under active development: development priorities include better 
-integrated functionality for posterior predictive checking in single-season
-models and integration of multiple post-processing tools on for other model 
-types.
+integrated functionality for posterior predictive checking and full
+cross-validation.
 
 Compared to existing R packages for fitting occupancy models, `flocker` is 
 substantially more flexible in the variety of single-season models that can 
@@ -34,9 +33,9 @@ Install `flocker` in R with
 # install.packages("remotes")
 remotes::install_github("jsocolar/flocker")
 ```
-`flocker` requires a working version of either Rstan or cmdstan, which are 
+`flocker` requires a working version of either `rstan` or `cmdstan`, which are 
 interfaces to [Stan](https://mc-stan.org/), a state-of-the-art the 
-probabilistic programming language. We recommend using cmdstan if possible.
+probabilistic programming language. We recommend using `cmdstan` if possible.
 To do so, first install R package `cmdstanr` with
 ```
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
@@ -46,20 +45,19 @@ You must additionally install cmdstan itself. We strongly recommend using
 ```
 cmdstanr::install_cmdstan()
 ```
-If using Rstan, we strongly recommend 
-installing the development version rather than the CRAN version. In a fresh 
-R session, do
+If using `rstan`, we strongly recommend installing the development version rather than 
+the CRAN version. In a fresh R session, do
 ```
 # Uncomment the next line if you have previously installed rstan
 # remove.packages(c("StanHeaders", "rstan"))
 install.packages("StanHeaders", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
-Both Rstan and cmdstan require a working C++ toolchain, which has posed occasional 
+Both `rstan` and `cmdstan` require a working C++ toolchain, which has posed occasional 
 complications for Stan users. 
 [See here](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started) for 
-Rstan-focused advice on installing the toolchain, and 
-[see here](https://mc-stan.org/cmdstanr/articles/cmdstanr.html) for cmdstan-focused 
+`rstan` focused advice on installing the toolchain, and 
+[see here](https://mc-stan.org/cmdstanr/articles/cmdstanr.html) for `cmdstan` focused 
 advice. If you encounter toolchain issues that you are unable to troubleshoot, 
 ask for help at https://discourse.mc-stan.org/.
 
@@ -71,7 +69,7 @@ issues, or open a new issue to discuss.
 
 ### Citing flocker
 Please cite `flocker` as:
-* Socolar, J.B. & Mills, S.C. (2021). "flocker: flexible occupancy estimation in 
+* Socolar, J.B. & Mills, S.C. (2023). "flocker: flexible occupancy estimation in 
 R." R package version XXX, <URL: https://github.com/jsocolar/flocker/>.
 
 Additionally, please consider citing [Stan](https://mc-stan.org/users/citations/)

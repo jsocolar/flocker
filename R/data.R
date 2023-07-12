@@ -24,5 +24,92 @@
 #'
 #' @format ## `example_flocker_model_single`
 #' A flocker_fit and brmsfit object
-#' @source data-raw/example_flocker_model_single.R
+#' @source data-raw/example_flocker_model.R
 "example_flocker_model_single"
+
+#' Example single-season rep-constant flocker model
+#'
+#' A fitted single-season rep-constant occupancy model from flocker
+#'
+#' @format ## `example_flocker_model_single_C`
+#' A flocker_fit and brmsfit object
+#' @source data-raw/example_flocker_model.R
+"example_flocker_model_single_C"
+
+
+#' Example single-season false-positive flocker model
+#'
+#' A fitted single-season false-positive occupancy model from flocker
+#'
+#' @format ## `example_flocker_model_single_fp`
+#' A flocker_fit and brmsfit object
+#' @source data-raw/example_flocker_model.R
+"example_flocker_model_single_fp"
+
+
+#' Example data-augmented flocker model
+#'
+#' A fitted data-augmented occupancy model from flocker
+#'
+#' @format ## `example_flocker_model_aug`
+#' A flocker_fit and brmsfit object
+#' @source data-raw/example_flocker_model.R
+"example_flocker_model_aug"
+
+
+#' Example multi-season flocker model (colex explicit)
+#'
+#' A fitted multi-season occupancy model from flocker.
+#' One species 200 point, six season, four rep, missing seasons, missing reps.
+#' colex parameterization with explicit init.
+#'
+#' @format ## `example_flocker_model_multi_colex_ex`
+#' A flocker_fit and brmsfit object
+#' @source data-raw/example_flocker_model.R
+"example_flocker_model_multi_colex_ex"
+
+
+#' Example multi-season flocker model (colex equilibirum)
+#'
+#' A fitted multi-season occupancy model from flocker.
+#' One species 200 point, six season, four rep, missing seasons, missing reps.
+#' colex parameterization with equilibrium init.
+#'
+#' @format ## `example_flocker_model_multi_colex_eq`
+#' A flocker_fit and brmsfit object
+#' @source data-raw/example_flocker_model.R
+"example_flocker_model_multi_colex_eq"
+
+
+#' Example multi-season flocker model (autologistic explicit)
+#'
+#' A fitted multi-season occupancy model from flocker.
+#' One species 200 point, six season, four rep, missing seasons, missing reps.
+#' autologistic parameterization with explicit init.
+#'
+#' @format ## `example_flocker_model_multi_auto_ex`
+#' A flocker_fit and brmsfit object
+#' @source data-raw/example_flocker_model.R
+"example_flocker_model_multi_auto_ex"
+
+#' Example multi-season flocker model (autologistic equilibrium)
+#'
+#' A fitted multi-season occupancy model from flocker.
+#' One species 200 point, six season, four rep, missing seasons, missing reps.
+#' autologistic parameterization with equilibrium init.
+#'
+#' @format ## `example_flocker_model_multi_auto_eq`
+#' A flocker_fit and brmsfit object
+#' @source data-raw/example_flocker_model.R
+"example_flocker_model_multi_auto_eq"
+
+#' Example multi-season flocker model (colex explicit false-positive)
+#'
+#' A fitted multi-season occupancy model from flocker.
+#' One species 200 point, six season, four rep, missing seasons, missing reps.
+#' colex parameterization with explicit init.
+#'
+#' @format ## `example_flocker_model_multi_colex_ex_fp`
+#' A flocker_fit and brmsfit object
+#' @source data-raw/example_flocker_model.R
+"example_flocker_model_multi_colex_ex_fp"

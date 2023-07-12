@@ -614,7 +614,7 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
     !fp, msg = "fp data-augmented models are not implemented"
   )
   assertthat::assert_that(
-    n_aug > 0 & round(n_aug) == n_aug,
+    is_one_pos_int(n_aug),
     msg = "n_aug must be a positive integer"
   )
   obs1 <- obs[,,1]
@@ -717,7 +717,7 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
   
   flocker_data$ff_n_sp <- c(n_sp, rep(-99, nrow(flocker_data)-1))
   flocker_data$ff_species <- rep(rep(c(1:n_sp), each = n_site), n_rep)
-  flocker_data$ff_superQ <- as.integer(flocker_data$ff_species <= n_sp_obs)
+  flocker_data$ff_superQ <- c(rep(1, n_sp_obs), rep(0, n_aug), rep(-99, nrow(flocker_data) - n_sp))
   
   # Prepare to add rep indices, and trim flocker_data to existing observations
   flocker_data$ff_unit <- 1:nrow(obs)

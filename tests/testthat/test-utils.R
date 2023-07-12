@@ -174,21 +174,21 @@ test_that("type_flocker_fit function returns expected string", {
 
 test_that("emission_likelihood function returns expected output", {
   # Test cases for state 0
-  obs1 <- c(0, 0, 0, 0, NA)
-  det1 <- c(0.3, 0.4, 0.5, 0.6, 0.7)
+  obs1 <- matrix(c(0, 0, 0, 0, NA), nrow = 1)
+  det1 <- matrix(c(0.3, 0.4, 0.5, 0.6, 0.7), nrow = 1)
   expected_output1 <- 1
   
-  obs2 <- c(0, 1, 0, 1, 1)
-  det2 <- c(0.3, 0.4, 0.5, 0.6, 0.7)
-  expected_output2 <- 0
+  obs2 <- rbind(obs1, c(0, 1, 0, 1, 1))
+  det2 <- rbind(det1, c(0.3, 0.4, 0.5, 0.6, 0.7))
+  expected_output2 <- c(1,0)
   
   # Test cases for state 1
-  obs3 <- c(1, 1, 0, 1, NA)
-  det3 <- c(0.3, 0.4, 0.5, 0.6, 0.7)
+  obs3 <- matrix(c(1, 1, 0, 1, NA), nrow = 1)
+  det3 <- matrix(c(0.3, 0.4, 0.5, 0.6, 0.7), nrow = 1)
   expected_output3 <- 0.3 * 0.4 * (1 - 0.5) * 0.6
   
-  obs4 <- c(0, 0, 1, 1, 0)
-  det4 <- c(0.3, 0.4, 0.5, 0.6, 0.7)
+  obs4 <- matrix(c(0, 0, 1, 1, 0), nrow = 1)
+  det4 <- matrix(c(0.3, 0.4, 0.5, 0.6, 0.7), nrow = 1)
   expected_output4 <- (1 - 0.3) * (1 - 0.4) * 0.5 * 0.6 * (1 - 0.7)
   
   # Test the function with the test cases
@@ -205,11 +205,11 @@ test_that("emission_likelihood function returns expected output", {
   expect_equal(result4, expected_output4)
   
   # Test the function with invalid inputs
-  obs_invalid1 <- c(0, 1, -1, 1, 0)
-  obs_invalid2 <- c(0, 1, 2, 1, 0)
-  det_invalid1 <- c(0.5, 0.5, -0.5, 0.5, 0.5)
-  det_invalid2 <- c(0.5, 0.5, 1.5, 0.5, 0.5)
-  det_invalid3 <- c(NA, .5, .5, .5, .5)
+  obs_invalid1 <- matrix(c(0, 1, -1, 1, 0), nrow = 1)
+  obs_invalid2 <- matrix(c(0, 1, 2, 1, 0), nrow = 1)
+  det_invalid1 <- matrix(c(0.5, 0.5, -0.5, 0.5, 0.5), nrow = 1)
+  det_invalid2 <- matrix(c(0.5, 0.5, 1.5, 0.5, 0.5), nrow = 1)
+  det_invalid3 <- matrix(c(NA, .5, .5, .5, .5), nrow = 1)
   
   expect_error(emission_likelihood(0, obs_invalid1, det1), "all\\(obs")
   expect_error(emission_likelihood(0, obs_invalid2, det1), "all\\(obs")

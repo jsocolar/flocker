@@ -23,9 +23,9 @@ that assume [closure](https://jsocolar.github.io/closureOccupancy/) over units
 that are linked by explicit colonization and extinction 
 processes.^[As we will see, this is true even of multiseason models 
 with autologistic occupancy dynamics]  That is, sites are surveyed over a series 
-of more than one timestep;^[It's fine if some sites are surveyed for just one 
+of more than one timestep,^[It's fine if some sites are surveyed for just one 
 timestep, but at least some sites are surveyed for multiple timesteps.] closure
-is assumed to apply within (but not across) timesteps, but the latent occupancy
+is assumed to hold within (but not across) timesteps, and the latent occupancy
 state is linked across timesteps within a site via models of local colonization
 and extinction processes. Following the terminology introduced
 [here](https://jsocolar.github.io/flocker/articles/flocker_tutorial.html), we
@@ -42,22 +42,23 @@ mainly to highlight the connection between multiseason occupancy models and
 well-developed techniques for efficiently computing the likelihood for a 
 series.^[For the curious, we use the forward algorithm to compute the 
 likelihood, and the forward-backward algorithm to compute unit-wise posterior 
-distributions for the latent occupancy state.] The HMM conceptualizes the 
-latent occupancy state as a Markov-like process (it need not be strictly 
-Markovian, because the transition probabilities can vary by timestep), where the 
-transition probabilities between the two possible states (occupied or 
-unoccupied) are a colonization probabilility $\mathcal{C}$, an extinction 
-probability $\mathcal{E}$, and their complements $1 - \mathcal{C}$ and 
-$1 - \mathcal{E}$. The complement of the extinction probability turns out to be
-particularly important; we call it the *persistence* probability 
+distributions for the latent occupancy state, and the forward-filtering-backward-sampling
+algorithm to draw valid posterior samples for the sequence of latent states] 
+The HMM conceptualizes the latent occupancy state as a Markov-like process (the
+process need not be strictly Markovian, because the transition probabilities can 
+vary by timestep), where the transition probabilities between the two possible 
+states (occupied or unoccupied) are a colonization probabilility $\mathcal{C}$, 
+an extinction probability $\mathcal{E}$, and their complements $1 - \mathcal{C}$ 
+and $1 - \mathcal{E}$. The complement of the extinction probability turns out to 
+be particularly important; we call it the *persistence* probability 
 $\mathcal{P} = 1 - \mathcal{E}$.
 
 To specify the HMM, we need a model for the $\mathcal{C}$, a model for 
-$\mathcal{E}$, a model for the initial occupancy probability $\mathcal{O}$ in 
-the first timestep, and a model for the probability of observing the data in 
+$\mathcal{E}$, and a model for the initial occupancy probability $\mathcal{O}$ in 
+the first timestep. We also need a model for the probability of observing the data in 
 any particular timestep conditional on the true occupancy state in that 
-timestep (in the HMM literature, these probabilities are referred to as 
-*emission probabilities*). 
+timestep (in the HMM literature, this probability is referred to as an
+*emission probability*). 
 
 #### Emission probabilities
 *Emission probabilities* are just fancy HMM terminology for the most familiar
@@ -70,7 +71,7 @@ organization, including down to the visit level. This is exactly the same way
 that `flocker` treats the detection sub-model in a single-season model.
 
 #### Colonization and extinction
-In the "colonization-extinction" model, logit colonization probabilities 
+In "colonization-extinction" models, logit colonization probabilities 
 $\mathcal{C}$ and logit extinction probabilities $\mathcal{E}$ are both assumed 
 to vary according to separate predictors based on covariates that may vary 
 across timesteps within series but never across visits within closure-units.
@@ -85,7 +86,7 @@ model in terms of its colonization and extinction probabilities. In fact, the
 so-called "occupancy probability" mentioned above is actually a colonization
 probability, because it reflects the probability of occupancy conditional on
 non-occupancy during the previous timestep. The logit-scale sum of the 
-colonization probability and the autologistic parameter gives the probability of
+colonization probability and the autologistic term gives the probability of
 persistence $\mathcal{P}$.
 
 Thus, the autologistic model differs from the colonization-extinction model in
@@ -112,38 +113,40 @@ in a single-season model. Thus, a colonization-extinction model would contain
 predictors for detection, colonization, extinction, and initial 
 occupancy; an autologistic model would contain linear predictors for detection,
 colonization, the colonization-persistence offset (often modeled as a constant),
-and initial occupancy. `flocker` is well equipped to fit these models.
+and initial occupancy. `flocker` can fit either model.
 
 Borrowing from the HMM literature, `flocker` also comes with optional 
-functionality to handle $\mathcal{O}$ differently. Any pair of 
-colonization/extinction probabilities, if they remain constant through time, 
-defines an equilibrium proportion of sites that are occupied. If colonization 
-and extinction remain constant for a long time prior to the first timestep, the 
-initial occupancy probability will simply be this equilibrium frequency.  
+functionality to handle $\mathcal{O}$ differently. Any pair of time-invariant
+colonization and extinction probabilities defines an equilibrium proportion of 
+sites that are occupied. If colonization and extinction remain constant for a 
+long time prior to the first timestep, the initial occupancy probability should 
+simply be this equilibrium frequency, eliminating the need to parameterize
+and fit initial occupancy separately from colonization and extinction.
 `flocker` is equipped to fit models without any separate predictor for initial 
 occupancy, and instead to begin with the equilibrium frequencies implied by the 
 coloniziation and extinction probabilities modeled for the first timestep. 
-This can sometimes be valid even if the probabilities are time-varying over the 
-series being modeled, for example if a some sites are subject to a disturbance 
-that perturbs equilbrium dynamics during the timeseries. For a concrete
-example, consider a study system that is initially in equilibrium, but in which
-some sites burn in a forest fire partway through the study. If the impact of 
-the burn on colonization and extinction probabilities is modeled adequately, 
+Note that this approach is sometimes valid even if the colonization and 
+extinction probabilities begin to vary during the timeseries being modeled,
+as long as they are invariant for a substantial period up to and including the
+first year modeled. As a concrete example, consider a study system that begins 
+in an equilibrium condition, but in which some sites burn in a forest fire 
+partway through the study. If the impact of the burn on colonization and 
+extinction probabilities is modeled adequately, 
 then the modeled probabilites prior to the burn will reflect the equilibrium
 colonization and extinction probabilities in the pre-burn state. It is for this 
 reason that, when using equilibrium frequencies as initial occupancy 
 probabilities, `flocker` always computes the equilibrium based on the 
 probabilites modeled for the first timestep.
 
-As an aside, it is not uncommon in the literature to see confusion that
-conflates the initial occupancy probabilities $\mathcal{O}$ with the
-colonization probabilities $\mathcal{C}$. This confusion arises from the
-notion that the autologistic model consists of a single-season occupancy model
-plus an autologistic term, which leads people to incorrectly surmise that the
-linear predictor without the autologistic term gives an occupancy 
-probability.^[Well, maybe initial occupancy probabilities and colonization 
-probabilities could be equivalent in a study of species introduction or of 
-primary succession, but otherwise no!] 
+As an aside, we somewhat regularly encounter confusion that conflates initial 
+occupancy probabilities $\mathcal{O}$ with colonization probabilities 
+$\mathcal{C}$. This confusion apparently arises from the notion that the 
+autologistic model consists of a single-season occupancy model plus an 
+autologistic term, which leads people to incorrectly surmise that the linear 
+predictor without the autologistic term gives an occupancy probability. It does
+not; it gives a colonization probability, which is typically much lower. Any 
+modeling exercise that enforces equality between initial occupancy probabilities 
+and subsequent colonization probabilities should be viewed skeptically.
 
 ## Examples
 Let's simulate some data that is valid for use with multiseason models. Here,
@@ -175,7 +178,7 @@ fd <- make_flocker_data(
 
 
 Here's the colonization-extinction model with an explicit model for occupancy
-in the first timestep. Depending on hardware, fitting this model might take 2-5 
+in the first timestep. Depending on hardware, fitting this model might take 1-5 
 minutes.
 
 ```{r colex-explicit, echo = FALSE, eval = FALSE}
@@ -204,11 +207,11 @@ multi_colex_eq <- flock(
   multiseason = "colex",
   multi_init = "equilibrium",
   backend = "cmdstanr",
-  cores = 4,
-  iter = params$iter
+  cores = 4
 )
 
 ```
+
 Here's the autologistic model with explicit occupancy probabilities in the 
 first timestep. To reflect the stereotypical autologistic model with a constant
 logit-scale offset separating colonization and persistence probabilities, we
@@ -224,8 +227,7 @@ multi_auto <- flock(
   multiseason = "autologistic",
   multi_init = "explicit",
   backend = "cmdstanr",
-  cores = 4,
-  iter = params$iter
+  cores = 4
 )
 
 ```
@@ -241,8 +243,30 @@ multi_auto_eq <- flock(
   multiseason = "autologistic",
   multi_init = "equilibrium",
   backend = "cmdstanr",
-  cores = 4,
-  iter = params$iter
+  cores = 4
+)
+
+```
+
+We can reconstruct the occupancy probabilities at every unit using the 
+`get_Z` function:
+```{r Z, echo = FALSE, eval = FALSE}
+Z <- get_Z(multi_colex_eq)
+
+```
+
+We can generate posterior predictions:
+```{r predict, echo = FALSE, eval = FALSE}
+pp <- predic
+```
+
+We can compare the fit of these various models using approxiamte leave-one-out
+cross-validation, where the holdouts consist of entire series 
+(leave-one-series-out cross-validation).
+
+```{r loo, echo = FALSE, eval = FALSE}
+loo_out <- loo_compare_flocker(
+  list(multi_colex, multi_colex_eq, multi_auto, multi_auto_eq)
 )
 
 ```
