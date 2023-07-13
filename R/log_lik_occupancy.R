@@ -28,7 +28,7 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
   
   lik_type <- type_flocker_fit(flocker_fit)
   
-  if (lik_type %in% c("single", "single_fp")) {
+  if (lik_type %in% c("single")) {
     lps <- fitted_flocker(
       flocker_fit, draw_ids = draw_ids, new_data = NULL, allow_new_levels = FALSE, 
       response = TRUE, unit_level = FALSE
@@ -88,7 +88,7 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
     
     ll <- log(elw1 * Omega + elw0 * (1 - Omega)) |>
       t()
-  } else if (lik_type %in% c("multi_colex", "multi_colex_fp")) {
+  } else if (lik_type %in% c("multi_colex")) {
     gp <- get_positions(flocker_fit)
     obs <- new_array(gp, flocker_fit$data$ff_y[gp])
     
@@ -106,7 +106,7 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
     det <- lps1$linpred_det
     ll <- log_lik_dynamic(init, colo, ex, obs, det) |>
       t()
-  } else if (lik_type %in% c("multi_colex_eq", "multi_colex_eq_fp")) {
+  } else if (lik_type %in% c("multi_colex_eq")) {
     gp <- get_positions(flocker_fit)
     obs <- new_array(gp, flocker_fit$data$ff_y[gp])
     
