@@ -73,7 +73,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     obs <- NULL
   }
   
-  if (lik_type %in% c("single", "single_fp")) {
+  if (lik_type %in% c("single")) {
     lps <- fitted_flocker(
       flocker_fit, draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
       sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
@@ -92,7 +92,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
       sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
     )
     Z <- get_Z_augmented(lps, sample, history_condition, obs)
-  } else if (lik_type %in% c("multi_colex", "multi_colex_fp")) {
+  } else if (lik_type %in% c("multi_colex")) {
     lps2 <- fitted_flocker(
       flocker_fit, components = c("occ", "colo", "ex"),
       draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
@@ -112,7 +112,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
       det <- NULL
     }
     Z <- get_Z_dynamic(init, colo, ex, history_condition, sample, obs, det)
-  } else if (lik_type %in% c("multi_colex_eq", "multi_colex_eq_fp")) {
+  } else if (lik_type %in% c("multi_colex_eq")) {
     if(history_condition){
       lps1 <- fitted_flocker(
         flocker_fit, components = c("det"),

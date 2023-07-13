@@ -144,56 +144,10 @@ example_flocker_model_multi_auto_eq <- flock(
   warmup = 990
 )
 
-#### single-season fp model ####
-fd <- simulate_flocker_data(n_sp = 1, n_pt = 200, fp = .9)
-mfd <- make_flocker_data(
-  fd$obs, 
-  fd$unit_covs,
-  fd$event_covs,
-  fp = TRUE
-)
-example_flocker_model_single_fp <- flock(
-  f_occ = ~ 0 + Intercept + uc1 + (1 + uc1 | species),
-  f_det = ~ 0 + Intercept + uc1 + (1 + uc1 | species),
-  flocker_data = mfd,
-  fp = TRUE,
-  backend = "cmdstanr",
-  cores = 4,
-  iter = 1000,
-  warmup = 990
-)
-
-#### multiseason colex with explicit inits and fp ####
-fd <- simulate_flocker_data(
-  n_pt = 200, n_sp = 1, n_season = 6, 
-  multiseason = "colex", multi_init = "explicit",
-  ragged_rep = TRUE, missing_seasons = TRUE,
-  fp = .9
-)
-mfd <- make_flocker_data(
-  fd$obs, fd$unit_covs, fd$event_covs, type = "multi", fp = TRUE
-)
-example_flocker_model_multi_colex_ex_fp <- flock(
-  f_occ = ~ 0 + Intercept + uc1,
-  f_det = ~ 0 + Intercept + uc1 + ec1,
-  f_col = ~ 0 + Intercept + uc1,
-  f_ex = ~ 0 + Intercept + uc1,
-  flocker_data = mfd,
-  multiseason = "colex",
-  multi_init = "explicit",
-  fp = TRUE,
-  cores = 4,
-  backend = "cmdstanr",
-  iter = 1000,
-  warmup = 990
-)
-
 usethis::use_data(example_flocker_model_single, overwrite = TRUE)
 usethis::use_data(example_flocker_model_single_C, overwrite = TRUE)
-usethis::use_data(example_flocker_model_single_fp, overwrite = TRUE)
 usethis::use_data(example_flocker_model_aug, overwrite = TRUE)
 usethis::use_data(example_flocker_model_multi_colex_ex, overwrite = TRUE)
 usethis::use_data(example_flocker_model_multi_colex_eq, overwrite = TRUE)
 usethis::use_data(example_flocker_model_multi_auto_ex, overwrite = TRUE)
 usethis::use_data(example_flocker_model_multi_auto_eq, overwrite = TRUE)
-usethis::use_data(example_flocker_model_multi_colex_ex_fp, overwrite = TRUE)

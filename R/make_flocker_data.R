@@ -11,9 +11,8 @@
 #'  closure is assumed across rows and columns are repeated sampling events. 
 #'    If \code{type = "multi"}, an I x J x K array where rows are sites or 
 #'  species-sites, columns are repeated sampling events, and slices along the 
-#'  third dimension are seasons. Allowable values are 1 (detection), real
-#'  numbers between 0 and 1 (detection probability in an fp model; `fp` must be
-#'  `TRUE`), 0 (no detection), and NA (no sampling event).
+#'  third dimension are seasons. Allowable values are 1 (detection), 0 (no 
+#'  detection), and NA (no sampling event).
 #'     If \code{type = "augmented"}, an L x J x K array where rows L are sites, 
 #'  columns J are repeat sampling events, and slices K are species. 
 #'     The data must be packed so that, for a given unit (site, site-species, 
@@ -43,7 +42,6 @@
 #'    data-augmentation for never-observed pseudospecies.
 #' @param n_aug Number of pseudo-species to augment. Only applicable if 
 #'    \code{type = "augmented"}.
-#' @param fp logical. TRUE if model is an fp model
 #' @param verbose Show informational messages?
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
@@ -54,7 +52,7 @@
 #'  example_flocker_data$event_covs
 #' )
 make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
-                              type = "single", n_aug = NULL, fp = FALSE,
+                              type = "single", n_aug = NULL,
                               verbose = TRUE) {
   assertthat::assert_that(
     type %in% flocker_data_input_types(),
@@ -112,20 +110,18 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
   }
   
   if (type == "single") {
-    out <- make_flocker_data_static(obs, unit_covs, event_covs, fp)
+    out <- make_flocker_data_static(obs, unit_covs, event_covs)
     out$unit_covs <- names(unit_covs)
     out$event_covs <- names(event_covs)
   } else if (type == "multi") {
-    out <- make_flocker_data_dynamic(obs, unit_covs, event_covs, fp)
+    out <- make_flocker_data_dynamic(obs, unit_covs, event_covs)
     out$unit_covs <- names(unit_covs[[1]])
     out$event_covs <- names(event_covs)
   } else if (type == "augmented") {
-    out <- make_flocker_data_augmented(obs, n_aug, unit_covs, event_covs, fp)
+    out <- make_flocker_data_augmented(obs, n_aug, unit_covs, event_covs)
     out$unit_covs <- names(unit_covs)
     out$event_covs <- names(event_covs)
   }
-  
-  out$fp <- fp
   
   out
 }
@@ -143,7 +139,6 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
 #'            across repeated sampling events within closure-units.
 #' @param event_covs A named list of I x J matrices, each one corresponding to a covariate
 #' that varies across repeated sampling events within closure-units
-#' @param fp logical
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 #' @examples
@@ -152,8 +147,7 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
 #'  example_flocker_data$unit_covs,
 #'  example_flocker_data$event_covs
 #' )
-make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
-                                     fp = FALSE) {
+make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL) {
   assertthat::assert_that(
     length(dim(obs)) == 2,
     msg = "in a single-season model, obs must have exactly two dimensions"
@@ -165,17 +159,10 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
     msg = "obs must contain at least two columns."
   )
   unique_y <- unique(obs)[!is.na(unique(obs))]
-  if (!fp) {
-    assertthat::assert_that(
-      all(unique_y %in% c(0, 1)),
-      msg = "in non-fp model obs may only contain the values 0, 1, or NA"
-    )
-  } else {
-    assertthat::assert_that(
-      all(unique_y >= 0) & all(unique_y <= 1),
-      msg = "in fp model obs may only contain NA and values between 0 and 1 inclusive."
-    )
-  }
+  assertthat::assert_that(
+    all(unique_y %in% c(0, 1)),
+    msg = "obs may only contain the values 0, 1, or NA"
+  )
   assertthat::assert_that(
     !any(is.na(obs[ , 1])), 
     msg = paste0("obs has NAs in its first column; this is not allowed in ", 
@@ -233,7 +220,7 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
         )
     }
   }
-  if (is.null(event_covs) & !fp) {
+  if (is.null(event_covs)) {
     n_trial <- rowSums(!is.na(obs))
     n_suc <- rowSums(obs, na.rm = T)
     flocker_data <- data.frame(ff_n_suc = n_suc, ff_n_trial = n_trial)
@@ -288,8 +275,7 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
 #' @param obs An I x J x K array where closure is assumed across rows, columns 
 #'  are repeated sampling events, and slices along the third dimension are 
 #'  seasons. Allowable values are 1 (detection), 0 (no detection), and NA (no 
-#'  sampling event); or in a fp model the true prior probability that a 
-#'  detection was obtained.
+#'  sampling event).
 #'  The data must be formatted so that all NAs are trailing within their rows
 #'  across repeat visits, but not necessarily across seasons. 
 #' @param unit_covs  A list of dataframes (one per season) of covariates for 
@@ -298,12 +284,11 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL,
 #'    dataframes must have I rows.
 #' @param event_covs A named list of I x J x K arrays, each one corresponding to 
 #' a covariate that varies across repeated sampling events within closure-units
-#' @param fp logical
 #' @param verbose logical
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
-                                      fp = FALSE, verbose = TRUE) {
+                                      verbose = TRUE) {
   n_year <- nslice(obs) # nslice checks that obs is a 3-D array
   n_series <- nrow(obs)
   n_rep <- ncol(obs)
@@ -319,17 +304,10 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
     )
   )
   unique_y <- unique(obs)[!is.na(unique(obs))]
-  if (!fp) {
-    assertthat::assert_that(
-      all(unique_y %in% c(0, 1)),
-      msg = "in non-fp model obs may only contain the values 0, 1, or NA"
-    )
-  } else {
-    assertthat::assert_that(
-      all(unique_y >= 0) & all(unique_y <= 1),
-          msg = "in fp model obs may only contain NA and values between 0 and 1 inclusive."
-    )
-  }
+  assertthat::assert_that(
+    all(unique_y %in% c(0, 1)),
+    msg = "obs may only contain the values 0, 1, or NA"
+  )
   
   # Check that no NAs are non-trailing across columns (i.e. reps within series-
   # years)
@@ -601,17 +579,13 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
 #'            across repeated sampling events.
 #' @param event_covs A named list of I x J matrices, each one corresponding to a 
 #' covariate that varies across repeated sampling events within sites
-#' @param fp logical
 #' @return A flocker_data list that can be passed as data to \code{flocker()}.
 #' @export
 make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL, 
-                                        event_covs = NULL, fp = FALSE) {
+                                        event_covs = NULL) {
   assertthat::assert_that(
     length(dim(obs)) == 3,
     msg = "obs must have exactly three dimensions."
-  )
-  assertthat::assert_that(
-    !fp, msg = "fp data-augmented models are not implemented"
   )
   assertthat::assert_that(
     is_one_pos_int(n_aug),

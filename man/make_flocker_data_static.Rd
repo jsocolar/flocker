@@ -5,7 +5,7 @@
 \title{Format data for single-season occupancy model, to be passed to 
  \code{flock()}.}
 \usage{
-make_flocker_data_static(obs, unit_covs = NULL, event_covs = NULL, fp = FALSE)
+make_flocker_data_static(obs, unit_covs = NULL, event_covs = NULL)
 }
 \arguments{
 \item{obs}{An I x J matrix-like object where closure is assumed across rows 
@@ -17,8 +17,6 @@ across repeated sampling events within closure-units.}
 
 \item{event_covs}{A named list of I x J matrices, each one corresponding to a covariate
 that varies across repeated sampling events within closure-units}
-
-\item{fp}{logical}
 }
 \value{
 A flocker_data list that can be passed as data to \code{flock()}.

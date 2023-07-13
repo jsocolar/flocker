@@ -27,8 +27,6 @@
 #'   begin with "~".
 #' @param augmented Logical. Must be TRUE if data are formatted for a 
 #'  data-augmented multi-species model, and FALSE otherwise.
-#' @param fp logical. If data are formatted for an fp model, must be set to
-#'  TRUE, otherwise to FALSE.
 #' @param threads NULL or positive integer. If integer, the number of threads
 #'  to use per chain in within chain parallelization. Currently available only
 #'  with single-season rep-constant models, and must be set to NULL otherwise.
@@ -52,13 +50,13 @@
 flock <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL, 
                   multiseason = NULL, f_col = NULL, f_ex = NULL, 
                   multi_init = NULL, f_auto = NULL,
-                  augmented = FALSE, fp = FALSE, threads = NULL,
+                  augmented = FALSE, threads = NULL,
                   ...) {
   flock_(output = "model", f_occ = f_occ, f_det = f_det, 
          flocker_data = flocker_data, data2 = data2, 
          multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
          multi_init = multi_init, f_auto = f_auto,
-         augmented = augmented, fp = fp, threads = threads, ...)
+         augmented = augmented, threads = threads, ...)
 }
 
 #' Generate stan code for an occupancy model
@@ -80,13 +78,13 @@ flock <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL,
 #' }
 flocker_stancode <- function(f_occ, f_det, flocker_data, data2 = NULL, 
                   multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
-                  augmented = FALSE, fp = FALSE, threads = NULL,
+                  augmented = FALSE, threads = NULL,
                   ...) {
   flock_(output = "code", f_occ = f_occ, f_det = f_det, 
          flocker_data = flocker_data, data2 = data2, 
          multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
          multi_init = multi_init, f_auto = f_auto,
-         augmented = augmented, fp = fp, threads = threads, ...)
+         augmented = augmented, threads = threads, ...)
 }
 
 #' Generate stan data for an occupancy model
@@ -108,13 +106,13 @@ flocker_stancode <- function(f_occ, f_det, flocker_data, data2 = NULL,
 #' }
 flocker_standata <- function(f_occ, f_det, flocker_data, data2 = NULL, 
                              multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
-                             augmented = FALSE, fp = FALSE, threads = NULL,
+                             augmented = FALSE, threads = NULL,
                              ...) {
   flock_(output = "data", f_occ = f_occ, f_det = f_det, 
          flocker_data = flocker_data, data2 = data2, 
          multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
          multi_init = multi_init, f_auto = f_auto,
-         augmented = augmented, fp = fp, threads = threads, ...)
+         augmented = augmented, threads = threads, ...)
 }
 
 #' Fit an occupancy model or generate Stan code for a model 
@@ -146,19 +144,17 @@ flocker_standata <- function(f_occ, f_det, flocker_data, data2 = NULL,
 #'  parameter (theta). If provided, must begin with "~".
 #' @param augmented Logical. Must be TRUE if data are formatted for a 
 #'  data-augmented multi-species model, and FALSE otherwise.
-#' @param fp logical. If data are formatted for an fp model, must be set to
-#'  TRUE, otherwise to FALSE.
 #' @param threads NULL or positive integer. If integer, the number of threads
 #'  to use per chain in within chain parallelization.
 #' @param ... additional arguments passed to \code{brms::brm()}
 #' @return stan code for brms model or a \code{brmsfit} containing the fitted occupancy model. 
 flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL, 
                   multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
-                  augmented = FALSE, fp = FALSE, threads = NULL,
+                  augmented = FALSE, threads = NULL,
                   ...) {
   ### validate parameters
   validate_flock_params(f_occ, f_det, flocker_data, multiseason, f_col, 
-                        f_ex, multi_init, f_auto, augmented, fp, threads)
+                        f_ex, multi_init, f_auto, augmented, threads)
   ### create final formulas
   if (!is.null(f_occ)) {
     f_occ_txt <- paste0(deparse(f_occ), collapse = "")
@@ -180,7 +176,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
   f_det_txt <- paste0(deparse(f_det), collapse = "")
   # f_det_use is type specific and is handled below
   
-  if (flocker_data$type == "single" & !fp) {
+  if (flocker_data$type == "single") {
     max_rep <- flocker_data$n_rep
     vint_text <- paste0("ff_rep_index", 1:max_rep, 
                         collapse = ", ")
@@ -256,7 +252,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  family = occupancy_augmented(max_rep), 
                                  stanvars = stanvars,
                                  ...)
-  } else if (isTRUE(multiseason == "colex") & isTRUE(multi_init == "explicit") & !fp) {
+  } else if (isTRUE(multiseason == "colex") & isTRUE(multi_init == "explicit")) {
     n_rep <- flocker_data$n_rep
     n_year <- flocker_data$n_year
     vint_text1 <- paste0("ff_unit_index", seq(n_year), 
@@ -294,7 +290,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  family = occupancy_multi_colex(n_year, n_rep), 
                                  stanvars = stanvars,
                                  ...)
-  } else if (isTRUE(multiseason == "colex") & isTRUE(multi_init == "equilibrium") & !fp) {
+  } else if (isTRUE(multiseason == "colex") & isTRUE(multi_init == "equilibrium")) {
     n_rep <- flocker_data$n_rep
     n_year <- flocker_data$n_year
     vint_text1 <- paste0("ff_unit_index", seq(n_year), 
@@ -331,7 +327,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  family = occupancy_multi_colex_eq(n_year, n_rep), 
                                  stanvars = stanvars,
                                  ...)
-  } else if (isTRUE(multiseason == "autologistic") & isTRUE(multi_init == "explicit") & !fp) {
+  } else if (isTRUE(multiseason == "autologistic") & isTRUE(multi_init == "explicit")) {
     n_rep <- flocker_data$n_rep
     n_year <- flocker_data$n_year
     vint_text1 <- paste0("ff_unit_index", seq(n_year), 
@@ -368,7 +364,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  family = occupancy_multi_autologistic(n_year, n_rep), 
                                  stanvars = stanvars,
                                  ...)
-  } else if (isTRUE(multiseason == "autologistic") & isTRUE(multi_init == "equilibrium") & !fp) {
+  } else if (isTRUE(multiseason == "autologistic") & isTRUE(multi_init == "equilibrium")) {
     n_rep <- flocker_data$n_rep
     n_year <- flocker_data$n_year
     vint_text1 <- paste0("ff_unit_index", seq(n_year), 
@@ -405,113 +401,6 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  family = occupancy_multi_autologistic_eq(n_year, n_rep), 
                                  stanvars = stanvars,
                                  ...)
-  } else if (flocker_data$type == "single" & fp) {
-    max_rep <- flocker_data$n_rep
-    vint_text <- paste0("ff_rep_index", 1:max_rep, 
-                        collapse = ", ")
-    f_det_use <- stats::as.formula(
-      paste0("ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ",
-             vint_text, ") ", f_det_txt))
-    f_use <- brms::bf(f_det_use, f_occ_use)
-    
-    stanvars <- 
-      brms::stanvar(scode = make_emission_0_fp(), block = "functions") +
-      brms::stanvar(scode = make_emission_1_fp(), block = "functions") +
-      brms::stanvar(
-        scode = make_occupancy_single_fp_lpdf(max_rep = max_rep), 
-        block = "functions"
-      )
-    out <- flocker_fit_code_util(output, 
-                                 f_use, 
-                                 data = flocker_data$data,
-                                 data2 = data2,
-                                 family = occupancy_single_fp(max_rep), 
-                                 stanvars = stanvars,
-                                 ...)
-  } else if (isTRUE(multiseason == "colex") & isTRUE(multi_init == "explicit") & fp) {
-    n_rep <- flocker_data$n_rep
-    n_year <- flocker_data$n_year
-    vint_text1 <- paste0("ff_unit_index", seq(n_year), 
-                         collapse = ", ")
-    vint_text2 <- paste0("ff_rep_index", seq(n_rep), 
-                         collapse = ", ")
-    f_det_use <- stats::as.formula(
-      paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
-             vint_text1, ", ", vint_text2, ") ", f_det_txt))
-    
-    f_use <- brms::bf(f_det_use, f_occ_use, f_col_use, f_ex_use)
-    
-    stanvars <- 
-      brms::stanvar(
-        scode = make_emission_1_fp(), 
-        block = "functions"
-      ) + 
-      brms::stanvar(
-        scode = make_emission_0_fp(),
-        block = "functions"
-      ) +
-      brms::stanvar(
-        scode = make_colex_fp_likelihoods(), 
-        block = "functions"
-      ) + 
-      brms::stanvar(
-        scode = make_forward_colex_fp(), 
-        block = "functions"
-      ) + 
-      brms::stanvar(
-        scode = make_occupancy_multi_colex_fp_lpdf(max_rep = n_rep, max_year = n_year), 
-        block = "functions"
-      )
-    out <- flocker_fit_code_util(output, 
-                                 f_use, 
-                                 data = flocker_data$data,
-                                 data2 = data2,
-                                 family = occupancy_multi_colex_fp(n_year, n_rep), 
-                                 stanvars = stanvars,
-                                 ...)
-  } else if (isTRUE(multiseason == "colex") & isTRUE(multi_init == "equilibrium") & fp) {
-    n_rep <- flocker_data$n_rep
-    n_year <- flocker_data$n_year
-    vint_text1 <- paste0("ff_unit_index", seq(n_year), 
-                         collapse = ", ")
-    vint_text2 <- paste0("ff_rep_index", seq(n_rep), 
-                         collapse = ", ")
-    f_det_use <- stats::as.formula(
-      paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
-             vint_text1, ", ", vint_text2, ") ", f_det_txt))
-    
-    f_use <- brms::bf(f_det_use, f_col_use, f_ex_use)
-    
-    stanvars <- 
-      brms::stanvar(
-        scode = make_emission_1_fp(), 
-        block = "functions"
-      ) + 
-      brms::stanvar(
-        scode = make_emission_0_fp(),
-        block = "functions"
-      ) + 
-      brms::stanvar(
-        scode = make_colex_fp_likelihoods(), 
-        block = "functions"
-      ) + 
-      brms::stanvar(
-        scode = make_forward_colex_fp(), 
-        block = "functions"
-      ) + 
-      brms::stanvar(
-        scode = make_occupancy_multi_colex_eq_fp_lpdf(max_rep = n_rep, max_year = n_year), 
-        block = "functions"
-      )
-    out <- flocker_fit_code_util(output, 
-                                 f_use, 
-                                 data = flocker_data$data,
-                                 data2 = data2,
-                                 family = occupancy_multi_colex_eq_fp(n_year, n_rep), 
-                                 stanvars = stanvars,
-                                 ...)
-  } else if (isTRUE(multiseason == "autologistic") & fp) {
-    stop("autologistic fp models not yet implemented")
   } else {
     stop("Error: unhandled type. This should not happen; please report a bug.")
   }
@@ -520,7 +409,6 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     attr(out, "data_type") <- flocker_data$type
     attr(out, "multiseason") <- multiseason
     attr(out, "multi_init") <- multi_init
-    attr(out, "fp") <- fp
   }
   out
 }

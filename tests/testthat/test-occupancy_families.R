@@ -63,21 +63,5 @@ test_that("custom families are what they claim", {
   expect_length(result$vars, 10)
   expect_equal(result$dpars, c("mu", "colo", "autologistic"))
   
-  result <- occupancy_multi_colex_fp(2, 3)
-  expect_is(result, "customfamily")
-  expect_is(result, "brmsfamily")
-  expect_is(result, "family")
-  expect_false(result$loop)
-  expect_length(result$vars, 10)
-  expect_equal(result$dpars, c("mu", "occ", "colo", "ex"))
-  
-  result <- occupancy_multi_colex_eq_fp(2, 3)
-  expect_is(result, "customfamily")
-  expect_is(result, "brmsfamily")
-  expect_is(result, "family")
-  expect_false(result$loop)
-  expect_length(result$vars, 10)
-  expect_equal(result$dpars, c("mu", "colo", "ex"))
-  
   
 })

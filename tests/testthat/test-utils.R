@@ -103,7 +103,7 @@ test_that("fdtl function returns expected dataframe", {
   expect_named(result, c("model_type", "data_output_type", "data_input_type"))
   
   # Check if the result has the correct number of rows (assuming 10 model types)
-  expect_equal(nrow(result), 10)
+  expect_equal(nrow(result), 7)
   
   # Check if the result has the correct number of columns
   expect_equal(ncol(result), 3)
@@ -113,13 +113,11 @@ test_that("fdtl function returns expected dataframe", {
   
   # Check if the data_output_type and data_input_type columns contain the expected values
   expected_data_input_types <- c(
-    "single", "single", "augmented", "multi", "multi", "multi", "multi",
-    "single", "multi", "multi"
+    "single", "single", "augmented", "multi", "multi", "multi", "multi"
   )
   
   expected_data_output_types <- c(
-    "single", "single_C", "augmented", "multi", "multi", "multi", "multi",
-    "single", "multi", "multi"
+    "single", "single_C", "augmented", "multi", "multi", "multi", "multi"
   )
   
   
@@ -142,7 +140,6 @@ test_that("type_flocker_fit function returns expected string", {
     list(),
     class = "flocker_fit",
     data_type = "multi",
-    fp = FALSE,
     multiseason = "colex",
     multi_init = "equilibrium"
   )
@@ -165,8 +162,7 @@ test_that("type_flocker_fit function returns expected string", {
   corrupted_flocker_fit <- structure(
     list(),
     class = "flocker_fit",
-    data_type = "MT1",
-    fp = FALSE
+    data_type = "MT1"
   )
   expect_error(type_flocker_fit(corrupted_flocker_fit), "the attributes of the flocker_fit object have been altered or corrupted")
 })

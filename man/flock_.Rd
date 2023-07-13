@@ -16,7 +16,6 @@ flock_(
   multi_init = NULL,
   f_auto = NULL,
   augmented = FALSE,
-  fp = FALSE,
   threads = NULL,
   ...
 )
@@ -60,9 +59,6 @@ parameter (theta). If provided, must begin with "~".}
 
 \item{augmented}{Logical. Must be TRUE if data are formatted for a 
 data-augmented multi-species model, and FALSE otherwise.}
-
-\item{fp}{logical. If data are formatted for an fp model, must be set to
-TRUE, otherwise to FALSE.}
 
 \item{threads}{NULL or positive integer. If integer, the number of threads
 to use per chain in within chain parallelization.}
