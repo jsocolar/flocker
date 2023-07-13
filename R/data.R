@@ -37,16 +37,6 @@
 "example_flocker_model_single_C"
 
 
-#' Example single-season false-positive flocker model
-#'
-#' A fitted single-season false-positive occupancy model from flocker
-#'
-#' @format ## `example_flocker_model_single_fp`
-#' A flocker_fit and brmsfit object
-#' @source data-raw/example_flocker_model.R
-"example_flocker_model_single_fp"
-
-
 #' Example data-augmented flocker model
 #'
 #' A fitted data-augmented occupancy model from flocker
@@ -103,13 +93,3 @@
 #' @source data-raw/example_flocker_model.R
 "example_flocker_model_multi_auto_eq"
 
-#' Example multi-season flocker model (colex explicit false-positive)
-#'
-#' A fitted multi-season occupancy model from flocker.
-#' One species 200 point, six season, four rep, missing seasons, missing reps.
-#' colex parameterization with explicit init.
-#'
-#' @format ## `example_flocker_model_multi_colex_ex_fp`
-#' A flocker_fit and brmsfit object
-#' @source data-raw/example_flocker_model.R
-"example_flocker_model_multi_colex_ex_fp"
