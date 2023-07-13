@@ -14,7 +14,6 @@ validate_param_combos_augmented(
   multi_init,
   f_auto,
   augmented,
-  fp,
   threads
 )
 }
@@ -36,8 +35,6 @@ validate_param_combos_augmented(
 \item{f_auto}{autologistic formula}
 
 \item{augmented}{augmented flag}
-
-\item{fp}{false positive flag}
 
 \item{threads}{threads number}
 }

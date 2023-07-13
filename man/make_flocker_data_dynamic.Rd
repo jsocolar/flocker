@@ -9,7 +9,6 @@ make_flocker_data_dynamic(
   obs,
   unit_covs = NULL,
   event_covs = NULL,
-  fp = FALSE,
   verbose = TRUE
 )
 }
@@ -17,8 +16,7 @@ make_flocker_data_dynamic(
 \item{obs}{An I x J x K array where closure is assumed across rows, columns 
 are repeated sampling events, and slices along the third dimension are 
 seasons. Allowable values are 1 (detection), 0 (no detection), and NA (no 
-sampling event); or in a fp model the true prior probability that a 
-detection was obtained.
+sampling event).
 The data must be formatted so that all NAs are trailing within their rows
 across repeat visits, but not necessarily across seasons.}
 
@@ -29,8 +27,6 @@ dataframes must have I rows.}
 
 \item{event_covs}{A named list of I x J x K arrays, each one corresponding to 
 a covariate that varies across repeated sampling events within closure-units}
-
-\item{fp}{logical}
 
 \item{verbose}{logical}
 }

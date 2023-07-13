@@ -13,7 +13,6 @@ sfd(
   multi_init,
   augmented,
   rep_constant,
-  fp,
   params,
   covariates,
   ragged_rep,
@@ -42,7 +41,7 @@ model; all other positive integers yield data for multiseason models.}
 "explicit" or "equilibrium".}
 
 \item{augmented}{logical. If `TRUE` data will be formatted for an augmented
-model, which requires that `fp = NULL` and `n_season == 1`. All never-observed 
+model, which requires that `n_season == 1`. All never-observed 
 species will be trimmed out of the data, and the default parameters will be
 modified to increase random effect variances for the detection and occupancy,
 intercepts and to decrease random effect variances for detection slopes, thus
@@ -51,9 +50,6 @@ be simulated without any covariate influence on occupancy.}
 
 \item{rep_constant}{logical: create data with unit covariates only (TRUE) 
 or data that includes event covariates (FALSE)}
-
-\item{fp}{NULL for a standard model. For a false-positive model, a number between
-0 and 1 exclusive to simulate data under that fp probablility.}
 
 \item{params}{a named list containing of parameter values to use in simulation.
 Any required parameters whose names are not in this list will be assigned their

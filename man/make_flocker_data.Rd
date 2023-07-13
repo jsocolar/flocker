@@ -10,7 +10,6 @@ make_flocker_data(
   event_covs = NULL,
   type = "single",
   n_aug = NULL,
-  fp = FALSE,
   verbose = TRUE
 )
 }
@@ -19,9 +18,8 @@ make_flocker_data(
 closure is assumed across rows and columns are repeated sampling events. 
   If \code{type = "multi"}, an I x J x K array where rows are sites or 
 species-sites, columns are repeated sampling events, and slices along the 
-third dimension are seasons. Allowable values are 1 (detection), real
-numbers between 0 and 1 (detection probability in an fp model; `fp` must be
-`TRUE`), 0 (no detection), and NA (no sampling event).
+third dimension are seasons. Allowable values are 1 (detection), 0 (no 
+detection), and NA (no sampling event).
    If \code{type = "augmented"}, an L x J x K array where rows L are sites, 
 columns J are repeat sampling events, and slices K are species. 
    The data must be packed so that, for a given unit (site, site-species, 
@@ -55,8 +53,6 @@ data-augmentation for never-observed pseudospecies.}
 
 \item{n_aug}{Number of pseudo-species to augment. Only applicable if 
 \code{type = "augmented"}.}
-
-\item{fp}{logical. TRUE if model is an fp model}
 
 \item{verbose}{Show informational messages?}
 }

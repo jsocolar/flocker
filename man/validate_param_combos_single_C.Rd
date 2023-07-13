@@ -13,8 +13,7 @@ validate_param_combos_single_C(
   f_ex,
   multi_init,
   f_auto,
-  augmented,
-  fp
+  augmented
 )
 }
 \arguments{
@@ -35,8 +34,6 @@ validate_param_combos_single_C(
 \item{f_auto}{autologistic formula}
 
 \item{augmented}{augmented flag}
-
-\item{fp}{false positive flag}
 }
 \value{
 silent if parameters are valid
