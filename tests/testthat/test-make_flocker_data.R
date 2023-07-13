@@ -7,7 +7,7 @@ test_that("make_flocker_data works correctly", {
   fd <- make_flocker_data(obs, unit_covs, event_covs)
   expect_equal(fd$type, "single")
   expect_equal(class(fd), c("list", "flocker_data"))
-  expect_equal(names(fd), c("data", "n_rep", "type", "unit_covs", "event_covs", "fp"))
+  expect_equal(names(fd), c("data", "n_rep", "type", "unit_covs", "event_covs"))
   expect_equal(
     sum(fd$data[1:900, c("ff_rep_index1", "ff_rep_index2", 
                           "ff_rep_index3", "ff_rep_index4")] - 

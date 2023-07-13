@@ -142,7 +142,6 @@ test_that("type_flocker_fit function returns expected string", {
     list(),
     class = "flocker_fit",
     data_type = "multi",
-    fp = FALSE,
     multiseason = "colex",
     multi_init = "equilibrium"
   )
@@ -165,8 +164,7 @@ test_that("type_flocker_fit function returns expected string", {
   corrupted_flocker_fit <- structure(
     list(),
     class = "flocker_fit",
-    data_type = "MT1",
-    fp = FALSE
+    data_type = "MT1"
   )
   expect_error(type_flocker_fit(corrupted_flocker_fit), "the attributes of the flocker_fit object have been altered or corrupted")
 })
