@@ -160,12 +160,7 @@ flocker_model_types <- function() {
     "multi_colex", # multi-season model with explicit colonization/extinction
     "multi_colex_eq", # multi_colex with equilibrium starting probabiltiies
     "multi_autologistic", # multi-season autologistic model
-    "multi_autologistic_eq", # multi_autologistic with equilibrium starting probabilities
-    "single_fp", # single-season false-positive model with known fp probabilities
-    "multi_colex_fp", # multi_colex with known fp rates
-#    "multi_autologistic_fp", # multi_autologistic with known fp rates
-#    "multi_autologistic_eq_fp", # multi_autologistic_eq with known fp rates
-    "multi_colex_eq_fp" # multi_colex_eq with known fp rates
+    "multi_autologistic_eq" # multi_autologistic with equilibrium starting probabilities
     )
 }
 
@@ -246,7 +241,7 @@ type_flocker_fit <- function(x) {
     msg = "x must be a flocker_fit object"
   )
   assertthat::assert_that(
-    all(c("data_type", "fp") %in% names(attributes(x))),
+    all(c("data_type") %in% names(attributes(x))),
     msg = "the attributes of the flocker_fit object have been altered or corrupted"
   )
   a <- attributes(x)
@@ -256,9 +251,6 @@ type_flocker_fit <- function(x) {
     if(a$multi_init == "equilibrium"){
       out <- paste(out, "eq", sep = "_")
     }
-  }
-  if(a$fp) {
-    out <- paste(out, "fp", sep = "_")
   }
   
   assertthat::assert_that(
@@ -278,10 +270,7 @@ params_by_type <- list(
   multi_colex = c("occ", "colo", "ex", "det"),
   multi_colex_eq = c("colo", "ex", "det"),
   multi_autologistic = c("occ", "colo", "auto", "det"),
-  multi_autologistic_eq = c("colo", "auto", "det"),
-  single_fp = c("occ", "det"),
-  multi_colex_fp = c("occ", "colo", "ex", "det"),
-  multi_colex_eq_fp = c("colo", "ex", "det")
+  multi_autologistic_eq = c("colo", "auto", "det")
 )
 
 
@@ -461,37 +450,36 @@ Z_from_emission <- function(el0, el1, psi_unconditional){
 #' @param multi_init multi_init flag
 #' @param f_auto autologistic formula
 #' @param augmented augmented flag
-#' @param fp false positive flag
 #' @param threads threads number
 #' @return silent if parameters are valid
 validate_flock_params <- function(f_occ, f_det, flocker_data,
                                   multiseason, f_col, f_ex, multi_init, f_auto,
-                                  augmented, fp, threads) {
+                                  augmented, threads) {
   
   # Check that inputs are valid individually
   validate_params_individually(f_occ, f_det, flocker_data,
                                multiseason, f_col, f_ex, multi_init, f_auto,
-                               augmented, fp, threads)
+                               augmented, threads)
   
   # Check that parameters are valid in combination
   if (flocker_data$type == "single") {
     validate_param_combos_single(f_occ, f_det, flocker_data, 
                                  multiseason, f_col, f_ex, multi_init, f_auto,
-                                 augmented, fp)
+                                 augmented)
   } else if (flocker_data$type == "single_C") {
     validate_param_combos_single_C(f_occ, f_det, flocker_data, 
                                    multiseason, f_col, f_ex, multi_init, f_auto,
-                                   augmented, fp)
+                                   augmented)
   } else if (flocker_data$type == "augmented") {
     validate_param_combos_augmented(f_occ, f_det, flocker_data, 
                                    multiseason, f_col, f_ex, multi_init, f_auto,
-                                   augmented, fp, threads)
+                                   augmented, threads)
   } else {
     assertthat::assert_that(flocker_data$type == "multi") 
     # above line is redundant but included for clarity
     validate_param_combos_multi(f_occ, f_det, flocker_data, 
                                 multiseason, f_col, f_ex, multi_init, f_auto,
-                                augmented, fp, threads)
+                                augmented, threads)
   }
   validate_unit_formula_variables(f_occ, f_col, f_ex, f_auto, flocker_data)
 }
@@ -501,7 +489,7 @@ validate_flock_params <- function(f_occ, f_det, flocker_data,
 #' @return silent if parameters are valid
 validate_params_individually <- function(f_occ, f_det, flocker_data,
                                          multiseason, f_col, f_ex, multi_init, f_auto,
-                                         augmented, fp, threads) {
+                                         augmented, threads) {
   # Check that formulas are valid and produce informative errors otherwise
   assertthat::assert_that(
     inherits(f_det, "formula"),
@@ -540,8 +528,7 @@ validate_params_individually <- function(f_occ, f_det, flocker_data,
   assertthat::assert_that(multiseason2 %in% c("NULL", "colex", "autologistic"))
   assertthat::assert_that(multi_init2 %in% c("NULL", "explicit", "equilibrium"))
   assertthat::assert_that(is.logical(augmented))
-  assertthat::assert_that(is.logical(fp))
-  
+
   # Check that threads is valid
   assertthat::assert_that(
     is.null(threads) | is_one_pos_int(threads),
@@ -583,7 +570,7 @@ validate_unit_formula_variables <- function(f_occ, f_col, f_ex, f_auto, flocker_
 #' @return silent if parameters are valid
 validate_param_combos_single_generic <- function(f_occ, f_det, flocker_data, 
                                                  multiseason, f_col, f_ex, multi_init, f_auto,
-                                                 augmented, fp) {
+                                                 augmented) {
   assertthat::assert_that(
     is_flocker_formula(f_occ), msg = formula_error("occupancy")
   )
@@ -612,27 +599,16 @@ validate_param_combos_single_generic <- function(f_occ, f_det, flocker_data,
 #' @return silent if parameters are valid
 validate_param_combos_single <- function(f_occ, f_det, flocker_data, 
                                          multiseason, f_col, f_ex, multi_init, f_auto,
-                                         augmented, fp) {
+                                         augmented) {
   validate_param_combos_single_generic(f_occ, f_det, flocker_data, 
                                        multiseason, f_col, f_ex, multi_init, f_auto,
-                                       augmented, fp)
-  if(fp) {
-    assertthat::assert_that(
-      all(is.numeric(flocker_data$data$ff_y)) &
-        all(flocker_data$data$ff_y >= 0) &
-        all(flocker_data$data$ff_y <= 1),
-      msg = paste0("for a single-season fp model, all response elements ",
-                   "must be numeric between 0 and 1 inclusive")
-    )
-  } else {
-    assertthat::assert_that(
-      all(is.numeric(flocker_data$data$ff_y)) &
-        all(flocker_data$data$ff_y %in% c(0, 1)), 
-      msg = paste0("for a standard single-season model, all response ",
-                   "elements must be 0 or 1."
-      )
-    )
-  }
+                                       augmented)
+
+  assertthat::assert_that(
+    all(is.numeric(flocker_data$data$ff_y)) &
+      all(flocker_data$data$ff_y %in% c(0, 1)), 
+    msg = "All response elements must be 0, 1, or NA"
+  )
 }
 
 #' Check validity of params passed to `flock` if `type` is `single_C`
@@ -640,15 +616,11 @@ validate_param_combos_single <- function(f_occ, f_det, flocker_data,
 #' @return silent if parameters are valid
 validate_param_combos_single_C <- function(f_occ, f_det, flocker_data, 
                                          multiseason, f_col, f_ex, multi_init, f_auto,
-                                         augmented, fp) {
+                                         augmented) {
   validate_param_combos_single_generic(f_occ, f_det, flocker_data, 
    multiseason, f_col, f_ex, multi_init, f_auto,
-   augmented, fp)
-  assertthat::assert_that(
-    !fp,
-    msg = paste0("reformat data for fp model or set fp to FALSE.")
-  )
-  
+   augmented)
+
   assertthat::assert_that(
     all(flocker_data$data$ff_n_suc >= 0) &
       all(flocker_data$data$ff_n_suc == round(flocker_data$data$ff_n_suc)),
@@ -667,7 +639,7 @@ validate_param_combos_single_C <- function(f_occ, f_det, flocker_data,
 #' @return silent if parameters are valid
 validate_param_combos_augmented <- function(f_occ, f_det, flocker_data, 
                                          multiseason, f_col, f_ex, multi_init, f_auto,
-                                         augmented, fp, threads) {
+                                         augmented, threads) {
   assertthat::assert_that(
     is_flocker_formula(f_occ), msg = formula_error("occupancy")
   )
@@ -690,15 +662,9 @@ validate_param_combos_augmented <- function(f_occ, f_det, flocker_data,
     )
   )  
   assertthat::assert_that(
-    !fp,
-    msg = "augmented models not implemented for fp likelihoods."
-  )
-  assertthat::assert_that(
     all(is.numeric(flocker_data$data$ff_y)) &
       all(flocker_data$data$ff_y %in% c(0, 1)), 
-    msg = paste0("for an augmented model, all response ",
-                 "elements must be 0 or 1."
-    )
+    msg = "All response elements must be 0, 1, or NA"
   )
   assertthat::assert_that(
     is.null(threads),
@@ -711,7 +677,7 @@ validate_param_combos_augmented <- function(f_occ, f_det, flocker_data,
 #' @return silent if parameters are valid
 validate_param_combos_multi <- function(f_occ, f_det, flocker_data, 
                                          multiseason, f_col, f_ex, multi_init, f_auto,
-                                         augmented, fp, threads) {
+                                         augmented, threads) {
   assertthat::assert_that(
     isFALSE(augmented),
     msg = paste0("flocker_data not formatted for augmented model, but ",
@@ -755,26 +721,12 @@ validate_param_combos_multi <- function(f_occ, f_det, flocker_data,
   }
   
   y_nonmissing <- flocker_data$data$ff_y[flocker_data$data$ff_y != -99]
-  if(fp) {
-    assertthat::assert_that(
-      all(is.numeric(y_nonmissing)) &
-        all(y_nonmissing >= 0) &
-        all(y_nonmissing <= 1),
-      msg = "all fp probabilities must be between 0 and 1 inclusive"
-    )
-    if (all(y_nonmissing %in% c(0, 1))) {
-      warning(paste0("fp is set to TRUE, but all probabilities are either ",
-                     "0 or 1. Setting fp = FALSE yields the same model but ",
-                     "should fit faster.")
-              )
-    }
-  } else {
-    assertthat::assert_that(
-      all(is.numeric(y_nonmissing)) &
-        all(y_nonmissing %in% c(0, 1)), 
-      msg = "in a multi-season model, all non-missing data must be 0 or 1."
-    )
-  }
+
+  assertthat::assert_that(
+    all(is.numeric(y_nonmissing)) &
+      all(y_nonmissing %in% c(0, 1)), 
+    msg = "All response elements must be 0, 1, or NA."
+  )
   assertthat::assert_that(
     is.null(threads),
     msg = "multithreading not supported in multiseason models; set threads to NULL"
