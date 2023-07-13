@@ -192,12 +192,10 @@ fdtl <- function(){
   data.frame(
     model_type = flocker_model_types(),
     data_output_type = c(
-      "single", "single_C", "augmented", "multi", "multi", "multi", "multi",
-      "single", "multi", "multi"
+      "single", "single_C", "augmented", "multi", "multi", "multi", "multi"
     ),
     data_input_type = c(
-      "single", "single", "augmented", "multi", "multi", "multi", "multi",
-      "single", "multi", "multi"
+      "single", "single", "augmented", "multi", "multi", "multi", "multi"
     )
   )
 }
