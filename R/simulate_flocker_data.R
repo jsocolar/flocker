@@ -20,7 +20,7 @@
 #' @param multi_init if n_season is NULL, must be NULL. Otherwise, one of 
 #'   "explicit" or "equilibrium".
 #' @param augmented logical. If `TRUE` data will be formatted for an augmented
-#'   model, which requires that `fp = NULL` and `n_season == 1`. All never-observed 
+#'   model, which requires that `n_season == 1`. All never-observed 
 #'   species will be trimmed out of the data, and the default parameters will be
 #'   modified to increase random effect variances for the detection and occupancy,
 #'   intercepts and to decrease random effect variances for detection slopes, thus
@@ -28,8 +28,6 @@
 #'   be simulated without any covariate influence on occupancy.
 #' @param rep_constant logical: create data with unit covariates only (TRUE) 
 #'   or data that includes event covariates (FALSE)
-#' @param fp NULL for a standard model. For a false-positive model, a number between
-#'   0 and 1 exclusive to simulate data under that fp probablility.
 #' @param params a named list containing of parameter values to use in simulation.
 #'   Any required parameters whose names are not in this list will be assigned their
 #'   default values. To see the parameter names and structures required, run with 
@@ -64,7 +62,6 @@ simulate_flocker_data <- function(
   multi_init = NULL,
   augmented = FALSE,
   rep_constant = FALSE,
-  fp = NULL,
   params = NULL,
   covariates = NULL,
   seed = 123,
@@ -87,10 +84,6 @@ simulate_flocker_data <- function(
   )
   assertthat::assert_that(is_one_logical(augmented), msg = "augmented must be a single logical")
   assertthat::assert_that(is_one_logical(rep_constant), msg = "rep_constant must be a single logical")
-  assertthat::assert_that(
-    is.null(fp) | isTRUE(fp > 0 & fp < 1),
-    msg = "fp must be NULL or a number between 0 and 1"
-  )
   assertthat::assert_that(is_one_logical(ragged_rep), msg = "ragged_rep must be a single logical")
   assertthat::assert_that(is_one_logical(missing_seasons), msg = "missing_seasons must be a single logical")
   if(n_season == 1){
@@ -112,21 +105,15 @@ simulate_flocker_data <- function(
       msg = "augmented must be FALSE when n_season is greater than 1"
     )
   }
-  if(augmented){
-    assertthat::assert_that(
-      is.null(fp),
-      msg = "fp must be NULL when augmented is TRUE"
-    )
-  }
   
   if (is.null(seed)){
     out <- sfd(n_rep, n_pt, n_sp, n_season, multiseason, multi_init, augmented,
-               rep_constant, fp, params, covariates, ragged_rep, missing_seasons)
+               rep_constant, params, covariates, ragged_rep, missing_seasons)
   } else {
       out <- withr::with_seed(
         seed,
         sfd(n_rep, n_pt, n_sp, n_season, multiseason, multi_init, augmented,
-            rep_constant, fp, params, covariates, ragged_rep, missing_seasons)
+            rep_constant, params, covariates, ragged_rep, missing_seasons)
       )
   }
   out
@@ -143,7 +130,6 @@ sfd <- function(
     multi_init,
     augmented,
     rep_constant,
-    fp,
     params,
     covariates,
     ragged_rep,
@@ -325,25 +311,6 @@ sfd <- function(
   
   visit_full$obs <- visit_full$true_Z *
     stats::rbinom(nrow(visit_full), 1, boot::inv.logit(visit_full$logit_det))
-  
-  if (!is.null(fp)) {
-    # true detections are categorized as such with probability fp
-    n_succ <- sum(visit_full$obs)
-    visit_full$obs[visit_full$obs == 1] <- fp
-    # other detections are categorized as {true detections with prob. fp} with
-    # probability so as to imply that on average a fraction fp of detections 
-    # are true
-    n_fail <- extended_binomial_rng(fp, n_succ) - n_succ
-    n_zeros <- sum(!visit_full$obs)
-    if(n_fail > n_zeros) {
-      stop(
-      "there are not enough true nondetections to accommodate the desired fp probability"
-      )
-    }
-    zeros <- rep(0, n_zeros)
-    zeros[sample(1:n_zeros, n_fail)] <- fp
-    visit_full$obs[visit_full$obs == 0] <- zeros
-  }
   
   if (ragged_rep) {
     visit_full$season_pt <- interaction(visit_full$id_point, visit_full$id_season)
