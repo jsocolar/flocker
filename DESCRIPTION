@@ -1,5 +1,5 @@
 Package: flocker
-Version: 0.1-0
+Version: 0.2-0
 Title: Flexible Occupancy Estimation in R
 Authors@R: 
     c(person("Jacob B.", "Socolar", email = "jacob.socolar@gmail.com",
