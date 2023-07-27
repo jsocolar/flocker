@@ -316,7 +316,10 @@ sfd <- function(
     visit_full$season_pt <- interaction(visit_full$id_point, visit_full$id_season)
     season_pt_missing <- sample(unique(visit_full$season_pt), floor(length(unique(visit_full$season_pt)) / 2))
     rows_missing <- which((visit_full$season_pt %in% season_pt_missing) & (visit_full$id_rep > n_rep / 2))
-    visit_full$obs[rows_missing] <- visit_full$ec1[rows_missing] <- NA
+    visit_full$obs[rows_missing] <- NA
+    if(!rep_constant){
+      visit_full$ec1[rows_missing] <- NA
+    }
   }
   
   if (missing_seasons) {
