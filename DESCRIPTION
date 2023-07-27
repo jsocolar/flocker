@@ -29,6 +29,7 @@ Suggests:
     tibble
 Remotes: 
 	stan-dev/cmdstanr
+	hyunjimoon/SBC
 Description: Fit flexible occupancy models in Stan via brms. Flocker brings 
    the full variety of brms effects structures to the relevant distributional 
    terms in multiple classes of occupancy model, including standard 
