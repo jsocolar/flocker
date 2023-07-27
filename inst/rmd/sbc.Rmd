@@ -1,0 +1,455 @@
+---
+title: "SBC for flocker models"
+author: "Jacob Socolar"
+date: "`r Sys.Date()`"
+output: html_document
+params:
+  n_sims: 200
+  n_sites: 200
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r setup2}
+library(flocker)
+library(brms)
+library(SBC)
+set.seed(2)
+```
+
+## Overview
+
+This document performs simulation-based calibration (SBC; REFS) for the models
+available in R package `flocker`. Here, our goal is to validate `flocker`'s 
+data formatting, decoding, and likelihood implementations, and not `brms`'s 
+construction of the linear predictors.
+
+The encoding of the data for a `flocker` model tends to be more complex in the 
+presence of missing observations, and so we include missingness in the data 
+simulation wherever possible (some visits missing in all models, some time-steps
+missing in multiseason models). 
+
+In all models, we include one unit covariate that affects detection and 
+occupancy, colonization, extinction and/or autologistic terms as applicable, 
+and one event covariate that affects detection only (for all models except the
+rep-constant).
+
+## Single-season
+
+### Rep-constant
+```{r rep-constant, eval = FALSE}
+# make the stancode
+model_name <- paste0(tempdir(), "/sbc_rep_constant_model.stan")
+fd <- simulate_flocker_data(
+  n_pt = params$n_sites, n_sp = 1,
+  params = list(
+      det_intercept = rnorm(1),
+      det_slope_unit = rnorm(1),
+      occ_intercept = rnorm(1),
+      occ_slope_unit = rnorm(1)
+  ),
+  seed = NULL,
+  rep_constant = TRUE,
+  ragged_rep = TRUE
+)
+flocker_data = make_flocker_data(fd$obs, fd$unit_covs, verbose = FALSE)
+  
+scode <- flocker_stancode(
+    f_occ = ~ 0 + Intercept + uc1,
+    f_det = ~ 0 + Intercept + uc1,
+    flocker_data = flocker_data,
+    prior = 
+      brms::set_prior("std_normal()") + 
+      brms::set_prior("std_normal()", dpar = "occ"),
+    backend = "cmdstanr"
+  )
+
+writeLines(scode, model_name)
+
+rep_constant_generator <- function(N){  
+  fd <- simulate_flocker_data(
+    n_pt = N, n_sp = 1,
+    params = list(
+      det_intercept = rnorm(1),
+      det_slope_unit = rnorm(1),
+      occ_intercept = rnorm(1),
+      occ_slope_unit = rnorm(1)
+    ),
+    seed = NULL,
+    rep_constant = TRUE,
+    ragged_rep = TRUE
+  )
+  
+  flocker_data = make_flocker_data(fd$obs, fd$unit_covs, verbose = FALSE)
+  
+  # format for return
+  list(
+    variables = list(
+      `b[1]` = fd$params$coefs$det_intercept,
+      `b[2]` = fd$params$coefs$det_slope_unit,
+      `b_occ[1]` = fd$params$coefs$occ_intercept,
+      `b_occ[2]` = fd$params$coefs$occ_slope_unit
+    ),
+    generated = flocker_standata(
+      f_occ = ~ 0 + Intercept + uc1,
+      f_det = ~ 0 + Intercept + uc1,
+      flocker_data = flocker_data
+    )
+  )
+}
+
+rep_constant_gen <- SBC_generator_function(
+  rep_constant_generator, 
+  N = params$n_sites
+  )
+rep_constant_dataset <- suppressMessages(
+  generate_datasets(rep_constant_gen, params$n_sims)
+)
+  
+rep_constant_backend <- 
+  SBC_backend_cmdstan_sample(
+    cmdstanr::cmdstan_model(
+      paste0(tempdir(), "/sbc_rep_constant_model.stan")
+      )
+    )
+
+rep_constant_results <- compute_SBC(rep_constant_dataset, rep_constant_backend)
+
+plot_ecdf(rep_constant_results)
+plot_rank_hist(rep_constant_results)
+plot_ecdf_diff(rep_constant_results)
+
+```
+
+### Rep-varying
+```{r rep-varying, eval = FALSE}
+# make the stancode
+model_name <- paste0(tempdir(), "/sbc_rep_varying_model.stan")
+fd <- simulate_flocker_data(
+  n_pt = params$n_sites, n_sp = 1,
+  params = list(
+      det_intercept = rnorm(1),
+      det_slope_unit = rnorm(1),
+      det_slope_visit = rnorm(1),
+      occ_intercept = rnorm(1),
+      occ_slope_unit = rnorm(1)
+  ),
+  seed = NULL,
+  rep_constant = FALSE,
+  ragged_rep = TRUE
+)
+flocker_data = make_flocker_data(fd$obs, fd$unit_covs, fd$event_covs, verbose = FALSE)
+  
+scode <- flocker_stancode(
+    f_occ = ~ 0 + Intercept + uc1,
+    f_det = ~ 0 + Intercept + uc1 + ec1,
+    flocker_data = flocker_data,
+    prior = 
+      brms::set_prior("std_normal()") + 
+      brms::set_prior("std_normal()", dpar = "occ"),
+    backend = "cmdstanr"
+  )
+writeLines(scode, model_name)
+
+rep_varying_generator <- function(N){  
+  fd <- simulate_flocker_data(
+    n_pt = N, n_sp = 1,
+    params = list(
+      det_intercept = rnorm(1),
+      det_slope_unit = rnorm(1),
+      det_slope_visit = rnorm(1),
+      occ_intercept = rnorm(1),
+      occ_slope_unit = rnorm(1)
+    ),
+    seed = NULL,
+    rep_constant = FALSE,
+    ragged_rep = TRUE
+  )
+  
+  flocker_data = make_flocker_data(fd$obs, fd$unit_covs, fd$event_covs, verbose = FALSE)
+  
+  # format for return
+  list(
+    variables = list(
+      `b[1]` = fd$params$coefs$det_intercept,
+      `b[2]` = fd$params$coefs$det_slope_unit,
+      `b[3]` = fd$params$coefs$det_slope_visit,
+      `b_occ[1]` = fd$params$coefs$occ_intercept,
+      `b_occ[2]` = fd$params$coefs$occ_slope_unit
+    ),
+    generated = flocker_standata(
+      f_occ = ~ 0 + Intercept + uc1,
+      f_det = ~ 0 + Intercept + uc1 + ec1,
+      flocker_data = flocker_data
+    )
+  )
+}
+
+rep_varying_gen <- SBC_generator_function(
+  rep_varying_generator, 
+  N = params$n_sites
+  )
+rep_varying_dataset <- suppressMessages(
+  generate_datasets(rep_varying_gen, params$n_sims)
+)
+  
+rep_varying_backend <- 
+  SBC_backend_cmdstan_sample(
+    cmdstanr::cmdstan_model(
+      paste0(tempdir(), "/sbc_rep_varying_model.stan")
+      )
+    )
+
+rep_varying_results <- compute_SBC(rep_varying_dataset, rep_varying_backend)
+
+plot_ecdf(rep_varying_results)
+plot_rank_hist(rep_varying_results)
+plot_ecdf_diff(rep_varying_results)
+
+```
+
+
+## Data-augmented
+```{r data-augmented}
+
+```
+
+
+## Multi-season
+`flocker` fits multi-season models that parameterize the dynamics using colonization/extinction or autologistic specifications, and that parameterize
+the initial occupancy state using explicit and equilibrium parameterizations, 
+for a total of four classes of multi-season model. We validate each class.
+
+### Colonization-extinction, explicit initial occupancy
+```{r multi-colex-ex}
+# make the stancode
+model_name <- paste0(tempdir(), "/sbc_colex_ex_model.stan")
+fd <- simulate_flocker_data(
+  n_pt = params$n_sites, n_sp = 1, n_season = 4,
+  params = list(
+      det_intercept = rnorm(1),
+      det_slope_unit = rnorm(1),
+      det_slope_visit = rnorm(1),
+      occ_intercept = rnorm(1),
+      occ_slope_unit = rnorm(1),
+      colo_intercept = rnorm(1),
+      colo_slope_unit = rnorm(1),
+      ex_intercept = rnorm(1),
+      ex_slope_unit = rnorm(1)
+  ),
+  seed = NULL,
+  rep_constant = FALSE,
+  multiseason = "colex",
+  multi_init = "explicit",
+  ragged_rep = TRUE
+)
+flocker_data = make_flocker_data(
+  fd$obs, fd$unit_covs, fd$event_covs,
+  type = "multi", verbose = FALSE)
+  
+scode <- flocker_stancode(
+    f_occ = ~ 0 + Intercept + uc1,
+    f_col = ~ 0 + Intercept + uc1,
+    f_ex = ~ 0 + Intercept + uc1,
+    f_det = ~ 0 + Intercept + uc1 + ec1,
+    flocker_data = flocker_data,
+    prior = 
+      brms::set_prior("std_normal()") + 
+      brms::set_prior("std_normal()", dpar = "occ") +
+      brms::set_prior("std_normal()", dpar = "colo") +
+      brms::set_prior("std_normal()", dpar = "ex"),
+    multiseason = "colex",
+    multi_init = "explicit",
+    backend = "cmdstanr"
+  )
+writeLines(scode, model_name)
+
+colex_ex_generator <- function(N){  
+  fd <- simulate_flocker_data(
+    n_pt = params$n_sites, n_sp = 1, n_season = 4,
+    params = list(
+        det_intercept = rnorm(1),
+        det_slope_unit = rnorm(1),
+        det_slope_visit = rnorm(1),
+        occ_intercept = rnorm(1),
+        occ_slope_unit = rnorm(1),
+        colo_intercept = rnorm(1),
+        colo_slope_unit = rnorm(1),
+        ex_intercept = rnorm(1),
+        ex_slope_unit = rnorm(1)
+    ),
+    seed = NULL,
+    rep_constant = FALSE,
+    multiseason = "colex",
+    multi_init = "explicit",
+    ragged_rep = TRUE
+  )
+  
+  flocker_data = make_flocker_data(
+    fd$obs, fd$unit_covs, fd$event_covs,
+    type = "multi", verbose = FALSE)
+  
+  # format for return
+  list(
+    variables = list(
+      `b[1]` = fd$params$coefs$det_intercept,
+      `b[2]` = fd$params$coefs$det_slope_unit,
+      `b[3]` = fd$params$coefs$det_slope_visit,
+      `b_occ[1]` = fd$params$coefs$occ_intercept,
+      `b_occ[2]` = fd$params$coefs$occ_slope_unit,
+      `b_colo[1]` = fd$params$coefs$col_intercept,
+      `b_colo[2]` = fd$params$coefs$col_slope_unit,
+      `b_ex[1]` = fd$params$coefs$ex_intercept,
+      `b_ex[2]` = fd$params$coefs$ex_slope_unit
+    ),
+    generated = flocker_standata(
+      f_occ = ~ 0 + Intercept + uc1,
+      f_col = ~ 0 + Intercept + uc1,
+      f_ex = ~ 0 + Intercept + uc1,
+      f_det = ~ 0 + Intercept + uc1 + ec1,
+      flocker_data = flocker_data,
+      multiseason = "colex",
+      multi_init = "explicit"
+    )
+  )
+}
+
+colex_ex_gen <- SBC_generator_function(
+  colex_ex_generator, 
+  N = params$n_sites
+  )
+colex_ex_dataset <- suppressMessages(
+  generate_datasets(colex_ex_gen, params$n_sims)
+)
+  
+colex_ex_backend <- 
+  SBC_backend_cmdstan_sample(
+    cmdstanr::cmdstan_model(
+      paste0(tempdir(), "/sbc_colex_ex_model.stan")
+      )
+    )
+
+colex_ex_results <- compute_SBC(colex_ex_dataset, colex_ex_backend)
+
+plot_ecdf(colex_ex_results)
+plot_rank_hist(colex_ex_results)
+plot_ecdf_diff(colex_ex_results)
+
+```
+
+### Colonization-extinction, equilibrium initial occupancy
+```{r multi-colex-eq}
+# make the stancode
+model_name <- paste0(tempdir(), "/sbc_colex_eq_model.stan")
+fd <- simulate_flocker_data(
+  n_pt = params$n_sites, n_sp = 1, n_season = 4,
+  params = list(
+      det_intercept = rnorm(1),
+      det_slope_unit = rnorm(1),
+      det_slope_visit = rnorm(1),
+      colo_intercept = rnorm(1),
+      colo_slope_unit = rnorm(1),
+      ex_intercept = rnorm(1),
+      ex_slope_unit = rnorm(1)
+  ),
+  seed = NULL,
+  rep_constant = FALSE,
+  multiseason = "colex",
+  multi_init = "equilibrium",
+  ragged_rep = TRUE
+)
+flocker_data = make_flocker_data(
+  fd$obs, fd$unit_covs, fd$event_covs,
+  type = "multi", verbose = FALSE)
+  
+scode <- flocker_stancode(
+    f_col = ~ 0 + Intercept + uc1,
+    f_ex = ~ 0 + Intercept + uc1,
+    f_det = ~ 0 + Intercept + uc1 + ec1,
+    flocker_data = flocker_data,
+    prior = 
+      brms::set_prior("std_normal()") + 
+      brms::set_prior("std_normal()", dpar = "colo") +
+      brms::set_prior("std_normal()", dpar = "ex"),
+    multiseason = "colex",
+    multi_init = "equilibrium",
+    backend = "cmdstanr"
+  )
+writeLines(scode, model_name)
+
+colex_eq_generator <- function(N){  
+  fd <- simulate_flocker_data(
+    n_pt = params$n_sites, n_sp = 1, n_season = 4,
+    params = list(
+        det_intercept = rnorm(1),
+        det_slope_unit = rnorm(1),
+        det_slope_visit = rnorm(1),
+        colo_intercept = rnorm(1),
+        colo_slope_unit = rnorm(1),
+        ex_intercept = rnorm(1),
+        ex_slope_unit = rnorm(1)
+    ),
+    seed = NULL,
+    rep_constant = FALSE,
+    multiseason = "colex",
+    multi_init = "equilibrium",
+    ragged_rep = TRUE
+  )
+  
+  flocker_data = make_flocker_data(
+    fd$obs, fd$unit_covs, fd$event_covs,
+    type = "multi", verbose = FALSE)
+  
+  # format for return
+  list(
+    variables = list(
+      `b[1]` = fd$params$coefs$det_intercept,
+      `b[2]` = fd$params$coefs$det_slope_unit,
+      `b[3]` = fd$params$coefs$det_slope_visit,
+      `b_colo[1]` = fd$params$coefs$col_intercept,
+      `b_colo[2]` = fd$params$coefs$col_slope_unit,
+      `b_ex[1]` = fd$params$coefs$ex_intercept,
+      `b_ex[2]` = fd$params$coefs$ex_slope_unit
+    ),
+    generated = flocker_standata(
+      f_col = ~ 0 + Intercept + uc1,
+      f_ex = ~ 0 + Intercept + uc1,
+      f_det = ~ 0 + Intercept + uc1 + ec1,
+      flocker_data = flocker_data,
+      multiseason = "colex",
+      multi_init = "explicit"
+    )
+  )
+}
+
+colex_eq_gen <- SBC_generator_function(
+  colex_eq_generator, 
+  N = params$n_sites
+  )
+colex_eq_dataset <- suppressMessages(
+  generate_datasets(colex_eq_gen, params$n_sims)
+)
+  
+colex_eq_backend <- 
+  SBC_backend_cmdstan_sample(
+    cmdstanr::cmdstan_model(
+      paste0(tempdir(), "/sbc_colex_eq_model.stan")
+      )
+    )
+
+colex_eq_results <- compute_SBC(colex_eq_dataset, colex_eq_backend)
+
+plot_ecdf(colex_eq_results)
+plot_rank_hist(colex_eq_results)
+plot_ecdf_diff(colex_eq_results)
+
+```
+
+### Autologistic, explicit initial occupancy
+
+
+### Autologistic, equilibrium initial occupancy
+
+
