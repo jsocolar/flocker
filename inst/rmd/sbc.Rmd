@@ -448,8 +448,209 @@ plot_ecdf_diff(colex_eq_results)
 ```
 
 ### Autologistic, explicit initial occupancy
+```{r multi-auto-ex}
+# make the stancode
+model_name <- paste0(tempdir(), "/sbc_auto_ex_model.stan")
+fd <- simulate_flocker_data(
+  n_pt = params$n_sites, n_sp = 1, n_season = 4,
+  params = list(
+      det_intercept = rnorm(1),
+      det_slope_unit = rnorm(1),
+      det_slope_visit = rnorm(1),
+      occ_intercept = rnorm(1),
+      occ_slope_unit = rnorm(1),
+      auto_intercept = rnorm(1),
+      auto_slope_unit = rnorm(1)
+  ),
+  seed = NULL,
+  rep_constant = FALSE,
+  multiseason = "autologistic",
+  multi_init = "explicit",
+  ragged_rep = TRUE
+)
+flocker_data = make_flocker_data(
+  fd$obs, fd$unit_covs, fd$event_covs,
+  type = "multi", verbose = FALSE)
+  
+scode <- flocker_stancode(
+    f_occ = ~ 0 + Intercept + uc1,
+    f_auto = ~ 0 + Intercept + uc1,
+    f_det = ~ 0 + Intercept + uc1 + ec1,
+    flocker_data = flocker_data,
+    prior = 
+      brms::set_prior("std_normal()") + 
+      brms::set_prior("std_normal()", dpar = "occ") +
+      brms::set_prior("std_normal()", dpar = "auto"),
+    multiseason = "autologistic",
+    multi_init = "explicit",
+    backend = "cmdstanr"
+  )
+writeLines(scode, model_name)
 
+auto_ex_generator <- function(N){  
+  fd <- simulate_flocker_data(
+    n_pt = params$n_sites, n_sp = 1, n_season = 4,
+    params = list(
+        det_intercept = rnorm(1),
+        det_slope_unit = rnorm(1),
+        det_slope_visit = rnorm(1),
+        occ_intercept = rnorm(1),
+        occ_slope_unit = rnorm(1),
+        auto_intercept = rnorm(1),
+        auto_slope_unit = rnorm(1)
+    ),
+    seed = NULL,
+    rep_constant = FALSE,
+    multiseason = "autologistic",
+    multi_init = "explicit",
+    ragged_rep = TRUE
+  )
+  
+  flocker_data = make_flocker_data(
+    fd$obs, fd$unit_covs, fd$event_covs,
+    type = "multi", verbose = FALSE)
+  
+  # format for return
+  list(
+    variables = list(
+      `b[1]` = fd$params$coefs$det_intercept,
+      `b[2]` = fd$params$coefs$det_slope_unit,
+      `b[3]` = fd$params$coefs$det_slope_visit,
+      `b_occ[1]` = fd$params$coefs$occ_intercept,
+      `b_occ[2]` = fd$params$coefs$occ_slope_unit,
+      `b_auto[1]` = fd$params$coefs$auto_intercept,
+      `b_auto[2]` = fd$params$coefs$auto_slope_unit
+    ),
+    generated = flocker_standata(
+      f_occ = ~ 0 + Intercept + uc1,
+      f_auto = ~ 0 + Intercept + uc1,
+      f_det = ~ 0 + Intercept + uc1 + ec1,
+      flocker_data = flocker_data,
+      multiseason = "autologistic",
+      multi_init = "explicit"
+    )
+  )
+}
+
+auto_ex_gen <- SBC_generator_function(
+  auto_ex_generator, 
+  N = params$n_sites
+  )
+auto_ex_dataset <- suppressMessages(
+  generate_datasets(auto_ex_gen, params$n_sims)
+)
+  
+auto_ex_backend <- 
+  SBC_backend_cmdstan_sample(
+    cmdstanr::cmdstan_model(
+      paste0(tempdir(), "/sbc_auto_ex_model.stan")
+      )
+    )
+
+auto_ex_results <- compute_SBC(auto_ex_dataset, auto_ex_backend)
+
+plot_ecdf(auto_ex_results)
+plot_rank_hist(auto_ex_results)
+plot_ecdf_diff(auto_ex_results)
+
+```
 
 ### Autologistic, equilibrium initial occupancy
+```{r multi-auto-eq}
+# make the stancode
+model_name <- paste0(tempdir(), "/sbc_auto_eq_model.stan")
+fd <- simulate_flocker_data(
+  n_pt = params$n_sites, n_sp = 1, n_season = 4,
+  params = list(
+      det_intercept = rnorm(1),
+      det_slope_unit = rnorm(1),
+      det_slope_visit = rnorm(1),
+      auto_intercept = rnorm(1),
+      auto_slope_unit = rnorm(1)
+  ),
+  seed = NULL,
+  rep_constant = FALSE,
+  multiseason = "autologistic",
+  multi_init = "equilibrium",
+  ragged_rep = TRUE
+)
+flocker_data = make_flocker_data(
+  fd$obs, fd$unit_covs, fd$event_covs,
+  type = "multi", verbose = FALSE)
+  
+scode <- flocker_stancode(
+    f_auto = ~ 0 + Intercept + uc1,
+    f_det = ~ 0 + Intercept + uc1 + ec1,
+    flocker_data = flocker_data,
+    prior = 
+      brms::set_prior("std_normal()") + 
+      brms::set_prior("std_normal()", dpar = "auto"),
+    multiseason = "autologistic",
+    multi_init = "equilibrium",
+    backend = "cmdstanr"
+  )
+writeLines(scode, model_name)
 
+auto_eq_generator <- function(N){  
+  fd <- simulate_flocker_data(
+    n_pt = params$n_sites, n_sp = 1, n_season = 4,
+    params = list(
+        det_intercept = rnorm(1),
+        det_slope_unit = rnorm(1),
+        det_slope_visit = rnorm(1),
+        auto_intercept = rnorm(1),
+        auto_slope_unit = rnorm(1)
+    ),
+    seed = NULL,
+    rep_constant = FALSE,
+    multiseason = "autologistic",
+    multi_init = "equilibrium",
+    ragged_rep = TRUE
+  )
+  
+  flocker_data = make_flocker_data(
+    fd$obs, fd$unit_covs, fd$event_covs,
+    type = "multi", verbose = FALSE)
+  
+  # format for return
+  list(
+    variables = list(
+      `b[1]` = fd$params$coefs$det_intercept,
+      `b[2]` = fd$params$coefs$det_slope_unit,
+      `b[3]` = fd$params$coefs$det_slope_visit,
+      `b_auto[1]` = fd$params$coefs$auto_intercept,
+      `b_auto[2]` = fd$params$coefs$auto_slope_unit
+    ),
+    generated = flocker_standata(
+      f_auto = ~ 0 + Intercept + uc1,
+      f_det = ~ 0 + Intercept + uc1 + ec1,
+      flocker_data = flocker_data,
+      multiseason = "autologistic",
+      multi_init = "equilibrium"
+    )
+  )
+}
+
+auto_eq_gen <- SBC_generator_function(
+  auto_eq_generator, 
+  N = params$n_sites
+  )
+auto_eq_dataset <- suppressMessages(
+  generate_datasets(auto_eq_gen, params$n_sims)
+)
+  
+auto_eq_backend <- 
+  SBC_backend_cmdstan_sample(
+    cmdstanr::cmdstan_model(
+      paste0(tempdir(), "/sbc_auto_eq_model.stan")
+      )
+    )
+
+auto_eq_results <- compute_SBC(auto_eq_dataset, auto_eq_backend)
+
+plot_ecdf(auto_eq_results)
+plot_rank_hist(auto_eq_results)
+plot_ecdf_diff(auto_eq_results)
+
+```
 
