@@ -4,7 +4,7 @@ author: "Jacob Socolar"
 date: "`r Sys.Date()`"
 output: html_document
 params:
-  n_sims: 200
+  n_sims: 2
   n_sites: 200
   n_pseudospecies: 100
 ---
@@ -345,7 +345,7 @@ plot_ecdf_diff(colex_ex_results)
 ```
 
 ### Colonization-extinction, equilibrium initial occupancy
-```{r multi-colex-eq, eval = FALSE}
+```{r multi-colex-eq, eval = TRUE}
 # make the stancode
 model_name <- paste0(tempdir(), "/sbc_colex_eq_model.stan")
 fd <- simulate_flocker_data(
@@ -370,17 +370,17 @@ flocker_data = make_flocker_data(
   type = "multi", quiet = TRUE)
   
 scode <- flocker_stancode(
-    f_col = ~ 0 + Intercept + uc1,
-    f_ex = ~ 0 + Intercept + uc1,
-    f_det = ~ 0 + Intercept + uc1 + ec1,
-    flocker_data = flocker_data,
-    prior = 
-      brms::set_prior("std_normal()") + 
-      brms::set_prior("std_normal()", dpar = "colo") +
-      brms::set_prior("std_normal()", dpar = "ex"),
-    multiseason = "colex",
-    multi_init = "equilibrium",
-    backend = "cmdstanr"
+  f_col = ~ 0 + Intercept + uc1,
+  f_ex = ~ 0 + Intercept + uc1,
+  f_det = ~ 0 + Intercept + uc1 + ec1,
+  flocker_data = flocker_data,
+  prior = 
+    brms::set_prior("std_normal()") + 
+    brms::set_prior("std_normal()", dpar = "colo") +
+    brms::set_prior("std_normal()", dpar = "ex"),
+  multiseason = "colex",
+  multi_init = "equilibrium",
+  backend = "cmdstanr"
   )
 writeLines(scode, model_name)
 
@@ -424,7 +424,7 @@ colex_eq_generator <- function(N){
       f_det = ~ 0 + Intercept + uc1 + ec1,
       flocker_data = flocker_data,
       multiseason = "colex",
-      multi_init = "explicit"
+      multi_init = "equilibrium"
     )
   )
 }
@@ -453,7 +453,7 @@ plot_ecdf_diff(colex_eq_results)
 ```
 
 ### Autologistic, explicit initial occupancy
-```{r multi-auto-ex, eval = FALSE}
+```{r multi-auto-ex, eval = TRUE}
 # make the stancode
 model_name <- paste0(tempdir(), "/sbc_auto_ex_model.stan")
 fd <- simulate_flocker_data(
@@ -561,7 +561,7 @@ plot_ecdf_diff(auto_ex_results)
 ```
 
 ### Autologistic, equilibrium initial occupancy
-```{r multi-auto-eq, eval = FALSE}
+```{r multi-auto-eq, eval = TRUE}
 # make the stancode
 model_name <- paste0(tempdir(), "/sbc_auto_eq_model.stan")
 fd <- simulate_flocker_data(
@@ -662,7 +662,7 @@ plot_ecdf_diff(auto_eq_results)
 
 
 ## Data-augmented
-```{r data-augmented, eval = FALSE}
+```{r data-augmented, eval = TRUE}
 # make the stancode
 model_name <- paste0(tempdir(), "/sbc_augmented_model.stan")
 
@@ -710,19 +710,23 @@ flocker_data = make_flocker_data(
   quiet = TRUE)
   
 scode <- flocker_stancode(
-    f_occ = ~ 0 + Intercept + uc1 + (Intercept + uc1 || species),
-    f_det = ~ 0 + Intercept + uc1 + ec1 + (Intercept + uc1 + ec1 || species),
+    f_occ = ~ 0 + Intercept + uc1 + (1 + uc1 || ff_species),
+    f_det = ~ 0 + Intercept + uc1 + ec1 + (1 + uc1 + ec1 || ff_species),
     flocker_data = flocker_data,
     prior = 
       brms::set_prior("std_normal()") + 
       brms::set_prior("std_normal()", class = "sd") +
       brms::set_prior("std_normal()", dpar = "occ") +
       brms::set_prior("std_normal()", class = "sd", dpar = "occ"),
-    backend = "cmdstanr"
+    backend = "cmdstanr",
+    augmented = TRUE
   )
 writeLines(scode, model_name)
 
 rep_varying_generator <- function(N){  
+  omega <- rbeta(1, 30, 30)
+  available <- rbinom(1, params$n_pseudospecies, omega)
+  unavailable <- params$n_pseudospecies - available
   coef_means <- rnorm(5) # normal prior on random effect means
   sigma <- abs(rnorm(5)) # half-normal prior on all random effect sds
   Sigma <- diag(5) * sigma
@@ -744,23 +748,37 @@ rep_varying_generator <- function(N){
     rep_constant = FALSE,
     ragged_rep = TRUE
   )
+  
+  obs_aug <- fd$obs[seq_len(params$n_sites), ]
+  
+  for(i in 2:available){
+    obs_aug <- abind::abind(
+      obs_aug, 
+      fd$obs[((i - 1) * params$n_sites) + seq_len(params$n_sites), ], 
+      along = 3
+      )
+  }
+  
+  event_covs_aug <- list(ec1 = fd$event_covs$ec1[seq_len(params$n_sites), ])
+  unit_covs_aug <- data.frame(uc1 = fd$unit_covs[seq_len(params$n_sites), "uc1"])
+  
   flocker_data = make_flocker_data(
-    fd$obs, fd$unit_covs, fd$event_covs,
+    obs_aug, unit_covs_aug, event_covs_aug,
     type = "augmented", n_aug = unavailable,
     quiet = TRUE)
-  
   # format for return
   list(
     variables = list(
-      `b[1]` = fd$params$coefs$det_intercept,
-      `b[2]` = fd$params$coefs$det_slope_unit,
-      `b[3]` = fd$params$coefs$det_slope_visit,
-      `b_occ[1]` = fd$params$coefs$occ_intercept,
-      `b_occ[2]` = fd$params$coefs$occ_slope_unit
+      `b[1]` = fd$params$coef_means[1],
+      `b[2]` = fd$params$coef_means[2],
+      `b[3]` = fd$params$coef_means[3],
+      `b_occ[1]` = fd$params$coef_means[4],
+      `b_occ[2]` = fd$params$coef_means[5],
+      `Omega_Intercept` = boot::logit(omega)
     ),
     generated = flocker_standata(
-      f_occ = ~ 0 + Intercept + uc1,
-      f_det = ~ 0 + Intercept + uc1 + ec1,
+      f_occ = ~ 0 + Intercept + uc1 + (1 + uc1 || ff_species),
+      f_det = ~ 0 + Intercept + uc1 + ec1 + (1 + uc1 + ec1 || species),
       flocker_data = flocker_data
     )
   )

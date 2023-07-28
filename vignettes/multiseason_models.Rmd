@@ -156,7 +156,7 @@ explicit inits, but we will be able to fit other models (autologistic,
 equilibrium inits) to the same data.^[note that `simulate_flocker_data()` can 
 also simulate directly from these other model types.]
 
-```{r simulate, echo = FALSE}
+```{r simulate, eval = FALSE}
 library(flocker)
 multi_data <- simulate_flocker_data(
   n_season = 3,
@@ -171,7 +171,8 @@ fd <- make_flocker_data(
   multi_data$obs, 
   multi_data$unit_covs, 
   multi_data$event_covs, 
-  type = "multi"
+  type = "multi",
+  quiet = TRUE
   )
 
 ```
@@ -181,7 +182,7 @@ Here's the colonization-extinction model with an explicit model for occupancy
 in the first timestep. Depending on hardware, fitting this model might take 1-5 
 minutes.
 
-```{r colex-explicit, echo = FALSE, eval = FALSE}
+```{r colex-explicit, eval = FALSE}
 multi_colex <- flock(
   f_occ = ~ uc1,
   f_det = ~ uc1 + ec1,
@@ -198,7 +199,7 @@ multi_colex <- flock(
 
 Here's the colonization-extinction model using equilibrium occupancy 
 probabilities in the first timestep:
-```{r colex-equilibrium, echo = FALSE, eval = FALSE}
+```{r colex-equilibrium, eval = FALSE}
 multi_colex_eq <- flock(
   f_det = ~ uc1 + ec1,
   f_col = ~ uc1,
@@ -217,7 +218,7 @@ first timestep. To reflect the stereotypical autologistic model with a constant
 logit-scale offset separating colonization and persistence probabilities, we
 use the formula `f_auto = ~ 1`, but it is fine to relax this constraint and use,
 e.g. `f_auto = ~ uc1`.
-```{r auto-explicit, echo = FALSE, eval = FALSE}
+```{r auto-explicit, eval = FALSE}
 multi_auto <- flock(
   f_occ = ~ uc1,
   f_det = ~ uc1 + ec1,
@@ -234,7 +235,7 @@ multi_auto <- flock(
 
 And finally the autologistic model with equilibrium occupancy probabilities in
 the first timestep:
-```{r auto-equilirium, echo = FALSE, eval = FALSE}
+```{r auto-equilirium, eval = FALSE}
 multi_auto_eq <- flock(
   f_det = ~ uc1 + ec1,
   f_col = ~ uc1,
@@ -250,23 +251,25 @@ multi_auto_eq <- flock(
 
 We can reconstruct the occupancy probabilities at every unit using the 
 `get_Z` function:
-```{r Z, echo = FALSE, eval = FALSE}
+```{r Z, eval = FALSE}
 Z <- get_Z(multi_colex_eq)
 
 ```
 
 We can generate posterior predictions:
-```{r predict, echo = FALSE, eval = FALSE}
-pp <- predic
+```{r predict, eval = FALSE}
+pp <- predict_flocker(multi_colex_eq)
+
 ```
 
-We can compare the fit of these various models using approxiamte leave-one-out
+We can compare the fit of these various models using approximate leave-one-out
 cross-validation, where the holdouts consist of entire series 
 (leave-one-series-out cross-validation).
 
-```{r loo, echo = FALSE, eval = FALSE}
+```{r loo, eval = FALSE}
 loo_out <- loo_compare_flocker(
   list(multi_colex, multi_colex_eq, multi_auto, multi_auto_eq)
 )
+loo_out
 
 ```
