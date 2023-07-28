@@ -110,15 +110,15 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
   }
   
   if (type == "single") {
-    out <- make_flocker_data_static(obs, unit_covs, event_covs)
+    out <- make_flocker_data_static(obs, unit_covs, event_covs, quiet)
     out$unit_covs <- names(unit_covs)
     out$event_covs <- names(event_covs)
   } else if (type == "multi") {
-    out <- make_flocker_data_dynamic(obs, unit_covs, event_covs)
+    out <- make_flocker_data_dynamic(obs, unit_covs, event_covs, quiet)
     out$unit_covs <- names(unit_covs[[1]])
     out$event_covs <- names(event_covs)
   } else if (type == "augmented") {
-    out <- make_flocker_data_augmented(obs, n_aug, unit_covs, event_covs)
+    out <- make_flocker_data_augmented(obs, n_aug, unit_covs, event_covs, quiet)
     out$unit_covs <- names(unit_covs)
     out$event_covs <- names(event_covs)
   }
@@ -139,6 +139,7 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
 #'            across repeated sampling events within closure-units.
 #' @param event_covs A named list of I x J matrices, each one corresponding to a covariate
 #' that varies across repeated sampling events within closure-units
+#' @param quiet Hide progress bars and informational messages?
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 #' @examples
@@ -147,7 +148,7 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
 #'  example_flocker_data$unit_covs,
 #'  example_flocker_data$event_covs
 #' )
-make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL) {
+make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL, quiet = FALSE) {
   assertthat::assert_that(
     length(dim(obs)) == 2,
     msg = "in a single-season model, obs must have exactly two dimensions"
@@ -284,7 +285,7 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL) {
 #'    dataframes must have I rows.
 #' @param event_covs A named list of I x J x K arrays, each one corresponding to 
 #' a covariate that varies across repeated sampling events within closure-units
-#' @param quiet logical
+#' @param quiet Hide progress bars and informational messages?
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
@@ -594,10 +595,11 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
 #'            across repeated sampling events.
 #' @param event_covs A named list of I x J matrices, each one corresponding to a 
 #' covariate that varies across repeated sampling events within sites
+#' @param quiet Hide progress bars and informational messages?
 #' @return A flocker_data list that can be passed as data to \code{flocker()}.
 #' @export
 make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL, 
-                                        event_covs = NULL) {
+                                        event_covs = NULL, quiet = FALSE) {
   assertthat::assert_that(
     length(dim(obs)) == 3,
     msg = "obs must have exactly three dimensions."

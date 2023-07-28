@@ -57,7 +57,7 @@ fd <- simulate_flocker_data(
   rep_constant = TRUE,
   ragged_rep = TRUE
 )
-flocker_data = make_flocker_data(fd$obs, fd$unit_covs, verbose = FALSE)
+flocker_data = make_flocker_data(fd$obs, fd$unit_covs, quiet = TRUE)
   
 scode <- flocker_stancode(
     f_occ = ~ 0 + Intercept + uc1,
@@ -87,7 +87,7 @@ rep_constant_generator <- function(N){
     ragged_rep = TRUE
   )
   
-  flocker_data = make_flocker_data(fd$obs, fd$unit_covs, verbose = FALSE)
+  flocker_data = make_flocker_data(fd$obs, fd$unit_covs, quiet = TRUE)
   
   # format for return
   list(
@@ -147,7 +147,7 @@ fd <- simulate_flocker_data(
   rep_constant = FALSE,
   ragged_rep = TRUE
 )
-flocker_data = make_flocker_data(fd$obs, fd$unit_covs, fd$event_covs, verbose = FALSE)
+flocker_data = make_flocker_data(fd$obs, fd$unit_covs, fd$event_covs, quiet = TRUE)
   
 scode <- flocker_stancode(
     f_occ = ~ 0 + Intercept + uc1,
@@ -177,7 +177,7 @@ rep_varying_generator <- function(N){
     ragged_rep = TRUE
   )
   
-  flocker_data = make_flocker_data(fd$obs, fd$unit_covs, fd$event_covs, verbose = FALSE)
+  flocker_data = make_flocker_data(fd$obs, fd$unit_covs, fd$event_covs, quiet = TRUE)
   
   # format for return
   list(
@@ -252,7 +252,7 @@ fd <- simulate_flocker_data(
 )
 flocker_data = make_flocker_data(
   fd$obs, fd$unit_covs, fd$event_covs,
-  type = "multi", verbose = FALSE)
+  type = "multi", quiet = TRUE)
   
 scode <- flocker_stancode(
     f_occ = ~ 0 + Intercept + uc1,
@@ -294,7 +294,7 @@ colex_ex_generator <- function(N){
   
   flocker_data = make_flocker_data(
     fd$obs, fd$unit_covs, fd$event_covs,
-    type = "multi", verbose = FALSE)
+    type = "multi", quiet = TRUE)
   
   # format for return
   list(
@@ -367,7 +367,7 @@ fd <- simulate_flocker_data(
 )
 flocker_data = make_flocker_data(
   fd$obs, fd$unit_covs, fd$event_covs,
-  type = "multi", verbose = FALSE)
+  type = "multi", quiet = TRUE)
   
 scode <- flocker_stancode(
     f_col = ~ 0 + Intercept + uc1,
@@ -405,7 +405,7 @@ colex_eq_generator <- function(N){
   
   flocker_data = make_flocker_data(
     fd$obs, fd$unit_covs, fd$event_covs,
-    type = "multi", verbose = FALSE)
+    type = "multi", quiet = TRUE)
   
   # format for return
   list(
@@ -475,7 +475,7 @@ fd <- simulate_flocker_data(
 )
 flocker_data = make_flocker_data(
   fd$obs, fd$unit_covs, fd$event_covs,
-  type = "multi", verbose = FALSE)
+  type = "multi", quiet = TRUE)
   
 scode <- flocker_stancode(
     f_occ = ~ 0 + Intercept + uc1,
@@ -513,7 +513,7 @@ auto_ex_generator <- function(N){
   
   flocker_data = make_flocker_data(
     fd$obs, fd$unit_covs, fd$event_covs,
-    type = "multi", verbose = FALSE)
+    type = "multi", quiet = TRUE)
   
   # format for return
   list(
@@ -581,7 +581,7 @@ fd <- simulate_flocker_data(
 )
 flocker_data = make_flocker_data(
   fd$obs, fd$unit_covs, fd$event_covs,
-  type = "multi", verbose = FALSE)
+  type = "multi", quiet = TRUE)
   
 scode <- flocker_stancode(
     f_auto = ~ 0 + Intercept + uc1,
@@ -615,7 +615,7 @@ auto_eq_generator <- function(N){
   
   flocker_data = make_flocker_data(
     fd$obs, fd$unit_covs, fd$event_covs,
-    type = "multi", verbose = FALSE)
+    type = "multi", quiet = TRUE)
   
   # format for return
   list(
@@ -663,60 +663,91 @@ plot_ecdf_diff(auto_eq_results)
 
 ## Data-augmented
 ```{r data-augmented, eval = FALSE}
-omega <- rbeta(1, 30, 30)
-sigma_det_intercept <- abs(rnorm(1))
-sigma_det_slope <- abs(rnorm(1))
-sigma_occ_intercept <- abs(rnorm(1))
-
-
-available <- rbinom(1, params$n_pseudospecies, omega)
-unavailable <- params$n_pseudospecies - available
-
 # make the stancode
 model_name <- paste0(tempdir(), "/sbc_augmented_model.stan")
+
+omega <- rbeta(1, 30, 30)
+available <- rbinom(1, params$n_pseudospecies, omega)
+unavailable <- params$n_pseudospecies - available
+coef_means <- rnorm(5) # normal prior on random effect means
+sigma <- abs(rnorm(5)) # half-normal prior on all random effect sds
+Sigma <- diag(5) * sigma
+
 fd <- simulate_flocker_data(
   n_pt = params$n_sites, n_sp = available,
   params = list(
-    coef_means = c(rnorm(4), 0), # 0 because we aren't going to include a slope for occupancy
-      det_intercept = rnorm(available, ),
-      det_slope_unit = rnorm(1),
-      det_slope_visit = rnorm(1),
-      occ_intercept = rnorm(1),
-      occ_slope_unit = rnorm(1)
+    coef_means = coef_means,
+    Sigma = Sigma,
+    coefs = data.frame(
+      det_intercept = rnorm(available, coef_means[1], sigma[1]),
+      det_slope_unit = rnorm(available, coef_means[2], sigma[2]),
+      det_slope_visit = rnorm(available, coef_means[3], sigma[3]),
+      occ_intercept = rnorm(available, coef_means[4], sigma[4]),
+      occ_slope_unit = rnorm(available, coef_means[5], sigma[5])
+    )
   ),
   seed = NULL,
   rep_constant = FALSE,
   ragged_rep = TRUE
 )
-flocker_data = make_flocker_data(fd$obs, fd$unit_covs, fd$event_covs, verbose = FALSE)
+
+obs_aug <- fd$obs[seq_len(params$n_sites), ]
+
+for(i in 2:available){
+  obs_aug <- abind::abind(
+    obs_aug, 
+    fd$obs[((i - 1) * params$n_sites) + seq_len(params$n_sites), ], 
+    along = 3
+    )
+}
+
+event_covs_aug <- list(ec1 = fd$event_covs$ec1[seq_len(params$n_sites), ])
+unit_covs_aug <- data.frame(uc1 = fd$unit_covs[seq_len(params$n_sites), "uc1"])
+
+flocker_data = make_flocker_data(
+  obs_aug, unit_covs_aug, event_covs_aug,
+  type = "augmented", n_aug = unavailable,
+  quiet = TRUE)
   
 scode <- flocker_stancode(
-    f_occ = ~ 0 + Intercept + uc1,
-    f_det = ~ 0 + Intercept + uc1 + ec1,
+    f_occ = ~ 0 + Intercept + uc1 + (Intercept + uc1 || species),
+    f_det = ~ 0 + Intercept + uc1 + ec1 + (Intercept + uc1 + ec1 || species),
     flocker_data = flocker_data,
     prior = 
       brms::set_prior("std_normal()") + 
-      brms::set_prior("std_normal()", dpar = "occ"),
+      brms::set_prior("std_normal()", class = "sd") +
+      brms::set_prior("std_normal()", dpar = "occ") +
+      brms::set_prior("std_normal()", class = "sd", dpar = "occ"),
     backend = "cmdstanr"
   )
 writeLines(scode, model_name)
 
 rep_varying_generator <- function(N){  
+  coef_means <- rnorm(5) # normal prior on random effect means
+  sigma <- abs(rnorm(5)) # half-normal prior on all random effect sds
+  Sigma <- diag(5) * sigma
+  
   fd <- simulate_flocker_data(
-    n_pt = N, n_sp = 1,
+    n_pt = params$n_sites, n_sp = available,
     params = list(
-      det_intercept = rnorm(1),
-      det_slope_unit = rnorm(1),
-      det_slope_visit = rnorm(1),
-      occ_intercept = rnorm(1),
-      occ_slope_unit = rnorm(1)
+      coef_means = coef_means,
+      Sigma = Sigma,
+      coefs = data.frame(
+        det_intercept = rnorm(available, coef_means[1], sigma[1]),
+        det_slope_unit = rnorm(available, coef_means[2], sigma[2]),
+        det_slope_visit = rnorm(available, coef_means[3], sigma[3]),
+        occ_intercept = rnorm(available, coef_means[4], sigma[4]),
+        occ_slope_unit = rnorm(available, coef_means[5], sigma[5])
+      )
     ),
     seed = NULL,
     rep_constant = FALSE,
     ragged_rep = TRUE
   )
-  
-  flocker_data = make_flocker_data(fd$obs, fd$unit_covs, fd$event_covs, verbose = FALSE)
+  flocker_data = make_flocker_data(
+    fd$obs, fd$unit_covs, fd$event_covs,
+    type = "augmented", n_aug = unavailable,
+    quiet = TRUE)
   
   # format for return
   list(

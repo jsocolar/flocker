@@ -28,7 +28,7 @@ dataframes must have I rows.}
 \item{event_covs}{A named list of I x J x K arrays, each one corresponding to 
 a covariate that varies across repeated sampling events within closure-units}
 
-\item{quiet}{logical}
+\item{quiet}{Hide progress bars and informational messages?}
 }
 \value{
 A flocker_data list that can be passed as data to \code{flock()}.
