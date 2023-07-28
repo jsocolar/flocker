@@ -10,7 +10,7 @@ make_flocker_data(
   event_covs = NULL,
   type = "single",
   n_aug = NULL,
-  verbose = TRUE
+  quiet = FALSE
 )
 }
 \arguments{
@@ -54,7 +54,7 @@ data-augmentation for never-observed pseudospecies.}
 \item{n_aug}{Number of pseudo-species to augment. Only applicable if 
 \code{type = "augmented"}.}
 
-\item{verbose}{Show informational messages?}
+\item{quiet}{Hide progress bars and informational messages?}
 }
 \value{
 A flocker_data list that can be passed as data to \code{flock()}.

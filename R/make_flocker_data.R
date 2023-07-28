@@ -42,7 +42,7 @@
 #'    data-augmentation for never-observed pseudospecies.
 #' @param n_aug Number of pseudo-species to augment. Only applicable if 
 #'    \code{type = "augmented"}.
-#' @param verbose Show informational messages?
+#' @param quiet Hide progress bars and informational messages?
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 #' @examples
@@ -53,7 +53,7 @@
 #' )
 make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
                               type = "single", n_aug = NULL,
-                              verbose = TRUE) {
+                              quiet = FALSE) {
   assertthat::assert_that(
     type %in% flocker_data_input_types(),
     msg = paste0("Invalid type argument. Type given as '", type, "' but must ",
@@ -86,7 +86,7 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
     )
   }
   
-  if (verbose) {
+  if (!quiet) {
     if (type == "single") {
       message(paste0("Formatting data for a single-season occupancy model. For ",
                      "details, see make_flocker_data_static. All warnings and ",
@@ -284,11 +284,11 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL) {
 #'    dataframes must have I rows.
 #' @param event_covs A named list of I x J x K arrays, each one corresponding to 
 #' a covariate that varies across repeated sampling events within closure-units
-#' @param verbose logical
+#' @param quiet logical
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
-                                      verbose = TRUE) {
+                                      quiet = FALSE) {
   n_year <- nslice(obs) # nslice checks that obs is a 3-D array
   n_series <- nrow(obs)
   n_rep <- ncol(obs)
@@ -465,7 +465,7 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
       the_m99s <- which(obs[ , 1, ] == -99)
       nas_replace <- shared_elements(the_nas_event, the_m99s)
       if (length(nas_replace) > 0) {
-        if (verbose) {
+        if (!quiet) {
           warning(paste0("One or more event_covariates are NA on the first ",
                          "repeat visit to one or more units. This is ",
                          "allowable as long as the units in question were ",
@@ -529,22 +529,33 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
   unit_indices <- as.data.frame(matrix(data = -99, nrow = nrow(flocker_data),
                                       ncol = n_year))
   names(unit_indices) <- paste0("ff_unit_index", seq(n_year))
-  message("formatting unit indices")
-  pb <- utils::txtProgressBar(min = 0, max = n_series, style = 3)
+  if(!quiet){
+    message("formatting unit indices")
+    pb <- utils::txtProgressBar(min = 0, max = n_series, style = 3)
+  }
   for (i in 1:n_series) {
     unit_indices[i, 1:flocker_data$ff_n_year[i]] <- 
       which(flocker_data$ff_series[seq(n_unit)] == flocker_data$ff_series[i])
-    utils::setTxtProgressBar(pb, i)
+    if(!quiet){
+      utils::setTxtProgressBar(pb, i)
+    }
   }
-  close(pb)
+  if(!quiet){
+    close(pb)
+  }
+  
   flocker_data <- cbind(flocker_data, unit_indices)
   
   # Rep indices: indices for the unique reps belonging to each unit
   rep_indices <- as.data.frame(matrix(data = -99, nrow = nrow(flocker_data),
                                        ncol = n_rep))
   names(rep_indices) <- paste0("ff_rep_index", seq(n_rep))
-  message("formatting rep indices")
-  pb <- utils::txtProgressBar(min = 0, max = n_unit, style = 3)
+  
+  if(!quiet){
+    message("formatting rep indices")
+    pb <- utils::txtProgressBar(min = 0, max = n_unit, style = 3)
+  }
+
   for (i in seq(n_unit)) {
     assertthat::assert_that(
       !duplicated(flocker_data$ff_series_year)[i],
@@ -554,9 +565,13 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
       rep_indices[i, 1:flocker_data$ff_n_rep[i]] <- 
         which(flocker_data$ff_series_year == flocker_data$ff_series_year[i])
     }
-    utils::setTxtProgressBar(pb, i)
+    if(!quiet){
+      utils::setTxtProgressBar(pb, i)
+    }
   }
-  close(pb)
+  if(!quiet){
+    close(pb)
+  }
   
   flocker_data <- cbind(flocker_data, rep_indices)
   
@@ -699,13 +714,19 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
   rep_indices <- as.data.frame(matrix(data = -99, nrow = nrow(flocker_data),
                                       ncol = n_rep))
   names(rep_indices) <- paste0("ff_rep_index", 1:n_rep)
-  message("formatting rep indices")
-  pb <- utils::txtProgressBar(min = 0, max = nrow(obs), style = 3)
+  if(!quiet){
+    message("formatting rep indices")
+    pb <- utils::txtProgressBar(min = 0, max = nrow(obs), style = 3)
+  }
   for (i in 1:nrow(obs)) {
     rep_indices[i, 1:flocker_data$ff_n_rep[i]] <- which(flocker_data$ff_unit == i)
-    utils::setTxtProgressBar(pb, i)
+    if(!quiet){
+      utils::setTxtProgressBar(pb, i)
+    }
   }
-  close(pb)
+  if(!quiet){
+    close(pb)
+  }
   flocker_data <- cbind(flocker_data, rep_indices)
   
   out <- list(data = flocker_data, n_rep = n_rep,

@@ -9,7 +9,7 @@ make_flocker_data_dynamic(
   obs,
   unit_covs = NULL,
   event_covs = NULL,
-  verbose = TRUE
+  quiet = FALSE
 )
 }
 \arguments{
@@ -28,7 +28,7 @@ dataframes must have I rows.}
 \item{event_covs}{A named list of I x J x K arrays, each one corresponding to 
 a covariate that varies across repeated sampling events within closure-units}
 
-\item{verbose}{logical}
+\item{quiet}{logical}
 }
 \value{
 A flocker_data list that can be passed as data to \code{flock()}.

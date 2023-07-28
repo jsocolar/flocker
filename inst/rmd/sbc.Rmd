@@ -6,6 +6,7 @@ output: html_document
 params:
   n_sims: 200
   n_sites: 200
+  n_pseudospecies: 100
 ---
 
 ```{r setup, include=FALSE}
@@ -39,16 +40,18 @@ rep-constant).
 ## Single-season
 
 ### Rep-constant
-```{r rep-constant, eval = FALSE}
+```{r rep-constant}
 # make the stancode
 model_name <- paste0(tempdir(), "/sbc_rep_constant_model.stan")
 fd <- simulate_flocker_data(
   n_pt = params$n_sites, n_sp = 1,
   params = list(
+    coefs = data.frame(
       det_intercept = rnorm(1),
       det_slope_unit = rnorm(1),
       occ_intercept = rnorm(1),
       occ_slope_unit = rnorm(1)
+    )
   ),
   seed = NULL,
   rep_constant = TRUE,
@@ -72,10 +75,12 @@ rep_constant_generator <- function(N){
   fd <- simulate_flocker_data(
     n_pt = N, n_sp = 1,
     params = list(
-      det_intercept = rnorm(1),
-      det_slope_unit = rnorm(1),
-      occ_intercept = rnorm(1),
-      occ_slope_unit = rnorm(1)
+      coefs = data.frame(
+        det_intercept = rnorm(1),
+        det_slope_unit = rnorm(1),
+        occ_intercept = rnorm(1),
+        occ_slope_unit = rnorm(1)
+      )
     ),
     seed = NULL,
     rep_constant = TRUE,
@@ -124,17 +129,19 @@ plot_ecdf_diff(rep_constant_results)
 ```
 
 ### Rep-varying
-```{r rep-varying, eval = FALSE}
+```{r rep-varying}
 # make the stancode
 model_name <- paste0(tempdir(), "/sbc_rep_varying_model.stan")
 fd <- simulate_flocker_data(
   n_pt = params$n_sites, n_sp = 1,
   params = list(
+    coefs = data.frame(
       det_intercept = rnorm(1),
       det_slope_unit = rnorm(1),
       det_slope_visit = rnorm(1),
       occ_intercept = rnorm(1),
       occ_slope_unit = rnorm(1)
+    )
   ),
   seed = NULL,
   rep_constant = FALSE,
@@ -157,11 +164,13 @@ rep_varying_generator <- function(N){
   fd <- simulate_flocker_data(
     n_pt = N, n_sp = 1,
     params = list(
-      det_intercept = rnorm(1),
-      det_slope_unit = rnorm(1),
-      det_slope_visit = rnorm(1),
-      occ_intercept = rnorm(1),
-      occ_slope_unit = rnorm(1)
+      coefs = data.frame(
+        det_intercept = rnorm(1),
+        det_slope_unit = rnorm(1),
+        det_slope_visit = rnorm(1),
+        occ_intercept = rnorm(1),
+        occ_slope_unit = rnorm(1)
+      )
     ),
     seed = NULL,
     rep_constant = FALSE,
@@ -211,12 +220,6 @@ plot_ecdf_diff(rep_varying_results)
 ```
 
 
-## Data-augmented
-```{r data-augmented}
-
-```
-
-
 ## Multi-season
 `flocker` fits multi-season models that parameterize the dynamics using colonization/extinction or autologistic specifications, and that parameterize
 the initial occupancy state using explicit and equilibrium parameterizations, 
@@ -229,15 +232,17 @@ model_name <- paste0(tempdir(), "/sbc_colex_ex_model.stan")
 fd <- simulate_flocker_data(
   n_pt = params$n_sites, n_sp = 1, n_season = 4,
   params = list(
+    coefs = data.frame(
       det_intercept = rnorm(1),
       det_slope_unit = rnorm(1),
       det_slope_visit = rnorm(1),
       occ_intercept = rnorm(1),
       occ_slope_unit = rnorm(1),
-      colo_intercept = rnorm(1),
-      colo_slope_unit = rnorm(1),
+      col_intercept = rnorm(1),
+      col_slope_unit = rnorm(1),
       ex_intercept = rnorm(1),
       ex_slope_unit = rnorm(1)
+    )
   ),
   seed = NULL,
   rep_constant = FALSE,
@@ -340,7 +345,7 @@ plot_ecdf_diff(colex_ex_results)
 ```
 
 ### Colonization-extinction, equilibrium initial occupancy
-```{r multi-colex-eq}
+```{r multi-colex-eq, eval = FALSE}
 # make the stancode
 model_name <- paste0(tempdir(), "/sbc_colex_eq_model.stan")
 fd <- simulate_flocker_data(
@@ -448,7 +453,7 @@ plot_ecdf_diff(colex_eq_results)
 ```
 
 ### Autologistic, explicit initial occupancy
-```{r multi-auto-ex}
+```{r multi-auto-ex, eval = FALSE}
 # make the stancode
 model_name <- paste0(tempdir(), "/sbc_auto_ex_model.stan")
 fd <- simulate_flocker_data(
@@ -556,7 +561,7 @@ plot_ecdf_diff(auto_ex_results)
 ```
 
 ### Autologistic, equilibrium initial occupancy
-```{r multi-auto-eq}
+```{r multi-auto-eq, eval = FALSE}
 # make the stancode
 model_name <- paste0(tempdir(), "/sbc_auto_eq_model.stan")
 fd <- simulate_flocker_data(
@@ -653,4 +658,104 @@ plot_rank_hist(auto_eq_results)
 plot_ecdf_diff(auto_eq_results)
 
 ```
+
+
+
+## Data-augmented
+```{r data-augmented, eval = FALSE}
+omega <- rbeta(1, 30, 30)
+sigma_det_intercept <- abs(rnorm(1))
+sigma_det_slope <- abs(rnorm(1))
+sigma_occ_intercept <- abs(rnorm(1))
+
+
+available <- rbinom(1, params$n_pseudospecies, omega)
+unavailable <- params$n_pseudospecies - available
+
+# make the stancode
+model_name <- paste0(tempdir(), "/sbc_augmented_model.stan")
+fd <- simulate_flocker_data(
+  n_pt = params$n_sites, n_sp = available,
+  params = list(
+    coef_means = c(rnorm(4), 0), # 0 because we aren't going to include a slope for occupancy
+      det_intercept = rnorm(available, ),
+      det_slope_unit = rnorm(1),
+      det_slope_visit = rnorm(1),
+      occ_intercept = rnorm(1),
+      occ_slope_unit = rnorm(1)
+  ),
+  seed = NULL,
+  rep_constant = FALSE,
+  ragged_rep = TRUE
+)
+flocker_data = make_flocker_data(fd$obs, fd$unit_covs, fd$event_covs, verbose = FALSE)
+  
+scode <- flocker_stancode(
+    f_occ = ~ 0 + Intercept + uc1,
+    f_det = ~ 0 + Intercept + uc1 + ec1,
+    flocker_data = flocker_data,
+    prior = 
+      brms::set_prior("std_normal()") + 
+      brms::set_prior("std_normal()", dpar = "occ"),
+    backend = "cmdstanr"
+  )
+writeLines(scode, model_name)
+
+rep_varying_generator <- function(N){  
+  fd <- simulate_flocker_data(
+    n_pt = N, n_sp = 1,
+    params = list(
+      det_intercept = rnorm(1),
+      det_slope_unit = rnorm(1),
+      det_slope_visit = rnorm(1),
+      occ_intercept = rnorm(1),
+      occ_slope_unit = rnorm(1)
+    ),
+    seed = NULL,
+    rep_constant = FALSE,
+    ragged_rep = TRUE
+  )
+  
+  flocker_data = make_flocker_data(fd$obs, fd$unit_covs, fd$event_covs, verbose = FALSE)
+  
+  # format for return
+  list(
+    variables = list(
+      `b[1]` = fd$params$coefs$det_intercept,
+      `b[2]` = fd$params$coefs$det_slope_unit,
+      `b[3]` = fd$params$coefs$det_slope_visit,
+      `b_occ[1]` = fd$params$coefs$occ_intercept,
+      `b_occ[2]` = fd$params$coefs$occ_slope_unit
+    ),
+    generated = flocker_standata(
+      f_occ = ~ 0 + Intercept + uc1,
+      f_det = ~ 0 + Intercept + uc1 + ec1,
+      flocker_data = flocker_data
+    )
+  )
+}
+
+rep_varying_gen <- SBC_generator_function(
+  rep_varying_generator, 
+  N = params$n_sites
+  )
+rep_varying_dataset <- suppressMessages(
+  generate_datasets(rep_varying_gen, params$n_sims)
+)
+  
+rep_varying_backend <- 
+  SBC_backend_cmdstan_sample(
+    cmdstanr::cmdstan_model(
+      paste0(tempdir(), "/sbc_rep_varying_model.stan")
+      )
+    )
+
+rep_varying_results <- compute_SBC(rep_varying_dataset, rep_varying_backend)
+
+plot_ecdf(rep_varying_results)
+plot_rank_hist(rep_varying_results)
+plot_ecdf_diff(rep_varying_results)
+
+```
+
 
