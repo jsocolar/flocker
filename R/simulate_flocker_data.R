@@ -152,6 +152,8 @@ sfd <- function(
   }
   if (isTRUE(multiseason == "colex")) {
     coef_names <- c(coef_names, c("ex_intercept", "ex_slope_unit"))
+  } else if (isTRUE(multiseason == "autologistic")){
+    coef_names <- c(coef_names, c("auto_intercept", "auto_slope_unit"))
   }
   
   # If coefs not specified directly, simulate from the prior (either passed via
@@ -195,11 +197,6 @@ sfd <- function(
     identical(names(params$coefs), coef_names)
   )
   coefs <- params$coefs
-  if (isTRUE(multiseason == "autologistic")) {
-    if (!("theta" %in% np)) {
-      params$theta <- 1
-    }
-  }
   
   # Create covariates (currently assume that unit covariates are the same
   # across all timesteps in multiseason models)
@@ -222,9 +219,9 @@ sfd <- function(
       unit_backbone$ex <- coefs$ex_intercept[as.integer(unit_backbone$species)] +
         coefs$ex_slope_unit[as.integer(unit_backbone$species)] * unit_backbone$uc1
     } else if (multiseason == "autologistic") {
-      unit_backbone$ex <- boot::logit(
-        1 - boot::inv.logit(params$theta + unit_backbone$col)
-      )
+      unit_backbone$ex <- -(unit_backbone$col + 
+        coefs$auto_intercept[as.integer(unit_backbone$species)] +
+        coefs$auto_slope_unit[as.integer(unit_backbone$species)] * unit_backbone$uc1)
     }
   }
   

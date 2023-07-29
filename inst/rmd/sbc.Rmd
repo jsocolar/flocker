@@ -391,8 +391,8 @@ colex_eq_generator <- function(N){
         det_intercept = rnorm(1),
         det_slope_unit = rnorm(1),
         det_slope_visit = rnorm(1),
-        colo_intercept = rnorm(1),
-        colo_slope_unit = rnorm(1),
+        col_intercept = rnorm(1),
+        col_slope_unit = rnorm(1),
         ex_intercept = rnorm(1),
         ex_slope_unit = rnorm(1)
     ),
@@ -464,6 +464,8 @@ fd <- simulate_flocker_data(
       det_slope_visit = rnorm(1),
       occ_intercept = rnorm(1),
       occ_slope_unit = rnorm(1),
+      col_intercept = rnorm(1),
+      col_slope_unit = rnorm(1),
       auto_intercept = rnorm(1),
       auto_slope_unit = rnorm(1)
   ),
@@ -479,13 +481,15 @@ flocker_data = make_flocker_data(
   
 scode <- flocker_stancode(
     f_occ = ~ 0 + Intercept + uc1,
+    f_col = ~ 0 + Intercept + uc1,
     f_auto = ~ 0 + Intercept + uc1,
     f_det = ~ 0 + Intercept + uc1 + ec1,
     flocker_data = flocker_data,
     prior = 
       brms::set_prior("std_normal()") + 
       brms::set_prior("std_normal()", dpar = "occ") +
-      brms::set_prior("std_normal()", dpar = "auto"),
+      brms::set_prior("std_normal()", dpar = "colo") +
+      brms::set_prior("std_normal()", dpar = "autologistic"),
     multiseason = "autologistic",
     multi_init = "explicit",
     backend = "cmdstanr"
@@ -501,6 +505,8 @@ auto_ex_generator <- function(N){
         det_slope_visit = rnorm(1),
         occ_intercept = rnorm(1),
         occ_slope_unit = rnorm(1),
+        colo_intercept = rnorm(1),
+        colo_slope_unit = rnorm(1),
         auto_intercept = rnorm(1),
         auto_slope_unit = rnorm(1)
     ),
@@ -523,11 +529,14 @@ auto_ex_generator <- function(N){
       `b[3]` = fd$params$coefs$det_slope_visit,
       `b_occ[1]` = fd$params$coefs$occ_intercept,
       `b_occ[2]` = fd$params$coefs$occ_slope_unit,
-      `b_auto[1]` = fd$params$coefs$auto_intercept,
-      `b_auto[2]` = fd$params$coefs$auto_slope_unit
+      `b_colo[1]` = fd$params$coefs$col_intercept,
+      `b_colo[2]` = fd$params$coefs$col_slope_unit,
+      `b_autologistic[1]` = fd$params$coefs$auto_intercept,
+      `b_autologistic[2]` = fd$params$coefs$auto_slope_unit
     ),
     generated = flocker_standata(
       f_occ = ~ 0 + Intercept + uc1,
+      f_col = ~ 0 + Intercept + uc1,
       f_auto = ~ 0 + Intercept + uc1,
       f_det = ~ 0 + Intercept + uc1 + ec1,
       flocker_data = flocker_data,
@@ -584,12 +593,14 @@ flocker_data = make_flocker_data(
   type = "multi", quiet = TRUE)
   
 scode <- flocker_stancode(
+    f_col = ~ 0 + Intercept + uc1,
     f_auto = ~ 0 + Intercept + uc1,
     f_det = ~ 0 + Intercept + uc1 + ec1,
     flocker_data = flocker_data,
     prior = 
       brms::set_prior("std_normal()") + 
-      brms::set_prior("std_normal()", dpar = "auto"),
+      brms::set_prior("std_normal()", dpar = "colo") +
+      brms::set_prior("std_normal()", dpar = "autologistic"),
     multiseason = "autologistic",
     multi_init = "equilibrium",
     backend = "cmdstanr"
@@ -603,6 +614,8 @@ auto_eq_generator <- function(N){
         det_intercept = rnorm(1),
         det_slope_unit = rnorm(1),
         det_slope_visit = rnorm(1),
+        col_intercept = rnorm(1),
+        col_slope_unit = rnorm(1),
         auto_intercept = rnorm(1),
         auto_slope_unit = rnorm(1)
     ),
@@ -623,8 +636,10 @@ auto_eq_generator <- function(N){
       `b[1]` = fd$params$coefs$det_intercept,
       `b[2]` = fd$params$coefs$det_slope_unit,
       `b[3]` = fd$params$coefs$det_slope_visit,
-      `b_auto[1]` = fd$params$coefs$auto_intercept,
-      `b_auto[2]` = fd$params$coefs$auto_slope_unit
+      `b_colo[1]` = fd$params$coefs$col_intercept,
+      `b_colo[2]` = fd$params$coefs$col_slope_unit,
+      `b_autologistic[1]` = fd$params$coefs$auto_intercept,
+      `b_autologistic[2]` = fd$params$coefs$auto_slope_unit
     ),
     generated = flocker_standata(
       f_auto = ~ 0 + Intercept + uc1,
