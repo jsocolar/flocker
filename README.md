@@ -18,7 +18,7 @@ integrated functionality for posterior predictive checking and full
 cross-validation.
 
 Compared to existing R packages for fitting occupancy models, `flocker` is 
-substantially more flexible in the variety of single-season models that can 
+substantially more flexible in the variety of models that can 
 be fit, and contains advanced functionality for model comparison and 
 checking.
 
