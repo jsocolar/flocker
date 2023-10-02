@@ -16,7 +16,7 @@ flocker_fit_code_util(
 )
 }
 \arguments{
-\item{output}{one of "model", "code", or "data"}
+\item{output}{one of "model", "code", "data", or "prior"}
 
 \item{f_use}{brms formula}
 

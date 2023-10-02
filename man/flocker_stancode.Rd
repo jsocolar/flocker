@@ -5,7 +5,7 @@
 \title{Generate stan code for an occupancy model}
 \usage{
 flocker_stancode(
-  f_occ,
+  f_occ = NULL,
   f_det,
   flocker_data,
   data2 = NULL,
