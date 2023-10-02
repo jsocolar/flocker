@@ -66,4 +66,3 @@ requires more/different covariates than `simulate_flocker_data()` provides),
 create an example dataset in the data folder, put the script to generate the
 dataset in data.R, and document appropriately.
 
-    
