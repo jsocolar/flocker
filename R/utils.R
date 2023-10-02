@@ -148,7 +148,7 @@ flocker_col_names <- function(n_rep = NULL, n_year = NULL) {
 #' Reserved names in flocker
 #' @return character vector of regexes matching reserved variable names
 flocker_reserved <- function() {
-  c("^ff_", "^\\.")
+  c("^ff_", "^\\.", "^occ$", "^det$", "^colo$", "^ex$", "^autologistic$", "^Omega$")
 }
 
 #' Model types in flocker as outputted by `flock`
@@ -490,23 +490,23 @@ validate_params_individually <- function(f_occ, f_det, flocker_data,
                                          augmented, threads) {
   # Check that formulas are valid and produce informative errors otherwise
   assertthat::assert_that(
-    inherits(f_det, "formula"),
+    is_formula(f_det) | brms::is.brmsformula(f_det),
     msg = formula_error("detection")
   )
   assertthat::assert_that(
-    is.null(f_occ) | inherits(f_occ, "formula"),
+    is.null(f_occ) | is_formula(f_occ),
     msg = formula_error("occupancy")
   )
   assertthat::assert_that(
-    is.null(f_col) | inherits(f_col, "formula"),
+    is.null(f_col) | is_formula(f_col),
     msg = formula_error("colonization")
   )
   assertthat::assert_that(
-    is.null(f_ex) | inherits(f_ex, "formula"),
+    is.null(f_ex) | is_formula(f_ex),
     msg = formula_error("extinction")
   )
   assertthat::assert_that(
-    is.null(f_auto) | inherits(f_auto, "formula"),
+    is.null(f_auto) | is_formula(f_auto),
     msg = formula_error("autologistic")
   )
   
@@ -569,9 +569,11 @@ validate_unit_formula_variables <- function(f_occ, f_col, f_ex, f_auto, flocker_
 validate_param_combos_single_generic <- function(f_occ, f_det, flocker_data, 
                                                  multiseason, f_col, f_ex, multi_init, f_auto,
                                                  augmented) {
-  assertthat::assert_that(
-    is_flocker_formula(f_occ), msg = formula_error("occupancy")
-  )
+  if(!brms::is.brmsformula(f_det)){
+    assertthat::assert_that(
+      is_flocker_formula(f_occ), msg = formula_error("occupancy")
+    )
+  }
   assertthat::assert_that(
     is.null(f_col) & is.null(f_ex) & is.null(f_auto),
     msg = "colonization/extinction/autologistic formulas not allowed in single-season model"
@@ -638,9 +640,11 @@ validate_param_combos_single_C <- function(f_occ, f_det, flocker_data,
 validate_param_combos_augmented <- function(f_occ, f_det, flocker_data, 
                                          multiseason, f_col, f_ex, multi_init, f_auto,
                                          augmented, threads) {
-  assertthat::assert_that(
-    is_flocker_formula(f_occ), msg = formula_error("occupancy")
-  )
+  if(!brms::is.brmsformula(f_det)){
+    assertthat::assert_that(
+      is_flocker_formula(f_occ), msg = formula_error("occupancy")
+    )
+  }
   assertthat::assert_that(
     is.null(f_col) & is.null(f_ex) & is.null(f_auto),
     msg = "colonization/extinction/autologistic formulas not allowed in single-season model"
@@ -686,36 +690,39 @@ validate_param_combos_multi <- function(f_occ, f_det, flocker_data,
     isTRUE(multiseason %in% c("colex", "autologistic")),
     msg = "in a multiseason model, `multiseason` must be either 'colex' or 'autologistic'"
   )
-  assertthat::assert_that(
-    is_flocker_formula(f_col), msg = formula_error("colonization")
-  )
+  
   assertthat::assert_that(
     isTRUE(multi_init %in% c("explicit", "equilibrium")),
     msg = "in a multiseason model, `multi_init` must be either 'explicit' or 'equilibrium'"
   )
-  if (multi_init == "explicit") {
+  if(!brms::is.brmsformula(f_det)){
     assertthat::assert_that(
-      is_flocker_formula(f_occ), msg = formula_error("occupancy")
+      is_flocker_formula(f_col), msg = formula_error("colonization")
     )
-  } else {
-    assertthat::assert_that(
-      is.null(f_occ), msg = "f_occ must be NULL for equilibrium initialization"
-    )
-  }
-  if (multiseason == "colex") {
-    assertthat::assert_that(
-      is_flocker_formula(f_ex), msg = formula_error("extinction")
-    )
-    assertthat::assert_that(
-      is.null(f_auto), msg = "f_auto must be NULL in colex models"
-    )
-  } else {
-    assertthat::assert_that(
-      is_flocker_formula(f_auto), msg = formula_error("autologistic")
-    )
-    assertthat::assert_that(
-      is.null(f_ex), msg = "f_ex must be NULL in autologistic models"
-    )
+    if (multi_init == "explicit") {
+      assertthat::assert_that(
+        is_flocker_formula(f_occ), msg = formula_error("occupancy")
+      )
+    } else {
+      assertthat::assert_that(
+        is.null(f_occ), msg = "f_occ must be NULL for equilibrium initialization"
+      )
+    }
+    if (multiseason == "colex") {
+      assertthat::assert_that(
+        is_flocker_formula(f_ex), msg = formula_error("extinction")
+      )
+      assertthat::assert_that(
+        is.null(f_auto), msg = "f_auto must be NULL in colex models"
+      )
+    } else {
+      assertthat::assert_that(
+        is_flocker_formula(f_auto), msg = formula_error("autologistic")
+      )
+      assertthat::assert_that(
+        is.null(f_ex), msg = "f_ex must be NULL in autologistic models"
+      )
+    }
   }
   
   y_nonmissing <- flocker_data$data$ff_y[flocker_data$data$ff_y != -99]

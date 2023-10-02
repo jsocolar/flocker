@@ -1,7 +1,13 @@
 #' Fit an occupancy model
 #' @param f_occ A brms-type model formula for occupancy. If provided, must begin 
 #'  with "~".
-#' @param f_det A brms-type model formula for detection. Must begin with "~".
+#' @param f_det A brms-type model formula for detection. Must begin with "~". 
+#'  OR, a \code{brmsformula} object including formulas for all of the relevant
+#'  distributional parameters in the desired model (det and at least one of occ, 
+#'  colo, ex, autologistic, and Omega). The \code{$formula} element of the 
+#'  \code{brmsformula} must be the detection formula, beginning with \code{det ~}.
+#'  This latter option unadvisable except when necessary (e.g. when a nonlinear 
+#'  formula is desired), as input checking is less thorough.
 #' @param flocker_data data, generally the output of \code{make_flocker_data()}.
 #' @param data2 additional data (e.g. a covariance matrix for a phylogenetic 
 #'  effect)
@@ -173,7 +179,23 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     f_auto_use <- stats::as.formula(paste0("autologistic ", f_auto_txt))
   }
   
-  f_det_txt <- paste0(deparse(f_det), collapse = "")
+  if(brms::is.brmsformula(f_det)){
+    f_det_txt <- format(f_det$formula)
+    is_valid <- grepl("^det[[:blank:]]*~", f_det_txt)
+    assertthat::assert_that(
+      is_one_logical(is_valid),
+      msg = "Error in formula checking. This should not happen; please report a bug."
+    )
+    assertthat::assert_that(
+      is_valid,
+      msg = paste0("When f_det is a brmsformula, the $formula element ", 
+                   "must be a detection formula beginning with `det ~`"
+      )
+    )
+  } else {
+    f_det_txt <- paste0(deparse(f_det), collapse = "")
+  }
+  
   # f_det_use is type specific and is handled below
   
   if (flocker_data$type == "single") {
@@ -183,7 +205,12 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     f_det_use <- stats::as.formula(
       paste0("ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ",
              vint_text, ") ", f_det_txt))
-    f_use <- brms::bf(f_det_use, f_occ_use)
+    if(brms::is.brmsformula(f_det)){
+      f_use <- f_det
+      f_use$formula <- f_det_use
+    } else {
+      f_use <- brms::bf(f_det_use, f_occ_use)
+    }
     if (is.null(threads)) {
       stanvars <- brms::stanvar(
         scode = make_occupancy_single_lpmf(max_rep = max_rep), block = "functions"
@@ -220,7 +247,12 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
 
   } else if (flocker_data$type == "single_C") {
     f_det_use <- stats::as.formula(paste0("ff_n_suc | vint(ff_n_trial) ", f_det_txt))
-    f_use <- brms::bf(f_det_use, f_occ_use)
+    if(brms::is.brmsformula(f_det)){
+      f_use <- f_det
+      f_use$formula <- f_det_use
+    } else {
+      f_use <- brms::bf(f_det_use, f_occ_use)
+    }
     stanvars <- brms::stanvar(
       scode = make_occupancy_single_C_lpmf(), block = "functions"
     )
@@ -239,8 +271,14 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     f_det_use <- stats::as.formula(
       paste0("ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ff_n_sp, ff_superQ, ff_species, ",
              vint_text, ") ", f_det_txt))
-    f_Omega_use <- stats::as.formula("Omega ~ 1")
-    f_use <- brms::bf(f_det_use, f_occ_use, f_Omega_use)
+    
+    if(brms::is.brmsformula(f_det)){
+      f_use <- f_det
+      f_use$formula <- f_det_use
+    } else {
+      f_Omega_use <- stats::as.formula("Omega ~ 1")
+      f_use <- brms::bf(f_det_use, f_occ_use, f_Omega_use)
+    }
     stanvars <- brms::stanvar(
       scode = make_occupancy_augmented_lpmf(max_rep = max_rep), 
       block = "functions"
@@ -264,7 +302,12 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
       paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
     
-    f_use <- brms::bf(f_det_use, f_occ_use, f_col_use, f_ex_use)
+    if(brms::is.brmsformula(f_det)){
+      f_use <- f_det
+      f_use$formula <- f_det_use
+    } else {
+      f_use <- brms::bf(f_det_use, f_occ_use, f_col_use, f_ex_use)
+    }
     
     stanvars <- 
       brms::stanvar(
@@ -301,7 +344,12 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
       paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
     
-    f_use <- brms::bf(f_det_use, f_col_use, f_ex_use)
+    if(brms::is.brmsformula(f_det)){
+      f_use <- f_det
+      f_use$formula <- f_det_use
+    } else {
+      f_use <- brms::bf(f_det_use, f_col_use, f_ex_use)
+    }
     
     stanvars <- 
       brms::stanvar(
@@ -338,8 +386,13 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
       paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
     
-    f_use <- brms::bf(f_det_use, f_occ_use, f_col_use, f_auto_use)
-    
+    if(brms::is.brmsformula(f_det)){
+      f_use <- f_det
+      f_use$formula <- f_det_use
+    } else {
+      f_use <- brms::bf(f_det_use, f_occ_use, f_col_use, f_auto_use)
+    }
+
     stanvars <- 
       brms::stanvar(
         scode = make_emission_1(), 
@@ -375,7 +428,12 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
       paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
     
-    f_use <- brms::bf(f_det_use, f_col_use, f_auto_use)
+    if(brms::is.brmsformula(f_det)){
+      f_use <- f_det
+      f_use$formula <- f_det_use
+    } else {
+      f_use <- brms::bf(f_det_use, f_col_use, f_auto_use)
+    }
     
     stanvars <- 
       brms::stanvar(
