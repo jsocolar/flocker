@@ -45,14 +45,6 @@ You must additionally install cmdstan itself. We strongly recommend using
 ```
 cmdstanr::install_cmdstan()
 ```
-If using `rstan`, we strongly recommend installing the development version rather than 
-the CRAN version. In a fresh R session, do
-```
-# Uncomment the next line if you have previously installed rstan
-# remove.packages(c("StanHeaders", "rstan"))
-install.packages("StanHeaders", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
-install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
-```
 Both `rstan` and `cmdstan` require a working C++ toolchain, which has posed occasional 
 complications for Stan users. 
 [See here](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started) for 
