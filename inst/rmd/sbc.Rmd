@@ -4,12 +4,17 @@ author: "Jacob Socolar"
 date: "`r Sys.Date()`"
 output: html_document
 params:
-  n_sims: 200
+  n_sims: 1000
   n_sites: 200
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r display_params}
+params
+
 ```
 
 ```{r setup2}

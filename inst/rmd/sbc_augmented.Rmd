@@ -4,13 +4,18 @@ author: "Jacob Socolar"
 date: "`r Sys.Date()`"
 output: html_document
 params:
-  n_sims: 100
-  n_sites: 200
-  n_pseudospecies: 100
+  n_sims: 200
+  n_sites: 50
+  n_pseudospecies: 50
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r display_params}
+params
+
 ```
 
 ```{r setup2}
@@ -22,11 +27,11 @@ set.seed(2)
 
 
 ## Data-augmented
-```{r data-augmented, eval = FALSE}
+```{r data-augmented, eval = TRUE}
 # make the stancode
 model_name <- paste0(tempdir(), "/sbc_augmented_model.stan")
 
-omega <- rbeta(1, 30, 30)
+omega <- boot::inv.logit(rnorm(1, 0, .1))
 available <- rbinom(1, params$n_pseudospecies, omega)
 unavailable <- params$n_pseudospecies - available
 coef_means <- rnorm(5) # normal prior on random effect means
@@ -78,14 +83,14 @@ scode <- flocker_stancode(
       brms::set_prior("std_normal()", class = "sd") +
       brms::set_prior("std_normal()", dpar = "occ") +
       brms::set_prior("std_normal()", class = "sd", dpar = "occ") +
-      brms::set_prior("beta(30, 30)", dpar = "Omega"),
+      brms::set_prior("normal(0, 0.1)", class = "Intercept", dpar = "Omega"),
     backend = "cmdstanr",
     augmented = TRUE
   )
 writeLines(scode, model_name)
 
 aug_generator <- function(N){  
-  omega <- rbeta(1, 30, 30)
+  omega <- boot::inv.logit(rnorm(1, 0, .1))
   available <- rbinom(1, params$n_pseudospecies, omega)
   unavailable <- params$n_pseudospecies - available
   coef_means <- rnorm(5) # normal prior on random effect means
@@ -135,7 +140,7 @@ aug_generator <- function(N){
       `b[3]` = fd$params$coef_means[3],
       `b_occ[1]` = fd$params$coef_means[4],
       `b_occ[2]` = fd$params$coef_means[5],
-      `Omega_Intercept` = boot::logit(omega)
+      `Intercept_Omega` = boot::logit(omega)
     ),
     generated = flocker_standata(
       f_occ = ~ 0 + Intercept + uc1 + (1 + uc1 || ff_species),
