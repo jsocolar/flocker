@@ -76,7 +76,7 @@ flock <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL,
 #'           adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123,
 #'           backend = "cmdstanr")
 #' }
-flocker_stancode <- function(f_occ, f_det, flocker_data, data2 = NULL, 
+flocker_stancode <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL, 
                   multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
                   augmented = FALSE, threads = NULL,
                   ...) {
@@ -104,7 +104,7 @@ flocker_stancode <- function(f_occ, f_det, flocker_data, data2 = NULL,
 #'           adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123,
 #'           backend = "cmdstanr")
 #' }
-flocker_standata <- function(f_occ, f_det, flocker_data, data2 = NULL, 
+flocker_standata <- function(f_occ=NULL, f_det, flocker_data, data2 = NULL, 
                              multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
                              augmented = FALSE, threads = NULL,
                              ...) {

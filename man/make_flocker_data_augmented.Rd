@@ -5,7 +5,13 @@
 \title{#' Format data for data-augmented occupancy model, to be passed to 
  \code{flock()}.}
 \usage{
-make_flocker_data_augmented(obs, n_aug, site_covs = NULL, event_covs = NULL)
+make_flocker_data_augmented(
+  obs,
+  n_aug,
+  site_covs = NULL,
+  event_covs = NULL,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{obs}{An I x J x K array where rows I are sites, columns J are 
@@ -20,6 +26,8 @@ across repeated sampling events.}
 
 \item{event_covs}{A named list of I x J matrices, each one corresponding to a 
 covariate that varies across repeated sampling events within sites}
+
+\item{quiet}{Hide progress bars and informational messages?}
 }
 \value{
 A flocker_data list that can be passed as data to \code{flocker()}.
