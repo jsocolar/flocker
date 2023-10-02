@@ -25,7 +25,7 @@ Suggests:
     rmarkdown,
     ape,
     posterior (>= 1.0.0),
-    rstan,
+    rstan (>= 2.26),
     tibble
 Remotes: 
 	stan-dev/cmdstanr,
