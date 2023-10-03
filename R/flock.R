@@ -212,7 +212,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
   }
   
   if(brms::is.brmsformula(f_det)){
-    f_det_txt <- format(f_det$formula)
+    f_det_txt1 <- format(f_det$formula)
     is_valid <- grepl("^det[[:blank:]]*~", f_det_txt)
     assertthat::assert_that(
       is_one_logical(is_valid),
@@ -224,6 +224,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                    "must be a detection formula beginning with `det ~`"
       )
     )
+    f_det_txt <- paste0("~", strsplit(f_det_txt1)[[1]][2])
   } else {
     f_det_txt <- paste0(deparse(f_det), collapse = "")
   }
