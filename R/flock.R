@@ -224,7 +224,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                    "must be a detection formula beginning with `det ~`"
       )
     )
-    f_det_txt <- paste0("~", strsplit(f_det_txt1)[[1]][2])
+    f_det_txt <- paste0("~", strsplit(f_det_txt1, "~")[[1]][2])
   } else {
     f_det_txt <- paste0(deparse(f_det), collapse = "")
   }
