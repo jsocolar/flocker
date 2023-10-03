@@ -213,7 +213,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
   
   if(brms::is.brmsformula(f_det)){
     f_det_txt1 <- format(f_det$formula)
-    is_valid <- grepl("^det[[:blank:]]*~", f_det_txt)
+    is_valid <- grepl("^det[[:blank:]]*~", f_det_txt1)
     assertthat::assert_that(
       is_one_logical(is_valid),
       msg = "Error in formula checking. This should not happen; please report a bug."
