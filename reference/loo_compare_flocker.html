@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">flocker</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1-0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2-0</span>
       </span>
     </div>
 
@@ -33,6 +33,9 @@
   </a>
   <ul class="dropdown-menu" role="menu"><li>
       <a href="../articles/flocker_tutorial.html">Fitting occupancy models with flocker</a>
+    </li>
+    <li>
+      <a href="../articles/multiseason_models.html">Multiseason models in flocker</a>
     </li>
   </ul></li>
       </ul><ul class="nav navbar-nav navbar-right"><li>
@@ -60,19 +63,33 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">loo_compare_flocker</span><span class="op">(</span><span class="va">model_list</span>, model_names <span class="op">=</span> <span class="cn">NULL</span>, thin <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">loo_compare_flocker</span><span class="op">(</span><span class="va">model_list</span>, model_names <span class="op">=</span> <span class="cn">NULL</span>, thin <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>model_list</dt>
 <dd><p>a list of flocker_fit objects.</p></dd>
+
+
 <dt>model_names</dt>
 <dd><p>An optional vector of names for the models.</p></dd>
+
+
 <dt>thin</dt>
-<dd><p>specify the amount of thinning required. 1 or NULL implies no thinning, 2 implies every other value, 3 every third, etc.</p></dd>
+<dd><p>specify the amount of thinning required. 1 or NULL results in no 
+thinning, 2 retains every other value, 3 every third, etc.</p></dd>
+
 </dl></div>
 
+    <div id="ref-examples">
+    <h2>Examples</h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="va">ml</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">example_flocker_model_single</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">loo_compare_flocker</span><span class="op">(</span><span class="va">ml</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+</code></pre></div>
+    </div>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top"><h2 data-toc-skip>Contents</h2>
@@ -85,7 +102,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

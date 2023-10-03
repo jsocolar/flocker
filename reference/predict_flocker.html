@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">flocker</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1-0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2-0</span>
       </span>
     </div>
 
@@ -33,6 +33,9 @@
   </a>
   <ul class="dropdown-menu" role="menu"><li>
       <a href="../articles/flocker_tutorial.html">Fitting occupancy models with flocker</a>
+    </li>
+    <li>
+      <a href="../articles/multiseason_models.html">Multiseason models in flocker</a>
     </li>
   </ul></li>
       </ul><ul class="nav navbar-nav navbar-right"><li>
@@ -60,57 +63,85 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">predict_flocker</span><span class="op">(</span>
-  <span class="va">flocker_fit</span>,
-  n_iter <span class="op">=</span> <span class="cn">NULL</span>,
-  new_data <span class="op">=</span> <span class="cn">NULL</span>,
-  hist_condition <span class="op">=</span> <span class="cn">FALSE</span>,
-  mixed <span class="op">=</span> <span class="cn">FALSE</span>,
-  sample_new_levels <span class="op">=</span> <span class="st">"uncertainty"</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">predict_flocker</span><span class="op">(</span></span>
+<span>  <span class="va">flocker_fit</span>,</span>
+<span>  draw_ids <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  history_condition <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  new_data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  mixed <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  allow_new_levels <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  sample_new_levels <span class="op">=</span> <span class="st">"uncertainty"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>flocker_fit</dt>
 <dd><p>A `flocker_fit` object</p></dd>
-<dt>n_iter</dt>
-<dd><p>The number of posterior iterations desired. If `NULL`, use
-all available posterior iterations.</p></dd>
-<dt>new_data</dt>
-<dd><p>Optional new data at which to predict. If `NULL`, predictions
-are given at the data points used for model fitting ("retrodictions")</p></dd>
-<dt>hist_condition</dt>
+
+
+<dt>draw_ids</dt>
+<dd><p>Vector of indices of the posterior draws to be 
+used. If `NULL` (the default) all draws are used in their native order.</p></dd>
+
+
+<dt>history_condition</dt>
 <dd><p>Logical indicator of whether to directly condition the 
 posterior for the occupancy state on the observed detection histories.
 For example, at sites with at least one detection, the true occupancy 
 state conditioned on the history is one with absolute certainty. Without 
 directly conditioning on the history, the occupancy state is controlled 
-by the posterior distribution for the occupancy probability psi. Of 
-course even without conditioning directly on the detection history, we 
-still condition indirectly on the observed history via the fitted value 
-of psi, which itself depends on all of the observed detection histories.</p></dd>
+exclusively by the posterior distribution for the occupancy probability 
+psi.</p></dd>
+
+
+<dt>new_data</dt>
+<dd><p>Optional new data at which to predict. If `NULL`, predictions
+are given at the data points used for model fitting ("retrodictions")</p></dd>
+
+
 <dt>mixed</dt>
 <dd><p>When `new_data` is not provided, should random effect levels be
 drawn from their posteriors (`FALSE`, the default) or re-sampled from 
 their fitted hyperparameters (`TRUE`). The latter can be useful for mixed
-predictive checking.</p></dd>
+predictive checking. Note that setting to TRUE is not available for
+grouping terms involved in phylogenetic random effects or other random 
+effects with specified covariance structures.</p></dd>
+
+
+<dt>allow_new_levels</dt>
+<dd><p>Should new_data be allowed to contain new levels for
+random effects?</p></dd>
+
+
 <dt>sample_new_levels</dt>
 <dd><p>If new_data is provided and contains random effect
 levels not present in the original data, how should predictions be
 handled? Passed directly to brms::prepare_predictions, which see.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>An array of posterior predictions. If the model is rep-varying, 
-    then a 3-dimensional array where the first dimension is the closure-unit,
+    
+
+<p>An array of posterior predictions. For a single-season rep-varying 
+    model, a 3-dimensional array where the first dimension is the closure-unit,
     the second dimension is the rep, the third dimension is the iteration, 
     and the value is 1, 0, or NA indicating detection, non-detection, or 
-    non-existence of the sampling event.
-    If the model is rep-constant, then a matrix where rows are iterations,
-    columns are closure-units, and values are the number of successes.</p>
+    non-existence of the sampling event.</p>
     </div>
 
+    <div id="ref-examples">
+    <h2>Examples</h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="va">unconditioned_preds</span> <span class="op">&lt;-</span> <span class="fu">predict_flocker</span><span class="op">(</span><span class="va">example_flocker_model_single</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">conditioned_preds</span> <span class="op">&lt;-</span> <span class="fu">predict_flocker</span><span class="op">(</span></span></span>
+<span class="r-in"><span> <span class="va">example_flocker_model_single</span>, </span></span>
+<span class="r-in"><span> history_condition <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+</code></pre></div>
+    </div>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top"><h2 data-toc-skip>Contents</h2>
@@ -123,7 +154,7 @@ handled? Passed directly to brms::prepare_predictions, which see.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>
