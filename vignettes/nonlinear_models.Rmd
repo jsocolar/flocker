@@ -45,7 +45,7 @@ fd <- make_flocker_data(
 
 We wish to fit an occupancy model that recovers the unknown parameters $L$, $k$, and $t_0$. We can achieve this using the nonlinear formula syntax provided by `brms` via `flocker`. 
 
-Our first challenge is that `flocker` will always assume that the occupancy formula is provided on the logit scale. Thus, we need to convert our nonlinear function giving the occupancy probability to a function giving the logit occupancy probability. A bit of simplification via Wolfram Alpha and we arrive at $\log(\frac{-L}{-e^{-k(t - t_0)} + L - 1})$.
+Our first challenge is that `flocker` will always assume that the occupancy formula is provided on the logit scale. Thus, we need to convert our nonlinear function giving the occupancy probability to a function giving the logit occupancy probability. A bit of simplification via Wolfram Alpha and we arrive at $\log(\frac{L}{1 + e^{-k(t - t_0)} - L})$.
 
 Our second challenge is in remembering how to write down a nonlinear brms formula where a distributional parameter is nonlinear. `brms::set_nl()` is our friend here.
 
@@ -62,7 +62,7 @@ With all of that said, we can go ahead and fit this model!
 ```{r fitting, results='hide', message=FALSE}
 fit <- flock(f_det = brms::bf(
                  det ~ 1 + dummy,
-                 occ ~ log(-L/(-exp(-k*(t - t0)) + L - 1)),
+                 occ ~ log(L/(1 + exp(-k*(t - t0)) - L)),
                  L ~ 1,
                  k ~ 1,
                  t0 ~ 1
@@ -75,7 +75,7 @@ fit <- flock(f_det = brms::bf(
                  prior(beta(1, 1), nlpar = "L", lb = 0, ub = 1)
                 ),
              flocker_data = fd, 
-             adapt_delta = .9,
+             adapt_delta = 0.9,
              backend = "cmdstanr", 
              cores = 4)
 ```
