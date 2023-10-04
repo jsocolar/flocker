@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Here we show how we can use `flocker` to fit nonlinear occupancy models via `brms`. Suppose an expanding population of a territorial species undergoes logistic growth, and also that some territories are unsuitable due to an unobserved factor, such that occupancy asymptotes at some probability less than one. Thus, occupancy probability changes through time as $\frac{L}{1 + e^{-k(t-t_0)}}$, where $L$ is the asymptote, $k$ is a growth rate, $t$ is time, and $t_0$ is the timing of the inflection point. At multiple discrete times, we randomly sample several sites to survey, and survey each of those sites over several repeat visits.
 
-```{r true-occupancy}
+```{r true-occupancy, results='hide', message=FALSE}
 library(flocker); library(brms)
 set.seed(3)
 
@@ -53,13 +53,13 @@ Our final challenge is to pass a `brmsformula` as an input function to `flocker`
 
 * Several input checks are turned off.  For example, we no longer check to ensure that no event covariates are used in the occupancy formula.  We also no longer explicitly check that we have formulas for all of the required distributional terms for a given family.
 
-* All inputs to `f_occ`, `f_det`, `f_col`, `f_ex`, `f_auto` are silently ignored. It is obligatory to pass the entire formula as a `brmsformula` object. In turn this means that the user must be familiar with `flocker`'s internal naming conventions for all of the relevant distributional parameters (`det` and at least one of `occ`, `colo`, `ex`, `autologistic`, `Omega`). If fitting a data-augmented model, it will be requried to pass the `Omega ~ 1` formula within the `brmsformula` (otherwise `flocker` includes this formula automatically).
+* All inputs to `f_occ`, `f_det`, `f_col`, `f_ex`, `f_auto` are silently ignored. It is obligatory to pass the entire formula as a `brmsformula` object. In turn this means that the user must be familiar with `flocker`'s internal naming conventions for all of the relevant distributional parameters (`det` and one or more of `occ`, `colo`, `ex`, `autologistic`, `Omega`). If fitting a data-augmented model, it will be requried to pass the `Omega ~ 1` formula within the `brmsformula` (otherwise `flocker` includes this formula automatically).
 
 * Nonlinear formulas that involve data that are required to be positive might fail! Internally, some irrelevant data positions get filled with `-99`, but these positions might still get evaluated by the nonlinear formula, even though they make no contribution to the likelihood.
 
 With all of that said, we can go ahead and fit this model!
 
-```{r fitting}
+```{r fitting, results='hide', message=FALSE}
 fit <- flock(f_det = brms::bf(
                  det ~ 1 + dummy,
                  occ ~ log(-L/(-exp(-k*(t - t0)) + L - 1)),
@@ -78,10 +78,15 @@ fit <- flock(f_det = brms::bf(
              adapt_delta = .9,
              backend = "cmdstanr", 
              cores = 4)
+```
+
+```{r summary}
 summary(fit)
 
 ```
 
-It works! Note that if desired, we could fit more complicated formulas than `~ 1` for any of the nonlinear parameters! For more see the [brms nonlinear model vignette](https://cran.r-project.org/web/packages/brms/vignettes/brms_nonlinear.html).
+It works! 
+
+Note that if desired, we could fit more complicated formulas than `~ 1` for any of the nonlinear parameters! For more see the [brms nonlinear model vignette](https://cran.r-project.org/web/packages/brms/vignettes/brms_nonlinear.html).
 
 
