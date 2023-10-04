@@ -225,6 +225,21 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
       )
     )
     f_det_txt <- paste0("~", strsplit(f_det_txt1, "~")[[1]][2])
+  } else if (brms::is.mvbrmsformula(f_det)) {
+    assertthat::assert_that("det" %in% names(f_det$forms))
+    f_det_txt1 <- format(f_det$forms$det$formula)
+    is_valid <- grepl("^det[[:blank:]]*~", f_det_txt1)
+    assertthat::assert_that(
+      is_one_logical(is_valid),
+      msg = "Error in formula checking. This should not happen; please report a bug."
+    )
+    assertthat::assert_that(
+      is_valid,
+      msg = paste0("When f_det is a brmsformula, the $formula element ", 
+                   "must be a detection formula beginning with `det ~`"
+      )
+    )
+    f_det_txt <- paste0("~", strsplit(f_det_txt1, "~")[[1]][2])
   } else {
     f_det_txt <- paste0(deparse(f_det), collapse = "")
   }
@@ -241,6 +256,9 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     if(brms::is.brmsformula(f_det)){
       f_use <- f_det
       f_use$formula <- f_det_use
+    } else if(brms::is.mvbrmsformula(f_det)){
+      f_use <- f_det
+      f_use$forms$det$formula <- f_det_use
     } else {
       f_use <- brms::bf(f_det_use, f_occ_use)
     }

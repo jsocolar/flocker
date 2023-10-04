@@ -490,7 +490,7 @@ validate_params_individually <- function(f_occ, f_det, flocker_data,
                                          augmented, threads) {
   # Check that formulas are valid and produce informative errors otherwise
   assertthat::assert_that(
-    is_formula(f_det) | brms::is.brmsformula(f_det),
+    is_formula(f_det) | brms::is.brmsformula(f_det) | brms::is.mvbrmsformula(f_det),
     msg = formula_error("detection")
   )
   assertthat::assert_that(
@@ -569,7 +569,7 @@ validate_unit_formula_variables <- function(f_occ, f_col, f_ex, f_auto, flocker_
 validate_param_combos_single_generic <- function(f_occ, f_det, flocker_data, 
                                                  multiseason, f_col, f_ex, multi_init, f_auto,
                                                  augmented) {
-  if(!brms::is.brmsformula(f_det)){
+  if(!(brms::is.brmsformula(f_det) | brms::is.mvbrmsformula(f_det))){
     assertthat::assert_that(
       is_flocker_formula(f_occ), msg = formula_error("occupancy")
     )
@@ -640,7 +640,7 @@ validate_param_combos_single_C <- function(f_occ, f_det, flocker_data,
 validate_param_combos_augmented <- function(f_occ, f_det, flocker_data, 
                                          multiseason, f_col, f_ex, multi_init, f_auto,
                                          augmented, threads) {
-  if(!brms::is.brmsformula(f_det)){
+  if(!(brms::is.brmsformula(f_det) | brms::is.mvbrmsformula(f_det))){
     assertthat::assert_that(
       is_flocker_formula(f_occ), msg = formula_error("occupancy")
     )
@@ -695,7 +695,7 @@ validate_param_combos_multi <- function(f_occ, f_det, flocker_data,
     isTRUE(multi_init %in% c("explicit", "equilibrium")),
     msg = "in a multiseason model, `multi_init` must be either 'explicit' or 'equilibrium'"
   )
-  if(!brms::is.brmsformula(f_det)){
+  if(!(brms::is.brmsformula(f_det) | brms::is.mvbrmsformula(f_det))){
     assertthat::assert_that(
       is_flocker_formula(f_col), msg = formula_error("colonization")
     )
