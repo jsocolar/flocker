@@ -1,0 +1,60 @@
+---
+title: "Data-augmented models in flocker"
+author: "Jacob Socolar"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Data-augmented models in flocker}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+<img align="right" src="../man/figures/flocker_sticker.png" width=30%>
+
+When modeling multiple ecologically comparable species simultaneously, occupancy models often assume conditional exchangeability across species and fit species-specific terms as random effects. Data-augmented multi-species models leverage this exchangeability assumption to estimate the number and prevalence of never-detected species within the study region. To do so, the dataset is augmented with a large number of pseudospecies with all-zero detection histories, each species (both the observed species and the augmented pseudospecies) is ascribed a common parameter $\omega$ giving the Bernoulli probability that a given (pseudo)species occurs in the study area, and random-effects exchangeability assumptions are assumed to hold for all species-specific modeled terms (i.e. intercepts and slopes for occupancy and detection).
+
+For a data-augmented multi-species model, we marginalize over the occupancy status of a closure-unit as for a single-season model yielding the unit-wise likelihood $\mathcal{L}_i$, and we additionally marginalize over the availability of each (pseudo)species, yielding the species-wise likelihood
+\[ \mathcal{N}_s = 
+   \begin{cases}
+     B(1 | \omega)\prod\limits_{i \textrm{ in } I_s}{\mathcal{L}_i} & \text{if $r_s = 1$} \\
+     B(0 | \omega) +  B(1 | \omega)\prod\limits_{i \textrm{ in } I_s}{\mathcal{L}_i}& \text{if $r_s = 0$}
+   \end{cases}
+\]
+where $s$ indexes the species, $\omega$ is the fitted availability probability of a species, $I_s$ is the set of all closure-unit indices $i$ pertaining to species $s$, $r_s$ is an indicator that takes the value $1$ if there is at least one positive detection of the (pseudo)species in the entire dataset and $0$ otherwise.
+
+Fitting the data-augmented model in \mintinline{r}{flocker} requires passing the observed data as a three-dimensional array with sites along the first dimension, visits along the second, and species along the third. Additionally, we must supply the `n_aug` argument to `make_flocker_data()`, specifying how many all-zero pseudospecies to augment the data with.
+
+```{r data-augmented}
+library(flocker)
+d <- simulate_flocker_data(
+    augmented = TRUE
+    )
+fd = make_flocker_data(
+  d$obs, d$unit_covs, d$event_covs,
+  type = "augmented", n_aug = 100
+  )
+fm <- flock(
+  f_occ = ~ (1 | ff_species),
+  f_det = ~ uc1 + ec1 + (1 + uc1 + ec1 | ff_species),
+  flocker_data = fd,
+  augmented = TRUE,
+  backend = "cmdstanr"
+  )
+
+```
+
+Here, the random effect of species is specified using the special grouping keyword `ff_species` (names beginning with `ff_` are reserved in `flocker` and are not allowed as names for user-supplied covariates).
+
+```{r summary}
+summary(fm)
+
+```
+
+`flocker` enables users to fit data-augmented models using arbitrary `brms` formulas for the occupancy and detection components. However, we caution that continuous covariates in the occupancy sub-model can lead to pitfalls in interpretation. A seemingly straightforward application, for example, might be to ask how many species are present along an elevational gradient, fitting species-specific quadratic elevation-occupancy relationships. In our experience, a data-augmented model that includes quadratic elevation terms will place an arbitrarily large number of pseudo-species along the gradient, but will do so by placing pseudospecies' estimated elevational ranges entirely outside the range covered by the sampling effort. The model is in effect trying to estimate how many species occur in a landscape with elevations ranging from negative to positive infinity. This extrapolation is unprincipled, most obviously because it does not account for hard limits imposed by the physical termina of the gradient (valley floor and mountain peak). Thus, although `flocker` provides functionality to fit continuous covariates in the occupancy term, we recommend extreme caution in interpreting patterns estimated for never-observed species.
