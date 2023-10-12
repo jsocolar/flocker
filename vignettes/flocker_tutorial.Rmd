@@ -81,15 +81,15 @@ arguments will simulate example data for other likelihoods, including
 multi-season and data-augmented occupancy models. 
 
 ```{r simulate}
-d_rep_varying <- simulate_flocker_data()
+d <- simulate_flocker_data()
 ```
 
-The simulated data `d_rep_varying` are in list form, with elements for the 
-detection/non-detection observations `d_rep_varying$obs`, unit covariates 
-`d_rep_varying$unit_covs`, and event covariates `d_rep_varying$event_covs`. 
-`d_rep_varying$obs` is a matrix where rows are species-site combinations, 
+The simulated data `d` are in list form, with elements for the 
+detection/non-detection observations `d$obs`, unit covariates 
+`d$unit_covs`, and event covariates `d$event_covs`. 
+`d$obs` is a matrix where rows are species-site combinations, 
 columns are replicate visits, and entries are `1` (detection), `0` 
-(nondetection), or `NA` (no visit). `d_rep_varying$unit_covs` is a dataframe 
+(nondetection), or `NA` (no visit). `d$unit_covs` is a dataframe 
 containing covariates that vary across the rows of obs (i.e. by closure-unit) 
 but not across the columns within any given row (i.e. do not vary across 
 replicate visits). `event_covs` is a named list of matrices, with each matrix 
@@ -156,7 +156,9 @@ as one-sided formulas to the relevant arguments of `flock()` (`f_occ`, `f_det`,
 rep_varying <- flock(
   f_occ = ~ uc1 + (1 + uc1 | species),
   f_det = ~ uc1 + ec1 + (1 + uc1 + ec1 | species),
-  flocker_data = fd_rep_varying
+  flocker_data = fd_rep_varying,
+  silent = 2,
+  refresh = 0
   )
 ```
 
@@ -187,23 +189,26 @@ rep_constant <- flock(
   f_occ = ~ uc1 + (1 + uc1 | species),
   f_det = ~ uc1 + (1 + uc1 | species),
   flocker_data = fd_rep_constant,
-  save_pars = save_pars(all = TRUE) # for loo with moment matching
+  save_pars = save_pars(all = TRUE), # for loo with moment matching
+  silent = 2,
+  refresh = 0
   )
 ```
 
-```{r rep-constant, eval = FALSE}
+Note that within-chain parallelization is available (uniquely so) for the 
+rep-constant mode:
+```{r rep-constant-parallel, eval = FALSE}
 rep_constant <- flock(
   f_occ = ~ uc1 + (1 + uc1 | species),
   f_det = ~ uc1 + (1 + uc1 | species),
   flocker_data = fd_rep_constant,
+  silent = 2,
+  refresh = 0
   chains = 2,
   cores = 2,
   threads = 2
   )
 ```
-
-Note that within-chain parallelization is available, uniquely so, for the 
-rep-constant model via 
 
 ### Multi-season models
 Here we provide code examples to complement the companion publication INSERT LINK.
@@ -246,10 +251,11 @@ multi_colex <- flock(
   f_det = ~ uc1 + ec1,
   f_col = ~ uc1,
   f_ex = ~ uc1,
-  flocker_data = fd,
+  flocker_data = fd_multi,
   multiseason = "colex",
   multi_init = "explicit",
-  backend = "cmdstanr"
+  silent = 2,
+  refresh = 0
 )
 ```
 
@@ -261,10 +267,11 @@ multi_colex_eq <- flock(
   f_det = ~ uc1 + ec1,
   f_col = ~ uc1,
   f_ex = ~ uc1,
-  flocker_data = fd,
+  flocker_data = fd_multi,
   multiseason = "colex",
   multi_init = "equilibrium",
-  backend = "cmdstanr"
+  silent = 2,
+  refresh = 0
   )
 ```
 
@@ -280,10 +287,11 @@ multi_auto <- flock(
   f_det = ~ uc1 + ec1,
   f_col = ~ uc1,
   f_auto = ~ 1,
-  flocker_data = fd,
+  flocker_data = fd_multi,
   multiseason = "autologistic",
   multi_init = "explicit",
-  backend = "cmdstanr"
+  silent = 2,
+  refresh = 0
   )
 ```
 
@@ -295,10 +303,11 @@ multi_auto_eq <- flock(
   f_det = ~ uc1 + ec1,
   f_col = ~ uc1,
   f_auto = ~ 1,
-  flocker_data = fd,
+  flocker_data = fd_multi,
   multiseason = "autologistic",
   multi_init = "equilibrium",
-  backend = "cmdstanr"
+  silent = 2,
+  refresh = 0
 )
 ```
 
@@ -314,18 +323,19 @@ along the second, and species along the third. Additionally, we must supply the
 pseudospecies to augment the data with.
 
 ```{r data-augmented}
-d <- simulate_flocker_data(
+augmented_data <- simulate_flocker_data(
     augmented = TRUE
     )
-fd <- make_flocker_data(
-  d$obs, d$unit_covs, d$event_covs,
+fd_augmented <- make_flocker_data(
+  augmented_data$obs, augmented_data$unit_covs, augmented_data$event_covs,
   type = "augmented", n_aug = 100
   )
 augmented <- flock(
   f_occ = ~ (1 | ff_species),
   f_det = ~ uc1 + ec1 + (1 + uc1 + ec1 | ff_species),
-  flocker_data = fd,
-  backend = "cmdstanr"
+  flocker_data = fd_augmented,
+  silent = 2,
+  refresh = 0
   )
 ```
 
@@ -346,11 +356,11 @@ Both posterior predictions and model comparison rely on subtle aspects of the
 occupancy model likelihood that we explain in more detail in the companion paper
 INSERT LINK and [here](https://jsocolar.github.io/likelihoodOccupancy/).
 
-### `brms`-native post-processing
+### brms-native post-processing
 All post-processing functions from `brms` work on single-season rep-constant
 models, but do not work on any other model types. For example:
 
-```{r rep-constant-processing}
+```{r rep-constant-processing, eval = FALSE}
 predictions_rep_constant <- brms::posterior_predict(rep_constant)
 brms::conditional_effects(rep_constant)
 loo_rep_constant <- brms::loo(rep_constant, moment_match = TRUE)
@@ -666,9 +676,15 @@ not available in `spOccupancy`, and `flocker` enables these structures to
 combine with the full flexibility of the additional effects structures provided 
 by `brms`.
 
-### Measurement error
-[See here](http://paul-buerkner.github.io/brms/reference/me.html) for relevant `brms` documentation.
+### Measurement error in covariates
+[See here](http://paul-buerkner.github.io/brms/reference/me.html) for relevant 
+`brms` documentation.
 
 ## Additional fitting arguments
-`flock` will pass any relevant parameters forward to `brms::brm()`, giving the user important control over the algorithmic details of how the model is fit. See `?brms::brm` for details. To speed up the execution, we recommend supplying the argument `backend = "cmdstanr"`. This requires the cmdstanr package and a working installation of cmdstan; [see here](https://mc-stan.org/cmdstanr/) for instructions to get started and further details.
+`flock` will pass any relevant parameters forward to `brms::brm()`, giving the 
+user important control over the algorithmic details of how the model is fit. See
+`?brms::brm` for details. To speed up the execution, we recommend supplying the 
+argument `backend = "cmdstanr"`. This requires the cmdstanr package and a 
+working installation of cmdstan; [see here](https://mc-stan.org/cmdstanr/) for 
+instructions to get started and further details.
 
