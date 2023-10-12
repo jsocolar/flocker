@@ -18,9 +18,80 @@ knitr::opts_chunk$set(
 
 <img align="right" src="../man/figures/flocker_sticker.png" width=30%>
 
-`flocker` is an R package for fitting [occupancy models](https://jsocolar.github.io/closureOccupancy/). To date, software for occupancy modeling has required users either to work directly with probabilistic programming languages like Stan or JAGS, or to restrict themselves to simple effects structures in packages like `unmarked`. `flocker` changes that, providing occupancy modelers with a simple formula-based syntax for sophisticated model structures. Based on highly optimized Stan code, `flocker` is also **fast**, especially for large models.
+`flocker` is an R package for fitting [occupancy models](https://jsocolar.github.io/closureOccupancy/) that incorportate 
+sophisticated effects structures using simple formula-based syntax. `flocker` is 
+built on R package `brms`, which in turn is a front-end for `Stan`. 
 
-`flocker` is built on R package `brms`, which in turn is a front-end for `Stan`. Thus, mastering `flocker` is mostly a matter of mastering the formula syntax available in `brms`. 
+This vignette is intended as a companion to Socolar & Mills 2023 (INSERT LINK),
+where we provide details of the models and post-processing functionality 
+available in `flocker` in greater detail. Here, we provide illustrative R code 
+for several types of model, from data simulation, through model fitting, 
+to model post-processing. We also showcase the `brms` syntax 
+that `flocker` can use to fit a variety of section showcasing some of the 
+flexibility that `flocker` incorporates from `brms` to fit sophisticated effect 
+structures.
+
+## Terms and definitions
+Socolar & Mills (2023) introduce several terms that figure importantly in this 
+vignette, including:
+
+* **closure-unit**: The groupings of observations over which
+ [closure](https://jsocolar.github.io/closureOccupancy/) is assumed. In 
+ single-species models, a closure-unit corresponds to a "site" or "point". In 
+ multi-species models, a closure-unit is a species-site combination. In dynamic
+ (multiseason) models, a closure-unit is a site-season combination (or 
+ species-site-season in a multispecies dynamic model).
+ 
+* **rep-constant**, **rep-varying**: We refer to models that assume constant
+ detection probabilities across repeat visits within closure-units as 
+ *rep-constant models*, as contrasted with *rep-varying models* that incorporate
+ event-specific detection covariates. It turns out that rep-constant models 
+ enable a more efficient parametrization of the likelihood than rep-varying models.
+
+* **unit covariates**, **event covariates**: We refer to any covariate that does
+ not vary across sampling events within closure-units as a "unit covariate". 
+ This includes covariates that are intrinsically properties of single 
+ closure-units (e.g. the elevations of sites in a single-species model), 
+ covariates that are intrinsically properties of groups of closure units (e.g. 
+ elevations of sites in a multi-species model), and covariates that are 
+ intrinsically properties of sampling events but happen to be constant within
+ all closure-units (e.g. observer in a sampling design where every site is 
+ visited by exactly one observer). We refer to any covariate that varies across 
+ sampling events within covariates as an "event covariate". Note that while unit 
+ covariates may appear in either the occupancy or the detection formula, event 
+ covariates are restricted to the detection formula. Models that incorporate 
+ event covariates are *rep-varying* (see above); those that do not are 
+ *rep-constant*.
+
+## Installation and feedback
+[Installation instructions are available here](https://jsocolar.github.io/flocker). To request features or report bugs (much appreciated!), please [open an issue on GitHub](https://github.com/jsocolar/flocker/issues).
+
+## Data simulation
+
+
+## Model fitting
+### The single-season rep-varying model
+
+### The single-season rep-constant model
+
+### Multi-season models
+
+### Data-augmented multi-species models
+
+## Post-processing
+
+### Fitted values
+
+### The posterior occupancy state
+
+### Posterior prediction
+
+### Model comparison
+
+## `brms` tips and tricks
+
+Mastering advanced occupancy modeling via `flocker` is mostly a matter of 
+mastering the formula syntax available in `brms`. 
 
 This vignette introduces `flocker` with examples focused on "standard" single-season models (including multispecies models). For help with other model types, following the links here for [the data-augmented model](), [multiseason (dynamic) models](), and [false-positive models](). In the remainder of this vignette, we
 
@@ -33,20 +104,6 @@ This vignette introduces `flocker` with examples focused on "standard" single-se
 ## Installation and feedback
 [Installation instructions are available here](https://jsocolar.github.io/flocker). To request features or report bugs (much appreciated!), please [open an issue on GitHub](https://github.com/jsocolar/flocker/issues).
 
-## Terms and defintions
-The following terms feature importantly in this vignette. Some are not standard in the literature (but we think maybe they should be):
-
-**closure-unit**: The groupings of observations over which [closure](https://jsocolar.github.io/closureOccupancy/) is assumed. In single-species models, a closure-unit corresponds to a "site" or "point". In multi-species models, a closure-unit is a species-site combination. In dynamic (multiseason) models, a closure-unit is a site-season combination (or species-site-season in a multispecies dynamic model).
-
-**Z**: The (unobserved) true occupancy state of each closure-unit. We can represent Z as a vector of ones and zeros with one element for each closure-unit: a one if occupied; a zero if unoccupied.
-
-$\boldsymbol{\psi}$, $\boldsymbol{\theta}$: The occupancy ($\psi$) and detection ($\theta$) probabilities. In many models, both $\psi$ and $\theta$ will vary across closure-units. In some models $\theta$ will additionally vary across repeated sampling events within a closure-unit.
-
-**Q** The (observed) detection/nondetection state of each closure-unit (i.e. does the unit have at least one detection in the data or not). As for Z, we represent Q as a vector of ones and zeros.
-
-**rep-constant**, **rep-varying**: We refer to models where $\theta$ is constant across repeated sampling events within closure-units as *rep-constant models*, as contrasted with *rep-varying models* that incorporate event-specific detection covariates. It turns out that rep-constant models enable a more efficient parametrization of the likelihood than rep-varying models.
-
-**unit covariates**, **event covariates**: We refer to any covariate that does not vary across sampling events within closure-units as a "unit covariate". This includes covariates that are intrinsically properties of single closure-units (e.g. the elevations of sites in a single-species model), covariates that are intrinsically properties of groups of closure units (e.g. elevations of sites in a multispecies model), and covariates that are intrinsically properties of sampling events but happen to be constant within all closure-units (e.g. observer in a sampling design where every site is visited by exactly one observer). We refer to any covariate that varies across sampling events within covariates as an "event covariate". Note that while unit covariates may appear in either the occupancy or the detection formula, event covariates are restricted to the detection formula. Models that incorporate event covariates are *rep-varying* (see above); those that do not are *rep-constant*.
 
 ## Data formatting
 The main function in `flocker` for fitting occupancy models, called `flock()`, expects a highly specific and somewhat peculiar data format. The function `make_flocker_data()` formats data for use with `flock()` automatically. For single-season models, `make_flocker_data()` expects at a minimum a matrix or dataframe of detection/non-detection data. Rows represent closure-units, columns represent repeated sampling events within closure-units, and entries must be `0` (nondetection), `1` (detection), or `NA` (no corresponding sampling event). The data must be formatted so that all `NA`s are trailing within their rows. For example, if some units were sampled four times and other three times, the three sampling events must be treated as events 1, 2, and 3 (with the fourth event `NA`) rather than as events 1, 3, and 4 (with the second event `NA`) or any other combination.
