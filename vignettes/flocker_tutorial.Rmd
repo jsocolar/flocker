@@ -206,6 +206,10 @@ Note that within-chain parallelization is available, uniquely so, for the
 rep-constant model via 
 
 ### Multi-season models
+Here we provide code examples to complement the companion publication INSERT LINK.
+For a more complete unified vignette on multiseason models in `flocker`, see
+INSERT LINK.
+
 First, we simulate some data that are valid for use with multi-season models. 
 Here, we will simulate data for three seasons with one unit covariate and one 
 event covariate. The data will be simulated under a colonization-extinction 
@@ -299,6 +303,10 @@ multi_auto_eq <- flock(
 ```
 
 ### Data-augmented multi-species models
+Here we provide code examples to complement the companion publication INSERT LINK.
+For a more complete unified vignette on data-augmented models in `flocker`, see
+INSERT LINK.
+
 Fitting the data-augmented model in `flocker` requires passing the observed 
 data as a three-dimensional array with sites along the first dimension, visits 
 along the second, and species along the third. Additionally, we must supply the 
@@ -328,7 +336,6 @@ are not allowed as names for user-supplied covariates).
 ## Post-processing
 `flocker` provides functions for four main types of bespoke post-processing
 for occupancy models. `fitted_flocker()`
-
 
 `get_Z()` provides the posterior distribution for the 
 latent occupancy state. `predict_flocker()` provides posterior predictions at 
@@ -587,58 +594,8 @@ mod6 <- flock(
 
 In addition, `brms` provides the ability to estimate models wherein the 
 predictors (e.g. for occupancy and detection) are parametric nonlinear functions 
-whose parameters have their own covariate-based linear predictors. For example, 
-suppose an expanding population of a territorial species undergoes logistic 
-growth, and also that some territories are unsuitable due to an unobserved 
-factor, such that occupancy asymptotes at some unknown probability less than 
-one. Thus, occupancy probability changes through time as 
-$\frac{L}{1 + e^{-k(t-t_0)}}$, where $L$ is the asymptote, $k$ is a growth rate, 
-$t$ is time, and $t_0$ is the timing of the inflection point. On the logit 
-scale, the occupancy probability changes as 
-$\log(\frac{L}{1 + e^{-k(t - t_0)} - L})$. We can fit this model with:
-
-```{r nonlinear, eval = F}
-# simulate nonlinear data
-L <- 0.5
-k <- .1
-t0 <- -5
-t <- seq(-15, 15, 1)
-n_site_per_time <- 30
-n_visit <- 3
-det_prob <- .3
-
-data <- data.frame(
-  t = rep(t, n_site_per_time)
-)
-
-data$psi <- L/(1 + exp(-k*(t - t0)))
-data$Z <- rbinom(nrow(data), 1, data$psi)
-data$v1 <- data$Z * rbinom(nrow(data), 1, det_prob)
-data$v2 <- data$Z * rbinom(nrow(data), 1, det_prob)
-data$v3 <- data$Z * rbinom(nrow(data), 1, det_prob)
-
-fd_nonlinear <- make_flocker_data(
-  obs = as.matrix(data[,c("v1", "v2", "v3")]),
-  unit_covs = data.frame(t = data[,c("t")]),
-  event_covs = list(dummy = matrix(rnorm(n_visit*nrow(data)), ncol = 3))
-)
-
-# fit nonlinear model
-mod7 <- flock(
-  f_det = 
-    brms::bf(
-      det ~ 1,
-      occ ~ log(L/(1 + exp(-k*(uc1 - t0)) - L)),
-      L ~ 1,
-      k ~ 1,
-      t0 ~ 1
-    ) +
-    set_nl(dpar = "occ"), 
-  flocker_data = fd, 
-  adapt_delta = 0.9,
-  backend = "cmdstanr"
-)
-```
+whose parameters have their own covariate-based linear predictors. For more 
+details and an example, see the nonlinear models vignette INSERT LINK.
 
 ### Phylogenetic models
 Phylogenetic effects can be included by providing a covariance matrix as a 
