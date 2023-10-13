@@ -25,10 +25,9 @@ built on R package `brms`, which in turn is a front-end for `Stan`.
 This vignette is intended as a companion to Socolar & Mills 2023 (INSERT LINK),
 where we provide details of the models and post-processing functionality 
 available in `flocker` in greater detail. Here, we provide illustrative R code 
-for several types of model, from data simulation, through model fitting, 
-to model post-processing. We also showcase the `brms` syntax 
-that `flocker` can use to fit a variety of section showcasing some of the 
-flexibility that `flocker` incorporates from `brms` to fit sophisticated effect 
+for several types of model, demonstrating data simulation, model fitting, 
+and model post-processing. We also showcase the `brms` syntax 
+that `flocker` can use to fit a variety of sophisticated effect 
 structures.
 
 ## Terms and definitions
@@ -39,8 +38,8 @@ vignette, including:
  [closure](https://jsocolar.github.io/closureOccupancy/) is assumed. In 
  single-species models, a closure-unit corresponds to a "site" or "point". In 
  multi-species models, a closure-unit is a species-site combination. In dynamic
- (multiseason) models, a closure-unit is a site-season combination (or 
- species-site-season in a multispecies dynamic model).
+ (multi-season) models, a closure-unit is a site-season combination (or 
+ species-site-season in a multi-species dynamic model).
  
 * **rep-constant**, **rep-varying**: We refer to models that assume constant
  detection probabilities across repeat visits within closure-units as 
@@ -67,11 +66,12 @@ vignette, including:
 [Installation instructions are available here](https://jsocolar.github.io/flocker). 
 To request features or report bugs (much appreciated!), please [open an issue on GitHub](https://github.com/jsocolar/flocker/issues).
 
-After installation, run
-```{r library}
+To make `flocker` and `brms` functions globally available within an R session 
+run:
+```{r library, echo = FALSE}
 library(flocker)
+library(brms)
 ```
-to make `flocker` functions globally available within an R session.
 
 ## Data simulation
 General purpose data simulation is provided via `simulate_flocker_data()`, which
@@ -203,7 +203,7 @@ rep_constant <- flock(
   f_det = ~ uc1 + (1 + uc1 | species),
   flocker_data = fd_rep_constant,
   silent = 2,
-  refresh = 0
+  refresh = 0,
   chains = 2,
   cores = 2,
   threads = 2
@@ -212,7 +212,7 @@ rep_constant <- flock(
 
 ### Multi-season models
 Here we provide code examples to complement the companion publication INSERT LINK.
-For a more complete unified vignette on multiseason models in `flocker`, see
+For a more complete vignette on multi-season models in `flocker`, see
 INSERT LINK.
 
 First, we simulate some data that are valid for use with multi-season models. 
@@ -237,7 +237,8 @@ fd_multi <- make_flocker_data(
   multi_data$obs, 
   multi_data$unit_covs, 
   multi_data$event_covs, 
-  type = "multi"
+  type = "multi",
+  quiet = TRUE
   )
 ```
 
@@ -328,11 +329,13 @@ augmented_data <- simulate_flocker_data(
     )
 fd_augmented <- make_flocker_data(
   augmented_data$obs, augmented_data$unit_covs, augmented_data$event_covs,
-  type = "augmented", n_aug = 100
+  type = "augmented", n_aug = 100,
+  quiet = TRUE
   )
 augmented <- flock(
   f_occ = ~ (1 | ff_species),
   f_det = ~ uc1 + ec1 + (1 + uc1 + ec1 | ff_species),
+  augmented = TRUE,
   flocker_data = fd_augmented,
   silent = 2,
   refresh = 0
@@ -362,8 +365,8 @@ models, but do not work on any other model types. For example:
 
 ```{r rep-constant-processing, eval = FALSE}
 predictions_rep_constant <- brms::posterior_predict(rep_constant)
-brms::conditional_effects(rep_constant)
 loo_rep_constant <- brms::loo(rep_constant, moment_match = TRUE)
+brms::conditional_effects(rep_constant)
 ```
 
 The following functions work on all model types available in `flocker`.
@@ -388,11 +391,21 @@ The function `get_Z()` returns the posterior distribution of occupancy probabili
 get_Z(rep_varying)
 ```
 
+For all model types, `get_Z()` accepts an optional `new_data` argument. Leaving 
+the default `new_data = NULL` supplies the posterior for the true occupancy state 
+at the locations of the data used to fit the model. Otherwise, the posterior is 
+computed over the new data. For single-season models, `new_data` can be supplied 
+as a dataframe of unit covariate values or as a `flocker_data` object. For 
+multi-season models, only a `flocker_data` object is allowed. Note that if 
+predictions are desired at sites without observations, it is acceptable to pass 
+an array of dummy observations (e.g. all zeros) to `make_flocker_data()` and 
+then to set `history_condition = FALSE` in the call to `get_Z()`.
+
 `get_Z()` accepts several additional arguments that control the way that posterior is obtained and the values returned. See the companion paper INSERT LINK and 
 `?get_Z` for details.
 
 ### Posterior prediction
-The funtion `predict_flocker()` provides posterior predictions. By default, 
+The function `predict_flocker()` provides posterior predictions. By default, 
 predictions are provided for the covariate data to which the model were fit, but predictions to new data are also possible via the `new_data` argument. The 
 output differs by model type. For single-season rep-constant models, the return 
 is a matrix where rows are iterations, columns are units, and values are the 
@@ -431,7 +444,7 @@ model.
 
 ```{r}
 loo_compare_flocker(
-  rep_constant, rep_varying
+  list(rep_constant, rep_varying)
 )
 ```
 
@@ -507,14 +520,16 @@ their means and a moderately regularizing prior on the coefficients:
 rep_varying_prior1 <- flock(
   f_occ = ~ uc1,
   f_det = ~ ec1,
-  flocker_data = fd,
+  flocker_data = fd_rep_varying,
   prior = 
     brms::set_prior("logistic(0,1)", class = "Intercept") +
     brms::set_prior("logistic(0,1)", class = "Intercept", dpar = "occ") +
     brms::set_prior("normal(0,2)", class = "b") +
-    brms::set_prior("normal(0,2)", class = "b", dpar = "occ")
+    brms::set_prior("normal(0,2)", class = "b", dpar = "occ"),
+  silent = 2,
+  refresh = 0
   )
-brms::prior_summary(rep_constant_prior1)
+brms::prior_summary(rep_varying_prior1)
 ```
 
 Here is an example where we set informative priors on the intercepts when all covariates are fixed to zero and the same moderately regularizing prior on the coefficients:
@@ -523,12 +538,14 @@ Here is an example where we set informative priors on the intercepts when all co
 rep_varying_prior2 <- flock(
   f_occ = ~ 0 + Intercept + uc1,
   f_det = ~ 0 + Intercept + ec1,
-  flocker_data = fd,
+  flocker_data = fd_rep_varying,
   prior = 
     brms::set_prior("normal(0,2)", class = "b") +
     brms::set_prior("normal(0,2)", class = "b", dpar = "occ") +
     brms::set_prior("normal(1, 1)", class = "b", coef = "Intercept") +
-    brms::set_prior("normal(-1, 1)", class = "b", coef = "Intercept", dpar = "occ")
+    brms::set_prior("normal(-1, 1)", class = "b", coef = "Intercept", dpar = "occ"),
+  silent = 2,
+  refresh = 0
   )
 brms::prior_summary(rep_varying_prior2)
 ```
@@ -661,7 +678,7 @@ transect, yielding a one-dimensional analog of a spatial autologistic occupancy
 model.
 
 A second caution is to remind users that in multi-species models, users will 
-likely want to fit separate spatial terms by species \cite{Doser_spOccupancy}. 
+likely want to fit separate spatial terms by species CITE DOSER spOccupancy. 
 For Gaussian processes, this can be achieved via the `by` argument to 
 `brms::gp()`. For some conditional autoregressive structures (those that allow 
 disconnected islands), this can be achieved by passing a block-diagonal 
