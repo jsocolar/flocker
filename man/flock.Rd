@@ -23,7 +23,13 @@ flock(
 \item{f_occ}{A brms-type model formula for occupancy. If provided, must begin 
 with "~".}
 
-\item{f_det}{A brms-type model formula for detection. Must begin with "~".}
+\item{f_det}{A brms-type model formula for detection. Must begin with "~". 
+OR, a \code{brmsformula} object including formulas for all of the relevant
+distributional parameters in the desired model (det and at least one of occ, 
+colo, ex, autologistic, and Omega). The \code{$formula} element of the 
+\code{brmsformula} must be the detection formula, beginning with \code{det ~}.
+This latter option unadvisable except when necessary (e.g. when a nonlinear 
+formula is desired), as input checking is less thorough.}
 
 \item{flocker_data}{data, generally the output of \code{make_flocker_data()}.}
 

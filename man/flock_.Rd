@@ -2,7 +2,8 @@
 % Please edit documentation in R/flock.R
 \name{flock_}
 \alias{flock_}
-\title{Fit an occupancy model or generate Stan code for a model}
+\title{Fit an occupancy model, or generate Stan code/data for a model, or get the prior
+for a model}
 \usage{
 flock_(
   output,
@@ -21,7 +22,8 @@ flock_(
 )
 }
 \arguments{
-\item{output}{"model" for model fitting, "code" for stancode, "data" for standata}
+\item{output}{"model" for model fitting, "code" for stancode, "data" for standata,
+"prior" for get_prior output}
 
 \item{f_occ}{A brms-type model formula for occupancy. If provided, must begin 
 with "~".}
@@ -69,5 +71,6 @@ to use per chain in within chain parallelization.}
 stan code for brms model or a \code{brmsfit} containing the fitted occupancy model.
 }
 \description{
-Fit an occupancy model or generate Stan code for a model
+Fit an occupancy model, or generate Stan code/data for a model, or get the prior
+for a model
 }

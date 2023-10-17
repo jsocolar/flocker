@@ -1,7 +1,13 @@
 #' Fit an occupancy model
 #' @param f_occ A brms-type model formula for occupancy. If provided, must begin 
 #'  with "~".
-#' @param f_det A brms-type model formula for detection. Must begin with "~".
+#' @param f_det A brms-type model formula for detection. Must begin with "~". 
+#'  OR, a \code{brmsformula} object including formulas for all of the relevant
+#'  distributional parameters in the desired model (det and at least one of occ, 
+#'  colo, ex, autologistic, and Omega). The \code{$formula} element of the 
+#'  \code{brmsformula} must be the detection formula, beginning with \code{det ~}.
+#'  This latter option unadvisable except when necessary (e.g. when a nonlinear 
+#'  formula is desired), as input checking is less thorough.
 #' @param flocker_data data, generally the output of \code{make_flocker_data()}.
 #' @param data2 additional data (e.g. a covariance matrix for a phylogenetic 
 #'  effect)
@@ -115,8 +121,40 @@ flocker_standata <- function(f_occ=NULL, f_det, flocker_data, data2 = NULL,
          augmented = augmented, threads = threads, ...)
 }
 
-#' Fit an occupancy model or generate Stan code for a model 
-#' @param output "model" for model fitting, "code" for stancode, "data" for standata
+#' Get prior for occupancy model
+#' @inheritParams flock
+#' @return A dataframe summarizing the parameters on which priors can
+#'  be specified and giving the default priors for those parameters.
+#'  See \code{?brms::get_prior} for further details.
+#' @export
+#' @examples
+#' \dontrun{
+#' fd <- make_flocker_data(
+#'  example_flocker_data$obs, 
+#'  example_flocker_data$unit_covs,
+#'  example_flocker_data$event_covs
+#' )
+#' get_flocker_prior(
+#'  f_occ = ~ uc1 + + (1|grp),
+#'  f_det = ~ uc1 + ec1 + (1|grp),
+#'  flocker_data = fd
+#' )
+#' }
+get_flocker_prior <- function(f_occ=NULL, f_det, flocker_data, data2 = NULL, 
+                             multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
+                             augmented = FALSE, threads = NULL,
+                             ...) {
+  flock_(output = "prior", f_occ = f_occ, f_det = f_det, 
+         flocker_data = flocker_data, data2 = data2, 
+         multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
+         multi_init = multi_init, f_auto = f_auto,
+         augmented = augmented, threads = threads, ...)
+}
+
+#' Fit an occupancy model, or generate Stan code/data for a model, or get the prior
+#' for a model
+#' @param output "model" for model fitting, "code" for stancode, "data" for standata,
+#'   "prior" for get_prior output
 #' @param f_occ A brms-type model formula for occupancy. If provided, must begin 
 #'  with "~".
 #' @param f_det A brms-type model formula for detection. Must begin with "~".
@@ -173,7 +211,39 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     f_auto_use <- stats::as.formula(paste0("autologistic ", f_auto_txt))
   }
   
-  f_det_txt <- paste0(deparse(f_det), collapse = "")
+  if(brms::is.brmsformula(f_det)){
+    f_det_txt1 <- format(f_det$formula)
+    is_valid <- grepl("^det[[:blank:]]*~", f_det_txt1)
+    assertthat::assert_that(
+      is_one_logical(is_valid),
+      msg = "Error in formula checking. This should not happen; please report a bug."
+    )
+    assertthat::assert_that(
+      is_valid,
+      msg = paste0("When f_det is a brmsformula, the $formula element ", 
+                   "must be a detection formula beginning with `det ~`"
+      )
+    )
+    f_det_txt <- paste0("~", strsplit(f_det_txt1, "~")[[1]][2])
+  } else if (brms::is.mvbrmsformula(f_det)) {
+    assertthat::assert_that("det" %in% names(f_det$forms))
+    f_det_txt1 <- format(f_det$forms$det$formula)
+    is_valid <- grepl("^det[[:blank:]]*~", f_det_txt1)
+    assertthat::assert_that(
+      is_one_logical(is_valid),
+      msg = "Error in formula checking. This should not happen; please report a bug."
+    )
+    assertthat::assert_that(
+      is_valid,
+      msg = paste0("When f_det is a brmsformula, the $formula element ", 
+                   "must be a detection formula beginning with `det ~`"
+      )
+    )
+    f_det_txt <- paste0("~", strsplit(f_det_txt1, "~")[[1]][2])
+  } else {
+    f_det_txt <- paste0(deparse(f_det), collapse = "")
+  }
+  
   # f_det_use is type specific and is handled below
   
   if (flocker_data$type == "single") {
@@ -183,7 +253,15 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     f_det_use <- stats::as.formula(
       paste0("ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ",
              vint_text, ") ", f_det_txt))
-    f_use <- brms::bf(f_det_use, f_occ_use)
+    if(brms::is.brmsformula(f_det)){
+      f_use <- f_det
+      f_use$formula <- f_det_use
+    } else if(brms::is.mvbrmsformula(f_det)){
+      f_use <- f_det
+      f_use$forms$det$formula <- f_det_use
+    } else {
+      f_use <- brms::bf(f_det_use, f_occ_use)
+    }
     if (is.null(threads)) {
       stanvars <- brms::stanvar(
         scode = make_occupancy_single_lpmf(max_rep = max_rep), block = "functions"
@@ -220,7 +298,12 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
 
   } else if (flocker_data$type == "single_C") {
     f_det_use <- stats::as.formula(paste0("ff_n_suc | vint(ff_n_trial) ", f_det_txt))
-    f_use <- brms::bf(f_det_use, f_occ_use)
+    if(brms::is.brmsformula(f_det)){
+      f_use <- f_det
+      f_use$formula <- f_det_use
+    } else {
+      f_use <- brms::bf(f_det_use, f_occ_use)
+    }
     stanvars <- brms::stanvar(
       scode = make_occupancy_single_C_lpmf(), block = "functions"
     )
@@ -239,8 +322,14 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     f_det_use <- stats::as.formula(
       paste0("ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ff_n_sp, ff_superQ, ff_species, ",
              vint_text, ") ", f_det_txt))
-    f_Omega_use <- stats::as.formula("Omega ~ 1")
-    f_use <- brms::bf(f_det_use, f_occ_use, f_Omega_use)
+    
+    if(brms::is.brmsformula(f_det)){
+      f_use <- f_det
+      f_use$formula <- f_det_use
+    } else {
+      f_Omega_use <- stats::as.formula("Omega ~ 1")
+      f_use <- brms::bf(f_det_use, f_occ_use, f_Omega_use)
+    }
     stanvars <- brms::stanvar(
       scode = make_occupancy_augmented_lpmf(max_rep = max_rep), 
       block = "functions"
@@ -264,7 +353,12 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
       paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
     
-    f_use <- brms::bf(f_det_use, f_occ_use, f_col_use, f_ex_use)
+    if(brms::is.brmsformula(f_det)){
+      f_use <- f_det
+      f_use$formula <- f_det_use
+    } else {
+      f_use <- brms::bf(f_det_use, f_occ_use, f_col_use, f_ex_use)
+    }
     
     stanvars <- 
       brms::stanvar(
@@ -301,7 +395,12 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
       paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
     
-    f_use <- brms::bf(f_det_use, f_col_use, f_ex_use)
+    if(brms::is.brmsformula(f_det)){
+      f_use <- f_det
+      f_use$formula <- f_det_use
+    } else {
+      f_use <- brms::bf(f_det_use, f_col_use, f_ex_use)
+    }
     
     stanvars <- 
       brms::stanvar(
@@ -338,8 +437,13 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
       paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
     
-    f_use <- brms::bf(f_det_use, f_occ_use, f_col_use, f_auto_use)
-    
+    if(brms::is.brmsformula(f_det)){
+      f_use <- f_det
+      f_use$formula <- f_det_use
+    } else {
+      f_use <- brms::bf(f_det_use, f_occ_use, f_col_use, f_auto_use)
+    }
+
     stanvars <- 
       brms::stanvar(
         scode = make_emission_1(), 
@@ -375,7 +479,12 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
       paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
              vint_text1, ", ", vint_text2, ") ", f_det_txt))
     
-    f_use <- brms::bf(f_det_use, f_col_use, f_auto_use)
+    if(brms::is.brmsformula(f_det)){
+      f_use <- f_det
+      f_use$formula <- f_det_use
+    } else {
+      f_use <- brms::bf(f_det_use, f_col_use, f_auto_use)
+    }
     
     stanvars <- 
       brms::stanvar(
@@ -414,7 +523,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
 }
 
 #' Either fit a flocker model or output stancode or output standata
-#' @param output one of "model", "code", or "data"
+#' @param output one of "model", "code", "data", or "prior"
 #' @param f_use brms formula
 #' @param data brms data
 #' @param data2 brms data2
@@ -456,6 +565,14 @@ flocker_fit_code_util <- function (
                        threads_per_chain = threads,
                        ...)
       cmdstanr::cmdstan_make_local(cpp_options = cml, append = F)
+    } else if (output == "prior") {
+      out <- brms::get_prior(f_use, 
+                             data = data,
+                             data2 = data2,
+                             family = family, 
+                             stanvars = stanvars,
+                             threads_per_chain = threads,
+                             ...)
     }
   } else if (!is.null(threads)){ # this covers the rep-constant case where
     # native brms threading is available
@@ -476,36 +593,63 @@ flocker_fit_code_util <- function (
                                  threads = threads,
                                  ...)
     } else if (output == "model") {
-      out <- brms::brm(f_use, 
-                       data = data,
-                       data2 = data2,
-                       family = family, 
-                       stanvars = stanvars,
-                       threads = threads,
-                       ...)
+      out <- brms::brm(
+        f_use,
+        data = data,
+        data2 = data2,
+        family = family,
+        stanvars = stanvars,
+        threads = threads,
+        ...
+      )
+    } else if (output == "prior") {
+      out <- brms::get_prior(
+        f_use, 
+        data = data,
+        data2 = data2,
+        family = family,
+        stanvars = stanvars,
+        threads = threads,
+        ...
+      )
     }
   } else {
     if (output == "code") {
-      out <- brms::make_stancode(f_use, 
-                                 data = data,
-                                 data2 = data2,
-                                 family = family, 
-                                 stanvars = stanvars,
-                                 ...)
+      out <- brms::make_stancode(
+        f_use,
+        data = data,
+        data2 = data2,
+        family = family, 
+        stanvars = stanvars,
+        ...
+      )
     } else if (output == "data") {
-      out <- brms::make_standata(f_use, 
-                                 data = data,
-                                 data2 = data2,
-                                 family = family, 
-                                 stanvars = stanvars,
-                                 ...)
+      out <- brms::make_standata(
+        f_use,
+        data = data,
+        data2 = data2,
+        family = family, 
+        stanvars = stanvars,
+        ...
+      )
     } else if (output == "model") {
-      out <- brms::brm(f_use, 
-                       data = data,
-                       data2 = data2,
-                       family = family, 
-                       stanvars = stanvars,
-                       ...)
+      out <- brms::brm(
+        f_use,
+        data = data,
+        data2 = data2,
+        family = family,
+        stanvars = stanvars,
+        ...
+      )
+    } else if (output == "prior") {
+      out <- brms::get_prior(
+        f_use,
+        data = data,
+        data2 = data2,
+        family = family,
+        stanvars = stanvars,
+        ...
+      )
     }
   }
   out
