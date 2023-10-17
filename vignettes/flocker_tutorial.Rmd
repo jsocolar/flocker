@@ -684,14 +684,9 @@ For Gaussian processes, this can be achieved via the `by` argument to
 disconnected islands), this can be achieved by passing a block-diagonal 
 adjacency matrix wherein species are disconnected components.
 
-Finally, we note that modelers whose primary interest is in fitting spatial 
-terms might be well-served to investigate the functionality of R package
-`spOccupancy` INSERT LINK, which affords some spatial specifications not yet 
-available via `brms` (e.g spatially varying coefficients). On the other hand,
-`brms` (and therefore `flocker`) likewise provides multiple spatial structures 
-not available in `spOccupancy`, and `flocker` enables these structures to 
-combine with the full flexibility of the additional effects structures provided 
-by `brms`.
+We note that gaussian process priors for spatially varying coefficients are 
+readily achieved via the nonlinear formula syntax of `brms`. For more 
+details and an example, see the nonlinear models vignette INSERT LINK.
 
 ### Measurement error in covariates
 [See here](http://paul-buerkner.github.io/brms/reference/me.html) for relevant 
