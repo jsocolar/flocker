@@ -44,17 +44,6 @@ jobs:
           extra-packages: any::rcmdcheck
           needs: check
 
-      - name: Extra dependencies
-        run: |
-          install.packages("BH")
-          remotes::install_github("stan-dev/cmdstanr")
-
-      #- name: Build Cmdstan
-      #  run: |
-      #    cmdstanr::check_cmdstan_toolchain(fix = TRUE)
-      #    cmdstanr::install_cmdstan(cores = parallel::detectCores())
-      #  shell: Rscript {0}
-
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
