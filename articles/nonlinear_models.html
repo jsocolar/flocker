@@ -220,9 +220,15 @@ contribution to the likelihood.</p></li>
 <span>                <span class="op">)</span>,</span>
 <span>             flocker_data <span class="op">=</span> <span class="va">fd</span>, </span>
 <span>             control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>adapt_delta <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span>,</span>
-<span>             cores <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
+<span>             cores <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: There were 1 divergent transitions after warmup. See</span></span>
+<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup</span></span>
+<span><span class="co">#&gt; to find out why this is a problem and how to eliminate them.</span></span>
+<span><span class="co">#&gt; Warning: Examine the pairs() plot to diagnose sampling problems</span></span></code></pre></div>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: There were 1 divergent transitions after warmup. Increasing adapt_delta above 0.9 may help.</span></span>
+<span><span class="co">#&gt; See http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup</span></span>
 <span><span class="co">#&gt;  Family: occupancy_single </span></span>
 <span><span class="co">#&gt;   Links: mu = identity; occ = identity </span></span>
 <span><span class="co">#&gt; Formula: ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ff_rep_index1, ff_rep_index2, ff_rep_index3) ~ 1 + dummy </span></span>
@@ -236,11 +242,11 @@ contribution to the likelihood.</p></li>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Population-Level Effects: </span></span>
 <span><span class="co">#&gt;              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
-<span><span class="co">#&gt; Intercept       -0.90      0.13    -1.15    -0.65 1.00     2322     2498</span></span>
-<span><span class="co">#&gt; L_Intercept      0.50      0.10     0.37     0.77 1.01     1219      776</span></span>
-<span><span class="co">#&gt; k_Intercept      0.19      0.08     0.07     0.37 1.00     1198     1466</span></span>
-<span><span class="co">#&gt; t0_Intercept    -5.90      3.50   -10.51     3.99 1.00     1162      818</span></span>
-<span><span class="co">#&gt; dummy           -0.00      0.07    -0.15     0.14 1.00     2575     1927</span></span>
+<span><span class="co">#&gt; Intercept       -0.90      0.13    -1.16    -0.66 1.00     2294     2302</span></span>
+<span><span class="co">#&gt; L_Intercept      0.50      0.10     0.37     0.75 1.00     1221      977</span></span>
+<span><span class="co">#&gt; k_Intercept      0.19      0.08     0.07     0.37 1.00     1200     1719</span></span>
+<span><span class="co">#&gt; t0_Intercept    -5.90      3.41   -10.41     3.03 1.00     1223     1078</span></span>
+<span><span class="co">#&gt; dummy           -0.00      0.08    -0.15     0.15 1.00     2752     2526</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS</span></span>
 <span><span class="co">#&gt; and Tail_ESS are effective sample size measures, and Rhat is the potential</span></span>
@@ -327,13 +333,13 @@ space approximate Gaussian process for computational efficiency.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Gaussian Process Terms: </span></span>
 <span><span class="co">#&gt;                Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
-<span><span class="co">#&gt; sdgp(g_gpxy)       1.65      0.75     0.71     3.57 1.00     3322     2931</span></span>
-<span><span class="co">#&gt; lscale(g_gpxy)     0.23      0.11     0.08     0.49 1.00     4874     3387</span></span>
+<span><span class="co">#&gt; sdgp(g_gpxy)       1.69      0.78     0.73     3.67 1.00     3368     3076</span></span>
+<span><span class="co">#&gt; lscale(g_gpxy)     0.23      0.11     0.08     0.50 1.00     4128     3128</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Population-Level Effects: </span></span>
 <span><span class="co">#&gt;                  Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
-<span><span class="co">#&gt; Intercept           -1.04      0.06    -1.16    -0.93 1.00     6589     3131</span></span>
-<span><span class="co">#&gt; occint_Intercept     0.09      0.09    -0.08     0.27 1.00     6821     3231</span></span>
+<span><span class="co">#&gt; Intercept           -1.04      0.06    -1.15    -0.93 1.00     6089     2975</span></span>
+<span><span class="co">#&gt; occint_Intercept     0.09      0.09    -0.08     0.27 1.00     6221     3132</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS</span></span>
 <span><span class="co">#&gt; and Tail_ESS are effective sample size measures, and Rhat is the potential</span></span>

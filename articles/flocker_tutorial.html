@@ -158,15 +158,6 @@ instructions are available here</a>. To request features or report bugs
 GitHub</a>.</p>
 <p>To make <code>flocker</code> and <code>brms</code> functions globally
 available within an R session run:</p>
-<pre><code><span><span class="co">#&gt; Loading required package: Rcpp</span></span>
-<span><span class="co">#&gt; Loading 'brms' package (version 2.20.4). Useful instructions</span></span>
-<span><span class="co">#&gt; can be found by typing help('brms'). A more detailed introduction</span></span>
-<span><span class="co">#&gt; to the package is available through vignette('brms_overview').</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Attaching package: 'brms'</span></span>
-<span><span class="co">#&gt; The following object is masked from 'package:stats':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     ar</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="data-simulation">Data simulation<a class="anchor" aria-label="anchor" href="#data-simulation"></a>
@@ -177,7 +168,7 @@ dataset with 30 species sampled at 50 sites using four replicate surveys
 (i.e. a single-season multi-species dataset). Non-default arguments will
 simulate example data for other likelihoods, including multi-season and
 data-augmented occupancy models.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_flocker_data.html">simulate_flocker_data</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>The simulated data <code>d</code> are in list form, with elements for
 the detection/non-detection observations <code>d$obs</code>, unit
@@ -228,7 +219,7 @@ value of the event covariate does not matter.</p>
 <code><a href="../reference/simulate_flocker_data.html">simulate_flocker_data()</a></code> to
 <code><a href="../reference/make_flocker_data.html">make_flocker_data()</a></code>, which will repackage data and apply
 the necessary formatting:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fd_rep_varying</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_flocker_data.html">make_flocker_data</a></span><span class="op">(</span></span>
 <span>  obs <span class="op">=</span> <span class="va">d</span><span class="op">$</span><span class="va">obs</span>, </span>
 <span>  unit_covs <span class="op">=</span> <span class="va">d</span><span class="op">$</span><span class="va">unit_covs</span>, </span>
@@ -259,7 +250,7 @@ provided as one-sided formulas to the relevant arguments of
 <code><a href="../reference/flock.html">flock()</a></code> (<code>f_occ</code>, <code>f_det</code>,
 <code>f_col</code>, <code>f_ex</code>, and <code>f_auto</code> as
 applicable).</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rep_varying</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span></span>
 <span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">uc1</span> <span class="op">|</span> <span class="va">species</span><span class="op">)</span>,</span>
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="va">ec1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">uc1</span> <span class="op">+</span> <span class="va">ec1</span> <span class="op">|</span> <span class="va">species</span><span class="op">)</span>,</span>
@@ -292,7 +283,7 @@ of the rep-constant model, it is necessary to supply
 the moment of data formatting; it is insufficient to omit event
 covariates from the detection formula supplied to <code><a href="../reference/flock.html">flock()</a></code>
 after formatting the data for a rep-varying model.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fd_rep_constant</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_flocker_data.html">make_flocker_data</a></span><span class="op">(</span></span>
 <span>  obs <span class="op">=</span> <span class="va">d</span><span class="op">$</span><span class="va">obs</span>, </span>
 <span>  unit_covs <span class="op">=</span> <span class="va">d</span><span class="op">$</span><span class="va">unit_covs</span></span>
@@ -309,7 +300,7 @@ after formatting the data for a rep-varying model.</p>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p>Note that within-chain parallelization is available (uniquely so) for
 the rep-constant mode:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rep_constant</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span></span>
 <span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">uc1</span> <span class="op">|</span> <span class="va">species</span><span class="op">)</span>,</span>
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">uc1</span> <span class="op">|</span> <span class="va">species</span><span class="op">)</span>,</span>
@@ -335,7 +326,7 @@ colonization-extinction model with explicit inits, but we will be able
 to fit other models (autologistic, equilibrium inits) to the same data
 (note that <code><a href="../reference/simulate_flocker_data.html">simulate_flocker_data()</a></code> can also simulate
 directly from these other model types).</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">multi_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_flocker_data.html">simulate_flocker_data</a></span><span class="op">(</span></span>
 <span>  n_season <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  n_pt <span class="op">=</span> <span class="fl">300</span>,</span>
@@ -355,7 +346,7 @@ directly from these other model types).</p>
 <p>Below, we fit the colonization-extinction model with an explicit
 model for occupancy in the first timestep. Depending on hardware,
 fitting this model might take several minutes.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">multi_colex</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span></span>
 <span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span>,</span>
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="va">ec1</span>,</span>
@@ -370,7 +361,7 @@ fitting this model might take several minutes.</p>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Here is the colonization-extinction model using equilibrium occupancy
 probabilities in the first timestep:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">multi_colex_eq</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span></span>
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="va">ec1</span>,</span>
 <span>  f_col <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span>,</span>
@@ -388,7 +379,7 @@ with a constant logit-scale offset separating colonization and
 persistence probabilities, we use the formula <code>f_auto = ~ 1</code>,
 but it is fine to relax this constraint and use,
 e.g. <code>f_auto = ~ uc1</code>.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">multi_auto</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span></span>
 <span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span>,</span>
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="va">ec1</span>,</span>
@@ -403,7 +394,7 @@ e.g. <code>f_auto = ~ uc1</code>.</p>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p>And the autologistic model with equilibrium occupancy probabilities
 in the first timestep:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">multi_auto_eq</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span></span>
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="va">ec1</span>,</span>
 <span>  f_col <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span>,</span>
@@ -429,7 +420,7 @@ the first dimension, visits along the second, and species along the
 third. Additionally, we must supply the <code>n_aug</code> argument to
 <code><a href="../reference/make_flocker_data.html">make_flocker_data()</a></code>, specifying how many all-zero
 pseudospecies to augment the data with.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">augmented_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_flocker_data.html">simulate_flocker_data</a></span><span class="op">(</span></span>
 <span>    augmented <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>    <span class="op">)</span></span>
@@ -446,7 +437,10 @@ pseudospecies to augment the data with.</p>
 <span>  cores <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  silent <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  refresh <span class="op">=</span> <span class="fl">0</span></span>
-<span>  <span class="op">)</span></span></code></pre></div>
+<span>  <span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.</span></span>
+<span><span class="co">#&gt; Running the chains for more iterations may help. See</span></span>
+<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#bulk-ess</span></span></code></pre></div>
 <p>Here, the random effect of species is specified using the special
 grouping keyword <code>ff_species</code> (names beginning with
 <code>ff_</code> are reserved in <code>flocker</code> and are not
@@ -474,7 +468,7 @@ companion paper INSERT LINK and <a href="https://jsocolar.github.io/likelihoodOc
 <p>All post-processing functions from <code>brms</code> work on
 single-season rep-constant models, but do not work on any other model
 types. For example:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">predictions_rep_constant</span> <span class="op">&lt;-</span> <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstantools/reference/posterior_predict.html" class="external-link">posterior_predict</a></span><span class="op">(</span><span class="va">rep_constant</span><span class="op">)</span></span>
 <span><span class="va">loo_rep_constant</span> <span class="op">&lt;-</span> <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo.html" class="external-link">loo</a></span><span class="op">(</span><span class="va">rep_constant</span>, moment_match <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/conditional_effects.brmsfit.html" class="external-link">conditional_effects</a></span><span class="op">(</span><span class="va">rep_constant</span><span class="op">)</span></span></code></pre></div>
@@ -489,7 +483,7 @@ occupancy, detection, colonization, extinction, autologistic, and/or
 Omega, the fitted probability that a given (pseudo)species occurrs in
 the metacommunity) are available via <code>fitted_flocker</code>. For
 example:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/fitted_flocker.html">fitted_flocker</a></span><span class="op">(</span><span class="va">rep_constant</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/fitted_flocker.html">fitted_flocker</a></span><span class="op">(</span><span class="va">rep_varying</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/fitted_flocker.html">fitted_flocker</a></span><span class="op">(</span><span class="va">multi_colex</span><span class="op">)</span></span>
@@ -507,7 +501,7 @@ the final dimension. Thus, for a single-season rep-varying model, the
 output is a matrix where rows are posterior iterations, columns are
 closure-units, and values are draws from the posterior distribution of
 occupancy probabilities:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_Z.html">get_Z</a></span><span class="op">(</span><span class="va">rep_varying</span><span class="op">)</span></span></code></pre></div>
 <p>For all model types, <code><a href="../reference/get_Z.html">get_Z()</a></code> accepts an optional
 <code>new_data</code> argument. Leaving the default
@@ -540,7 +534,7 @@ is an array whose first dimension is units, second dimension is sampling
 events, third dimension is iterations, and values are <code>1</code>,
 <code>0</code>, or <code>NA</code>, representing detection,
 nondetection, and no corresponding sampling event. For example:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/predict_flocker.html">predict_flocker</a></span><span class="op">(</span><span class="va">rep_varying</span><span class="op">)</span></span></code></pre></div>
 <p><code><a href="../reference/predict_flocker.html">predict_flocker()</a></code> accepts several additional arguments
 that control the way that posterior is obtained and the values of
@@ -570,30 +564,29 @@ rep-varying model performs best. Note that we ensure that these
 comparisons between rep-constant and rep-varying models are valid by
 omitting the binomial coefficient when computing the log-likelihood for
 the rep-constant model.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/loo_compare_flocker.html">loo_compare_flocker</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">rep_constant</span>, <span class="va">rep_varying</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.</span></span>
+<span><span class="co">#&gt; Warning: Some Pareto k diagnostic values are slightly high. See help('pareto-k-diagnostic') for details.</span></span>
 <span><span class="co">#&gt;        elpd_diff se_diff</span></span>
 <span><span class="co">#&gt; model2    0.0       0.0 </span></span>
-<span><span class="co">#&gt; model1 -169.9      17.2</span></span></code></pre></div>
+<span><span class="co">#&gt; model1 -156.4      17.9</span></span></code></pre></div>
 <p>Likewise, we can compare the four flavors of multi-season model that
 we fit above. Recall that the data were simulated under
 colonization-extinction dynamics (rather than autologistic) and under
 explicit initial occupancy probabilities (rather than equilibrium). As
 expected, the <code>multi_colex</code> model performs best:</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/loo_compare_flocker.html">loo_compare_flocker</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">multi_colex</span>, <span class="va">multi_colex_eq</span>, <span class="va">multi_auto</span>, <span class="va">multi_auto_eq</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;        elpd_diff se_diff</span></span>
 <span><span class="co">#&gt; model1   0.0       0.0  </span></span>
-<span><span class="co">#&gt; model3  -8.0       4.1  </span></span>
-<span><span class="co">#&gt; model2 -27.3       7.2  </span></span>
-<span><span class="co">#&gt; model4 -33.0       7.9</span></span></code></pre></div>
+<span><span class="co">#&gt; model2 -17.2       5.9  </span></span>
+<span><span class="co">#&gt; model3 -53.1      10.1  </span></span>
+<span><span class="co">#&gt; model4 -65.1      10.3</span></span></code></pre></div>
 <p>Flocker also provides the function <code><a href="../reference/loo_flocker.html">loo_flocker()</a></code> to
 return a table of <code>elpd_loo</code>, <code>p_loo</code>, and
 <code>looic</code> estimates from <code><a href="https://mc-stan.org/loo/reference/loo.html" class="external-link">loo::loo()</a></code> or
@@ -620,92 +613,54 @@ particular model can be retrieved using
 their default priors can be displayed prior to model fitting using
 <code><a href="../reference/get_flocker_prior.html">get_flocker_prior()</a></code> which is a drop-in replacement for
 <code><a href="https://paul-buerkner.github.io/brms/reference/get_prior.html" class="external-link">brms::get_prior()</a></code>.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_flocker_prior.html">get_flocker_prior</a></span><span class="op">(</span></span>
 <span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">uc1</span> <span class="op">|</span> <span class="va">species</span><span class="op">)</span>,</span>
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="va">ec1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">uc1</span> <span class="op">+</span> <span class="va">ec1</span> <span class="op">|</span> <span class="va">species</span><span class="op">)</span>,</span>
 <span>  flocker_data <span class="op">=</span> <span class="va">fd_rep_varying</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="co">#&gt;                 prior     class      coef   group resp dpar nlpar lb ub</span></span>
-<span><span class="co">#&gt;                (flat)         b                                        </span></span>
-<span><span class="co">#&gt;                (flat)         b       ec1                              </span></span>
-<span><span class="co">#&gt;                (flat)         b       uc1                              </span></span>
-<span><span class="co">#&gt;                lkj(1)       cor                                        </span></span>
-<span><span class="co">#&gt;                lkj(1)       cor           species                      </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5) Intercept                                        </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd                                    0   </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd           species                  0   </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       ec1 species                  0   </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd Intercept species                  0   </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       uc1 species                  0   </span></span>
-<span><span class="co">#&gt;                (flat)         b                         occ            </span></span>
-<span><span class="co">#&gt;                (flat)         b       uc1               occ            </span></span>
-<span><span class="co">#&gt;                (flat) Intercept                         occ            </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd                         occ        0   </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd           species       occ        0   </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd Intercept species       occ        0   </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       uc1 species       occ        0   </span></span>
-<span><span class="co">#&gt;        source</span></span>
-<span><span class="co">#&gt;       default</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;       default</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;       default</span></span>
-<span><span class="co">#&gt;       default</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;       default</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;       default</span></span>
-<span><span class="co">#&gt;       default</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
+<span><span class="co">#&gt;                 prior     class      coef   group resp dpar nlpar lb ub       source</span></span>
+<span><span class="co">#&gt;                (flat)         b                                              default</span></span>
+<span><span class="co">#&gt;                (flat)         b       ec1                               (vectorized)</span></span>
+<span><span class="co">#&gt;                (flat)         b       uc1                               (vectorized)</span></span>
+<span><span class="co">#&gt;                lkj(1)       cor                                              default</span></span>
+<span><span class="co">#&gt;                lkj(1)       cor           species                       (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5) Intercept                                              default</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd                                    0         default</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd           species                  0    (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       ec1 species                  0    (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd Intercept species                  0    (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       uc1 species                  0    (vectorized)</span></span>
+<span><span class="co">#&gt;                (flat)         b                         occ                  default</span></span>
+<span><span class="co">#&gt;                (flat)         b       uc1               occ             (vectorized)</span></span>
+<span><span class="co">#&gt;                (flat) Intercept                         occ                  default</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd                         occ        0         default</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd           species       occ        0    (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd Intercept species       occ        0    (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       uc1 species       occ        0    (vectorized)</span></span>
 <span><span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstantools/reference/prior_summary.html" class="external-link">prior_summary</a></span><span class="op">(</span><span class="va">rep_varying</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                 prior     class      coef   group resp dpar nlpar lb ub</span></span>
-<span><span class="co">#&gt;                (flat)         b                                        </span></span>
-<span><span class="co">#&gt;                (flat)         b       ec1                              </span></span>
-<span><span class="co">#&gt;                (flat)         b       uc1                              </span></span>
-<span><span class="co">#&gt;                (flat)         b                         occ            </span></span>
-<span><span class="co">#&gt;                (flat)         b       uc1               occ            </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5) Intercept                                        </span></span>
-<span><span class="co">#&gt;                (flat) Intercept                         occ            </span></span>
-<span><span class="co">#&gt;  lkj_corr_cholesky(1)         L                                        </span></span>
-<span><span class="co">#&gt;  lkj_corr_cholesky(1)         L           species                      </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd                                    0   </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd                         occ        0   </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd           species                  0   </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       ec1 species                  0   </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd Intercept species                  0   </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       uc1 species                  0   </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd           species       occ        0   </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd Intercept species       occ        0   </span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       uc1 species       occ        0   </span></span>
-<span><span class="co">#&gt;        source</span></span>
-<span><span class="co">#&gt;       default</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;       default</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;       default</span></span>
-<span><span class="co">#&gt;       default</span></span>
-<span><span class="co">#&gt;       default</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;       default</span></span>
-<span><span class="co">#&gt;       default</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span>
-<span><span class="co">#&gt;  (vectorized)</span></span></code></pre></div>
+<span><span class="co">#&gt;                 prior     class      coef   group resp dpar nlpar lb ub       source</span></span>
+<span><span class="co">#&gt;                (flat)         b                                              default</span></span>
+<span><span class="co">#&gt;                (flat)         b       ec1                               (vectorized)</span></span>
+<span><span class="co">#&gt;                (flat)         b       uc1                               (vectorized)</span></span>
+<span><span class="co">#&gt;                (flat)         b                         occ                  default</span></span>
+<span><span class="co">#&gt;                (flat)         b       uc1               occ             (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5) Intercept                                              default</span></span>
+<span><span class="co">#&gt;                (flat) Intercept                         occ                  default</span></span>
+<span><span class="co">#&gt;  lkj_corr_cholesky(1)         L                                              default</span></span>
+<span><span class="co">#&gt;  lkj_corr_cholesky(1)         L           species                       (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd                                    0         default</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd                         occ        0         default</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd           species                  0    (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       ec1 species                  0    (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd Intercept species                  0    (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       uc1 species                  0    (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd           species       occ        0    (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd Intercept species       occ        0    (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       uc1 species       occ        0    (vectorized)</span></span></code></pre></div>
 <p>Note that if there are parameters shared between both the occupancy
 and detection model formulas, e.g. </p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_flocker_prior.html">get_flocker_prior</a></span><span class="op">(</span></span>
 <span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">species</span><span class="op">)</span>, </span>
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="va">ec2</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">species</span><span class="op">)</span>, </span>
@@ -715,7 +670,7 @@ and detection model formulas, e.g. </p>
 the prior table (<code>uc1</code> in this example). Specifying a priors
 for parameters in formulas other than detection can be done with
 reference to the <code>dpar</code> column, e.g.:</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">user_prior</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(0, 1)"</span>, coef <span class="op">=</span> <span class="st">"uc1"</span><span class="op">)</span>, </span>
 <span>                <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(0, 3)"</span>, coef <span class="op">=</span> <span class="st">"uc1"</span>, dpar <span class="op">=</span> <span class="st">"occ"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>where the <code>uc1</code> parameter in the occupancy component is
@@ -732,7 +687,7 @@ single-season rep-varying model, wherein we set a logistic prior on the
 value of the intercepts (flat on the probability scale) when all
 predictors are held at their means and a moderately regularizing prior
 on the coefficients:</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rep_varying_prior1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span></span>
 <span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span>,</span>
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="va">ec1</span>,</span>
@@ -757,7 +712,7 @@ on the coefficients:</p>
 <p>Here is an example where we set informative priors on the intercepts
 when all covariates are fixed to zero and the same moderately
 regularizing prior on the coefficients:</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rep_varying_prior2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span></span>
 <span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">Intercept</span> <span class="op">+</span> <span class="va">uc1</span>,</span>
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">Intercept</span> <span class="op">+</span> <span class="va">ec1</span>,</span>
@@ -785,7 +740,7 @@ regularizing prior on the coefficients:</p>
 </h3>
 <p>Simple formulas follow the same syntax as R’s <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code>
 function. For example:</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mod1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span></span>
 <span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">species</span><span class="op">)</span>, </span>
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span>, </span>
@@ -799,7 +754,7 @@ function. For example:</p>
 advanced <code>lme4</code> syntax like <code>||</code> for uncorrelated
 effects and <code>/</code> and <code>:</code> for expansion of multiple
 grouping terms. Here’s a simple example:</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mod2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span></span>
 <span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">species</span><span class="op">)</span>, </span>
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span>, </span>
@@ -810,7 +765,7 @@ term, by default they are modeled as correlated <em>within</em> the
 occupancy or detection formulas, but as uncorrelated <em>between</em>
 formulas. For example, the code below estimates a single correlation for
 the intercept and slope in the occupancy sub-model.</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mod3</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span></span>
 <span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">uc1</span> <span class="op">|</span> <span class="va">species</span><span class="op">)</span>, </span>
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="va">ec1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span> <span class="va">species</span><span class="op">)</span>, </span>
@@ -824,7 +779,7 @@ models correlated intercepts in the occupancy and detection sub-models,
 and correlated effects of <code>sc1</code> on occupancy and
 <code>vc1</code> on detection, but no correlations between the
 intercepts and the slopes in either sub-model:</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mod4</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span></span>
 <span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span><span class="va">g1</span><span class="op">|</span> <span class="va">species</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">0</span> <span class="op">+</span> <span class="va">uc1</span> <span class="op">|</span><span class="va">g2</span><span class="op">|</span> <span class="va">species</span><span class="op">)</span>, </span>
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="va">ec1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span><span class="va">g1</span><span class="op">|</span> <span class="va">species</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">0</span> <span class="op">+</span> <span class="va">ec1</span> <span class="op">|</span><span class="va">g2</span><span class="op">|</span> <span class="va">species</span><span class="op">)</span>, </span>
@@ -844,7 +799,7 @@ as <code>mgcv</code> syntax for thin-plate regression splines
 (<code><a href="https://paul-buerkner.github.io/brms/reference/s.html" class="external-link">brms::t2()</a></code>), and <code>brms</code> syntax for monotonic
 effects of ordinal factors via <code><a href="https://paul-buerkner.github.io/brms/reference/mo.html" class="external-link">brms::mo()</a></code> (<a href="https://paul-buerkner.github.io/brms/articles/brms_monotonic.html" class="external-link">see
 here</a>). For example:</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mod5</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span></span>
 <span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">uc1</span><span class="op">)</span>, </span>
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="fu">t2</span><span class="op">(</span><span class="va">uc1</span>, <span class="va">ec1</span><span class="op">)</span>, </span>
@@ -873,7 +828,7 @@ the supplied covariance matrix. Note that phylogenetic effects can be
 included in either the occupancy component, the detection component, or
 both! In our experience, it can be computationally tractable to include
 multiple phylogenetic effects within a single occupancy model (see <a href="https://doi.org/10.1002/ecy.3867" class="external-link">Mills et al. 2022</a>).</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># simulate an example phylogeny</span></span>
 <span><span class="va">phylogeny</span> <span class="op">&lt;-</span> <span class="fu">ape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/rtree.html" class="external-link">rtree</a></span><span class="op">(</span><span class="fl">30</span>, tip.label <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"sp_"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">30</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
