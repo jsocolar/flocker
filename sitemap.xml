@@ -10,6 +10,9 @@
     <loc>/LICENSE.html</loc>
   </url>
   <url>
+    <loc>/articles/augmented_models.html</loc>
+  </url>
+  <url>
     <loc>/articles/flocker_tutorial.html</loc>
   </url>
   <url>
@@ -17,6 +20,9 @@
   </url>
   <url>
     <loc>/articles/multiseason_models.html</loc>
+  </url>
+  <url>
+    <loc>/articles/nonlinear_models.html</loc>
   </url>
   <url>
     <loc>/authors.html</loc>
@@ -131,6 +137,9 @@
   </url>
   <url>
     <loc>/reference/get_Z_single_C.html</loc>
+  </url>
+  <url>
+    <loc>/reference/get_flocker_prior.html</loc>
   </url>
   <url>
     <loc>/reference/get_positions.html</loc>

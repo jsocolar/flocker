@@ -32,10 +32,16 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu"><li>
+      <a href="../articles/augmented_models.html">Data-augmented models in flocker</a>
+    </li>
+    <li>
       <a href="../articles/flocker_tutorial.html">Fitting occupancy models with flocker</a>
     </li>
     <li>
       <a href="../articles/multiseason_models.html">Multiseason models in flocker</a>
+    </li>
+    <li>
+      <a href="../articles/nonlinear_models.html">Nonlinear models in flocker</a>
     </li>
   </ul></li>
       </ul><ul class="nav navbar-nav navbar-right"><li>
@@ -87,7 +93,13 @@ with "~".</p></dd>
 
 
 <dt>f_det</dt>
-<dd><p>A brms-type model formula for detection. Must begin with "~".</p></dd>
+<dd><p>A brms-type model formula for detection. Must begin with "~". 
+OR, a <code>brmsformula</code> object including formulas for all of the relevant
+distributional parameters in the desired model (det and at least one of occ, 
+colo, ex, autologistic, and Omega). The <code>$formula</code> element of the 
+<code>brmsformula</code> must be the detection formula, beginning with <code>det ~</code>.
+This latter option unadvisable except when necessary (e.g. when a nonlinear 
+formula is desired), as input checking is less thorough.</p></dd>
 
 
 <dt>flocker_data</dt>
