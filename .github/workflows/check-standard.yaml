@@ -41,11 +41,13 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: |
-            any::rcmdcheck
-            BH
-            stan-dev/cmdstanr
+          extra-packages: any::rcmdcheck
           needs: check
+
+      - name: Extra dependencies
+        run: |
+          install.packages(BH)
+          remotes::install_github("stan-dev/cmdstanr")
 
       #- name: Build Cmdstan
       #  run: |
