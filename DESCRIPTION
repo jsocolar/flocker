@@ -10,7 +10,6 @@ Depends:
 	R (>= 4.1.0)
 Imports:
 	brms (>= 2.16.0),
-	cmdstanr (>= 0.4.0),
 	loo (>= 2.0.0),
 	stats,
 	boot,
@@ -25,6 +24,7 @@ Suggests:
     rmarkdown,
     ape,
     posterior (>= 1.0.0),
+    BH,
     rstan (>= 2.26),
     tibble
 Remotes: 
