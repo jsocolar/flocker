@@ -42,4 +42,4 @@ vignettes/*.pdf
 .Renviron
 docs
 docs/
-inst/doc
+/Meta/

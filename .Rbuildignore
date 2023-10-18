@@ -5,3 +5,5 @@
 ^\.travis\.yml$
 ^data-raw$
 ^license.md$
+^doc$
+^Meta$
