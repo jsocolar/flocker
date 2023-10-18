@@ -1,7 +1,7 @@
 ---
 title: "Fitting occupancy models with flocker"
 author: Jacob Socolar & Simon Mills
-date: "2023-10-18"
+date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Fitting occupancy models with flocker}
@@ -9,7 +9,12 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
 
 <img align="right" src="../man/figures/flocker_sticker.png" width=30%>
 
@@ -63,7 +68,10 @@ To request features or report bugs (much appreciated!), please [open an issue on
 
 To make `flocker` and `brms` functions globally available within an R session 
 run:
-
+```{r library, echo = FALSE}
+library(flocker)
+library(brms)
+```
 
 ## Data simulation
 General purpose data simulation is provided via `simulate_flocker_data()`, which
@@ -72,8 +80,7 @@ four replicate surveys (i.e. a single-season multi-species dataset). Non-default
 arguments will simulate example data for other likelihoods, including 
 multi-season and data-augmented occupancy models. 
 
-
-```r
+```{r simulate}
 d <- simulate_flocker_data()
 ```
 
@@ -120,14 +127,12 @@ To pass data to `flocker`, we first pass the output from
 `simulate_flocker_data()` to `make_flocker_data()`, which will repackage data 
 and apply the necessary formatting: 
 
-
-```r
+```{r format}
 fd_rep_varying <- make_flocker_data(
   obs = d$obs, 
   unit_covs = d$unit_covs, 
   event_covs = d$event_covs
   )
-#> Formatting data for a single-season occupancy model. For details, see make_flocker_data_static. All warnings and error messages should be interpreted in the context of make_flocker_data_static
 ```
 
 The function `make_flocker_data()` outputs an object of class `flocker_data` 
@@ -147,8 +152,7 @@ colonization, extinction, and autologistic terms as applicable) are provided
 as one-sided formulas to the relevant arguments of `flock()` (`f_occ`, `f_det`, 
 `f_col`, `f_ex`, and `f_auto` as applicable).
 
-
-```r
+```{r rep-varying}
 rep_varying <- flock(
   f_occ = ~ uc1 + (1 + uc1 | species),
   f_det = ~ uc1 + ec1 + (1 + uc1 + ec1 | species),
@@ -177,13 +181,11 @@ supply `event_covs = NULL` to `make_flocker_data()` at the moment of data
 formatting; it is insufficient to omit event covariates from the detection 
 formula supplied to `flock()` after formatting the data for a rep-varying model.
 
-
-```r
+```{r rep-constant}
 fd_rep_constant <- make_flocker_data(
   obs = d$obs, 
   unit_covs = d$unit_covs
   )
-#> Formatting data for a single-season occupancy model. For details, see make_flocker_data_static. All warnings and error messages should be interpreted in the context of make_flocker_data_static
 rep_constant <- flock(
   f_occ = ~ uc1 + (1 + uc1 | species),
   f_det = ~ uc1 + (1 + uc1 | species),
@@ -197,8 +199,7 @@ rep_constant <- flock(
 
 Note that within-chain parallelization is available (uniquely so) for the 
 rep-constant mode:
-
-```r
+```{r rep-constant-parallel, eval = FALSE}
 rep_constant <- flock(
   f_occ = ~ uc1 + (1 + uc1 | species),
   f_det = ~ uc1 + (1 + uc1 | species),
@@ -223,8 +224,7 @@ model with explicit inits, but we will be able to fit other models
 `simulate_flocker_data()` can also simulate directly from these other model 
 types).
 
-
-```r
+```{r multiseason-data}
 multi_data <- simulate_flocker_data(
   n_season = 3,
   n_pt = 300,
@@ -247,8 +247,7 @@ Below, we fit the colonization-extinction model with an explicit model for
 occupancy in the first timestep. Depending on hardware, fitting this model might 
 take several minutes.
 
-
-```r
+```{r multi-colex}
 multi_colex <- flock(
   f_occ = ~ uc1,
   f_det = ~ uc1 + ec1,
@@ -266,8 +265,7 @@ multi_colex <- flock(
 Here is the colonization-extinction model using equilibrium occupancy 
 probabilities in the first timestep:
 
-
-```r
+```{r multi-colex-eq}
 multi_colex_eq <- flock(
   f_det = ~ uc1 + ec1,
   f_col = ~ uc1,
@@ -287,8 +285,7 @@ logit-scale offset separating colonization and persistence probabilities, we use
 the formula `f_auto = ~ 1`, but it is fine to relax this constraint and use, 
 e.g. `f_auto = ~ uc1`.
 
-
-```r
+```{r multi-auto}
 multi_auto <- flock(
   f_occ = ~ uc1,
   f_det = ~ uc1 + ec1,
@@ -306,8 +303,7 @@ multi_auto <- flock(
 And the autologistic model with equilibrium occupancy probabilities in the 
 first timestep:
 
-
-```r
+```{r multi-auto-eq}
 multi_auto_eq <- flock(
   f_det = ~ uc1 + ec1,
   f_col = ~ uc1,
@@ -332,8 +328,7 @@ along the second, and species along the third. Additionally, we must supply the
 `n_aug` argument to `make_flocker_data()`, specifying how many all-zero 
 pseudospecies to augment the data with.
 
-
-```r
+```{r data-augmented}
 augmented_data <- simulate_flocker_data(
     augmented = TRUE
     )
@@ -351,9 +346,6 @@ augmented <- flock(
   silent = 2,
   refresh = 0
   )
-#> Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.
-#> Running the chains for more iterations may help. See
-#> https://mc-stan.org/misc/warnings.html#bulk-ess
 ```
 
 Here, the random effect of species is specified using the special grouping 
@@ -377,8 +369,7 @@ INSERT LINK and [here](https://jsocolar.github.io/likelihoodOccupancy/).
 All post-processing functions from `brms` work on single-season rep-constant
 models, but do not work on any other model types. For example:
 
-
-```r
+```{r rep-constant-processing, eval = FALSE}
 predictions_rep_constant <- brms::posterior_predict(rep_constant)
 loo_rep_constant <- brms::loo(rep_constant, moment_match = TRUE)
 brms::conditional_effects(rep_constant)
@@ -392,8 +383,7 @@ detection, colonization, extinction, autologistic, and/or Omega, the fitted
 probability that a given (pseudo)species occurrs in the metacommunity) are
 available via `fitted_flocker`. For example:
 
-
-```r
+```{r fitted-flocker, eval = FALSE}
 fitted_flocker(rep_constant)
 fitted_flocker(rep_varying)
 fitted_flocker(multi_colex)
@@ -403,8 +393,7 @@ fitted_flocker(augmented)
 ### The posterior occupancy state
 The function `get_Z()` returns the posterior distribution of occupancy probabilities across the closure-units. The shape of the output depends on the class of model, and is an array in the shape of the first visit in `obs` as passed to `make_flocker_data`, with posterior iterations stacked along the final dimension. Thus, for a single-season rep-varying model, the output is a matrix where rows are posterior iterations, columns are closure-units, and values are draws from the posterior distribution of occupancy probabilities:
 
-
-```r
+```{r get_Z, eval=FALSE}
 get_Z(rep_varying)
 ```
 
@@ -431,8 +420,7 @@ array whose first dimension is units, second dimension is sampling events,
 third dimension is iterations, and values are `1`, `0`, or `NA`, representing 
 detection, nondetection, and no corresponding sampling event. For example:
 
-
-```r
+```{r predict_flocker, eval=FALSE}
 predict_flocker(rep_varying)
 ```
 
@@ -460,16 +448,10 @@ comparisons between rep-constant and rep-varying models are valid by omitting
 the binomial coefficient when computing the log-likelihood for the rep-constant
 model.
 
-
-```r
+```{r}
 loo_compare_flocker(
   list(rep_constant, rep_varying)
 )
-#> Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.
-#> Warning: Some Pareto k diagnostic values are slightly high. See help('pareto-k-diagnostic') for details.
-#>        elpd_diff se_diff
-#> model2    0.0       0.0 
-#> model1 -156.4      17.9
 ```
 
 Likewise, we can compare the four flavors of multi-season model that we fit 
@@ -478,16 +460,10 @@ dynamics (rather than autologistic) and under explicit initial occupancy
 probabilities (rather than equilibrium). As expected, the `multi_colex` model 
 performs best:
 
-
-```r
+```{r multi-season-loo}
 loo_compare_flocker(
   list(multi_colex, multi_colex_eq, multi_auto, multi_auto_eq)
 )
-#>        elpd_diff se_diff
-#> model1   0.0       0.0  
-#> model2 -17.2       5.9  
-#> model3 -53.1      10.1  
-#> model4 -65.1      10.3
 ```
 
 Flocker also provides the function `loo_flocker()` to return a table of 
@@ -507,57 +483,17 @@ names of the parameters and their default priors can be displayed prior to
 model fitting using `get_flocker_prior()` which is a drop-in replacement for 
 `brms::get_prior()`.
 
-
-```r
+```{r prior-summary}
 get_flocker_prior(
   f_occ = ~ uc1 + (1 + uc1 | species),
   f_det = ~ uc1 + ec1 + (1 + uc1 + ec1 | species),
   flocker_data = fd_rep_varying
   )
-#>                 prior     class      coef   group resp dpar nlpar lb ub       source
-#>                (flat)         b                                              default
-#>                (flat)         b       ec1                               (vectorized)
-#>                (flat)         b       uc1                               (vectorized)
-#>                lkj(1)       cor                                              default
-#>                lkj(1)       cor           species                       (vectorized)
-#>  student_t(3, 0, 2.5) Intercept                                              default
-#>  student_t(3, 0, 2.5)        sd                                    0         default
-#>  student_t(3, 0, 2.5)        sd           species                  0    (vectorized)
-#>  student_t(3, 0, 2.5)        sd       ec1 species                  0    (vectorized)
-#>  student_t(3, 0, 2.5)        sd Intercept species                  0    (vectorized)
-#>  student_t(3, 0, 2.5)        sd       uc1 species                  0    (vectorized)
-#>                (flat)         b                         occ                  default
-#>                (flat)         b       uc1               occ             (vectorized)
-#>                (flat) Intercept                         occ                  default
-#>  student_t(3, 0, 2.5)        sd                         occ        0         default
-#>  student_t(3, 0, 2.5)        sd           species       occ        0    (vectorized)
-#>  student_t(3, 0, 2.5)        sd Intercept species       occ        0    (vectorized)
-#>  student_t(3, 0, 2.5)        sd       uc1 species       occ        0    (vectorized)
 brms::prior_summary(rep_varying)
-#>                 prior     class      coef   group resp dpar nlpar lb ub       source
-#>                (flat)         b                                              default
-#>                (flat)         b       ec1                               (vectorized)
-#>                (flat)         b       uc1                               (vectorized)
-#>                (flat)         b                         occ                  default
-#>                (flat)         b       uc1               occ             (vectorized)
-#>  student_t(3, 0, 2.5) Intercept                                              default
-#>                (flat) Intercept                         occ                  default
-#>  lkj_corr_cholesky(1)         L                                              default
-#>  lkj_corr_cholesky(1)         L           species                       (vectorized)
-#>  student_t(3, 0, 2.5)        sd                                    0         default
-#>  student_t(3, 0, 2.5)        sd                         occ        0         default
-#>  student_t(3, 0, 2.5)        sd           species                  0    (vectorized)
-#>  student_t(3, 0, 2.5)        sd       ec1 species                  0    (vectorized)
-#>  student_t(3, 0, 2.5)        sd Intercept species                  0    (vectorized)
-#>  student_t(3, 0, 2.5)        sd       uc1 species                  0    (vectorized)
-#>  student_t(3, 0, 2.5)        sd           species       occ        0    (vectorized)
-#>  student_t(3, 0, 2.5)        sd Intercept species       occ        0    (vectorized)
-#>  student_t(3, 0, 2.5)        sd       uc1 species       occ        0    (vectorized)
 ```
 
 Note that if there are parameters shared between both the occupancy and detection model formulas, e.g. 
-
-```r
+```{r, priors_2, eval=FALSE}
 get_flocker_prior(
   f_occ = ~ uc1 + (1|species), 
   f_det = ~ uc1 + ec2 + (1|species), 
@@ -569,8 +505,7 @@ then there will be two entries for each of the shared parameters in the prior
 table (`uc1` in this example). Specifying a priors for parameters in formulas 
 other than detection can be done with reference to the `dpar` column, e.g.:
 
-
-```r
+```{r, priors_3, eval=FALSE}
 user_prior <- c(brms::set_prior("normal(0, 1)", coef = "uc1"), 
                 brms::set_prior("normal(0, 3)", coef = "uc1", dpar = "occ"))
 ```
@@ -587,8 +522,7 @@ single-season rep-varying model, wherein we set a logistic prior on the value of
 the intercepts (flat on the probability scale) when all predictors are held at 
 their means and a moderately regularizing prior on the coefficients:
 
-
-```r
+```{r priors1}
 rep_varying_prior1 <- flock(
   f_occ = ~ uc1,
   f_det = ~ ec1,
@@ -603,19 +537,11 @@ rep_varying_prior1 <- flock(
   refresh = 0
   )
 brms::prior_summary(rep_varying_prior1)
-#>          prior     class coef group resp dpar nlpar lb ub       source
-#>    normal(0,2)         b                                          user
-#>    normal(0,2)         b  ec1                             (vectorized)
-#>    normal(0,2)         b                  occ                     user
-#>    normal(0,2)         b  uc1             occ             (vectorized)
-#>  logistic(0,1) Intercept                                          user
-#>  logistic(0,1) Intercept                  occ                     user
 ```
 
 Here is an example where we set informative priors on the intercepts when all covariates are fixed to zero and the same moderately regularizing prior on the coefficients:
 
-
-```r
+```{r priors2}
 rep_varying_prior2 <- flock(
   f_occ = ~ 0 + Intercept + uc1,
   f_det = ~ 0 + Intercept + ec1,
@@ -630,19 +556,11 @@ rep_varying_prior2 <- flock(
   refresh = 0
   )
 brms::prior_summary(rep_varying_prior2)
-#>          prior class      coef group resp dpar nlpar lb ub       source
-#>    normal(0,2)     b                                               user
-#>    normal(0,2)     b       ec1                             (vectorized)
-#>   normal(1, 1)     b Intercept                                     user
-#>    normal(0,2)     b                       occ                     user
-#>  normal(-1, 1)     b Intercept             occ                     user
-#>    normal(0,2)     b       uc1             occ             (vectorized)
 ```
 
 ### Model formulas
 Simple formulas follow the same syntax as R's `lm()` function. For example: 
-
-```r
+```{r lm, eval=FALSE}
 mod1 <- flock(
   f_occ = ~ uc1 + (1|species), 
   f_det = ~ 1, 
@@ -654,8 +572,7 @@ mod1 <- flock(
 Simple random effects follow `lme4` syntax, including advanced `lme4` syntax 
 like `||` for uncorrelated effects and `/` and `:` for expansion of multiple 
 grouping terms. Here's a simple example:
-
-```r
+```{r lme4, eval=FALSE}
 mod2 <- flock(
   f_occ = ~ uc1 + (1|species), 
   f_det = ~ 1, 
@@ -668,8 +585,7 @@ default they are modeled as correlated *within* the occupancy or detection
 formulas, but as uncorrelated *between* formulas. For example, the code below 
 estimates a single correlation for the intercept and slope in the occupancy 
 sub-model.
-
-```r
+```{r lme4_2, eval=FALSE}
 mod3 <- flock(
   f_occ = ~ uc1 + (1 + uc1 | species), 
   f_det = ~ ec1 + (1 | species), 
@@ -682,8 +598,7 @@ terms to model as correlated. The below code, for example, models correlated
 intercepts in the occupancy and detection sub-models, and correlated effects of 
 `sc1` on occupancy and `vc1` on detection, but no correlations between the 
 intercepts and the slopes in either sub-model:
-
-```r
+```{r lme4_3, eval=FALSE}
 mod4 <- flock(
   f_occ = ~ uc1 + (1 |g1| species) + (0 + uc1 |g2| species), 
   f_det = ~ ec1 + (1 |g1| species) + (0 + ec1 |g2| species), 
@@ -698,8 +613,7 @@ Via `brms`, `flocker` supports Gaussian processes of arbitrary dimensionality
 (`brms::s()`) and tensor product smooths (`brms::t2()`), and `brms` syntax for
 monotonic effects of ordinal factors via `brms::mo()` ([see here](https://paul-buerkner.github.io/brms/articles/brms_monotonic.html)). For 
 example:
-
-```r
+```{r spline-gp, eval=FALSE}
 mod5 <- flock(
   f_occ = ~ s(uc1), 
   f_det = ~ t2(uc1, ec1), 
@@ -727,8 +641,7 @@ component, or both! In our experience, it can be computationally tractable to
 include multiple phylogenetic effects within a single occupancy model (see 
 [Mills et al. 2022](https://doi.org/10.1002/ecy.3867)).
 
-
-```r
+```{r, phylo, eval=FALSE} 
 # simulate an example phylogeny
 phylogeny <- ape::rtree(30, tip.label = paste0("sp_", 1:30))
 

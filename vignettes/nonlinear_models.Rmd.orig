@@ -1,7 +1,7 @@
 ---
 title: "Nonlinear models in flocker"
 author: "Jacob Socolar"
-date: "2023-10-18"
+date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Nonlinear models in flocker}
@@ -9,7 +9,12 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
 
 <img align="right" src="../man/figures/flocker_sticker.png" width=30%>
 
@@ -37,8 +42,7 @@ asymptote, $k$ is a growth rate, $t$ is time, and $t_0$ is the timing of the
 inflection point. At multiple discrete times, we randomly sample several sites 
 to survey, and survey each of those sites over several repeat visits.
 
-
-```r
+```{r true-occupancy, results='hide', message=FALSE}
 library(flocker); library(brms)
 set.seed(3)
 
@@ -65,6 +69,7 @@ fd <- make_flocker_data(
   unit_covs = data.frame(t = data[,c("t")]),
   event_covs <- list(dummy = matrix(rnorm(n_visit*nrow(data)), ncol = 3))
 )
+
 ```
 
 We wish to fit an occupancy model that recovers the unknown parameters $L$, $k$, 
@@ -108,8 +113,7 @@ they make no contribution to the likelihood.
 
 With all of that said, we can go ahead and fit this model!
 
-
-```r
+```{r fitting, results='hide', message=FALSE}
 fit <- flock(f_det = brms::bf(
                  det ~ 1 + dummy,
                  occ ~ log(L/(1 + exp(-k*(t - t0)) - L)),
@@ -127,39 +131,11 @@ fit <- flock(f_det = brms::bf(
              flocker_data = fd, 
              control = list(adapt_delta = 0.9),
              cores = 4)
-#> Warning: There were 1 divergent transitions after warmup. See
-#> https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
-#> to find out why this is a problem and how to eliminate them.
-#> Warning: Examine the pairs() plot to diagnose sampling problems
 ```
 
-
-```r
+```{r summary}
 summary(fit)
-#> Warning: There were 1 divergent transitions after warmup. Increasing adapt_delta above 0.9 may help.
-#> See http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
-#>  Family: occupancy_single 
-#>   Links: mu = identity; occ = identity 
-#> Formula: ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ff_rep_index1, ff_rep_index2, ff_rep_index3) ~ 1 + dummy 
-#>          occ ~ log(L/(1 + exp(-k * (t - t0)) - L))
-#>          L ~ 1
-#>          k ~ 1
-#>          t0 ~ 1
-#>    Data: data (Number of observations: 2790) 
-#>   Draws: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
-#>          total post-warmup draws = 4000
-#> 
-#> Population-Level Effects: 
-#>              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-#> Intercept       -0.90      0.13    -1.16    -0.66 1.00     2294     2302
-#> L_Intercept      0.50      0.10     0.37     0.75 1.00     1221      977
-#> k_Intercept      0.19      0.08     0.07     0.37 1.00     1200     1719
-#> t0_Intercept    -5.90      3.41   -10.41     3.03 1.00     1223     1078
-#> dummy           -0.00      0.08    -0.15     0.15 1.00     2752     2526
-#> 
-#> Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
-#> and Tail_ESS are effective sample size measures, and Rhat is the potential
-#> scale reduction factor on split chains (at convergence, Rhat = 1).
+
 ```
 
 It works! 
@@ -175,8 +151,7 @@ First we simulate some data wherein the logit of the occupancy probability
 depends on a covariate, and the slope of the dependency is modeled via a 
 two-dimensional spatial Gaussian process:
 
-
-```r
+```{r simulate-svc}
 set.seed(1)
 n <- 2000 # sample size
 lscale <- 0.3 # square root of l of the gaussian kernel
@@ -211,6 +186,7 @@ obs <- matrix(nrow = n, ncol = n_visit)
 for(j in 1:n_visit){
   obs[,j] <- gp_data$Z * rbinom(n, 1, boot::inv.logit(det_intercept))
 }
+
 ```
 
 
@@ -219,8 +195,7 @@ quite a lot of data points to constrain the standard deviation of the Gaussian
 process, and so we use a Hilbert space approximate Gaussian process for
 computational efficiency.
 
-
-```r
+```{r fit-svc, results='hide', message=FALSE}
 fd2 <- make_flocker_data(obs = obs, unit_covs = gp_data[, c("x", "y", "covariate")])
 svc_mod <- flock(
   f_det = brms::bf(
@@ -233,33 +208,11 @@ svc_mod <- flock(
   flocker_data = fd2,
   cores = 4
 )
+
 ```
 
-
-```r
+```{r summary-svc}
 summary(svc_mod)
-#>  Family: occupancy_single_C 
-#>   Links: mu = identity; occ = identity 
-#> Formula: ff_n_suc | vint(ff_n_trial) ~ 1 
-#>          occ ~ occint + g * covariate
-#>          occint ~ 1
-#>          g ~ 0 + gp(x, y, scale = FALSE, k = 20, c = 1.25)
-#>    Data: data (Number of observations: 2000) 
-#>   Draws: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
-#>          total post-warmup draws = 4000
-#> 
-#> Gaussian Process Terms: 
-#>                Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-#> sdgp(g_gpxy)       1.69      0.78     0.73     3.67 1.00     3368     3076
-#> lscale(g_gpxy)     0.23      0.11     0.08     0.50 1.00     4128     3128
-#> 
-#> Population-Level Effects: 
-#>                  Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-#> Intercept           -1.04      0.06    -1.15    -0.93 1.00     6089     2975
-#> occint_Intercept     0.09      0.09    -0.08     0.27 1.00     6221     3132
-#> 
-#> Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
-#> and Tail_ESS are effective sample size measures, and Rhat is the potential
-#> scale reduction factor on split chains (at convergence, Rhat = 1).
+
 ```
 Again, it worked!
