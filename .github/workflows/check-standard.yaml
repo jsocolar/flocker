@@ -46,7 +46,7 @@ jobs:
 
       - name: Extra dependencies
         run: |
-          install.packages(BH)
+          install.packages("BH")
           remotes::install_github("stan-dev/cmdstanr")
 
       #- name: Build Cmdstan
