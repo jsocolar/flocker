@@ -18,9 +18,29 @@ knitr::opts_chunk$set(
 
 <img align="right" src="../man/figures/flocker_sticker.png" width=30%>
 
-Here we show how we can use `flocker` to fit nonlinear occupancy models via `brms`. In most occupancy models, occupancy and detection probabilties are modeled as logit-linear combinations of covariates. In some models (e.g. those with splines or Gaussian processes), probabilities are modeled as the sum of more flexibile functions of covariates. Here, we use "nonlinear model" to refer to something different: the scenario where the response is a specific nonlinear parametric function whose parameters are fitted and might or might not depend on covariates.
+Here we show how we can use `flocker` to fit nonlinear occupancy models via 
+`brms`. In most occupancy models, occupancy and detection probabilties are 
+modeled as logit-linear combinations of covariates. In some models (e.g. those 
+with splines or Gaussian processes), probabilities are modeled as the sum of 
+more flexibile functions of covariates. These are straightforward to fit in
+`flocker` using the `brms` functions `s()`, `t2()`, and `gp()`; see the [flocker tutorial vignette](https://jsocolar.github.io/flocker/articles/flocker_tutorial.html) for 
+details.
 
-Suppose for example that an expanding population of a territorial species undergoes logistic growth, and also that some unknown proportion of territories are unsuitable due to an unobserved factor, such that occupancy asymptotes at some probability less than one. Thus, occupancy probability changes through time as $\frac{L}{1 + e^{-k(t-t_0)}}$, where $L$ is the asymptote, $k$ is a growth rate, $t$ is time, and $t_0$ is the timing of the inflection point. At multiple discrete times, we randomly sample several sites to survey, and survey each of those sites over several repeat visits.
+This vignette focuses on more complicated nonlinear models that require the use
+of special nonlinear `brms` formulas. We showcase two models. The first fits
+a parameteric nonlinear predictor. The second fits a model with a spatially
+varying coefficient that is given a gaussian process prior.
+
+## Parameteric nonlinear predictor
+In this scenario, we consider a model where the response is a specific nonlinear 
+parametric function whose parameters are fitted and might or might not depend on covariates. Suppose for example that an expanding population of a territorial 
+species undergoes logistic growth, and also that some unknown proportion of 
+territories are unsuitable due to an unobserved factor, such that occupancy 
+asymptotes at some probability less than one. Thus, occupancy probability 
+changes through time as $\frac{L}{1 + e^{-k(t-t_0)}}$, where $L$ is the 
+asymptote, $k$ is a growth rate, $t$ is time, and $t_0$ is the timing of the 
+inflection point. At multiple discrete times, we randomly sample several sites 
+to survey, and survey each of those sites over several repeat visits.
 
 ```{r true-occupancy, results='hide', message=FALSE}
 library(flocker); library(brms)
@@ -52,17 +72,44 @@ fd <- make_flocker_data(
 
 ```
 
-We wish to fit an occupancy model that recovers the unknown parameters $L$, $k$, and $t_0$. We can achieve this using the nonlinear formula syntax provided by `brms` via `flocker`. 
+We wish to fit an occupancy model that recovers the unknown parameters $L$, $k$, 
+and $t_0$. We can achieve this using the nonlinear formula syntax provided by 
+`brms` via `flocker`. 
 
-`flocker` will always assume that the occupancy formula is provided on the logit scale. Thus, we need to convert our nonlinear function giving the occupancy probability to a function giving the logit occupancy probability. A bit of simplification via Wolfram Alpha and we arrive at $\log(\frac{L}{1 + e^{-k(t - t_0)} - L})$. We then write a `brms` formula representing occupancy via this function. To specify a formula wherein a distributional parameter (`occ` in this case, referring to occupancy) is nonlinear we need to use `brms::set_nl()` rather than merely providing the `nl = TRUE` argument to `brms::bf()`.
+`flocker` will always assume that the occupancy formula is provided on the logit 
+scale. Thus, we need to convert our nonlinear function giving the occupancy 
+probability to a function giving the logit occupancy probability. A bit of 
+simplification via Wolfram Alpha and we arrive at 
+$\log(\frac{L}{1 + e^{-k(t - t_0)} - L})$. We then write a `brms` formula 
+representing occupancy via this function. To specify a formula wherein a 
+distributional parameter (`occ` in this case, referring to occupancy) is 
+nonlinear we need to use `brms::set_nl()` rather than merely providing the 
+`nl = TRUE` argument to `brms::bf()`.
 
-`flocker`'s main fitting function `flock()` accepts `brmsformula` inputs to its `f_det` argument. When supplying a `brmsformula` to `f_det` (rather than the typical one-sided detection formula), the following behaviors are triggered:
+`flocker`'s main fitting function `flock()` accepts `brmsformula` inputs to its 
+`f_det` argument. When supplying a `brmsformula` to `f_det` (rather than the 
+typical one-sided detection formula), the following behaviors are triggered:
 
-* Several input checks are turned off.  For example, `flocker` no longer checks to ensure that event covariates are absent from the occupancy formula.  `flocker` also no longer explicitly checks that formulas are provided for all of the required distributional terms for a given family (detection, occupancy, colonization, extinction, and autologistic terms, depending on the family).
+* Several input checks are turned off.  For example, `flocker` no longer checks 
+to ensure that event covariates are absent from the occupancy formula. 
+`flocker` also no longer explicitly checks that formulas are provided for all of 
+the required distributional terms for a given family (detection, occupancy, 
+colonization, extinction, and autologistic terms, depending on the family).
 
-* All inputs to `f_occ`, `f_col`, `f_ex`, `f_auto` are silently ignored. It is obligatory to pass the entire formula for all distributional parameters as a single `brmsformula` object. This means in turn that the user must be familiar with `flocker`'s internal naming conventions for all of the relevant distributional parameters (`det` and one or more of `occ`, `colo`, `ex`, `autologistic`, `Omega`). If fitting a data-augmented model, it will be requried to pass the `Omega ~ 1` formula within the `brmsformula` (When passing the traditional one-sided formula to `f_det`, `flocker` includes the formula for `Omega` internally and automatically).
+* All inputs to `f_occ`, `f_col`, `f_ex`, `f_auto` are silently ignored. It is 
+obligatory to pass the entire formula for all distributional parameters as a 
+single `brmsformula` object. This means in turn that the user must be familiar 
+with `flocker`'s internal naming conventions for all of the relevant 
+distributional parameters (`det` and one or more of `occ`, `colo`, `ex`, 
+`autologistic`, `Omega`). If fitting a data-augmented model, it will be requried 
+to pass the `Omega ~ 1` formula within the `brmsformula` (When passing the 
+traditional one-sided formula to `f_det`, `flocker` includes the formula for 
+`Omega` internally and automatically).
 
-* Nonlinear formulas that involve data that are required to be positive might fail! Internally, some irrelevant data positions get filled with `-99`, but these positions might still get evaluated by the nonlinear formula, even though they make no contribution to the likelihood.
+* Nonlinear formulas that involve data that are required to be positive might 
+fail! Internally, some irrelevant data positions get filled with `-99`, but 
+these positions might still get evaluated by the nonlinear formula, even though 
+they make no contribution to the likelihood.
 
 With all of that said, we can go ahead and fit this model!
 
@@ -82,8 +129,7 @@ fit <- flock(f_det = brms::bf(
                  prior(beta(1, 1), nlpar = "L", lb = 0, ub = 1)
                 ),
              flocker_data = fd, 
-             adapt_delta = 0.9,
-             backend = "cmdstanr", 
+             control = list(adapt_delta = 0.9),
              cores = 4)
 ```
 
@@ -96,4 +142,77 @@ It works!
 
 Note that if desired, we could fit more complicated formulas than `~ 1` for any of the nonlinear parameters. For more see the [brms nonlinear model vignette](https://cran.r-project.org/web/packages/brms/vignettes/brms_nonlinear.html).
 
+## Spatially varying coefficients via a Gaussian process
+The `gp()` function in `brms` includes a Gaussian process of arbitary dimension
+in the linear predictor. We can use the nonlinear formula syntax to tell `brms`
+to include a Gaussian process prior on a coefficient as well.
 
+First we simulate some data wherein the logit of the occupancy probability
+depends on a covariate, and the slope of the dependency is modeled via a 
+two-dimensional spatial Gaussian process:
+
+```{r simulate-svc}
+set.seed(1)
+n <- 2000 # sample size
+lscale <- 0.3 # square root of l of the gaussian kernel
+sigma_gp <- 1 # sigma of the gaussian kernel
+intercept <- 0 # occupancy logit-intercept
+det_intercept <- -1 # detection logit-intercept
+n_visit <- 4
+
+# covariate data for the model
+gp_data <- data.frame(
+  x = rnorm(n), 
+  y = rnorm(n),
+  covariate = rnorm(n)
+  )
+
+# get distance matrix
+dist.mat <- as.matrix(
+  stats::dist(gp_data[,c("x", "y")])
+  )
+
+# get covariance matrix
+cov.mat <- sigma_gp^2 * exp(- (dist.mat^2)/(2*lscale^2))
+
+# simulate occupancy data
+gp_data$coef <- mgcv::rmvn(1, rep(0, n), cov.mat)
+gp_data$lp <- intercept + gp_data$coef * gp_data$covariate
+gp_data$psi <- boot::inv.logit(gp_data$lp)
+gp_data$Z <- rbinom(n, 1, gp_data$psi)
+
+# simulate visit data
+obs <- matrix(nrow = n, ncol = n_visit)
+for(j in 1:n_visit){
+  obs[,j] <- gp_data$Z * rbinom(n, 1, boot::inv.logit(det_intercept))
+}
+
+```
+
+
+And here's how we can fit this model in `flocker`! It turns out that we need
+quite a lot of data points to constrain the standard deviation of the Gaussian
+process, and so we use a Hilbert space approximate Gaussian process for
+computational efficiency.
+
+```{r fit-svc, results='hide', message=FALSE}
+fd2 <- make_flocker_data(obs = obs, unit_covs = gp_data[, c("x", "y", "covariate")])
+svc_mod <- flock(
+  f_det = brms::bf(
+                 det ~ 1,
+                 occ ~ occint + g * covariate,
+                 occint ~ 1,
+                 g ~ 0 + gp(x, y, scale = FALSE, k = 20, c = 1.25)
+               ) +
+               brms::set_nl(dpar = "occ"),
+  flocker_data = fd2,
+  cores = 4
+)
+
+```
+
+```{r summary-svc}
+summary(svc_mod)
+
+```
+Again, it worked!

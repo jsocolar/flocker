@@ -273,3 +273,6 @@ loo_out <- loo_compare_flocker(
 loo_out
 
 ```
+
+See the main tutorial vignette for an example of the resulting output (this 
+vignette does not actual run the models to save on compuational resources.)

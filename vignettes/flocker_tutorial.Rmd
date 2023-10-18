@@ -157,6 +157,7 @@ rep_varying <- flock(
   f_occ = ~ uc1 + (1 + uc1 | species),
   f_det = ~ uc1 + ec1 + (1 + uc1 + ec1 | species),
   flocker_data = fd_rep_varying,
+  cores = 4,
   silent = 2,
   refresh = 0
   )
@@ -191,7 +192,8 @@ rep_constant <- flock(
   flocker_data = fd_rep_constant,
   save_pars = save_pars(all = TRUE), # for loo with moment matching
   silent = 2,
-  refresh = 0
+  refresh = 0,
+  cores = 4
   )
 ```
 
@@ -212,8 +214,7 @@ rep_constant <- flock(
 
 ### Multi-season models
 Here we provide code examples to complement the companion publication INSERT LINK.
-For a more complete vignette on multi-season models in `flocker`, see
-INSERT LINK.
+For a more complete vignette on multi-season models in `flocker`, see the [multiseason models vignette](https://jsocolar.github.io/flocker/articles/multiseason_models.html).
 
 First, we simulate some data that are valid for use with multi-season models. 
 Here, we will simulate data for three seasons with one unit covariate and one 
@@ -255,6 +256,7 @@ multi_colex <- flock(
   flocker_data = fd_multi,
   multiseason = "colex",
   multi_init = "explicit",
+  cores = 4,
   silent = 2,
   refresh = 0
 )
@@ -271,6 +273,7 @@ multi_colex_eq <- flock(
   flocker_data = fd_multi,
   multiseason = "colex",
   multi_init = "equilibrium",
+  cores = 4,
   silent = 2,
   refresh = 0
   )
@@ -291,6 +294,7 @@ multi_auto <- flock(
   flocker_data = fd_multi,
   multiseason = "autologistic",
   multi_init = "explicit",
+  cores = 4,
   silent = 2,
   refresh = 0
   )
@@ -307,6 +311,7 @@ multi_auto_eq <- flock(
   flocker_data = fd_multi,
   multiseason = "autologistic",
   multi_init = "equilibrium",
+  cores = 4,
   silent = 2,
   refresh = 0
 )
@@ -315,7 +320,7 @@ multi_auto_eq <- flock(
 ### Data-augmented multi-species models
 Here we provide code examples to complement the companion publication INSERT LINK.
 For a more complete unified vignette on data-augmented models in `flocker`, see
-INSERT LINK.
+the [data-augmented models vignette](https://jsocolar.github.io/flocker/articles/augmented_models.html).
 
 Fitting the data-augmented model in `flocker` requires passing the observed 
 data as a three-dimensional array with sites along the first dimension, visits 
@@ -337,6 +342,7 @@ augmented <- flock(
   f_det = ~ uc1 + ec1 + (1 + uc1 + ec1 | ff_species),
   augmented = TRUE,
   flocker_data = fd_augmented,
+  cores = 4,
   silent = 2,
   refresh = 0
   )
@@ -526,6 +532,7 @@ rep_varying_prior1 <- flock(
     brms::set_prior("logistic(0,1)", class = "Intercept", dpar = "occ") +
     brms::set_prior("normal(0,2)", class = "b") +
     brms::set_prior("normal(0,2)", class = "b", dpar = "occ"),
+  cores = 4,
   silent = 2,
   refresh = 0
   )
@@ -544,6 +551,7 @@ rep_varying_prior2 <- flock(
     brms::set_prior("normal(0,2)", class = "b", dpar = "occ") +
     brms::set_prior("normal(1, 1)", class = "b", coef = "Intercept") +
     brms::set_prior("normal(-1, 1)", class = "b", coef = "Intercept", dpar = "occ"),
+  cores = 4,
   silent = 2,
   refresh = 0
   )
@@ -622,7 +630,7 @@ mod6 <- flock(
 In addition, `brms` provides the ability to estimate models wherein the 
 predictors (e.g. for occupancy and detection) are parametric nonlinear functions 
 whose parameters have their own covariate-based linear predictors. For more 
-details and an example, see the nonlinear models vignette INSERT LINK.
+details and an example, see the [nonlinear models vignette](https://jsocolar.github.io/flocker/articles/nonlinear_models.html). 
 
 ### Phylogenetic models
 Phylogenetic effects can be included by providing a covariance matrix as a 
@@ -678,7 +686,7 @@ transect, yielding a one-dimensional analog of a spatial autologistic occupancy
 model.
 
 A second caution is to remind users that in multi-species models, users will 
-likely want to fit separate spatial terms by species CITE DOSER spOccupancy. 
+likely want to fit separate spatial terms by species ([Doser et al 2022](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.13897)). 
 For Gaussian processes, this can be achieved via the `by` argument to 
 `brms::gp()`. For some conditional autoregressive structures (those that allow 
 disconnected islands), this can be achieved by passing a block-diagonal 
@@ -686,7 +694,7 @@ adjacency matrix wherein species are disconnected components.
 
 We note that gaussian process priors for spatially varying coefficients are 
 readily achieved via the nonlinear formula syntax of `brms`. For more 
-details and an example, see the nonlinear models vignette INSERT LINK.
+details and an example, see the [nonlinear models vignette](https://jsocolar.github.io/flocker/articles/nonlinear_models.html).
 
 ### Measurement error in covariates
 [See here](http://paul-buerkner.github.io/brms/reference/me.html) for relevant 
