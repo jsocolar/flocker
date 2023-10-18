@@ -25,6 +25,7 @@ Suggests:
     ape,
     posterior (>= 1.0.0),
     BH,
+    RcppEigen,
     rstan (>= 2.26),
     tibble
 Remotes: 
