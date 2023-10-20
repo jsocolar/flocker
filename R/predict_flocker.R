@@ -10,7 +10,11 @@
 #'     exclusively by the posterior distribution for the occupancy probability 
 #'     psi.
 #' @param new_data Optional new data at which to predict. If `NULL`, predictions
-#'     are given at the data points used for model fitting ("retrodictions")
+#'     are given at the data points used for model fitting.
+#'     Can be the output of 'make_flocker_data' or the 'unit_covs' input to 
+#'     'make_flocker_data' provided that 'history_condition' is 'FALSE' and the 
+#'     occupancy model is a single-season model (rep-constant, rep-varying, or
+#'     data-augmented).
 #' @param mixed When `new_data` is not provided, should random effect levels be
 #'     drawn from their posteriors (`FALSE`, the default) or re-sampled from 
 #'     their fitted hyperparameters (`TRUE`). The latter can be useful for mixed
@@ -22,11 +26,9 @@
 #' @param sample_new_levels If new_data is provided and contains random effect
 #'     levels not present in the original data, how should predictions be
 #'     handled? Passed directly to brms::prepare_predictions, which see. 
-#' @return An array of posterior predictions. For a single-season rep-varying 
-#'     model, a 3-dimensional array where the first dimension is the closure-unit,
-#'     the second dimension is the rep, the third dimension is the iteration, 
-#'     and the value is 1, 0, or NA indicating detection, non-detection, or 
-#'     non-existence of the sampling event.
+#' @return An array of posterior predictions in the same shape as the
+#'     observations passed to `make_flocker_data()` with posterior iterations
+#'     stacked along the final dimension.
 #' @export
 #' @examples 
 #' \dontrun{
