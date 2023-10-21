@@ -1,7 +1,7 @@
 ---
 title: "Nonlinear models in flocker"
 author: "Jacob Socolar"
-date: "2023-10-18"
+date: "2023-10-21"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Nonlinear models in flocker}
@@ -11,7 +11,7 @@ vignette: >
 
 
 
-<img align="right" src="../man/figures/flocker_sticker.png" width=30%>
+<img align="right" src="../man/figures/flocker_sticker.png" width=30% style="border:none;">
 
 Here we show how we can use `flocker` to fit nonlinear occupancy models via 
 `brms`. In most occupancy models, occupancy and detection probabilties are 
@@ -127,17 +127,11 @@ fit <- flock(f_det = brms::bf(
              flocker_data = fd, 
              control = list(adapt_delta = 0.9),
              cores = 4)
-#> Warning: There were 1 divergent transitions after warmup. See
-#> https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
-#> to find out why this is a problem and how to eliminate them.
-#> Warning: Examine the pairs() plot to diagnose sampling problems
 ```
 
 
 ```r
 summary(fit)
-#> Warning: There were 1 divergent transitions after warmup. Increasing adapt_delta above 0.9 may help.
-#> See http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
 #>  Family: occupancy_single 
 #>   Links: mu = identity; occ = identity 
 #> Formula: ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ff_rep_index1, ff_rep_index2, ff_rep_index3) ~ 1 + dummy 
@@ -151,11 +145,11 @@ summary(fit)
 #> 
 #> Population-Level Effects: 
 #>              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-#> Intercept       -0.90      0.13    -1.16    -0.66 1.00     2294     2302
-#> L_Intercept      0.50      0.10     0.37     0.75 1.00     1221      977
-#> k_Intercept      0.19      0.08     0.07     0.37 1.00     1200     1719
-#> t0_Intercept    -5.90      3.41   -10.41     3.03 1.00     1223     1078
-#> dummy           -0.00      0.08    -0.15     0.15 1.00     2752     2526
+#> Intercept       -0.91      0.13    -1.18    -0.66 1.00     2535     2318
+#> L_Intercept      0.50      0.10     0.38     0.77 1.00     1241      864
+#> k_Intercept      0.19      0.08     0.07     0.36 1.00     1283     1433
+#> t0_Intercept    -5.90      3.38   -10.34     3.17 1.00     1248      921
+#> dummy            0.00      0.08    -0.15     0.15 1.00     2620     2236
 #> 
 #> Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
 #> and Tail_ESS are effective sample size measures, and Rhat is the potential
@@ -173,7 +167,9 @@ to include a Gaussian process prior on a coefficient as well.
 
 First we simulate some data wherein the logit of the occupancy probability
 depends on a covariate, and the slope of the dependency is modeled via a 
-two-dimensional spatial Gaussian process:
+two-dimensional spatial Gaussian process. It turns out that we will need
+quite a few of data points to constrain the standard deviation of the Gaussian
+process, so we simulate with 2000 sites:
 
 
 ```r
@@ -214,9 +210,7 @@ for(j in 1:n_visit){
 ```
 
 
-And here's how we can fit this model in `flocker`! It turns out that we need
-quite a lot of data points to constrain the standard deviation of the Gaussian
-process, and so we use a Hilbert space approximate Gaussian process for
+And here's how we can fit this model in `flocker`! Because we have a large number of sites, we use a [Hilbert space approximate Gaussian process](https://arxiv.org/abs/2004.11408) for
 computational efficiency.
 
 
@@ -250,16 +244,23 @@ summary(svc_mod)
 #> 
 #> Gaussian Process Terms: 
 #>                Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-#> sdgp(g_gpxy)       1.69      0.78     0.73     3.67 1.00     3368     3076
-#> lscale(g_gpxy)     0.23      0.11     0.08     0.50 1.00     4128     3128
+#> sdgp(g_gpxy)       1.66      0.75     0.73     3.66 1.00     2849     3317
+#> lscale(g_gpxy)     0.23      0.11     0.08     0.50 1.00     3850     3141
 #> 
 #> Population-Level Effects: 
 #>                  Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-#> Intercept           -1.04      0.06    -1.15    -0.93 1.00     6089     2975
-#> occint_Intercept     0.09      0.09    -0.08     0.27 1.00     6221     3132
+#> Intercept           -1.04      0.06    -1.15    -0.94 1.00     5532     2810
+#> occint_Intercept     0.09      0.09    -0.08     0.27 1.00     5736     3182
 #> 
 #> Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
 #> and Tail_ESS are effective sample size measures, and Rhat is the potential
 #> scale reduction factor on split chains (at convergence, Rhat = 1).
 ```
 Again, it worked!
+
+
+<center>
+
+![](../man/figures/logo3.png){ width=30% style="border:none;" }
+
+</center>

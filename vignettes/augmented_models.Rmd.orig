@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-<img align="right" src="../man/figures/flocker_sticker.png" width=30%>
+<img align="right" src="../man/figures/flocker_sticker.png" width=30% style="border:none;">
 
 When modeling multiple ecologically comparable species simultaneously, occupancy models often assume conditional exchangeability across species and fit species-specific terms as random effects. Data-augmented multi-species models leverage this exchangeability assumption to estimate the number and prevalence of never-detected species within the study region. To do so, the dataset is augmented with a large number of pseudospecies with all-zero detection histories, each species (both the observed species and the augmented pseudospecies) is ascribed a common parameter $\omega$ giving the Bernoulli probability that a given (pseudo)species occurs in the study area, and random-effects exchangeability assumptions are assumed to hold for all species-specific modeled terms (i.e. intercepts and slopes for occupancy and detection).
 
@@ -32,6 +32,7 @@ where $s$ indexes the species, $\omega$ is the fitted availability probability o
 Fitting the data-augmented model in \mintinline{r}{flocker} requires passing the observed data as a three-dimensional array with sites along the first dimension, visits along the second, and species along the third. Additionally, we must supply the `n_aug` argument to `make_flocker_data()`, specifying how many all-zero pseudospecies to augment the data with.
 
 ```{r data-augmented, echo = FALSE}
+set.seed(2)
 library(flocker)
 d <- simulate_flocker_data(
     augmented = TRUE
@@ -58,3 +59,9 @@ summary(fm)
 ```
 
 `flocker` enables users to fit data-augmented models using arbitrary `brms` formulas for the occupancy and detection components. However, we caution that continuous covariates in the occupancy sub-model can lead to pitfalls in interpretation. A seemingly straightforward application, for example, might be to ask how many species are present along an elevational gradient, fitting species-specific quadratic elevation-occupancy relationships. In our experience, a data-augmented model that includes quadratic elevation terms will place an arbitrarily large number of pseudo-species along the gradient, but will do so by placing pseudospecies' estimated elevational ranges entirely outside the range covered by the sampling effort ([Socolar et al 2022](https://onlinelibrary.wiley.com/doi/full/10.1002/ece3.9328)). The model is in effect trying to estimate how many species occur in a landscape with elevations ranging from negative to positive infinity. This extrapolation is unprincipled, most obviously because it does not account for hard limits imposed by the physical termina of the gradient (valley floor and mountain peak). Thus, although `flocker` provides functionality to fit continuous covariates in the occupancy term, we recommend extreme caution in interpreting patterns estimated for never-observed species.
+
+<center>
+
+![](../man/figures/logo3.png){ width=30% style="border:none;" }
+
+</center>
