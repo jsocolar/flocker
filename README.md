@@ -66,3 +66,5 @@ R." R package version XXX, <URL: https://github.com/jsocolar/flocker/>.
 
 Additionally, please consider citing [Stan](https://mc-stan.org/users/citations/)
 and R package [brms](https://mc-stan.org/users/interfaces/brms).
+
+<img src="man/figures/logo2.png" width = 200 alt="AI generated" align = "">
