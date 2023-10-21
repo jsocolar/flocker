@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-<img align="right" src="../man/figures/flocker_sticker.png" width=30%>
+<img align="right" src="../man/figures/flocker_sticker.png" width=30% style="border:none;">
 
 Multiseason occupancy models, also called dynamic occupancy models, are models 
 that assume [closure](https://jsocolar.github.io/closureOccupancy/) over units 
@@ -275,4 +275,10 @@ loo_out
 ```
 
 See the main tutorial vignette for an example of the resulting output (this 
-vignette does not actual run the models to save on compuational resources.)
+vignette does not actual run the models to save on computational resources).
+
+<center>
+
+![](../man/figures/logo2.png){ width=30% style="border:none;" }
+
+</center>

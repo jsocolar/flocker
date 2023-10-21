@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-<img align="right" src="../man/figures/flocker_sticker.png" width=30%>
+<img align="right" src="../man/figures/flocker_sticker.png" width=30% style="border:none;">
 
 Here we show how we can use `flocker` to fit nonlinear occupancy models via 
 `brms`. In most occupancy models, occupancy and detection probabilties are 
@@ -149,7 +149,9 @@ to include a Gaussian process prior on a coefficient as well.
 
 First we simulate some data wherein the logit of the occupancy probability
 depends on a covariate, and the slope of the dependency is modeled via a 
-two-dimensional spatial Gaussian process:
+two-dimensional spatial Gaussian process. It turns out that we will need
+quite a few of data points to constrain the standard deviation of the Gaussian
+process, so we simulate with 2000 sites:
 
 ```{r simulate-svc}
 set.seed(1)
@@ -190,9 +192,7 @@ for(j in 1:n_visit){
 ```
 
 
-And here's how we can fit this model in `flocker`! It turns out that we need
-quite a lot of data points to constrain the standard deviation of the Gaussian
-process, and so we use a Hilbert space approximate Gaussian process for
+And here's how we can fit this model in `flocker`! Because we have a large number of sites, we use a [Hilbert space approximate Gaussian process](https://arxiv.org/abs/2004.11408) for
 computational efficiency.
 
 ```{r fit-svc, results='hide', message=FALSE}
@@ -216,3 +216,10 @@ summary(svc_mod)
 
 ```
 Again, it worked!
+
+
+<center>
+
+![](../man/figures/logo3.png){ width=30% style="border:none;" }
+
+</center>

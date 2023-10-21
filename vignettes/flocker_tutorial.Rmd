@@ -1,7 +1,7 @@
 ---
 title: "Fitting occupancy models with flocker"
 author: Jacob Socolar & Simon Mills
-date: "2023-10-18"
+date: "2023-10-20"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Fitting occupancy models with flocker}
@@ -11,7 +11,7 @@ vignette: >
 
 
 
-<img align="right" src="../man/figures/flocker_sticker.png" width=30%>
+<img align="right" src="../man/figures/flocker_sticker.png" width=30% style="border:none;">
 
 `flocker` is an R package for fitting [occupancy models](https://jsocolar.github.io/closureOccupancy/) that incorportate 
 sophisticated effects structures using simple formula-based syntax. `flocker` is 
@@ -64,6 +64,11 @@ To request features or report bugs (much appreciated!), please [open an issue on
 To make `flocker` and `brms` functions globally available within an R session 
 run:
 
+```r
+library(flocker)
+library(brms)
+set.seed(1)
+```
 
 ## Data simulation
 General purpose data simulation is provided via `simulate_flocker_data()`, which
@@ -92,7 +97,7 @@ varies between replicate visits).
 
 ## Data formatting
 `flock()`, the main function in `flocker` for fitting occupancy models, 
-expects a highly specific data format. The function `make_flocker_data()` 
+expects a highly specific data format that we [describe more fully here](https://jsocolar.github.io/flocker/articles/flocker_format.html). The function `make_flocker_data()` 
 formats data for use with `flock()` automatically. For single-season models,
 `make_flocker_data()` takes as input a matrix or dataframe of 
 detection/non-detection data. Rows represent closure-units, columns represent 
@@ -105,11 +110,11 @@ sampling events must be treated as events 1, 2, and 3 (with the fourth event
 other combination.
 
 Many occupancy models also include covariates that influence occupancy or 
-detection probabilities. Unit covariates (see *Terms and definitions* above) can 
+detection probabilities. Unit covariates (see [Terms and definitions]) can 
 be passed to `make_flocker_data()` as a dataframe with the same number of rows 
 as the observation matrix and data in the same order as the rows of the 
 observation matrix. Columns are covariates, and we recommend using informative 
-column names. *Event covariates* (see *Terms and definitions* above) can be 
+column names. *Event covariates* (see [Terms and definitions]) can be 
 passed as a named list of matrices whose elements `[i, j]` are the covariate 
 values for the sampling event represented by the corresponding position of the 
 observation matrix. Again, we recommend using informative names for the list 
@@ -322,7 +327,7 @@ multi_auto_eq <- flock(
 ```
 
 ### Data-augmented multi-species models
-Here we provide code examples to complement the companion publication INSERT LINK.
+Here we provide a simple example of code for a data augmented model.
 For a more complete unified vignette on data-augmented models in `flocker`, see
 the [data-augmented models vignette](https://jsocolar.github.io/flocker/articles/augmented_models.html).
 
@@ -362,16 +367,15 @@ are not allowed as names for user-supplied covariates).
 
 ## Post-processing
 `flocker` provides functions for four main types of bespoke post-processing
-for occupancy models. `fitted_flocker()`
-
-`get_Z()` provides the posterior distribution for the 
+for occupancy models. `fitted_flocker()` computes (and optionally summarizes) 
+posterior distributions of fitted values at the locations of the data
+used in model fitting or of new data. `get_Z()` provides the posterior distribution for the 
 latent occupancy state. `predict_flocker()` provides posterior predictions at 
 the observed points (e.g. for use in posterior predictive checking) or for new 
 data. `loo_flocker()` and `loo_compare_flocker()` both provide functionality for 
 model comparison. See below for details on all four types of post-processing. 
 Both posterior predictions and model comparison rely on subtle aspects of the 
-occupancy model likelihood that we explain in more detail in the companion paper
-INSERT LINK and [here](https://jsocolar.github.io/likelihoodOccupancy/).
+occupancy model likelihood that we explain in more detail [here](https://jsocolar.github.io/likelihoodOccupancy/).
 
 ### brms-native post-processing
 All post-processing functions from `brms` work on single-season rep-constant
@@ -389,7 +393,7 @@ The following functions work on all model types available in `flocker`.
 ### Fitted values
 Fitted values for any of the distributional parameter (one or more of occupancy,
 detection, colonization, extinction, autologistic, and/or Omega, the fitted 
-probability that a given (pseudo)species occurrs in the metacommunity) are
+probability that a given (pseudo)species occurs in the metacommunity) are
 available via `fitted_flocker`. For example:
 
 
@@ -399,6 +403,13 @@ fitted_flocker(rep_varying)
 fitted_flocker(multi_colex)
 fitted_flocker(augmented)
 ```
+
+`fitted_flocker` provides a replacement for
+`brms::posterior_linpred()`. While the `brms`-native function executes on
+any `flocker` model, it returns in an opaque shape related to
+[the flocker data format](https://jsocolar.github.io/flocker/articles/flocker_format.html). `fitted_flocker()` returns in the shape of the observations passed
+to `make_flocker_data()`, with posterior iterations stacked along its final 
+dimension.
 
 ### The posterior occupancy state
 The function `get_Z()` returns the posterior distribution of occupancy probabilities across the closure-units. The shape of the output depends on the class of model, and is an array in the shape of the first visit in `obs` as passed to `make_flocker_data`, with posterior iterations stacked along the final dimension. Thus, for a single-season rep-varying model, the output is a matrix where rows are posterior iterations, columns are closure-units, and values are draws from the posterior distribution of occupancy probabilities:
@@ -466,10 +477,11 @@ loo_compare_flocker(
   list(rep_constant, rep_varying)
 )
 #> Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.
-#> Warning: Some Pareto k diagnostic values are slightly high. See help('pareto-k-diagnostic') for details.
+
+#> Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.
 #>        elpd_diff se_diff
 #> model2    0.0       0.0 
-#> model1 -156.4      17.9
+#> model1 -171.1      17.2
 ```
 
 Likewise, we can compare the four flavors of multi-season model that we fit 
@@ -485,9 +497,9 @@ loo_compare_flocker(
 )
 #>        elpd_diff se_diff
 #> model1   0.0       0.0  
-#> model2 -17.2       5.9  
-#> model3 -53.1      10.1  
-#> model4 -65.1      10.3
+#> model3  -7.8       4.1  
+#> model2 -27.1       7.2  
+#> model4 -32.9       7.9
 ```
 
 Flocker also provides the function `loo_flocker()` to return a table of 
@@ -555,18 +567,9 @@ brms::prior_summary(rep_varying)
 #>  student_t(3, 0, 2.5)        sd       uc1 species       occ        0    (vectorized)
 ```
 
-Note that if there are parameters shared between both the occupancy and detection model formulas, e.g. 
-
-```r
-get_flocker_prior(
-  f_occ = ~ uc1 + (1|species), 
-  f_det = ~ uc1 + ec2 + (1|species), 
-  flocker_data = fd_rep_varying
-  )
-```
-
-then there will be two entries for each of the shared parameters in the prior 
-table (`uc1` in this example). Specifying a priors for parameters in formulas 
+Note that in examples like the above, with covariates shared between both the occupancy and detection model formulas (`uc1` in this example), then the prior table will contain two entries 
+associated with the covariate, one for the parameter governing occupancy and 
+one for the parameter governing detection. Specifying priors for parameters in formulas 
 other than detection can be done with reference to the `dpar` column, e.g.:
 
 
@@ -581,7 +584,7 @@ component is specified without reference to `dpar`.
 For more on priors in `brms`, see `?brms::set_prior`.
 
 Users should understand the implications of the default `brms` behavior to 
-internally center the design matrix, which affects the prior on the intercept 
+internally center the design matrix, which affects how the prior on the intercept 
 gets set (see `?brms::set_prior`). Here is an example, based on a 
 single-season rep-varying model, wherein we set a logistic prior on the value of 
 the intercepts (flat on the probability scale) when all predictors are held at 
@@ -780,7 +783,7 @@ disconnected islands), this can be achieved by passing a block-diagonal
 adjacency matrix wherein species are disconnected components.
 
 We note that gaussian process priors for spatially varying coefficients are 
-readily achieved via the nonlinear formula syntax of `brms`. For more 
+readily achieved via the nonlinear formula syntax of `brms`, though they may require large volumes of data to successfully fit. For more 
 details and an example, see the [nonlinear models vignette](https://jsocolar.github.io/flocker/articles/nonlinear_models.html).
 
 ### Measurement error in covariates
@@ -791,7 +794,12 @@ details and an example, see the [nonlinear models vignette](https://jsocolar.git
 `flock` will pass any relevant parameters forward to `brms::brm()`, giving the 
 user important control over the algorithmic details of how the model is fit. See
 `?brms::brm` for details. To speed up the execution, we recommend supplying the 
-argument `backend = "cmdstanr"`. This requires the cmdstanr package and a 
-working installation of cmdstan; [see here](https://mc-stan.org/cmdstanr/) for 
+argument `backend = "cmdstanr"`. This requires the `cmdstanr` package and a 
+working installation of `cmdstan`; [see here](https://mc-stan.org/cmdstanr/) for 
 instructions to get started and further details.
 
+<center>
+
+![](../man/figures/logo2.png){ width=30% style="border:none;" }
+
+</center>
