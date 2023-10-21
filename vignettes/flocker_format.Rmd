@@ -4,7 +4,7 @@ author: "Jacob Socolar"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Multiseason models in flocker}
+  %\VignetteIndexEntry{Advanced brms custom families: occupancy models and the `flocker_data` format}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
