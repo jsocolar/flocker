@@ -53,6 +53,9 @@
       <a href="../articles/augmented_models.html">Data-augmented models in flocker</a>
     </li>
     <li>
+      <a href="../articles/flocker_format.html">Advanced brms custom families: occupancy models and the `flocker_data` format</a>
+    </li>
+    <li>
       <a href="../articles/flocker_tutorial.html">Fitting occupancy models with flocker</a>
     </li>
     <li>
@@ -88,7 +91,7 @@
                         <h4 data-toc-skip class="author">Jacob
 Socolar</h4>
             
-            <h4 data-toc-skip class="date">2023-10-18</h4>
+            <h4 data-toc-skip class="date">2023-10-21</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/jsocolar/flocker/blob/HEAD/vignettes/nonlinear_models.Rmd" class="external-link"><code>vignettes/nonlinear_models.Rmd</code></a></small>
       <div class="hidden name"><code>nonlinear_models.Rmd</code></div>
@@ -97,7 +100,7 @@ Socolar</h4>
 
     
     
-<p><img align="right" src="../reference/figures/flocker_sticker.png" width="30%"></p>
+<p><img align="right" src="../reference/figures/flocker_sticker.png" width="30%" style="border:none;"></p>
 <p>Here we show how we can use <code>flocker</code> to fit nonlinear
 occupancy models via <code>brms</code>. In most occupancy models,
 occupancy and detection probabilties are modeled as logit-linear
@@ -220,15 +223,9 @@ contribution to the likelihood.</p></li>
 <span>                <span class="op">)</span>,</span>
 <span>             flocker_data <span class="op">=</span> <span class="va">fd</span>, </span>
 <span>             control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>adapt_delta <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span>,</span>
-<span>             cores <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: There were 1 divergent transitions after warmup. See</span></span>
-<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup</span></span>
-<span><span class="co">#&gt; to find out why this is a problem and how to eliminate them.</span></span>
-<span><span class="co">#&gt; Warning: Examine the pairs() plot to diagnose sampling problems</span></span></code></pre></div>
+<span>             cores <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: There were 1 divergent transitions after warmup. Increasing adapt_delta above 0.9 may help.</span></span>
-<span><span class="co">#&gt; See http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup</span></span>
 <span><span class="co">#&gt;  Family: occupancy_single </span></span>
 <span><span class="co">#&gt;   Links: mu = identity; occ = identity </span></span>
 <span><span class="co">#&gt; Formula: ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ff_rep_index1, ff_rep_index2, ff_rep_index3) ~ 1 + dummy </span></span>
@@ -242,11 +239,11 @@ contribution to the likelihood.</p></li>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Population-Level Effects: </span></span>
 <span><span class="co">#&gt;              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
-<span><span class="co">#&gt; Intercept       -0.90      0.13    -1.16    -0.66 1.00     2294     2302</span></span>
-<span><span class="co">#&gt; L_Intercept      0.50      0.10     0.37     0.75 1.00     1221      977</span></span>
-<span><span class="co">#&gt; k_Intercept      0.19      0.08     0.07     0.37 1.00     1200     1719</span></span>
-<span><span class="co">#&gt; t0_Intercept    -5.90      3.41   -10.41     3.03 1.00     1223     1078</span></span>
-<span><span class="co">#&gt; dummy           -0.00      0.08    -0.15     0.15 1.00     2752     2526</span></span>
+<span><span class="co">#&gt; Intercept       -0.91      0.13    -1.18    -0.66 1.00     2535     2318</span></span>
+<span><span class="co">#&gt; L_Intercept      0.50      0.10     0.38     0.77 1.00     1241      864</span></span>
+<span><span class="co">#&gt; k_Intercept      0.19      0.08     0.07     0.36 1.00     1283     1433</span></span>
+<span><span class="co">#&gt; t0_Intercept    -5.90      3.38   -10.34     3.17 1.00     1248      921</span></span>
+<span><span class="co">#&gt; dummy            0.00      0.08    -0.15     0.15 1.00     2620     2236</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS</span></span>
 <span><span class="co">#&gt; and Tail_ESS are effective sample size measures, and Rhat is the potential</span></span>
@@ -266,7 +263,9 @@ use the nonlinear formula syntax to tell <code>brms</code> to include a
 Gaussian process prior on a coefficient as well.</p>
 <p>First we simulate some data wherein the logit of the occupancy
 probability depends on a covariate, and the slope of the dependency is
-modeled via a two-dimensional spatial Gaussian process:</p>
+modeled via a two-dimensional spatial Gaussian process. It turns out
+that we will need quite a few of data points to constrain the standard
+deviation of the Gaussian process, so we simulate with 2000 sites:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">2000</span> <span class="co"># sample size</span></span>
@@ -302,10 +301,9 @@ modeled via a two-dimensional spatial Gaussian process:</p>
 <span><span class="kw">for</span><span class="op">(</span><span class="va">j</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">n_visit</span><span class="op">)</span><span class="op">{</span></span>
 <span>  <span class="va">obs</span><span class="op">[</span>,<span class="va">j</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">gp_data</span><span class="op">$</span><span class="va">Z</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">1</span>, <span class="fu">boot</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/boot/man/inv.logit.html" class="external-link">inv.logit</a></span><span class="op">(</span><span class="va">det_intercept</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p>And here’s how we can fit this model in <code>flocker</code>! It
-turns out that we need quite a lot of data points to constrain the
-standard deviation of the Gaussian process, and so we use a Hilbert
-space approximate Gaussian process for computational efficiency.</p>
+<p>And here’s how we can fit this model in <code>flocker</code>! Because
+we have a large number of sites, we use a <a href="https://arxiv.org/abs/2004.11408" class="external-link">Hilbert space approximate
+Gaussian process</a> for computational efficiency.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fd2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_flocker_data.html">make_flocker_data</a></span><span class="op">(</span>obs <span class="op">=</span> <span class="va">obs</span>, unit_covs <span class="op">=</span> <span class="va">gp_data</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span>, <span class="st">"covariate"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">svc_mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span></span>
@@ -333,18 +331,21 @@ space approximate Gaussian process for computational efficiency.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Gaussian Process Terms: </span></span>
 <span><span class="co">#&gt;                Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
-<span><span class="co">#&gt; sdgp(g_gpxy)       1.69      0.78     0.73     3.67 1.00     3368     3076</span></span>
-<span><span class="co">#&gt; lscale(g_gpxy)     0.23      0.11     0.08     0.50 1.00     4128     3128</span></span>
+<span><span class="co">#&gt; sdgp(g_gpxy)       1.66      0.75     0.73     3.66 1.00     2849     3317</span></span>
+<span><span class="co">#&gt; lscale(g_gpxy)     0.23      0.11     0.08     0.50 1.00     3850     3141</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Population-Level Effects: </span></span>
 <span><span class="co">#&gt;                  Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
-<span><span class="co">#&gt; Intercept           -1.04      0.06    -1.15    -0.93 1.00     6089     2975</span></span>
-<span><span class="co">#&gt; occint_Intercept     0.09      0.09    -0.08     0.27 1.00     6221     3132</span></span>
+<span><span class="co">#&gt; Intercept           -1.04      0.06    -1.15    -0.94 1.00     5532     2810</span></span>
+<span><span class="co">#&gt; occint_Intercept     0.09      0.09    -0.08     0.27 1.00     5736     3182</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS</span></span>
 <span><span class="co">#&gt; and Tail_ESS are effective sample size measures, and Rhat is the potential</span></span>
 <span><span class="co">#&gt; scale reduction factor on split chains (at convergence, Rhat = 1).</span></span></code></pre></div>
 <p>Again, it worked!</p>
+<center>
+<p><img src="../reference/figures/logo3.png" style="border:none;;width:30.0%"></p>
+</center>
 </div>
   </div>
 
