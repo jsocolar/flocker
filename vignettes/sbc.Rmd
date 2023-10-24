@@ -1,27 +1,36 @@
 ---
 title: "SBC for flocker models"
 author: "Jacob Socolar"
-date: "`r Sys.Date()`"
-output: html_document
+date: "2023-10-22"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{SBC for flocker models}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 params:
   n_sims: 1000
   n_sites: 200
+  n_sims_augmented: 200
+  n_sites_augmented: 50
+  n_pseudospecies_augmented: 50
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```r
+params <- list(
+  n_sims = 1000,
+  n_sites = 200,
+  n_sims_augmented = 200,
+  n_sites_augmented = 50,
+  n_pseudospecies_augmented = 50
+)
 ```
 
-```{r display_params}
-params
 
-```
-
-```{r setup2}
+```r
 library(flocker)
 library(brms)
 library(SBC)
-set.seed(3)
+set.seed(1)
 ```
 
 ## Overview
@@ -44,7 +53,8 @@ rep-constant).
 ## Single-season
 
 ### Rep-constant
-```{r rep-constant}
+
+```r
 # make the stancode
 model_name <- paste0(tempdir(), "/sbc_rep_constant_model.stan")
 fd <- simulate_flocker_data(
@@ -127,13 +137,25 @@ rep_constant_backend <-
 rep_constant_results <- compute_SBC(rep_constant_dataset, rep_constant_backend)
 
 plot_ecdf(rep_constant_results)
-plot_rank_hist(rep_constant_results)
-plot_ecdf_diff(rep_constant_results)
-
 ```
 
+![plot of chunk rep-constant](../man/figures/vignettes/sbc/rep-constant-1.png)
+
+```r
+plot_rank_hist(rep_constant_results)
+```
+
+![plot of chunk rep-constant](../man/figures/vignettes/sbc/rep-constant-2.png)
+
+```r
+plot_ecdf_diff(rep_constant_results)
+```
+
+![plot of chunk rep-constant](../man/figures/vignettes/sbc/rep-constant-3.png)
+
 ### Rep-varying
-```{r rep-varying}
+
+```r
 # make the stancode
 model_name <- paste0(tempdir(), "/sbc_rep_varying_model.stan")
 fd <- simulate_flocker_data(
@@ -216,12 +238,35 @@ rep_varying_backend <-
     )
 
 rep_varying_results <- compute_SBC(rep_varying_dataset, rep_varying_backend)
-
-plot_ecdf(rep_varying_results)
-plot_rank_hist(rep_varying_results)
-plot_ecdf_diff(rep_varying_results)
+```
 
 ```
+##  - 3 (0%) fits had at least one Rhat > 1.01. Largest Rhat was 1.016.
+```
+
+```
+## Not all diagnostics are OK.
+## You can learn more by inspecting $default_diagnostics, $backend_diagnostics 
+## and/or investigating $outputs/$messages/$warnings for detailed output from the backend.
+```
+
+```r
+plot_ecdf(rep_varying_results)
+```
+
+![plot of chunk rep-varying](../man/figures/vignettes/sbc/rep-varying-1.png)
+
+```r
+plot_rank_hist(rep_varying_results)
+```
+
+![plot of chunk rep-varying](../man/figures/vignettes/sbc/rep-varying-2.png)
+
+```r
+plot_ecdf_diff(rep_varying_results)
+```
+
+![plot of chunk rep-varying](../man/figures/vignettes/sbc/rep-varying-3.png)
 
 
 ## Multi-season
@@ -230,7 +275,8 @@ the initial occupancy state using explicit and equilibrium parameterizations,
 for a total of four classes of multi-season model. We validate each class.
 
 ### Colonization-extinction, explicit initial occupancy
-```{r multi-colex-ex}
+
+```r
 # make the stancode
 model_name <- paste0(tempdir(), "/sbc_colex_ex_model.stan")
 fd <- simulate_flocker_data(
@@ -343,13 +389,25 @@ colex_ex_backend <-
 colex_ex_results <- compute_SBC(colex_ex_dataset, colex_ex_backend)
 
 plot_ecdf(colex_ex_results)
-plot_rank_hist(colex_ex_results)
-plot_ecdf_diff(colex_ex_results)
-
 ```
 
+![plot of chunk multi-colex-ex](../man/figures/vignettes/sbc/multi-colex-ex-1.png)
+
+```r
+plot_rank_hist(colex_ex_results)
+```
+
+![plot of chunk multi-colex-ex](../man/figures/vignettes/sbc/multi-colex-ex-2.png)
+
+```r
+plot_ecdf_diff(colex_ex_results)
+```
+
+![plot of chunk multi-colex-ex](../man/figures/vignettes/sbc/multi-colex-ex-3.png)
+
 ### Colonization-extinction, equilibrium initial occupancy
-```{r multi-colex-eq, eval = TRUE}
+
+```r
 # make the stancode
 model_name <- paste0(tempdir(), "/sbc_colex_eq_model.stan")
 fd <- simulate_flocker_data(
@@ -449,15 +507,43 @@ colex_eq_backend <-
     )
 
 colex_eq_results <- compute_SBC(colex_eq_dataset, colex_eq_backend)
-
-plot_ecdf(colex_eq_results)
-plot_rank_hist(colex_eq_results)
-plot_ecdf_diff(colex_eq_results)
-
 ```
 
+```
+##  - 1 (0%) fits had at least one Rhat > 1.01. Largest Rhat was 1.012.
+```
+
+```
+##  - 853 (85%) fits had some steps rejected. Maximum number of rejections was 5.
+```
+
+```
+## Not all diagnostics are OK.
+## You can learn more by inspecting $default_diagnostics, $backend_diagnostics 
+## and/or investigating $outputs/$messages/$warnings for detailed output from the backend.
+```
+
+```r
+plot_ecdf(colex_eq_results)
+```
+
+![plot of chunk multi-colex-eq](../man/figures/vignettes/sbc/multi-colex-eq-1.png)
+
+```r
+plot_rank_hist(colex_eq_results)
+```
+
+![plot of chunk multi-colex-eq](../man/figures/vignettes/sbc/multi-colex-eq-2.png)
+
+```r
+plot_ecdf_diff(colex_eq_results)
+```
+
+![plot of chunk multi-colex-eq](../man/figures/vignettes/sbc/multi-colex-eq-3.png)
+
 ### Autologistic, explicit initial occupancy
-```{r multi-auto-ex, eval = TRUE}
+
+```r
 # make the stancode
 model_name <- paste0(tempdir(), "/sbc_auto_ex_model.stan")
 fd <- simulate_flocker_data(
@@ -568,13 +654,25 @@ auto_ex_backend <-
 auto_ex_results <- compute_SBC(auto_ex_dataset, auto_ex_backend)
 
 plot_ecdf(auto_ex_results)
-plot_rank_hist(auto_ex_results)
-plot_ecdf_diff(auto_ex_results)
-
 ```
 
+![plot of chunk multi-auto-ex](../man/figures/vignettes/sbc/multi-auto-ex-1.png)
+
+```r
+plot_rank_hist(auto_ex_results)
+```
+
+![plot of chunk multi-auto-ex](../man/figures/vignettes/sbc/multi-auto-ex-2.png)
+
+```r
+plot_ecdf_diff(auto_ex_results)
+```
+
+![plot of chunk multi-auto-ex](../man/figures/vignettes/sbc/multi-auto-ex-3.png)
+
 ### Autologistic, equilibrium initial occupancy
-```{r multi-auto-eq, eval = TRUE}
+
+```r
 # make the stancode
 model_name <- paste0(tempdir(), "/sbc_auto_eq_model.stan")
 fd <- simulate_flocker_data(
@@ -672,12 +770,213 @@ auto_eq_backend <-
     )
 
 auto_eq_results <- compute_SBC(auto_eq_dataset, auto_eq_backend)
-
-plot_ecdf(auto_eq_results)
-plot_rank_hist(auto_eq_results)
-plot_ecdf_diff(auto_eq_results)
-
 ```
 
+```
+##  - 302 (30%) fits had some steps rejected. Maximum number of rejections was 3.
+```
+
+```
+## Not all diagnostics are OK.
+## You can learn more by inspecting $default_diagnostics, $backend_diagnostics 
+## and/or investigating $outputs/$messages/$warnings for detailed output from the backend.
+```
+
+```r
+plot_ecdf(auto_eq_results)
+```
+
+![plot of chunk multi-auto-eq](../man/figures/vignettes/sbc/multi-auto-eq-1.png)
+
+```r
+plot_rank_hist(auto_eq_results)
+```
+
+![plot of chunk multi-auto-eq](../man/figures/vignettes/sbc/multi-auto-eq-2.png)
+
+```r
+plot_ecdf_diff(auto_eq_results)
+```
+
+![plot of chunk multi-auto-eq](../man/figures/vignettes/sbc/multi-auto-eq-3.png)
 
 
+## Data-augmented
+
+```r
+# make the stancode
+model_name <- paste0(tempdir(), "/sbc_augmented_model.stan")
+
+omega <- boot::inv.logit(rnorm(1, 0, .1))
+available <- rbinom(1, params$n_pseudospecies_augmented, omega)
+unavailable <- params$n_pseudospecies_augmented - available
+coef_means <- rnorm(5) # normal prior on random effect means
+sigma <- abs(rnorm(5)) # half-normal prior on all random effect sds
+Sigma <- diag(5) * sigma
+
+fd <- simulate_flocker_data(
+  n_pt = params$n_sites_augmented, n_sp = available,
+  params = list(
+    coef_means = coef_means,
+    Sigma = Sigma,
+    coefs = data.frame(
+      det_intercept = rnorm(available, coef_means[1], sigma[1]),
+      det_slope_unit = rnorm(available, coef_means[2], sigma[2]),
+      det_slope_visit = rnorm(available, coef_means[3], sigma[3]),
+      occ_intercept = rnorm(available, coef_means[4], sigma[4]),
+      occ_slope_unit = rnorm(available, coef_means[5], sigma[5])
+    )
+  ),
+  seed = NULL,
+  rep_constant = FALSE,
+  ragged_rep = TRUE
+)
+
+obs_aug <- fd$obs[seq_len(params$n_sites_augmented), ]
+
+for(i in 2:available){
+  obs_aug <- abind::abind(
+    obs_aug, 
+    fd$obs[((i - 1) * params$n_sites_augmented) + seq_len(params$n_sites_augmented), ], 
+    along = 3
+    )
+}
+
+event_covs_aug <- list(ec1 = fd$event_covs$ec1[seq_len(params$n_sites_augmented), ])
+unit_covs_aug <- data.frame(uc1 = fd$unit_covs[seq_len(params$n_sites_augmented), "uc1"])
+
+flocker_data = make_flocker_data(
+  obs_aug, unit_covs_aug, event_covs_aug,
+  type = "augmented", n_aug = unavailable,
+  quiet = TRUE)
+  
+scode <- flocker_stancode(
+    f_occ = ~ 0 + Intercept + uc1 + (1 + uc1 || ff_species),
+    f_det = ~ 0 + Intercept + uc1 + ec1 + (1 + uc1 + ec1 || ff_species),
+    flocker_data = flocker_data,
+    prior = 
+      brms::set_prior("std_normal()") + 
+      brms::set_prior("std_normal()", class = "sd") +
+      brms::set_prior("std_normal()", dpar = "occ") +
+      brms::set_prior("std_normal()", class = "sd", dpar = "occ") +
+      brms::set_prior("normal(0, 0.1)", class = "Intercept", dpar = "Omega"),
+    backend = "cmdstanr",
+    augmented = TRUE
+  )
+writeLines(scode, model_name)
+
+aug_generator <- function(N){  
+  omega <- boot::inv.logit(rnorm(1, 0, .1))
+  available <- rbinom(1, params$n_pseudospecies_augmented, omega)
+  unavailable <- params$n_pseudospecies_augmented - available
+  coef_means <- rnorm(5) # normal prior on random effect means
+  sigma <- abs(rnorm(5)) # half-normal prior on all random effect sds
+  Sigma <- diag(5) * sigma
+  
+  fd <- simulate_flocker_data(
+    n_pt = params$n_sites_augmented, n_sp = available,
+    params = list(
+      coef_means = coef_means,
+      Sigma = Sigma,
+      coefs = data.frame(
+        det_intercept = rnorm(available, coef_means[1], sigma[1]),
+        det_slope_unit = rnorm(available, coef_means[2], sigma[2]),
+        det_slope_visit = rnorm(available, coef_means[3], sigma[3]),
+        occ_intercept = rnorm(available, coef_means[4], sigma[4]),
+        occ_slope_unit = rnorm(available, coef_means[5], sigma[5])
+      )
+    ),
+    seed = NULL,
+    rep_constant = FALSE,
+    ragged_rep = TRUE
+  )
+  
+  obs_aug <- fd$obs[seq_len(params$n_sites_augmented), ]
+  
+  for(i in 2:available){
+    obs_aug <- abind::abind(
+      obs_aug, 
+      fd$obs[((i - 1) * params$n_sites_augmented) + seq_len(params$n_sites_augmented), ], 
+      along = 3
+      )
+  }
+  
+  event_covs_aug <- list(ec1 = fd$event_covs$ec1[seq_len(params$n_sites_augmented), ])
+  unit_covs_aug <- data.frame(uc1 = fd$unit_covs[seq_len(params$n_sites_augmented), "uc1"])
+  
+  flocker_data = make_flocker_data(
+    obs_aug, unit_covs_aug, event_covs_aug,
+    type = "augmented", n_aug = unavailable,
+    quiet = TRUE)
+  # format for return
+  list(
+    variables = list(
+      `b[1]` = fd$params$coef_means[1],
+      `b[2]` = fd$params$coef_means[2],
+      `b[3]` = fd$params$coef_means[3],
+      `b_occ[1]` = fd$params$coef_means[4],
+      `b_occ[2]` = fd$params$coef_means[5],
+      `Intercept_Omega` = boot::logit(omega)
+    ),
+    generated = flocker_standata(
+      f_occ = ~ 0 + Intercept + uc1 + (1 + uc1 || ff_species),
+      f_det = ~ 0 + Intercept + uc1 + ec1 + (1 + uc1 + ec1 || ff_species),
+      flocker_data = flocker_data,
+      augmented = TRUE
+    )
+  )
+}
+
+aug_gen <- SBC_generator_function(
+  aug_generator, 
+  N = params$n_sites_augmented
+  )
+aug_dataset <- suppressMessages(
+  generate_datasets(aug_gen, params$n_sims_augmented)
+)
+  
+aug_backend <- 
+  SBC_backend_cmdstan_sample(
+    cmdstanr::cmdstan_model(
+      paste0(tempdir(), "/sbc_augmented_model.stan")
+      )
+    )
+
+aug_results <- compute_SBC(aug_dataset, aug_backend)
+```
+
+```
+##  - 4 (2%) fits had at least one Rhat > 1.01. Largest Rhat was 1.022.
+```
+
+```
+##  - 2 (1%) fits had divergent transitions. Maximum number of divergences was 2.
+```
+
+```
+##  - 7 (4%) fits had some steps rejected. Maximum number of rejections was 1.
+```
+
+```
+## Not all diagnostics are OK.
+## You can learn more by inspecting $default_diagnostics, $backend_diagnostics 
+## and/or investigating $outputs/$messages/$warnings for detailed output from the backend.
+```
+
+```r
+plot_ecdf(aug_results)
+```
+
+![plot of chunk data-augmented](../man/figures/vignettes/sbc/data-augmented-1.png)
+
+```r
+plot_rank_hist(aug_results)
+```
+
+![plot of chunk data-augmented](../man/figures/vignettes/sbc/data-augmented-2.png)
+
+```r
+plot_ecdf_diff(aug_results)
+```
+
+![plot of chunk data-augmented](../man/figures/vignettes/sbc/data-augmented-3.png)

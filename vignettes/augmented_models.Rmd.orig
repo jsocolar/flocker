@@ -31,7 +31,7 @@ where $s$ indexes the species, $\omega$ is the fitted availability probability o
 
 Fitting the data-augmented model in \mintinline{r}{flocker} requires passing the observed data as a three-dimensional array with sites along the first dimension, visits along the second, and species along the third. Additionally, we must supply the `n_aug` argument to `make_flocker_data()`, specifying how many all-zero pseudospecies to augment the data with.
 
-```{r data-augmented, echo = FALSE}
+```{r data-augmented, message = FALSE}
 set.seed(2)
 library(flocker)
 d <- simulate_flocker_data(
