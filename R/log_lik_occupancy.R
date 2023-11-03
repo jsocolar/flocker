@@ -163,8 +163,8 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
 }
 
 #' A log-likelihood function for the rep-constant occupancy model, sufficient for
-#' \code{brms::loo(vc_fit)} to work. 
-#' @param i Posterior iteration
+#' \code{brms::loo()} to work. 
+#' @param i Observation id
 #' @param prep Output of \code{brms::prepare_predictions}. See brms custom families
 #' vignette at 
 #' https://cran.r-project.org/web/packages/brms/vignettes/brms_customfamilies.html
