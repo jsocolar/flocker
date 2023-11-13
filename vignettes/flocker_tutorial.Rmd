@@ -17,7 +17,7 @@ vignette: >
 sophisticated effects structures using simple formula-based syntax. `flocker` is 
 built on R package `brms`, which in turn is a front-end for `Stan`. 
 
-This vignette is intended as a companion to Socolar & Mills 2023 (INSERT LINK),
+This vignette is intended as a companion to [Socolar & Mills 2023](https://www.biorxiv.org/content/10.1101/2023.10.26.564080v1),
 where we provide details of the models and post-processing functionality 
 available in `flocker` in greater detail. Here, we provide illustrative R code 
 for several types of model, demonstrating data simulation, model fitting, 
@@ -217,7 +217,7 @@ rep_constant <- flock(
 ```
 
 ### Multi-season models
-Here we provide code examples to complement the companion publication INSERT LINK.
+Here we provide code examples to complement the [companion publication](https://www.biorxiv.org/content/10.1101/2023.10.26.564080v1).
 For a more complete vignette on multi-season models in `flocker`, see the [multiseason models vignette](https://jsocolar.github.io/flocker/articles/multiseason_models.html).
 
 First, we simulate some data that are valid for use with multi-season models. 
@@ -429,7 +429,7 @@ predictions are desired at sites without observations, it is acceptable to pass
 an array of dummy observations (e.g. all zeros) to `make_flocker_data()` and 
 then to set `history_condition = FALSE` in the call to `get_Z()`.
 
-`get_Z()` accepts several additional arguments that control the way that posterior is obtained and the values returned. See the companion paper INSERT LINK and 
+`get_Z()` accepts several additional arguments that control the way that posterior is obtained and the values returned. See the [companion paper](https://www.biorxiv.org/content/10.1101/2023.10.26.564080v1) and 
 `?get_Z` for details.
 
 ### Posterior prediction
@@ -448,8 +448,7 @@ predict_flocker(rep_varying)
 ```
 
 `predict_flocker()` accepts several additional arguments that control the way 
-that posterior is obtained and the values of returned. See the companion paper 
-INSERT LINK and `?predict_flocker` for details.
+that posterior is obtained and the values of returned. See the [companion paper](https://www.biorxiv.org/content/10.1101/2023.10.26.564080v1) and `?predict_flocker` for details.
 
 ### Model comparison
 The most straightforward way to compare models fit with `flocker` is the 
@@ -459,8 +458,7 @@ difference in the expected log predictive density (elpd) between models. This
 table is a `compare.loo` object from `loo::loo_compare()`. The "leave-one-out" 
 holdouts consist of entire closure-units (single-season models), series 
 (multi-season models), or species (augmented models), not single sampling events 
-(see the companion paper INSERT LINK and 
-[here](https://jsocolar.github.io/likelihoodOccupancy/) for details of why). 
+(see the [companion paper](https://www.biorxiv.org/content/10.1101/2023.10.26.564080v1) and [here](https://jsocolar.github.io/likelihoodOccupancy/) for details of why). 
 
 `loo_compare_flocker()` accepts as input a list of `flockerfit` objects 
 and outputs a model comparison table. For example, we can compare the 
