@@ -109,8 +109,8 @@ that incorportate sophisticated effects structures using simple
 formula-based syntax. <code>flocker</code> is built on R package
 <code>brms</code>, which in turn is a front-end for
 <code>Stan</code>.</p>
-<p>This vignette is intended as a companion to Socolar &amp; Mills 2023
-(INSERT LINK), where we provide details of the models and
+<p>This vignette is intended as a companion to <a href="https://www.biorxiv.org/content/10.1101/2023.10.26.564080v1" class="external-link">Socolar
+&amp; Mills 2023</a>, where we provide details of the models and
 post-processing functionality available in <code>flocker</code> in
 greater detail. Here, we provide illustrative R code for several types
 of model, demonstrating data simulation, model fitting, and model
@@ -326,8 +326,8 @@ the rep-constant mode:</p>
 <div class="section level3">
 <h3 id="multi-season-models">Multi-season models<a class="anchor" aria-label="anchor" href="#multi-season-models"></a>
 </h3>
-<p>Here we provide code examples to complement the companion publication
-INSERT LINK. For a more complete vignette on multi-season models in
+<p>Here we provide code examples to complement the <a href="https://www.biorxiv.org/content/10.1101/2023.10.26.564080v1" class="external-link">companion
+publication</a>. For a more complete vignette on multi-season models in
 <code>flocker</code>, see the <a href="https://jsocolar.github.io/flocker/articles/multiseason_models.html" class="external-link">multiseason
 models vignette</a>.</p>
 <p>First, we simulate some data that are valid for use with multi-season
@@ -537,7 +537,8 @@ observations, it is acceptable to pass an array of dummy observations
 <code><a href="../reference/get_Z.html">get_Z()</a></code>.</p>
 <p><code><a href="../reference/get_Z.html">get_Z()</a></code> accepts several additional arguments that
 control the way that posterior is obtained and the values returned. See
-the companion paper INSERT LINK and <code><a href="../reference/get_Z.html">?get_Z</a></code> for details.</p>
+the <a href="https://www.biorxiv.org/content/10.1101/2023.10.26.564080v1" class="external-link">companion
+paper</a> and <code><a href="../reference/get_Z.html">?get_Z</a></code> for details.</p>
 </div>
 <div class="section level3">
 <h3 id="posterior-prediction">Posterior prediction<a class="anchor" aria-label="anchor" href="#posterior-prediction"></a>
@@ -557,8 +558,8 @@ nondetection, and no corresponding sampling event. For example:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/predict_flocker.html">predict_flocker</a></span><span class="op">(</span><span class="va">rep_varying</span><span class="op">)</span></span></code></pre></div>
 <p><code><a href="../reference/predict_flocker.html">predict_flocker()</a></code> accepts several additional arguments
 that control the way that posterior is obtained and the values of
-returned. See the companion paper INSERT LINK and
-<code><a href="../reference/predict_flocker.html">?predict_flocker</a></code> for details.</p>
+returned. See the <a href="https://www.biorxiv.org/content/10.1101/2023.10.26.564080v1" class="external-link">companion
+paper</a> and <code><a href="../reference/predict_flocker.html">?predict_flocker</a></code> for details.</p>
 </div>
 <div class="section level3">
 <h3 id="model-comparison">Model comparison<a class="anchor" aria-label="anchor" href="#model-comparison"></a>
@@ -571,8 +572,8 @@ log predictive density (elpd) between models. This table is a
 <code>compare.loo</code> object from <code><a href="https://mc-stan.org/loo/reference/loo_compare.html" class="external-link">loo::loo_compare()</a></code>.
 The “leave-one-out” holdouts consist of entire closure-units
 (single-season models), series (multi-season models), or species
-(augmented models), not single sampling events (see the companion paper
-INSERT LINK and <a href="https://jsocolar.github.io/likelihoodOccupancy/" class="external-link">here</a> for
+(augmented models), not single sampling events (see the <a href="https://www.biorxiv.org/content/10.1101/2023.10.26.564080v1" class="external-link">companion
+paper</a> and <a href="https://jsocolar.github.io/likelihoodOccupancy/" class="external-link">here</a> for
 details of why).</p>
 <p><code><a href="../reference/loo_compare_flocker.html">loo_compare_flocker()</a></code> accepts as input a list of
 <code>flockerfit</code> objects and outputs a model comparison table.
