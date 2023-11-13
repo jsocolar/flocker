@@ -24,7 +24,8 @@ checking.
 
 ### Getting started
 To get started, check out our 
-[tutorial vignette, available here](https://jsocolar.github.io/flocker/articles/flocker_tutorial.html). 
+[tutorial vignette, available here](https://jsocolar.github.io/flocker/articles/flocker_tutorial.html) and our
+[introductory paper, available here](https://www.biorxiv.org/content/10.1101/2023.10.26.564080v1). 
 For installation instructions, see below.
 
 ### Installation
@@ -60,9 +61,8 @@ To contribute to `flocker` (very much appreciated!) have a look at existing open
 issues, or open a new issue to discuss.
 
 ### Citing flocker
-Please cite `flocker` as:
-* Socolar, J.B. & Mills, S.C. (2023). "flocker: flexible occupancy estimation in 
-R." R package version XXX, <URL: https://github.com/jsocolar/flocker/>.
+When using `flocker`, please site the [companion manuscript](https://www.biorxiv.org/content/10.1101/2023.10.26.564080v1):
+* Socolar, J.B. & Mills, S.C. (2023). "Introducing flocker: an R package for flexible occupancy modeling via brms and Stan." https://doi.org/10.1101/2023.10.26.564080
 
 Additionally, please consider citing [Stan](https://mc-stan.org/users/citations/)
 and R package [brms](https://mc-stan.org/users/interfaces/brms).
