@@ -588,8 +588,7 @@ fd_augmented <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs, type = "a
 sd <- simulate_flocker_data(n_season = 3, multiseason = "colex", multi_init = "explicit")
 fd_multi <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs, type = "multi")
 
-# Test 1: All parameters are correct
-test_that("validate_flock_params works with all valid parameters", {
+test_that("validate_flock_params works as expected", {
   f_occ <- ~ uc1
   f_det <- ~ uc1 + ec1
   f_col <- NULL
@@ -664,11 +663,6 @@ test_that("validate_flock_params works with all valid parameters", {
   expect_silent(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
 })
-
-
-
-
-
 
 test_that("formula_error works", {
   result <- formula_error("x")
