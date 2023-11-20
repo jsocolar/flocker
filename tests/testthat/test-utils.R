@@ -516,6 +516,160 @@ test_that("emission_likelihood function returns expected output", {
   expect_error(emission_likelihood(1, obs1, det_invalid3))
 })
 
+
+test_that("Z_from_emission returns correct values for valid inputs", {
+  el0 <- c(0.1, 0.2, 0.3)
+  el1 <- c(0.7, 0.8, 0.9)
+  psi_unconditional <- c(0.4, 0.5, 0.6)
+  expected_output <- psi_unconditional * el1 / 
+    (psi_unconditional * el1 + (1 - psi_unconditional) * el0)
+  expect_equal(Z_from_emission(el0, el1, psi_unconditional), expected_output)
+})
+
+test_that("Z_from_emission handles zeros and ones correctly", {
+  el0 <- c(1, 0, 0)
+  el1 <- c(0, 1, 1)
+  psi_unconditional <- c(0, 1, 0.5)
+  expected_output <- c(0, 1, 1) # When el0 is 0 and el1 is 1, the output should be 1
+  expect_equal(Z_from_emission(el0, el1, psi_unconditional), expected_output)
+})
+
+test_that("Z_from_emission raises error with vectors of different lengths", {
+  el0 <- c(0.1, 0.2)
+  el1 <- c(0.7, 0.8, 0.9)
+  psi_unconditional <- c(0.4, 0.5)
+  expect_error(Z_from_emission(el0, el1, psi_unconditional))
+})
+
+test_that("Z_from_emission raises error with NA values in inputs", {
+  el0 <- c(0.1, NA, 0.3)
+  el1 <- c(0.7, 0.8, 0.9)
+  psi_unconditional <- c(0.4, 0.5, 0.6)
+  expect_error(Z_from_emission(el0, el1, psi_unconditional))
+})
+
+test_that("Z_from_emission raises error with negative values in inputs", {
+  el0 <- c(0.1, -0.2, 0.3)
+  el1 <- c(0.7, 0.8, 0.9)
+  psi_unconditional <- c(0.4, 0.5, 0.6)
+  expect_error(Z_from_emission(el0, el1, psi_unconditional))
+})
+
+test_that("Z_from_emission raises error with values greater than one in inputs", {
+  el0 <- c(0.1, 0.2, 0.3)
+  el1 <- c(1.1, 0.8, 0.9) # 1.1 is greater than 1
+  psi_unconditional <- c(0.4, 0.5, 2.0) # 2.0 is greater than 1
+  expect_error(Z_from_emission(el0, el1, psi_unconditional))
+})
+
+test_that("Z_from_emission handles equal emission likelihoods correctly", {
+  el0 <- c(0.5, 0.5, 0.5)
+  el1 <- c(0.5, 0.5, 0.5)
+  psi_unconditional <- c(0.4, 0.5, 0.6)
+  expected_output <- psi_unconditional / (psi_unconditional + (1 - psi_unconditional)) # Simplified formula for equal el0 and el1
+  expect_equal(Z_from_emission(el0, el1, psi_unconditional), expected_output)
+})
+
+test_that("Z_from_emission handles scalar inputs correctly", {
+  el0 <- 0.2
+  el1 <- 0.8
+  psi_unconditional <- 0.5
+  expected_output <- 0.5 * 0.8 / (0.5 * 0.8 + (1 - 0.5) * 0.2)
+  expect_equal(Z_from_emission(el0, el1, psi_unconditional), expected_output)
+})
+
+sd <- simulate_flocker_data()
+fd_single <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs)
+fd_single_C <- make_flocker_data(sd$obs, sd$unit_covs)
+
+sd <- simulate_flocker_data(augmented = TRUE)
+fd_augmented <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs, type = "augmented", n_aug = 10)
+
+sd <- simulate_flocker_data(n_season = 3, multiseason = "colex", multi_init = "explicit")
+fd_multi <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs, type = "multi")
+
+# Test 1: All parameters are correct
+test_that("validate_flock_params works with all valid parameters", {
+  f_occ <- ~ uc1
+  f_det <- ~ uc1 + ec1
+  f_col <- NULL
+  f_ex <- NULL
+  f_auto <- NULL
+  flocker_data <- fd_single
+  multiseason <- NULL
+  multi_init <- NULL
+  augmented <- FALSE
+  threads <- NULL
+  
+  expect_silent(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
+  
+  
+  f_occ <- ~ uc1 + ec1
+  expect_error(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
+  
+  f_occ <- y ~ uc1
+  expect_error(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
+  
+  flocker_data <- fd_single_C
+  f_occ <- ~ uc1
+  f_det <- ~ uc1
+  
+  expect_silent(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                     f_col, f_ex, multi_init, f_auto, augmented, threads))
+  
+  
+  flocker_data <- fd_augmented
+  f_det <- ~ uc1 + ec1
+  augmented <- TRUE
+  
+  expect_silent(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
+  
+  
+  flocker_data <- fd_multi
+  expect_error(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
+  augmented <- FALSE
+  expect_error(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                     f_col, f_ex, multi_init, f_auto, augmented, threads))
+  multiseason <- "colex"
+  multi_init <- "explicit"
+  expect_error(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                     f_col, f_ex, multi_init, f_auto, augmented, threads))
+  f_col <- ~ uc1
+  expect_error(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                     f_col, f_ex, multi_init, f_auto, augmented, threads))
+  f_ex <- ~ uc1
+  
+  expect_silent(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
+  
+  multiseason <- "autologistic"
+  multi_init <- "equilibrium"
+  
+  expect_error(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                     f_col, f_ex, multi_init, f_auto, augmented, threads))
+  f_auto <- ~ uc1
+  expect_error(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                     f_col, f_ex, multi_init, f_auto, augmented, threads))
+  f_auto <- NULL
+  f_occ <- NULL
+  f_ex <- NULL
+  expect_error(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                     f_col, f_ex, multi_init, f_auto, augmented, threads))
+  f_auto <- ~ uc1
+  expect_silent(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                     f_col, f_ex, multi_init, f_auto, augmented, threads))
+})
+
+
+
+
+
+
 test_that("formula_error works", {
   result <- formula_error("x")
   expect_is(result, "character")
