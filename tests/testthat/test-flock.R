@@ -31,18 +31,18 @@ test_that("flocker_stancode works as expected", {
   
   
   f_occ <- ~ uc1 + ec1
-  expect_error(flocker_stancode(f_occ, f_det, flocker_data, multiseason, 
+  expect_error(flocker_stancode(f_occ, f_det, flocker_data, data2, multiseason, 
                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
   
   f_occ <- y ~ uc1
-  expect_error(flocker_stancode(f_occ, f_det, flocker_data, multiseason, 
+  expect_error(flocker_stancode(f_occ, f_det, flocker_data, data2, multiseason, 
                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
   
   flocker_data <- fd_single_C
   f_occ <- ~ uc1
   f_det <- ~ uc1
   
-  expect_type(flocker_stancode(f_occ, f_det, flocker_data, multiseason, 
+  expect_type(flocker_stancode(f_occ, f_det, flocker_data, data2, multiseason, 
                                       f_col, f_ex, multi_init, f_auto, augmented, threads),
               "character")
   
@@ -51,45 +51,45 @@ test_that("flocker_stancode works as expected", {
   f_det <- ~ uc1 + ec1
   augmented <- TRUE
   
-  expect_type(flocker_stancode(f_occ, f_det, flocker_data, multiseason, 
+  expect_type(flocker_stancode(f_occ, f_det, flocker_data, data2, multiseason, 
                                       f_col, f_ex, multi_init, f_auto, augmented, threads),
               "character")
   
   
   flocker_data <- fd_multi
-  expect_error(flocker_stancode(f_occ, f_det, flocker_data, multiseason, 
+  expect_error(flocker_stancode(f_occ, f_det, flocker_data, data2, multiseason, 
                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
   augmented <- FALSE
-  expect_error(flocker_stancode(f_occ, f_det, flocker_data, multiseason, 
+  expect_error(flocker_stancode(f_occ, f_det, flocker_data, data2, multiseason, 
                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
   multiseason <- "colex"
   multi_init <- "explicit"
-  expect_error(flocker_stancode(f_occ, f_det, flocker_data, multiseason, 
+  expect_error(flocker_stancode(f_occ, f_det, flocker_data, data2, multiseason, 
                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
   f_col <- ~ uc1
-  expect_error(flocker_stancode(f_occ, f_det, flocker_data, multiseason, 
+  expect_error(flocker_stancode(f_occ, f_det, flocker_data, data2, multiseason, 
                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
   f_ex <- ~ uc1
   
-  expect_type(flocker_stancode(f_occ, f_det, flocker_data, multiseason, 
+  expect_type(flocker_stancode(f_occ, f_det, flocker_data, data2, multiseason, 
                                       f_col, f_ex, multi_init, f_auto, augmented, threads),
               "character")
   
   multiseason <- "autologistic"
   multi_init <- "equilibrium"
   
-  expect_error(flocker_stancode(f_occ, f_det, flocker_data, multiseason, 
+  expect_error(flocker_stancode(f_occ, f_det, flocker_data, data2, multiseason, 
                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
   f_auto <- ~ uc1
-  expect_error(flocker_stancode(f_occ, f_det, flocker_data, multiseason, 
+  expect_error(flocker_stancode(f_occ, f_det, flocker_data, data2, multiseason, 
                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
   f_auto <- NULL
   f_occ <- NULL
   f_ex <- NULL
-  expect_error(flocker_stancode(f_occ, f_det, flocker_data, multiseason, 
+  expect_error(flocker_stancode(f_occ, f_det, flocker_data, data2, multiseason, 
                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
   f_auto <- ~ uc1
-  expect_type(flocker_stancode(f_occ, f_det, flocker_data, multiseason, 
+  expect_type(flocker_stancode(f_occ, f_det, flocker_data, data2, multiseason, 
                                       f_col, f_ex, multi_init, f_auto, augmented, threads),
               "character")
 
