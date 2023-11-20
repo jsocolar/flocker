@@ -49,8 +49,71 @@ test_that("array utils work properly", {
   expect_error(stack_matrix(testarray, 2))
   expect_equal(stack_matrix(testmat, 2), matrix(c(NA, 1, NA, 1, 2, 3, 2, 3), ncol = 2))
   expect_equivalent(as.matrix(stack_matrix(testdf, 2)), matrix(c(NA, 1, NA, 1, 2, 3, 2, 3), ncol = 2))
-})
+  
+  # new_matrix
+  m <- matrix(1:4, nrow = 2, ncol = 2)
+  new_m <- new_matrix(m)
+  expect_true(is.matrix(new_m))
+  expect_equal(dim(new_m), dim(m))
+  expect_true(all(is.na(new_m)))
+  
+  data_vector <- c(5, 6, 7, 8)
+  new_m <- new_matrix(m, data = data_vector)
+  expect_equal(new_m, matrix(data_vector, nrow = 2, ncol = 2))
+  
+  new_m <- new_matrix(m, data = data_vector, byrow = TRUE)
+  expect_equal(new_m, matrix(data_vector, nrow = 2, ncol = 2, byrow = TRUE))
+  
+  m <- matrix(1:9, nrow = 3, ncol = 3)
+  data_vector <- 1:2 # insufficient length
+  new_m <- new_matrix(m, data = data_vector)
+  expected_matrix <- matrix(rep(data_vector, length.out = 9), nrow = 3, ncol = 3)
+  expect_equal(new_m, expected_matrix)
+  
+  m <- matrix(1:4, nrow = 2, ncol = 2)
+  data_vector <- 1:5 # excess length
+  expect_warning(new_matrix(m, data = data_vector))
+  
+  data_vector <- c("a", "b", "c", "d")
+  new_m <- new_matrix(m, data = data_vector)
+  expect_equal(new_m, matrix(data_vector, nrow = 2, ncol = 2))
+  
+  m <- matrix(numeric(0), nrow = 0, ncol = 0)
+  new_m <- new_matrix(m)
+  expect_equal(dim(new_m), c(0, 0))
 
+  expect_error(new_matrix(10))
+  expect_error(new_matrix(NULL))
+  expect_error(new_matrix(NA))
+  
+  m <- matrix(1:4, nrow = 2, ncol = 2, dimnames = list(c("r1", "r2"), c("c1", "c2")))
+  new_m <- new_matrix(m)
+  expect_false(identical(dimnames(new_m), dimnames(m)))
+  expect_true(is.null(dimnames(new_m)))
+  
+  # new array
+  m <- array(1:8, dim = c(2, 2, 2))
+  new_a <- new_array(m)
+  expect_true(is.array(new_a))
+  expect_equal(dim(new_a), dim(m))
+  expect_true(all(is.na(new_a)))
+  
+  data_vector <- c(9, 10, 11, 12, 13, 14, 15, 16)
+  new_a <- new_array(m, data = data_vector)
+  expect_equal(new_a, array(data_vector, dim = c(2, 2, 2)))
+  
+  m <- array(1:27, dim = c(3, 3, 3))
+  data_vector <- 1:5 # insufficient length
+  new_a <- new_array(m, data = data_vector)
+  expected_array <- array(rep(data_vector, length.out = 27), dim = c(3, 3, 3))
+  expect_equal(new_a, expected_array)
+  
+  non_array_input <- 10
+  expect_error(new_array(non_array_input))
+  
+  expect_error(new_array(NULL))
+  expect_error(new_array(NA))
+})
 
 test_that("bookkeeping works properly", {
   # flocker_col_names
@@ -168,6 +231,244 @@ test_that("type_flocker_fit function returns expected string", {
 })
 
 
+test_that("get_positions works properly", {
+  
+  # single-season rep-varying
+  sd <- simulate_flocker_data()
+  fd <- make_flocker_data(
+    sd$obs, sd$unit_covs, sd$event_covs, 
+    type = "single")
+  ps <- get_positions(fd)
+  expect_true(
+    all.equal(
+      new_array(sd$event_covs$ec1, fd$data$ec1[ps]),
+      sd$event_covs$ec1,
+      check.attributes = FALSE
+    )
+  )
+  ps2 <- get_positions(fd, unit_level = TRUE)
+  expect_true(
+    all.equal(
+      fd$data$uc1[ps2],
+      sd$unit_covs$uc1,
+      check.attributes = FALSE
+    )
+  )
+  
+  # single-season rep-varying with missingness
+  sd <- simulate_flocker_data(ragged_rep = TRUE)
+  fd <- make_flocker_data(
+    sd$obs, sd$unit_covs, sd$event_covs, 
+    type = "single")
+  ps <- get_positions(fd)
+  expect_true(
+    all.equal(
+      new_array(sd$event_covs$ec1, fd$data$ec1[ps]),
+      sd$event_covs$ec1,
+      check.attributes = FALSE
+    )
+  )
+  ps2 <- get_positions(fd, unit_level = TRUE)
+  expect_true(
+    all.equal(
+      fd$data$uc1[ps2],
+      sd$unit_covs$uc1,
+      check.attributes = FALSE
+    )
+  )
+  
+  # single_season rep-constant
+  sd <- simulate_flocker_data(rep_constant = TRUE)
+  fd <- make_flocker_data(
+    sd$obs, sd$unit_covs, 
+    type = "single")
+  ps <- get_positions(fd)
+  expect_true(
+    all.equal(
+      fd$data$uc1[ps[,1]],
+      sd$unit_covs$uc1,
+      check.attributes = FALSE
+    )
+  )
+  ps2 <- get_positions(fd, unit_level = TRUE)
+  expect_true(
+    all.equal(
+      fd$data$uc1[ps2],
+      sd$unit_covs$uc1,
+      check.attributes = FALSE
+    )
+  )
+  
+  # single-season rep-constant with missingness
+  sd <- simulate_flocker_data(rep_constant = TRUE, ragged_rep = TRUE)
+  fd <- make_flocker_data(
+    sd$obs, sd$unit_covs, 
+    type = "single")
+  ps <- get_positions(fd)
+  expect_true(
+    all.equal(
+      fd$data$uc1[ps[,1]],
+      sd$unit_covs$uc1,
+      check.attributes = FALSE
+    )
+  )
+  ps2 <- get_positions(fd, unit_level = TRUE)
+  expect_true(
+    all.equal(
+      fd$data$uc1[ps2],
+      sd$unit_covs$uc1,
+      check.attributes = FALSE
+    )
+  )
+  
+  # augmented
+  sd <- simulate_flocker_data(augmented = TRUE)
+  fd <- make_flocker_data(
+    sd$obs, sd$unit_covs, sd$event_covs, 
+    type = "augmented", n_aug = 1)
+  ps <- get_positions(fd)
+  expect_true(
+    all.equal(
+      new_array(sd$event_covs$ec1, fd$data$ec1[ps]),
+      sd$event_covs$ec1,
+      check.attributes = FALSE
+    )
+  )
+  ps2 <- get_positions(fd, unit_level = TRUE)
+  expect_true(
+    all.equal(
+      fd$data$ec1[ps2],
+      rep(sd$event_covs$ec1[,1], dim(sd$obs)[3]+1),
+      check.attributes = FALSE
+    )
+  )
+  
+  # augmented with missingness
+  sd <- simulate_flocker_data(augmented = TRUE, ragged_rep = TRUE)
+  fd <- make_flocker_data(
+    sd$obs, sd$unit_covs, sd$event_covs, 
+    type = "augmented", n_aug = 1)
+  ps <- get_positions(fd)
+  expect_true(
+    all.equal(
+      new_array(sd$event_covs$ec1, fd$data$ec1[ps]),
+      sd$event_covs$ec1,
+      check.attributes = FALSE
+    )
+  )
+  ps2 <- get_positions(fd, unit_level = TRUE)
+  expect_true(
+    all.equal(
+      fd$data$ec1[ps2],
+      rep(sd$event_covs$ec1[,1], dim(sd$obs)[3]+1),
+      check.attributes = FALSE
+    )
+  )
+  
+  
+  # multiseason
+  sd <- simulate_flocker_data(
+    n_pt = 10,
+    n_sp = 1,
+    n_season = 8,
+    multiseason = "colex", 
+    multi_init = "explicit"
+  )
+  fd <- make_flocker_data(
+    sd$obs, sd$unit_covs, sd$event_covs, 
+    type = "multi")
+  ps <- get_positions(fd)
+  expect_true(
+    all.equal(
+      new_array(sd$event_covs$ec1, fd$data$ec1[ps]),
+      sd$event_covs$ec1,
+      check.attributes = FALSE
+    )
+  )
+  ps2 <- get_positions(fd, unit_level = TRUE)
+  unit_covs_all <- sd$unit_covs[[1]]$uc1
+  for(i in 2:8){
+    unit_covs_all <- c(unit_covs_all, sd$unit_covs[[i]]$uc1)
+  }
+  expect_true(
+    all.equal(
+      fd$data$uc1[ps2],
+      unit_covs_all,
+      check.attributes = FALSE
+    )
+  )  
+  
+  
+  # multiseason with missingness
+  sd <- simulate_flocker_data(
+    n_pt = 10,
+    n_sp = 1,
+    n_season = 8,
+    multiseason = "colex", 
+    multi_init = "explicit",
+    ragged_rep = TRUE,
+    missing_seasons = TRUE
+  )
+  fd <- make_flocker_data(
+    sd$obs, sd$unit_covs, sd$event_covs, 
+    type = "multi")
+  ps <- get_positions(fd)
+  expect_true(
+    all.equal(
+      new_array(sd$event_covs$ec1, fd$data$ec1[ps]),
+      sd$event_covs$ec1,
+      check.attributes = FALSE
+    )
+  )
+  ps2 <- get_positions(fd, unit_level = TRUE)
+  # can't use unit covs here because they aren't NA in all relevant locations
+  temp <- new_array(sd$obs[,1,], fd$data$ff_y[ps2])
+  temp[temp == -99] <- NA
+  expect_true(
+    all.equal(
+      temp,
+      sd$obs[,1,],
+      check.attributes = FALSE
+    )
+  )
+  
+  # multiseason with missingness for the whole first season
+  sd <- simulate_flocker_data(
+    n_pt = 10,
+    n_sp = 1,
+    n_season = 8,
+    multiseason = "colex", 
+    multi_init = "explicit",
+    ragged_rep = TRUE,
+    missing_seasons = TRUE
+  )
+  sd$obs[,,1] <- NA
+  
+  fd <- make_flocker_data(
+    sd$obs, sd$unit_covs, sd$event_covs, 
+    type = "multi")
+  ps <- get_positions(fd)
+  expect_true(
+    all.equal(
+      new_array(sd$obs, fd$data$ff_y[ps]),
+      sd$obs,
+      check.attributes = FALSE
+    )
+  )
+  ps2 <- get_positions(fd, unit_level = TRUE)
+  # can't use unit covs here because they aren't NA in all relevant locations
+  temp <- new_array(sd$obs[,1,], fd$data$ff_y[ps2])
+  temp[temp == -99] <- NA
+  expect_true(
+    all.equal(
+      temp,
+      sd$obs[,1,],
+      check.attributes = FALSE
+    )
+  )
+})
+
+
 test_that("emission_likelihood function returns expected output", {
   # Test cases for state 0
   obs1 <- matrix(c(0, 0, 0, 0, NA), nrow = 1)
@@ -214,6 +515,160 @@ test_that("emission_likelihood function returns expected output", {
   expect_error(emission_likelihood(0, obs1, det_invalid3))
   expect_error(emission_likelihood(1, obs1, det_invalid3))
 })
+
+
+test_that("Z_from_emission returns correct values for valid inputs", {
+  el0 <- c(0.1, 0.2, 0.3)
+  el1 <- c(0.7, 0.8, 0.9)
+  psi_unconditional <- c(0.4, 0.5, 0.6)
+  expected_output <- psi_unconditional * el1 / 
+    (psi_unconditional * el1 + (1 - psi_unconditional) * el0)
+  expect_equal(Z_from_emission(el0, el1, psi_unconditional), expected_output)
+})
+
+test_that("Z_from_emission handles zeros and ones correctly", {
+  el0 <- c(1, 0, 0)
+  el1 <- c(0, 1, 1)
+  psi_unconditional <- c(0, 1, 0.5)
+  expected_output <- c(0, 1, 1) # When el0 is 0 and el1 is 1, the output should be 1
+  expect_equal(Z_from_emission(el0, el1, psi_unconditional), expected_output)
+})
+
+test_that("Z_from_emission raises error with vectors of different lengths", {
+  el0 <- c(0.1, 0.2)
+  el1 <- c(0.7, 0.8, 0.9)
+  psi_unconditional <- c(0.4, 0.5)
+  expect_error(Z_from_emission(el0, el1, psi_unconditional))
+})
+
+test_that("Z_from_emission raises error with NA values in inputs", {
+  el0 <- c(0.1, NA, 0.3)
+  el1 <- c(0.7, 0.8, 0.9)
+  psi_unconditional <- c(0.4, 0.5, 0.6)
+  expect_error(Z_from_emission(el0, el1, psi_unconditional))
+})
+
+test_that("Z_from_emission raises error with negative values in inputs", {
+  el0 <- c(0.1, -0.2, 0.3)
+  el1 <- c(0.7, 0.8, 0.9)
+  psi_unconditional <- c(0.4, 0.5, 0.6)
+  expect_error(Z_from_emission(el0, el1, psi_unconditional))
+})
+
+test_that("Z_from_emission raises error with values greater than one in inputs", {
+  el0 <- c(0.1, 0.2, 0.3)
+  el1 <- c(1.1, 0.8, 0.9) # 1.1 is greater than 1
+  psi_unconditional <- c(0.4, 0.5, 2.0) # 2.0 is greater than 1
+  expect_error(Z_from_emission(el0, el1, psi_unconditional))
+})
+
+test_that("Z_from_emission handles equal emission likelihoods correctly", {
+  el0 <- c(0.5, 0.5, 0.5)
+  el1 <- c(0.5, 0.5, 0.5)
+  psi_unconditional <- c(0.4, 0.5, 0.6)
+  expected_output <- psi_unconditional / (psi_unconditional + (1 - psi_unconditional)) # Simplified formula for equal el0 and el1
+  expect_equal(Z_from_emission(el0, el1, psi_unconditional), expected_output)
+})
+
+test_that("Z_from_emission handles scalar inputs correctly", {
+  el0 <- 0.2
+  el1 <- 0.8
+  psi_unconditional <- 0.5
+  expected_output <- 0.5 * 0.8 / (0.5 * 0.8 + (1 - 0.5) * 0.2)
+  expect_equal(Z_from_emission(el0, el1, psi_unconditional), expected_output)
+})
+
+sd <- simulate_flocker_data()
+fd_single <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs)
+fd_single_C <- make_flocker_data(sd$obs, sd$unit_covs)
+
+sd <- simulate_flocker_data(augmented = TRUE)
+fd_augmented <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs, type = "augmented", n_aug = 10)
+
+sd <- simulate_flocker_data(n_season = 3, multiseason = "colex", multi_init = "explicit")
+fd_multi <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs, type = "multi")
+
+# Test 1: All parameters are correct
+test_that("validate_flock_params works with all valid parameters", {
+  f_occ <- ~ uc1
+  f_det <- ~ uc1 + ec1
+  f_col <- NULL
+  f_ex <- NULL
+  f_auto <- NULL
+  flocker_data <- fd_single
+  multiseason <- NULL
+  multi_init <- NULL
+  augmented <- FALSE
+  threads <- NULL
+  
+  expect_silent(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
+  
+  
+  f_occ <- ~ uc1 + ec1
+  expect_error(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
+  
+  f_occ <- y ~ uc1
+  expect_error(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
+  
+  flocker_data <- fd_single_C
+  f_occ <- ~ uc1
+  f_det <- ~ uc1
+  
+  expect_silent(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                     f_col, f_ex, multi_init, f_auto, augmented, threads))
+  
+  
+  flocker_data <- fd_augmented
+  f_det <- ~ uc1 + ec1
+  augmented <- TRUE
+  
+  expect_silent(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
+  
+  
+  flocker_data <- fd_multi
+  expect_error(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
+  augmented <- FALSE
+  expect_error(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                     f_col, f_ex, multi_init, f_auto, augmented, threads))
+  multiseason <- "colex"
+  multi_init <- "explicit"
+  expect_error(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                     f_col, f_ex, multi_init, f_auto, augmented, threads))
+  f_col <- ~ uc1
+  expect_error(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                     f_col, f_ex, multi_init, f_auto, augmented, threads))
+  f_ex <- ~ uc1
+  
+  expect_silent(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
+  
+  multiseason <- "autologistic"
+  multi_init <- "equilibrium"
+  
+  expect_error(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                     f_col, f_ex, multi_init, f_auto, augmented, threads))
+  f_auto <- ~ uc1
+  expect_error(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                     f_col, f_ex, multi_init, f_auto, augmented, threads))
+  f_auto <- NULL
+  f_occ <- NULL
+  f_ex <- NULL
+  expect_error(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                     f_col, f_ex, multi_init, f_auto, augmented, threads))
+  f_auto <- ~ uc1
+  expect_silent(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
+                                     f_col, f_ex, multi_init, f_auto, augmented, threads))
+})
+
+
+
+
+
 
 test_that("formula_error works", {
   result <- formula_error("x")
