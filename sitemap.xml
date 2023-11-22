@@ -298,6 +298,12 @@
     <loc>/reference/params_by_type.html</loc>
   </url>
   <url>
+    <loc>/reference/posterior_epred_occupancy_single_C.html</loc>
+  </url>
+  <url>
+    <loc>/reference/posterior_predict_occupancy_single_C.html</loc>
+  </url>
+  <url>
     <loc>/reference/predict_flocker.html</loc>
   </url>
   <url>
