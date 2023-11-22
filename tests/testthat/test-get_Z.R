@@ -107,24 +107,20 @@ test_that("new_data works as expected", {
 })
 
 
-
-
-
-# Test 1: Test that the function throws an error for incorrect input types
 test_that("incorrect types cause an error", {
-  expect_error(forward_sim("init", c(0.5, NA), c(0.5, NA)))
-  expect_error(forward_sim(0.5, "colo", c(0.5, NA)))
-  expect_error(forward_sim(0.5, c(0.5, NA), "ex"))
+  expect_error(forward_sim("init", c(0.5, 0.5), c(0.5, 0.5)))
+  expect_error(forward_sim(0.5, "colo", c(0.5, 0.5)))
+  expect_error(forward_sim(0.5, c(0.5, 0.5), "ex"))
 })
 
-# Test 2: Test that the function throws an error for negative probabilities
 test_that("negative probabilities cause an error", {
-  expect_error(forward_sim(-0.1, c(0.5, NA), c(0.5, NA)))
-  expect_error(forward_sim(0.5, c(-0.5, NA), c(0.5, NA)))
-  expect_error(forward_sim(0.5, c(0.5, NA), c(-0.5, NA)))
+  expect_silent(forward_sim(.4, c(.5, .5), c(.5, .5)))
+  expect_error(forward_sim(.4, c(.5, NA), c(.5, .5)))
+  expect_error(forward_sim(-0.1, c(0.5, .5), c(0.5, .5)))
+  expect_error(forward_sim(0.5, c(.5, -0.5), c(.5, 0.5)))
+  expect_error(forward_sim(0.5, c(NA, 0.5), c(NA, -0.5)))
 })
 
-# Test 3: Test that the function returns correct results for valid inputs
 test_that("correct inputs produce correct outputs", {
   # Simple case with no NA values and no sampling
   expect_equal(forward_sim(0.5, c(0.5, 0.5), c(0.5, 0.5)), c(0.5, 0.5))
@@ -134,17 +130,12 @@ test_that("correct inputs produce correct outputs", {
   expect_length(result, 2)
 })
 
-# Test 4: Test edge cases
 test_that("edge cases are handled", {
   # Case with all NA values should return NA
   expect_error(forward_sim(NA, c(NA, NA), c(NA, NA)))
   # Case with empty vectors
   expect_error(forward_sim(0.5, numeric(0), numeric(0)))
 })
-
-
-
-
 
 # Test for forward_backward_algorithm function
 test_that("forward_backward_algorithm returns correct results", {

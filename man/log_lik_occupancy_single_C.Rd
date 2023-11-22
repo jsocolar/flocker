@@ -3,12 +3,12 @@
 \name{log_lik_occupancy_single_C}
 \alias{log_lik_occupancy_single_C}
 \title{A log-likelihood function for the rep-constant occupancy model, sufficient for
-\code{brms::loo(vc_fit)} to work.}
+\code{brms::loo()} to work.}
 \usage{
 log_lik_occupancy_single_C(i, prep)
 }
 \arguments{
-\item{i}{Posterior iteration}
+\item{i}{Observation id}
 
 \item{prep}{Output of \code{brms::prepare_predictions}. See brms custom families
 vignette at 
@@ -19,5 +19,5 @@ The log-likelihood for observation i
 }
 \description{
 A log-likelihood function for the rep-constant occupancy model, sufficient for
-\code{brms::loo(vc_fit)} to work.
+\code{brms::loo()} to work.
 }

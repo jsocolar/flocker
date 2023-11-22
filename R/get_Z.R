@@ -416,6 +416,10 @@ forward_sim <- function(init, colo, ex, sample = FALSE){
   assertthat::assert_that(is.numeric(init))
   assertthat::assert_that(length(init) == 1)
   assertthat::assert_that(init >= 0 & init <= 1)
+  assertthat::assert_that(all(colo >= 0, na.rm = TRUE))
+  assertthat::assert_that(all(colo <= 1, na.rm = TRUE))
+  assertthat::assert_that(all(ex >= 0, na.rm = TRUE))
+  assertthat::assert_that(all(ex <= 1, na.rm = TRUE))
   
   out <- rep(NA, length_out)
   if(sample){
