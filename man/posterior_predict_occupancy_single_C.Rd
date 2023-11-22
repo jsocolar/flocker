@@ -13,6 +13,10 @@ posterior_predict_occupancy_single_C(i, prep, ...)
 \item{prep}{Output of \code{brms::prepare_predictions}. See brms custom 
 families vignette at 
 https://cran.r-project.org/web/packages/brms/vignettes/brms_customfamilies.html}
+
+\item{...}{unused additional arguments. See brms custom 
+families vignette at 
+https://cran.r-project.org/web/packages/brms/vignettes/brms_customfamilies.html}
 }
 \value{
 Posterior predictions
