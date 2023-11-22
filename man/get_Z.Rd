@@ -33,7 +33,8 @@ or bernoulli samples from those probabilities (TRUE)}
 \item{new_data}{Optional new data at which to predict the Z matrix. Can be 
 the output of `make_flocker_data` or the `unit_covs` input to 
 `make_flocker_data` provided that `history_condition` is `FALSE` and the 
-occupancy model is for a single season.}
+occupancy model is a single-season model (rep-constant, rep-varying, or
+data-augmented).}
 
 \item{allow_new_levels}{allow new levels for random effect terms in `new_data`?
 Will error if set to `FALSE` and new levels are provided in `new_data`.}

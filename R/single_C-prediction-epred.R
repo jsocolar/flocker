@@ -4,6 +4,9 @@
 #' @param prep Output of \code{brms::prepare_predictions}. See brms custom 
 #' families vignette at 
 #' https://cran.r-project.org/web/packages/brms/vignettes/brms_customfamilies.html
+#' @param ... unused additional arguments. See brms custom 
+#' families vignette at 
+#' https://cran.r-project.org/web/packages/brms/vignettes/brms_customfamilies.html
 #' @return Posterior predictions
 posterior_predict_occupancy_single_C <- function(i, prep, ...) {
   mu <- brms::get_dpar(prep, "mu", i = i)
