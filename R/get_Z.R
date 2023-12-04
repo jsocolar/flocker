@@ -73,7 +73,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
       }
     }
   } else { # history_condition is FALSE
-    use_components <- components = c("occ", "col", "ex", "auto", "Omega")
+    use_components <- c("occ", "col", "ex", "auto", "Omega")
     obs <- NULL
   }
   
