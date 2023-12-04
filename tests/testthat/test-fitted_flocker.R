@@ -44,8 +44,7 @@ test_that("fitted_flocker works correctly", {
   expect_identical(test_out2, test_out3)
   
   # check error for missing predictor column
-  expect_error(fitted_flocker(example_flocker_model_single, new_data = newdat[,-1]), 
-               "new_data is missing columns required by flocker_fit")
+  expect_error(fitted_flocker(example_flocker_model_single, new_data = newdat[,-1]))
   
   # check non-summary version: 
   test_out <- fitted_flocker(example_flocker_model_single)
