@@ -55,6 +55,8 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
   }
   
   if(history_condition) {
+    use_components <- c("occ", "det", "col", "ex", "auto", "Omega")
+    
     if(lik_type != "single_C"){
       if(is.null(new_data)){
         gp <- get_positions(flocker_fit)
@@ -71,24 +73,26 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
       }
     }
   } else { # history_condition is FALSE
+    use_components <- components = c("occ", "col", "ex", "auto", "Omega")
     obs <- NULL
   }
   
   if (lik_type %in% c("single")) {
     lps <- fitted_flocker(
-      flocker_fit, draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
+      flocker_fit, components = use_components, draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
       sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
     )
     Z <- get_Z_single(lps, sample, history_condition, obs)
   } else if (lik_type == "single_C") {
     lps <- fitted_flocker(
-      flocker_fit, draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
+      flocker_fit, components = use_components, draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
       sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
     )
     Z <- get_Z_single_C(lps, sample, history_condition, obs)
   } else if (lik_type == "augmented") {
     lps <- fitted_flocker(
       flocker_fit,
+      components = use_components, 
       draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
       sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
     )
