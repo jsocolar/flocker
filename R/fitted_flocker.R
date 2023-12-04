@@ -125,23 +125,12 @@ fitted_flocker <- function(
   
   old_data <- flocker_fit$data
   
-  # format new_data: add necessary flocker cols to data frame
   if(is.null(new_data)) { # new data not provided
     new_data_fmtd <- old_data
   } else if(is_flocker_data(new_data)) {
     new_data_fmtd <- new_data$data
   } else {
-    # add cols to avoid error
-    col_string <- "^ff_y$|^ff_Q$|^ff_n_unit$|^ff_unit|^ff_n_rep$|^ff_rep_index|^ff_n_series|^ff_series|^ff_n_year|^ff_year|^ff_series_year"
-    flocker_cols <- flocker_fit$data[grepl(col_string, names(flocker_fit$data))]
-    extra_cols <- which(!(names(flocker_cols) %in% names(new_data)))
-    if(length(extra_cols) == 0) {
-      new_data_fmtd <- new_data
-    } else {
-      new_data_fmtd <- cbind(new_data, 
-                             do.call(rbind, replicate(nrow(new_data), flocker_fit$data[1, extra_cols], F)), 
-                             row.names=NULL) 
-    }
+    new_data_fmtd <- new_data
   }
   
   # Handle models fitted via 0 + Intercept syntax with newdata
@@ -151,66 +140,78 @@ fitted_flocker <- function(
     new_data_fmtd$Intercept <- 1
   }
   
-  assertthat::assert_that(
-    all(names(flocker_fit$data) %in% names(new_data_fmtd)),
-    msg = "new_data is missing columns required by flocker_fit (some covariates are missing or misnamed)"
-  )
+  f_form <- flocker_fit$formula
   
   component_list <- list()
   
   if("occ" %in% use_components) {
-    linpred_occ <- t(brms::posterior_linpred(flocker_fit, dpar = "occ", 
-                                             draw_ids = draw_ids, 
-                                             newdata = new_data_fmtd, 
-                                             re_formula = re_formula, 
-                                             allow_new_levels = allow_new_levels,
-                                             sample_new_levels = sample_new_levels))
+    occ_covs <- all.vars(f_form[[2]]$occ[[3]])
+    linpred_occ <- t(
+      brms::posterior_linpred(
+        flocker_fit, dpar = "occ", draw_ids = draw_ids, newdata = new_data_fmtd, 
+        re_formula = re_formula, allow_new_levels = allow_new_levels, 
+        sample_new_levels = sample_new_levels,
+        req_vars = occ_covs
+        )
+      )
     if(response){
       linpred_occ <- boot::inv.logit(linpred_occ)
     }
     component_list$linpred_occ <- linpred_occ
   }
   if("colo" %in% use_components) {
-    linpred_colo <- t(brms::posterior_linpred(flocker_fit, dpar = "colo", 
-                                             draw_ids = draw_ids, 
-                                             newdata = new_data_fmtd, 
-                                             re_formula = re_formula, 
-                                             allow_new_levels = allow_new_levels,
-                                             sample_new_levels = sample_new_levels))
+    colo_covs <- all.vars(f_form[[2]]$colo[[3]])
+    linpred_colo <- t(
+      brms::posterior_linpred(
+        flocker_fit, dpar = "colo", draw_ids = draw_ids, newdata = new_data_fmtd, 
+        re_formula = re_formula, allow_new_levels = allow_new_levels, 
+        sample_new_levels = sample_new_levels,
+        req_vars = colo_covs
+        )
+      )
     if(response){
       linpred_colo <- boot::inv.logit(linpred_colo)
     }
     component_list$linpred_col <- linpred_colo
   }
   if("ex" %in% use_components) {
-    linpred_ex <- t(brms::posterior_linpred(flocker_fit, dpar = "ex", 
-                                             draw_ids = draw_ids, 
-                                             newdata = new_data_fmtd, 
-                                             re_formula = re_formula, 
-                                             allow_new_levels = allow_new_levels,
-                                             sample_new_levels = sample_new_levels))
+    ex_covs <- all.vars(f_form[[2]]$ex[[3]])
+    linpred_ex <- t(
+      brms::posterior_linpred(
+        flocker_fit, dpar = "ex", draw_ids = draw_ids, newdata = new_data_fmtd, 
+        re_formula = re_formula, allow_new_levels = allow_new_levels, 
+        sample_new_levels = sample_new_levels,
+        req_vars = ex_covs
+        )
+      )
     if(response){
       linpred_ex <- boot::inv.logit(linpred_ex)
     }
     component_list$linpred_ex <- linpred_ex
   }
   if("auto" %in% use_components) {
-    linpred_auto <- t(brms::posterior_linpred(flocker_fit, dpar = "autologistic", 
-                                             draw_ids = draw_ids, 
-                                             newdata = new_data_fmtd, 
-                                             re_formula = re_formula, 
-                                             allow_new_levels = allow_new_levels,
-                                             sample_new_levels = sample_new_levels))
+    auto_covs <- all.vars(f_form[[2]]$autologistic[[3]])
+    linpred_auto <- t(
+      brms::posterior_linpred(
+        flocker_fit, dpar = "autologistic", draw_ids = draw_ids, newdata = new_data_fmtd, 
+        re_formula = re_formula, allow_new_levels = allow_new_levels, 
+        sample_new_levels = sample_new_levels,
+        req_vars = auto_covs
+        )
+      )
 
     component_list$linpred_auto <- linpred_auto
   }
   if("det" %in% use_components) {
-    linpred_det <- t(brms::posterior_linpred(flocker_fit, dpar = "mu", 
-                                             draw_ids = draw_ids, 
-                                             newdata = new_data_fmtd, 
-                                             re_formula = re_formula, 
-                                             allow_new_levels = allow_new_levels,
-                                             sample_new_levels = sample_new_levels))
+    det_covs <- all.vars(f_form[[1]][[3]])
+    linpred_det <- t(
+      brms::posterior_linpred(
+        flocker_fit, dpar = "mu", draw_ids = draw_ids, newdata = new_data_fmtd, 
+        re_formula = re_formula, allow_new_levels = allow_new_levels,
+        sample_new_levels = sample_new_levels,
+        req_vars = det_covs
+        )
+      )
     if(response){
       linpred_det <- boot::inv.logit(linpred_det)
     }
@@ -218,12 +219,16 @@ fitted_flocker <- function(
   }
   
   if("Omega" %in% use_components) {
-    linpred_Omega <- t(brms::posterior_linpred(flocker_fit, dpar = "Omega", 
-                                             draw_ids = draw_ids, 
-                                             newdata = new_data_fmtd, 
-                                             re_formula = re_formula, 
-                                             allow_new_levels = allow_new_levels,
-                                             sample_new_levels = sample_new_levels))
+    Omega_covs <- all.vars(f_form[[2]]$Omega[[3]])
+    
+    linpred_Omega <- t(
+      brms::posterior_linpred(
+        flocker_fit, dpar = "Omega", draw_ids = draw_ids, newdata = new_data_fmtd, 
+        re_formula = re_formula, allow_new_levels = allow_new_levels, 
+        sample_new_levels = sample_new_levels,
+        req_vars = Omega_covs
+        )
+      )
     if(response){
       linpred_Omega <- boot::inv.logit(linpred_Omega)
     }
