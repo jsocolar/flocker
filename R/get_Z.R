@@ -43,9 +43,14 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
   )
   lik_type <- type_flocker_fit(flocker_fit)
   is_multi <- fdtl()$data_output_type[fdtl()$model_type == lik_type] == "multi"
+  is_aug <- fdtl()$data_output_type[fdtl()$model_type == lik_type] == "augmented"
   assertthat::assert_that(
     !is_multi | is_flocker_data(new_data) | is.null(new_data),
     msg = "using the `new_data` argument for a multiseason model requires passing a `flocker_data` object, not a dataframe"
+  )
+  assertthat::assert_that(
+    !is_aug | is_flocker_data(new_data) | is.null(new_data),
+    msg = "using the `new_data` argument for a data-augmented model requires passing a `flocker_data` object, not a dataframe"
   )
   
   if (is.null(draw_ids)) {
@@ -190,7 +195,13 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
 #' @return a matrix of fitted Z probabilities or sampled Z values. Rows are
 #'   units and columns are posterior iterations.
 get_Z_single <- function(lps, sample, history_condition, obs = NULL){
-  lpo <- lps$linpred_occ[ , 1, ] # first index is unit, second is visit, third is draw
+  if(length(dim(lps$linpred_occ)) == 3) { # from flockerdata
+    lpo <- lps$linpred_occ[ , 1, ] # first index is unit, second is visit, third is draw
+  } else { # from data.frame
+    assertthat::assert_that(length(dim(lps$linpred_occ)) == 2)
+    lpo <- lps$linpred_occ
+  }
+  
   n_unit <- nrow(lpo)
   psi_all <- boot::inv.logit(lpo)
   
@@ -201,7 +212,7 @@ get_Z_single <- function(lps, sample, history_condition, obs = NULL){
       Z <- psi_all
     }
   } else {
-    theta_all <- boot::inv.logit(lps$linpred_det)
+    theta_all <- boot::inv.logit(lps$linpred_det) # lpo must be from flockerdata, since history_condition is TRUE
     
     # get emission likelihoods
     el_0 <- el_1 <- new_matrix(psi_all)
@@ -230,7 +241,13 @@ get_Z_single <- function(lps, sample, history_condition, obs = NULL){
 #' @return a matrix of fitted Z probabilities or sampled Z values. Rows are
 #'   units and columns are posterior iterations.
 get_Z_single_C <- function(lps, sample, history_condition, obs = NULL){
-  lpo <- lps$linpred_occ[ , 1, ] # first index is unit, second is visit, third is draw
+  if(length(dim(lps$linpred_occ)) == 3) { # from flockerdata
+    lpo <- lps$linpred_occ[ , 1, ] # first index is unit, second is visit, third is draw
+  } else { # from data.frame
+    assertthat::assert_that(length(dim(lps$linpred_occ)) == 2)
+    lpo <- lps$linpred_occ
+  }
+  
   n_unit <- nrow(lpo)
   psi_all <- boot::inv.logit(lpo)
   
