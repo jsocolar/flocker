@@ -29,11 +29,8 @@ exclusively by the posterior distribution for the occupancy probability
 psi.}
 
 \item{new_data}{Optional new data at which to predict. If `NULL`, predictions
-are given at the data points used for model fitting.
-Can be the output of 'make_flocker_data' or the 'unit_covs' input to 
-'make_flocker_data' provided that 'history_condition' is 'FALSE' and the 
-occupancy model is a single-season model (rep-constant, rep-varying, or
-data-augmented).}
+are given at the data points used for model fitting. Otherwise, must
+be a flocker_data object produced by `make_flocker_data`.}
 
 \item{mixed}{When `new_data` is not provided, should random effect levels be
 drawn from their posteriors (`FALSE`, the default) or re-sampled from 
