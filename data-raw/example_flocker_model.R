@@ -15,7 +15,7 @@ example_flocker_model_single <- flock(
   backend = "cmdstanr",
   cores = 4,
   iter = 1000,
-  warmup = 990
+  warmup = 996
 )
 
 #### single-season rep-constant model ####
@@ -30,7 +30,7 @@ example_flocker_model_single_C <- flock(
   backend = "cmdstanr",
   cores = 4,
   iter = 1000,
-  warmup = 990
+  warmup = 996
 )
 
 #### data augmented model ####
@@ -51,7 +51,7 @@ example_flocker_model_aug <- flock(
   backend = "cmdstanr",
   cores = 4,
   iter = 1000,
-  warmup = 990
+  warmup = 996
   )
 
 #### multiseason colex with explicit inits ####
@@ -74,7 +74,7 @@ example_flocker_model_multi_colex_ex <- flock(
   cores = 4,
   backend = "cmdstanr",
   iter = 1000,
-  warmup = 990
+  warmup = 996
 )
 
 #### multiseason colex with equilibrium inits ####
@@ -96,7 +96,7 @@ example_flocker_model_multi_colex_eq <- flock(
   cores = 4,
   backend = "cmdstanr",
   iter = 1000,
-  warmup = 990
+  warmup = 996
 )
 
 #### multiseason autologistic with explicit inits ####
@@ -119,7 +119,7 @@ example_flocker_model_multi_auto_ex <- flock(
   cores = 4,
   backend = "cmdstanr",
   iter = 1000,
-  warmup = 990
+  warmup = 996
 )
 
 #### multiseason autologistic with equilibrium inits ####
@@ -141,7 +141,7 @@ example_flocker_model_multi_auto_eq <- flock(
   cores = 4,
   backend = "cmdstanr",
   iter = 1000,
-  warmup = 990
+  warmup = 996
 )
 
 usethis::use_data(example_flocker_model_single, overwrite = TRUE)
