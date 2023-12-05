@@ -10,8 +10,8 @@ test_that("loo_flocker_onefit works correctly", {
   expect_error(loo_flocker(list(example_flocker_model_single, 1)), "x is a list, but x\\[\\[2\\]\\] is not a flocker_fit object.")
   
   # check dims
-  expect_equal(attributes(test_loo)$dims, c(12, 900))
-  expect_equal(attributes(test_loo_thinned)$dims, c(6, 900))
+  expect_equal(attributes(test_loo)$dims, c(16, 900))
+  expect_equal(attributes(test_loo_thinned)$dims, c(8, 900))
   
   # check list output
   expect_identical(class(test_loo_list), "list")
@@ -29,8 +29,8 @@ test_that("loo_flocker_onefit works correctly", {
   suppressWarnings(test_loo_thinned <- loo_flocker_onefit(example_flocker_model_single, thin = 2))
   
   # check dimensions
-  expect_equal(attributes(test_loo)$dims, c(12, 900))
-  expect_equal(attributes(test_loo_thinned)$dims, c(6, 900))
+  expect_equal(attributes(test_loo)$dims, c(16, 900))
+  expect_equal(attributes(test_loo_thinned)$dims, c(8, 900))
   
   # check thin = NULL specification returns same output 
   expect_identical(test_loo, test_loo_alt)

@@ -1,7 +1,7 @@
 test_that("check log_lik functions work correctly", {
   # check dims
   ll_test <- log_lik_flocker(example_flocker_model_single)
-  expect_equal(dim(ll_test), c(12, 900))
+  expect_equal(dim(ll_test), c(16, 900))
   ll_test <- log_lik_flocker(example_flocker_model_single, draw_ids = 1:10)
   expect_equal(dim(ll_test), c(10, 900))
   
