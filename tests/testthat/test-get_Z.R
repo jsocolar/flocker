@@ -102,7 +102,7 @@ test_that("new_data works as expected", {
   fd1 <- simulate_flocker_data()
   mfd1 <- make_flocker_data(fd1$obs, fd1$unit_covs, fd1$event_covs)
   expect_silent(get_Z(example_flocker_model_single, new_data = mfd1))
-#  expect_silent(get_Z(example_flocker_model_single, history_condition = FALSE, new_data = fd1$unit_covs))
+  expect_silent(get_Z(example_flocker_model_single, history_condition = FALSE, new_data = fd1$unit_covs))
   expect_error(get_Z(example_flocker_model_single, history_condition = TRUE, new_data = fd1$unit_covs))
 })
 
