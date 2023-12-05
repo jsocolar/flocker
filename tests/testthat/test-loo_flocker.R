@@ -1,6 +1,6 @@
 test_that("loo_flocker_onefit works correctly", {
   suppressWarnings(test_loo <- loo_flocker(example_flocker_model_single))
-  suppressWarnings(test_loo_thinned <- loo_flocker(example_flocker_model_single, 5))
+  suppressWarnings(test_loo_thinned <- loo_flocker(example_flocker_model_single, 2))
   suppressWarnings(test_loo_list <- loo_flocker(rep(list(example_flocker_model_single), 2)))
   
   # check error
@@ -10,8 +10,8 @@ test_that("loo_flocker_onefit works correctly", {
   expect_error(loo_flocker(list(example_flocker_model_single, 1)), "x is a list, but x\\[\\[2\\]\\] is not a flocker_fit object.")
   
   # check dims
-  expect_equal(attributes(test_loo)$dims, c(40, 900))
-  expect_equal(attributes(test_loo_thinned)$dims, c(8, 900))
+  expect_equal(attributes(test_loo)$dims, c(12, 900))
+  expect_equal(attributes(test_loo_thinned)$dims, c(6, 900))
   
   # check list output
   expect_identical(class(test_loo_list), "list")
@@ -26,11 +26,11 @@ test_that("loo_flocker_onefit works correctly", {
   
   suppressWarnings(test_loo <- loo_flocker_onefit(example_flocker_model_single, thin = NULL))
   suppressWarnings(test_loo_alt <- loo_flocker_onefit(example_flocker_model_single, thin=1))
-  suppressWarnings(test_loo_thinned <- loo_flocker_onefit(example_flocker_model_single, thin = 5))
+  suppressWarnings(test_loo_thinned <- loo_flocker_onefit(example_flocker_model_single, thin = 2))
   
   # check dimensions
-  expect_equal(attributes(test_loo)$dims, c(40, 900))
-  expect_equal(attributes(test_loo_thinned)$dims, c(8, 900))
+  expect_equal(attributes(test_loo)$dims, c(12, 900))
+  expect_equal(attributes(test_loo_thinned)$dims, c(6, 900))
   
   # check thin = NULL specification returns same output 
   expect_identical(test_loo, test_loo_alt)
@@ -42,7 +42,7 @@ test_that("loo_flocker_onefit works correctly", {
   
   # check model naming
   suppressWarnings(test_compare <- loo_compare_flocker(list(example_flocker_model_single, example_flocker_model_single), 
-                                      model_names = c("m1", "m2"), thin = 5))
+                                      model_names = c("m1", "m2"), thin = 2))
   expect_identical(row.names(test_compare), c("m1", "m2"))
   
   # check test output identical
