@@ -34,6 +34,7 @@ Imports:
     loo (>= 2.0.0),
     MASS,
     matrixStats,
+    RcppEigen,
     rstan (>= 2.26.0),
     stats,
     utils,
