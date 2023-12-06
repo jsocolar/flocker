@@ -86,7 +86,7 @@ at sites with a detection; it is estimated only based on the covariates).
 fitted_flocker(
   example_flocker_model_single, 
   summarise = TRUE, 
-  draw_ids = 1:5
+  draw_ids = 1:3
 )
 
 }

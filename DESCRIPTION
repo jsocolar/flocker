@@ -2,7 +2,7 @@ Package: flocker
 Title: Flexible Occupancy Estimation in R
 Version: 0.2-0
 Authors@R: c(
-    person("Jacob B.", "Socolar", , "jacob.socolar@gmail.com", role = c("aut", "cre", "ceh")),
+    person("Jacob B.", "Socolar", , "jacob.socolar@gmail.com", role = c("aut", "cre", "cph")),
     person("Simon C.", "Mills", role = "aut"),
     person("Paul-Christian", "Bürkner", role = "ctb")
   )

@@ -52,7 +52,7 @@
 #' fitted_flocker(
 #'   example_flocker_model_single, 
 #'   summarise = TRUE, 
-#'   draw_ids = 1:5
+#'   draw_ids = 1:3
 #' )
 #' 
 fitted_flocker <- function(

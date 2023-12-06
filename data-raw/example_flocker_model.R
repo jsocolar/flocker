@@ -12,10 +12,10 @@ example_flocker_model_single <- flock(
   f_occ = ~ 0 + Intercept + uc1 + (1 + uc1 | species),
   f_det = ~ 0 + Intercept + uc1 + ec1 + (1 + uc1 + ec1 | species),
   flocker_data = mfd,
-  backend = "cmdstanr",
   cores = 4,
   iter = 1000,
-  warmup = 996
+  warmup = 996,
+  save_warmup = FALSE
 )
 
 #### single-season rep-constant model ####
@@ -27,10 +27,10 @@ example_flocker_model_single_C <- flock(
   f_occ = ~ 0 + Intercept + uc1 + (1 + uc1 | species),
   f_det = ~ 0 + Intercept + uc1 + (1 + uc1 | species),
   flocker_data = mfd,
-  backend = "cmdstanr",
   cores = 4,
   iter = 1000,
-  warmup = 996
+  warmup = 996,
+  save_warmup = FALSE
 )
 
 #### data augmented model ####
@@ -48,10 +48,10 @@ example_flocker_model_aug <- flock(
   f_det = ~ 0 + Intercept + uc1 + ec1 + (1 + uc1 + ec1 | ff_species),
   flocker_data = mfd,
   augmented = TRUE,
-  backend = "cmdstanr",
   cores = 4,
   iter = 1000,
-  warmup = 996
+  warmup = 996,
+  save_warmup = FALSE
   )
 
 #### multiseason colex with explicit inits ####
@@ -72,9 +72,9 @@ example_flocker_model_multi_colex_ex <- flock(
   multiseason = "colex",
   multi_init = "explicit",
   cores = 4,
-  backend = "cmdstanr",
   iter = 1000,
-  warmup = 996
+  warmup = 996,
+  save_warmup = FALSE
 )
 
 #### multiseason colex with equilibrium inits ####
@@ -94,9 +94,9 @@ example_flocker_model_multi_colex_eq <- flock(
   multiseason = "colex",
   multi_init = "equilibrium",
   cores = 4,
-  backend = "cmdstanr",
   iter = 1000,
-  warmup = 996
+  warmup = 996,
+  save_warmup = FALSE
 )
 
 #### multiseason autologistic with explicit inits ####
@@ -117,9 +117,9 @@ example_flocker_model_multi_auto_ex <- flock(
   multiseason = "autologistic",
   multi_init = "explicit",
   cores = 4,
-  backend = "cmdstanr",
   iter = 1000,
-  warmup = 996
+  warmup = 996,
+  save_warmup = FALSE
 )
 
 #### multiseason autologistic with equilibrium inits ####
@@ -139,9 +139,9 @@ example_flocker_model_multi_auto_eq <- flock(
   multiseason = "autologistic",
   multi_init = "equilibrium",
   cores = 4,
-  backend = "cmdstanr",
   iter = 1000,
-  warmup = 996
+  warmup = 996,
+  save_warmup = FALSE
 )
 
 usethis::use_data(example_flocker_model_single, overwrite = TRUE)
