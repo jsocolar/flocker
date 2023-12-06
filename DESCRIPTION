@@ -28,11 +28,13 @@ Depends:
 Imports:
     abind,
     assertthat,
+    BH,
     boot,
     brms (>= 2.16.0),
     loo (>= 2.0.0),
     MASS,
     matrixStats,
+    rstan (>= 2.26.0),
     stats,
     utils,
     withr
