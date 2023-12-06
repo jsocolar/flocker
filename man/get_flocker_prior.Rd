@@ -80,14 +80,15 @@ Get prior for occupancy model
 }
 \examples{
 \dontrun{
+sfd <- simulate_flocker_data()
 fd <- make_flocker_data(
- example_flocker_data$obs, 
- example_flocker_data$unit_covs,
- example_flocker_data$event_covs
+ sfd$obs, 
+ sfd$unit_covs,
+ sfd$event_covs
 )
 get_flocker_prior(
- f_occ = ~ uc1 + + (1|grp),
- f_det = ~ uc1 + ec1 + (1|grp),
+ f_occ = ~ s(uc1) + + (1|species),
+ f_det = ~ uc1 + ec1 + (1|species),
  flocker_data = fd
 )
 }
