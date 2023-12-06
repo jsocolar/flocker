@@ -33,9 +33,10 @@ Format data for single-season occupancy model, to be passed to
  \code{flock()}.
 }
 \examples{
-make_flocker_data(
- example_flocker_data$obs,
- example_flocker_data$unit_covs,
- example_flocker_data$event_covs
+sfd <- simulate_flocker_data()
+make_flocker_data_static(
+ sfd$obs, 
+ sfd$unit_covs,
+ sfd$event_covs
 )
 }

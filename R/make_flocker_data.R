@@ -46,10 +46,11 @@
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 #' @examples
+#' sfd <- simulate_flocker_data()
 #' make_flocker_data(
-#'  example_flocker_data$obs,
-#'  example_flocker_data$unit_covs,
-#'  example_flocker_data$event_covs
+#'  sfd$obs, 
+#'  sfd$unit_covs,
+#'  sfd$event_covs
 #' )
 make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
                               type = "single", n_aug = NULL,
@@ -143,10 +144,11 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 #' @examples
-#' make_flocker_data(
-#'  example_flocker_data$obs,
-#'  example_flocker_data$unit_covs,
-#'  example_flocker_data$event_covs
+#' sfd <- simulate_flocker_data()
+#' make_flocker_data_static(
+#'  sfd$obs, 
+#'  sfd$unit_covs,
+#'  sfd$event_covs
 #' )
 make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL, quiet = FALSE) {
   assertthat::assert_that(
