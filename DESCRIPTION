@@ -28,20 +28,20 @@ Depends:
 Imports:
     abind,
     assertthat,
-    BH,
     boot,
     brms (>= 2.16.0),
     loo (>= 2.0.0),
     MASS,
     matrixStats,
-    RcppEigen,
-    rstan (>= 2.26.0),
     stats,
     utils,
     withr
 Suggests:
+    BH (>= 1.75.0-0),
     knitr,
+    RcppEigen (>= 0.3.3.9.3),
     rmarkdown,
+    rstan (>= 2.26.0),
     spelling,
     testthat (>= 2.1.0),
     tibble

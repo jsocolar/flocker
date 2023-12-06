@@ -686,14 +686,14 @@ test_that("is_formula and is_flocker_formula work", {
 })
 
 test_that("is_flocker_data works", {
-  expect_false(is_flocker_data(example_flocker_data))
+  sfd <- simulate_flocker_data()
+  expect_false(is_flocker_data(sfd))
   
   expect_true(
-    make_flocker_data(example_flocker_data$obs, example_flocker_data$unit_covs) |>
+    make_flocker_data(sfd$obs, sfd$unit_covs) |>
       is_flocker_data()
   )
 })  
-
 
 
 test_that("is_named_list returns TRUE for a named list with unique names", {

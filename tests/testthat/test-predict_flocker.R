@@ -44,12 +44,12 @@ test_that("predict flocker works as expected", {
 })
 
 test_that("new_data works as expected", {
-  fd1 <- simulate_flocker_data()
+  fd1 <- simulate_flocker_data(n_sp = 5, n_pt = 5)
   mfd1 <- make_flocker_data(fd1$obs, fd1$unit_covs, fd1$event_covs)
   expect_silent(predict_flocker(example_flocker_model_single, new_data = mfd1))
   expect_error(predict_flocker(example_flocker_model_single, history_condition = FALSE, new_data = fd1$unit_covs))
   
-  fd2 <- simulate_flocker_data(n_season = 3, multiseason = "colex", multi_init = "explicit")
+  fd2 <- simulate_flocker_data(n_sp = 5, n_pt = 5, n_season = 3, multiseason = "colex", multi_init = "explicit")
   mfd2 <- make_flocker_data(fd2$obs, fd2$unit_covs, fd2$event_covs, type = "multi")
   expect_silent(predict_flocker(example_flocker_model_multi_colex_ex, new_data = mfd2))
   expect_silent(predict_flocker(example_flocker_model_multi_auto_eq, new_data = mfd2))
