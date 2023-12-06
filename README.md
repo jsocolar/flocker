@@ -4,7 +4,7 @@
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/jsocolar/flocker/workflows/R-CMD-check/badge.svg)](https://github.com/jsocolar/flocker/actions?workflow=R-CMD-check)
 [![Coverage
-Status](https://codecov.io/gh/jsocolar/flocker/branch/main/graph/badge.svg)](https://codecov.io/gh/jsocolar/flocker)
+Status](https://codecov.io/gh/jsocolar/flocker/branch/main/graph/badge.svg)](https://app.codecov.io/gh/jsocolar/flocker)
 <!-- badges: end -->
 
 

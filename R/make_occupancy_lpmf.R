@@ -4,7 +4,7 @@
 #' @param max_rep Literal integer maximum number of repeated sampling events at 
 #'    any unit.
 #' @return Character string of Stan code corresponding to occupancy_single_lpmf
-
+#' @noRd
 make_occupancy_single_lpmf <- function (max_rep) {
   assertthat::assert_that(
     is_one_pos_int(max_rep, m = 1),
@@ -63,7 +63,7 @@ make_occupancy_single_lpmf <- function (max_rep) {
 #' values of 1 in the marginalized state reflecting occupancy rather than non-
 #' occupancy.
 #' @return Character string of Stan code corresponding to occupancy_single_C_lpmf
-
+#' @noRd
 make_occupancy_single_C_lpmf <- function () {
   "real occupancy_single_C_lpmf(int y, real mu, real occ, int trials) {
   if (y == 0) { 
@@ -83,7 +83,8 @@ make_occupancy_single_C_lpmf <- function () {
 #' rep-varying model. 
 #' @param max_rep Literal integer maximum number of repeated sampling events at 
 #'    any unit.
-#' @return Character string of Stan code corresponding to occupancy_V_lpmf
+#' @return Character string of Stan code corresponding to occupancy_augmented_lpmf
+#' @noRd
 make_occupancy_augmented_lpmf <- function (max_rep) {
   assertthat::assert_that(
     is_one_pos_int(max_rep, m = 1),
@@ -170,6 +171,7 @@ make_occupancy_augmented_lpmf <- function (max_rep) {
 #' Create Stan code for the emission log-likelihood given that the true state 
 #'   equals one in a rep-varying model.
 #' @return Character string of Stan code corresponding to emission_1
+#' @noRd
 make_emission_1 <- function() {
   paste("  // emission likelihood given that state equals one",
         "  real emission_1(array[] int y, row_vector det) {",
@@ -181,6 +183,7 @@ make_emission_1 <- function() {
 #' Create Stan code for the emission log-likelihood given that the true state 
 #'   equals one in a rep-constant model.
 #' @return Character string of Stan code corresponding to emission_1
+#' @noRd
 make_emission_1_C <- function() {
   paste("  // emission likelihood given that state equals one",
         "  real emission_1(int y, int k, real det) {",
@@ -197,6 +200,7 @@ make_emission_1_C <- function() {
 #' implementation of the forward algorithm.
 #' @return Character string of Stan code corresponding to likelihoods for the 
 #'  possible transitions in a colex model
+#' @noRd
 make_colex_likelihoods <- function() {
   paste("  // functions for the yearwise likelihood components corresponding to each",
         "  // possible pair of true states in that year and the previous year.",
@@ -224,6 +228,7 @@ make_colex_likelihoods <- function() {
 #' Create Stan code for forward_colex function, an implementation of the 
 #'  forward algorithm for use in colex models.
 #' @return Character string of Stan code corresponding to forward_colex
+#' @noRd
 make_forward_colex <- function() {
   paste(
     "  // Forward algorithm implementation",
@@ -315,6 +320,7 @@ make_forward_colex <- function() {
 #' @param max_year Literal integer maximum number of years (or seasons) visited
 #'    in any series
 #' @return Character string of Stan code corresponding to occupancy_multi_colex_lpmf
+#' @noRd
 make_occupancy_multi_colex_lpmf <- function (max_rep, max_year) {
   assertthat::assert_that(
     is_one_pos_int(max_rep, m = 1),
@@ -409,6 +415,7 @@ make_occupancy_multi_colex_lpmf <- function (max_rep, max_year) {
 #' @param max_year Literal integer maximum number of years (or seasons) visited
 #'    in any series
 #' @return Character string of Stan code corresponding to occupancy_multi_colex_eq_lpmf
+#' @noRd
 make_occupancy_multi_colex_eq_lpmf <- function (max_rep, max_year) {
   assertthat::assert_that(
     is_one_pos_int(max_rep, m = 1),
@@ -504,6 +511,7 @@ make_occupancy_multi_colex_eq_lpmf <- function (max_rep, max_year) {
 #' @param max_year Literal integer maximum number of years (or seasons) visited
 #'    in any series
 #' @return Character string of Stan code corresponding to occupancy_multi_autologistic_lpmf
+#' @noRd
 make_occupancy_multi_autologistic_lpmf <- function (max_rep, max_year) {
   assertthat::assert_that(
     is_one_pos_int(max_rep, m = 1),
@@ -600,6 +608,7 @@ make_occupancy_multi_autologistic_lpmf <- function (max_rep, max_year) {
 #' @param max_year Literal integer maximum number of years (or seasons) visited
 #'    in any series
 #' @return Character string of Stan code corresponding to occupancy_multi_autologistic_eq_lpmf
+#' @noRd
 make_occupancy_multi_autologistic_eq_lpmf <- function (max_rep, max_year) {
   assertthat::assert_that(
     is_one_pos_int(max_rep, m = 1),
@@ -689,6 +698,7 @@ make_occupancy_multi_autologistic_eq_lpmf <- function (max_rep, max_year) {
 }
 
 ##### Single threaded #####
+# Not currently in use
 make_occupancy_single_threaded_lpmf <- function (max_rep, grainsize) {
   assertthat::assert_that(
     is_one_pos_int(max_rep, m = 1),
@@ -743,10 +753,11 @@ make_occupancy_single_threaded_lpmf <- function (max_rep, grainsize) {
   return(out)
 }
 
-#' Create Stan code for likelihood function occupancy_single_lpmf.
+#' Create Stan code for likelihood function occupancy_single_partial_sum.
 #' @param max_rep Literal integer maximum number of repeated sampling events at 
 #'    any unit.
 #' @return Character string of Stan code corresponding to occupancy_single_lpmf
+#' @noRd
 make_occupancy_single_partial_sum <- function (max_rep) {
   assertthat::assert_that(
     is_one_pos_int(max_rep, m = 1),

@@ -121,6 +121,7 @@ simulate_flocker_data <- function(
   
 #' util for creating example data
 #' @inherit simulate_flocker_data
+#' @noRd
 sfd <- function(
     n_rep,
     n_pt,

@@ -291,6 +291,7 @@ fitted_flocker <- function(
 #' @param x linpreds
 #' @param CI fractional bounds of credible interval between 0 and 1 inclusive
 #' @return summary
+#' @noRd
 summarise_fun <- function(x, CI) {
   out <- data.frame(estimate = matrixStats::rowMeans2(x),
              lwr = matrixStats::rowQuantiles(x, probs = min(CI)), 
@@ -302,6 +303,7 @@ summarise_fun <- function(x, CI) {
 #' reshape a matrix of values into a stack of arrays via get_positions
 #' @param x input_matrix
 #' @param gp output of get_positions
+#' @noRd
 reshape_fun <- function(x, gp) {
   assertthat::assert_that(is.matrix(x) | is.data.frame(x))
   ai <- list()

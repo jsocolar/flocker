@@ -38,6 +38,7 @@ log1m_inv_logit <- function (x) {
 #' @return a sample representing a possible number of trials
 #' @details random samples `y` from the distribution proportional to 
 #'   binomial_pmf(y | n, s)
+#' @noRd
 extended_binomial_rng <- function(p, s) {
   assertthat::assert_that(is.numeric(p) & length(p) == 1)
   assertthat::assert_that(is_one_pos_int(s))
@@ -57,6 +58,7 @@ extended_binomial_rng <- function(p, s) {
 #' convert matrix-like object to long vector format
 #' @param m matrix-like object to expand
 #' @return vector
+#' @noRd
 expand_matrix <- function (m) {
   assertthat::assert_that(
     isTRUE(length(dim(m)) == 2),
@@ -68,6 +70,7 @@ expand_matrix <- function (m) {
 #' convert array to long matrix format
 #' @param a 3D array to expand
 #' @return matrix
+#' @noRd
 expand_array_3D <- function(a) {
   assertthat::assert_that(
     nslice(a) > 1,
@@ -83,6 +86,7 @@ expand_array_3D <- function(a) {
 #' Get third dimension of a 3D array
 #' @param x 3D array for which third dimension is desired
 #' @return integer size of third dimension
+#' @noRd
 nslice <- function(x) {
   assertthat::assert_that(
     is.array(x),
@@ -99,6 +103,7 @@ nslice <- function(x) {
 #' @param m a matrix or dataframe
 #' @param n number of times to rbind
 #' @return matrix or dataframe
+#' @noRd
 stack_matrix <- function (m, n) {
   assertthat::assert_that(
     length(dim(m)) == 2, 
@@ -112,6 +117,7 @@ stack_matrix <- function (m, n) {
 #' @param data passed to the data argument of matrix()
 #' @param byrow passed to the byrow argument of matrix()
 #' @return new matrix
+#' @noRd
 new_matrix <- function(m, data = NA, byrow = FALSE){
   matrix(data, nrow = nrow(m), ncol = ncol(m), byrow = byrow)
 }
@@ -120,6 +126,7 @@ new_matrix <- function(m, data = NA, byrow = FALSE){
 #' @param m old array
 #' @param data passed to the data argument of array()
 #' @return new array
+#' @noRd
 new_array <- function(m, data = NA){
   array(data, dim = dim(m))
 }
@@ -130,6 +137,7 @@ new_array <- function(m, data = NA){
 #' @param n_year max length of hmm series in dynamic models
 #' @return character vector of column names created internally by 
 #'    make_flocker_data
+#' @noRd
 flocker_col_names <- function(n_rep = NULL, n_year = NULL) {
   out <- c("ff_y", 
     "ff_n_suc", "ff_n_trial", 
@@ -147,12 +155,14 @@ flocker_col_names <- function(n_rep = NULL, n_year = NULL) {
 
 #' Reserved names in flocker
 #' @return character vector of regexes matching reserved variable names
+#' @noRd
 flocker_reserved <- function() {
   c("^ff_", "^\\.", "^occ$", "^det$", "^colo$", "^ex$", "^autologistic$", "^Omega$")
 }
 
 #' Model types in flocker as outputted by `flock`
 #' @return character vector of types
+#' @noRd
 flocker_model_types <- function() {
   c("single", # single-season garden-variety model
     "single_C", # single without rep-varying covariates
@@ -166,6 +176,7 @@ flocker_model_types <- function() {
 
 #' Options for the \code{type} argument to \code{make_flocker_data}.
 #' @return character vector of possible inputs
+#' @noRd
 flocker_data_input_types <- function() {
   c("single",    # covers all model types prefixed with "single"
                  # (rep-constant versus varying is inferred from
@@ -177,6 +188,7 @@ flocker_data_input_types <- function() {
 
 #' Data types that can be returned by \code{make_flocker_data}.
 #' @return character vector of data output types
+#' @noRd
 flocker_data_output_types <- function() {
   c("single",
     "single_C",
@@ -188,6 +200,7 @@ flocker_data_output_types <- function() {
 #' flocker data type lookup
 #' @return dataframe giving lookup table for data input types, data output types
 #'   and model types
+#' @noRd
 fdtl <- function(){
   data.frame(
     model_type = flocker_model_types(),
@@ -202,30 +215,35 @@ fdtl <- function(){
 
 #' flocker_data_output_types that yield rep-constant models
 #' @return character vector of data output types
+#' @noRd
 rep_constant_types <- function() {
   c("single_C")
 }
 
 #' flocker_data_output_types valid for use with threading
 #' @return character vector of data output types
+#' @noRd
 threading_types <- function() {
   c("single_C")
 }
 
 #' flocker_data_output_types valid for use with colex models
 #' @return character vector of data output types
+#' @noRd
 multi_types <- function() {
   c("multi")
 }
 
 #' possible values for the `multi_init` parameter if not NULL
 #' @return character vector of options
+#' @noRd
 multi_init_types <- function(){c("explicit", "equilibrium")}
 
 ##### flocker_fit manipulation #####
 #' Test whether an object is of class flocker_fit
 #' @param x object to be tested
 #' @return logical
+#' @noRd
 is_flocker_fit <- function(x) {
   inherits(x, "flocker_fit")
 }
@@ -233,6 +251,7 @@ is_flocker_fit <- function(x) {
 #' Extract lik_type from object of class flocker_fit
 #' @param x flocker_fit object
 #' @return string giving model type
+#' @noRd
 type_flocker_fit <- function(x) {
   assertthat::assert_that(
     is_flocker_fit(x),
@@ -261,6 +280,7 @@ type_flocker_fit <- function(x) {
 
 #' A list of distributional parameters by model type
 #' @return A list of distributional parameters by model type
+#' @noRd
 params_by_type <- list(
   single = c("occ", "det"),
   single_C = c("occ", "det"),
@@ -292,6 +312,7 @@ params_by_type <- list(
 #'   flocker_data$data where the corresponding element resides. If the data
 #'   were formatted for a data-augmented model, the returned array will have
 #'   extra slices for all of the augmented species.
+#' @noRd
 get_positions <- function(data_object, unit_level = FALSE) {
   assertthat::assert_that(
     isTRUE(is_flocker_fit(data_object)) | isTRUE(is_flocker_data(data_object)),
@@ -394,6 +415,7 @@ get_positions <- function(data_object, unit_level = FALSE) {
 #' @param obs A matrix of observation histories. Rows are units, columns are visits.
 #' @param det A matrix of detection probabilities
 #' @return a vector of emission likelihoods (one per row)
+#' @noRd
 emission_likelihood <- function(state, obs, det) {
   assertthat::assert_that(is.numeric(state))
   assertthat::assert_that(
@@ -423,6 +445,7 @@ emission_likelihood <- function(state, obs, det) {
 #' @param el1 emission likelihood given state 1
 #' @param psi_unconditional occupancy probability not conditioned on observation
 #' @return occupancy probability conditioned on observation
+#' @noRd
 Z_from_emission <- function(el0, el1, psi_unconditional){
   assertthat::assert_that(length(el0) == length(el1))
   assertthat::assert_that(length(el0) == length(psi_unconditional))
@@ -450,6 +473,7 @@ Z_from_emission <- function(el0, el1, psi_unconditional){
 #' @param augmented augmented flag
 #' @param threads threads number
 #' @return silent if parameters are valid
+#' @noRd
 validate_flock_params <- function(f_occ, f_det, flocker_data,
                                   multiseason, f_col, f_ex, multi_init, f_auto,
                                   augmented, threads) {
@@ -485,6 +509,7 @@ validate_flock_params <- function(f_occ, f_det, flocker_data,
 #' Check individual validity of params passed to `flock`
 #' @inheritParams validate_flock_params
 #' @return silent if parameters are valid
+#' @noRd
 validate_params_individually <- function(f_occ, f_det, flocker_data,
                                          multiseason, f_col, f_ex, multi_init, f_auto,
                                          augmented, threads) {
@@ -537,6 +562,7 @@ validate_params_individually <- function(f_occ, f_det, flocker_data,
 #' Check that no event covariates are used in unit formulas
 #' @inheritParams validate_flock_params
 #' @return silent if parameters are valid
+#' @noRd
 validate_unit_formula_variables <- function(f_occ, f_col, f_ex, f_auto, flocker_data) {
   # Check that no event covariates are used in unit formulas
   unit_terms <- character(0)
@@ -566,6 +592,7 @@ validate_unit_formula_variables <- function(f_occ, f_col, f_ex, f_auto, flocker_
 #' Check validity of some params passed to flock if `type` is `single` or `single_C`
 #' @inheritParams validate_flock_params
 #' @return silent if parameters are valid
+#' @noRd
 validate_param_combos_single_generic <- function(f_occ, f_det, flocker_data, 
                                                  multiseason, f_col, f_ex, multi_init, f_auto,
                                                  augmented) {
@@ -597,6 +624,7 @@ validate_param_combos_single_generic <- function(f_occ, f_det, flocker_data,
 #' Check validity of params passed to `flock` if `type` is `single`
 #' @inheritParams validate_flock_params
 #' @return silent if parameters are valid
+#' @noRd
 validate_param_combos_single <- function(f_occ, f_det, flocker_data, 
                                          multiseason, f_col, f_ex, multi_init, f_auto,
                                          augmented) {
@@ -614,6 +642,7 @@ validate_param_combos_single <- function(f_occ, f_det, flocker_data,
 #' Check validity of params passed to `flock` if `type` is `single_C`
 #' @inheritParams validate_flock_params
 #' @return silent if parameters are valid
+#' @noRd
 validate_param_combos_single_C <- function(f_occ, f_det, flocker_data, 
                                          multiseason, f_col, f_ex, multi_init, f_auto,
                                          augmented) {
@@ -637,6 +666,7 @@ validate_param_combos_single_C <- function(f_occ, f_det, flocker_data,
 #' Check validity of params passed to `flock` if `type` is `augmented`
 #' @inheritParams validate_flock_params
 #' @return silent if parameters are valid
+#' @noRd
 validate_param_combos_augmented <- function(f_occ, f_det, flocker_data, 
                                          multiseason, f_col, f_ex, multi_init, f_auto,
                                          augmented, threads) {
@@ -677,6 +707,7 @@ validate_param_combos_augmented <- function(f_occ, f_det, flocker_data,
 #' Check validity of params passed to `flock` if `type` is `multi`
 #' @inheritParams validate_flock_params
 #' @return silent if parameters are valid
+#' @noRd
 validate_param_combos_multi <- function(f_occ, f_det, flocker_data, 
                                          multiseason, f_col, f_ex, multi_init, f_auto,
                                          augmented, threads) {
@@ -741,6 +772,7 @@ validate_param_combos_multi <- function(f_occ, f_det, flocker_data,
 #' Create error message for formula with incorrect syntax
 #' @param form string giving name of formula
 #' @return string giving text of error
+#' @noRd
 formula_error <- function(form) {
   strwrap(paste0("Formula error: ", form, " formula has incorrect syntax."))
 }
@@ -748,6 +780,7 @@ formula_error <- function(form) {
 #' check that object is a formula
 #' @param x object to test
 #' @return logical; TRUE if x is a formula
+#' @noRd
 is_formula <- function (x) {
   inherits(x, "formula")
 }
@@ -755,6 +788,7 @@ is_formula <- function (x) {
 #' check that object is a valid flocker formula
 #' @param x object to test
 #' @return logical; TRUE if x is a valid flocker formula
+#' @noRd
 is_flocker_formula <- function (x) {
   is_formula(x) & as.character(x)[1] == "~" & length(x) == 2
 }
@@ -762,6 +796,7 @@ is_flocker_formula <- function (x) {
 #' check that object is a flocker data object
 #' @param x object to test
 #' @return logical; TRUE if x is a flocker data object
+#' @noRd
 is_flocker_data <- function(x) {
   inherits(x, "flocker_data")
 }
@@ -770,6 +805,7 @@ is_flocker_data <- function(x) {
 #' check that object is a named list with no duplicate names
 #' @param x object to test
 #' @return logical; TRUE if x is a named list with no duplicate names
+#' @noRd
 is_named_list <- function (x) {
   names <- names(x)
   is.list(x) & 
@@ -782,6 +818,7 @@ is_named_list <- function (x) {
 #' check if an object is a single logical value
 #' @param x object to test
 #' @return logical; TRUE if x is a single logical value
+#' @noRd
 is_one_logical <- function (x) {
   identical(x, TRUE) | identical(x, FALSE)
 }
@@ -790,6 +827,7 @@ is_one_logical <- function (x) {
 #' @param x object to test
 #' @param m minimum value for x
 #' @return logical; TRUE if x is a single positive integer
+#' @noRd
 is_one_pos_int <- function(x, m = 0) {
   if(!is.numeric(x)){return(FALSE)}
   if(length(x) != 1){return(FALSE)}
@@ -800,6 +838,7 @@ is_one_pos_int <- function(x, m = 0) {
 #' @param x vector
 #' @param y vector
 #' @return all unique elements that occur at least once in both x and y
+#' @noRd
 shared_elements <- function (x, y) {
   ux <- unique(x)
   ux[ux %in% y]
@@ -811,6 +850,7 @@ shared_elements <- function (x, y) {
 #' @details if `treat_m99_NA` is `TRUE`, then character `"-99"` will be treated
 #'   as `NA` just as numeric `-99` would be.
 #' @return 0 if all elements are NA; otherwise the largest index that is not NA
+#' @noRd
 max_position_not_na <- function (x, treat_m99_NA = FALSE) {
   assertthat::assert_that(
     identical(x, as.vector(x)),
@@ -829,6 +869,7 @@ max_position_not_na <- function (x, treat_m99_NA = FALSE) {
 #' remove rownames
 #' @param m object whose rownames to remove
 #' @return m with rownames removed
+#' @noRd
 remove_rownames <- function(m) {
   rownames(m) <- NULL
   m

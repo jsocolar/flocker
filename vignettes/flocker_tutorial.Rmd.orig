@@ -63,7 +63,7 @@ vignette, including:
  *rep-constant*.
 
 ## Installation and feedback
-[Installation instructions are available here](https://jsocolar.github.io/flocker). 
+[Installation instructions are available here](https://jsocolar.github.io/flocker/). 
 To request features or report bugs (much appreciated!), please [open an issue on GitHub](https://github.com/jsocolar/flocker/issues).
 
 To make `flocker` and `brms` functions globally available within an R session 

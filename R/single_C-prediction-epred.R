@@ -8,6 +8,7 @@
 #' families vignette at 
 #' https://cran.r-project.org/web/packages/brms/vignettes/brms_customfamilies.html
 #' @return Posterior predictions
+#' @noRd
 posterior_predict_occupancy_single_C <- function(i, prep, ...) {
   mu <- brms::get_dpar(prep, "mu", i = i)
   occ <- brms::get_dpar(prep, "occ", i = i)
@@ -22,6 +23,7 @@ posterior_predict_occupancy_single_C <- function(i, prep, ...) {
 #' families vignette at 
 #' https://cran.r-project.org/web/packages/brms/vignettes/brms_customfamilies.html
 #' @return Posterior epreds
+#' @noRd
 posterior_epred_occupancy_single_C <- function(prep) {
   mu <- brms::get_dpar(prep, "mu")
   occ <- brms::get_dpar(prep, "occ")

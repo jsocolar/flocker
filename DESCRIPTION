@@ -17,8 +17,8 @@ Description: Fit occupancy models in 'Stan' via 'brms'. The full variety
     extinction, and autologistic depending on the model type. Several
     important forms of model post-processing are provided.  References:
     Bürkner (2017) <doi:10.18637/jss.v080.i01>; Carpenter et al. (2017)
-    <doi:10.18637/jss.v076.io1>; Socolar & Mills (2023)
-    <doi:10.1101/2023.10.26.564080v1>.
+    <doi:10.18637/jss.v076.i01>; Socolar & Mills (2023)
+    <doi:10.1101/2023.10.26.564080>.
 License: BSD_3_clause + file LICENSE
 URL: https://github.com/jsocolar/flocker,
     https://jsocolar.github.io/flocker/

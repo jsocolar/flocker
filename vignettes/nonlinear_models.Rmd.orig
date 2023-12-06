@@ -140,7 +140,7 @@ summary(fit)
 
 It works! 
 
-Note that if desired, we could fit more complicated formulas than `~ 1` for any of the nonlinear parameters. For more see the [brms nonlinear model vignette](https://cran.r-project.org/web/packages/brms/vignettes/brms_nonlinear.html).
+Note that if desired, we could fit more complicated formulas than `~ 1` for any of the nonlinear parameters. For more see the [brms nonlinear model vignette](https://paul-buerkner.github.io/brms/articles/brms_nonlinear.html).
 
 ## Spatially varying coefficients via a Gaussian process
 The `gp()` function in `brms` includes a Gaussian process of arbitary dimension

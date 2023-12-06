@@ -67,6 +67,7 @@ flock <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL,
 
 #' Generate stan code for an occupancy model
 #' @inheritParams flock
+#' @return generated stancode
 #' @export
 #' @examples
 #' \dontrun{
@@ -95,6 +96,7 @@ flocker_stancode <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL,
 
 #' Generate stan data for an occupancy model
 #' @inheritParams flock
+#' @return generated stan data
 #' @export
 #' @examples
 #' \dontrun{
@@ -185,7 +187,8 @@ get_flocker_prior <- function(f_occ=NULL, f_det, flocker_data, data2 = NULL,
 #' @param threads NULL or positive integer. If integer, the number of threads
 #'  to use per chain in within chain parallelization.
 #' @param ... additional arguments passed to \code{brms::brm()}
-#' @return stan code for brms model or a \code{brmsfit} containing the fitted occupancy model. 
+#' @return stan code for brms model or a \code{brmsfit} containing the fitted occupancy model.
+#' @noRd
 flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL, 
                   multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
                   augmented = FALSE, threads = NULL,
@@ -532,6 +535,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
 #' @param threads brms threads
 #' @param ... brms ...
 #' @return output of brms::brm or brms::make_stancode or brms::make_standata
+#' @noRd
 flocker_fit_code_util <- function (
   output, f_use, data, data2, family, stanvars, threads = NULL, ...
  ) {

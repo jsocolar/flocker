@@ -70,6 +70,9 @@ with single-season rep-constant models, and must be set to NULL otherwise.}
 
 \item{...}{additional arguments passed to \code{brms::brm()}}
 }
+\value{
+generated stancode
+}
 \description{
 Generate stan code for an occupancy model
 }
