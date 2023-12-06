@@ -3,7 +3,7 @@
 \docType{data}
 \name{example_flocker_model_multi_colex_eq}
 \alias{example_flocker_model_multi_colex_eq}
-\title{Example multi-season flocker model (colex equilibirum)}
+\title{Example multi-season flocker model (colex equilibrium)}
 \format{
 ## `example_flocker_model_multi_colex_eq`
 A flocker_fit and brmsfit object

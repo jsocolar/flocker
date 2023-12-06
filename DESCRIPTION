@@ -39,6 +39,7 @@ Imports:
 Suggests:
     knitr,
     rmarkdown,
+    spelling,
     testthat (>= 2.1.0),
     tibble
 VignetteBuilder: 
@@ -46,3 +47,4 @@ VignetteBuilder:
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
+Language: en-US

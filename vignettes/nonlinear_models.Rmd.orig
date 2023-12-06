@@ -19,10 +19,10 @@ knitr::opts_chunk$set(
 <img align="right" src="../man/figures/flocker_sticker.png" width=30% style="border:none;">
 
 Here we show how we can use `flocker` to fit nonlinear occupancy models via 
-`brms`. In most occupancy models, occupancy and detection probabilties are 
+`brms`. In most occupancy models, occupancy and detection probabilities are 
 modeled as logit-linear combinations of covariates. In some models (e.g. those 
 with splines or Gaussian processes), probabilities are modeled as the sum of 
-more flexibile functions of covariates. These are straightforward to fit in
+more flexible functions of covariates. These are straightforward to fit in
 `flocker` using the `brms` functions `s()`, `t2()`, and `gp()`; see the [flocker tutorial vignette](https://jsocolar.github.io/flocker/articles/flocker_tutorial.html) for 
 details.
 
@@ -143,7 +143,7 @@ It works!
 Note that if desired, we could fit more complicated formulas than `~ 1` for any of the nonlinear parameters. For more see the [brms nonlinear model vignette](https://paul-buerkner.github.io/brms/articles/brms_nonlinear.html).
 
 ## Spatially varying coefficients via a Gaussian process
-The `gp()` function in `brms` includes a Gaussian process of arbitary dimension
+The `gp()` function in `brms` includes a Gaussian process of arbitrary dimension
 in the linear predictor. We can use the nonlinear formula syntax to tell `brms`
 to include a Gaussian process prior on a coefficient as well.
 

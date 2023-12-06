@@ -29,7 +29,7 @@ For a data-augmented multi-species model, we marginalize over the occupancy stat
 \]
 where $s$ indexes the species, $\omega$ is the fitted availability probability of a species, $I_s$ is the set of all closure-unit indices $i$ pertaining to species $s$, $r_s$ is an indicator that takes the value $1$ if there is at least one positive detection of the (pseudo)species in the entire dataset and $0$ otherwise.
 
-Fitting the data-augmented model in \mintinline{r}{flocker} requires passing the observed data as a three-dimensional array with sites along the first dimension, visits along the second, and species along the third. Additionally, we must supply the `n_aug` argument to `make_flocker_data()`, specifying how many all-zero pseudospecies to augment the data with.
+Fitting the data-augmented model in `flocker` requires passing the observed data as a three-dimensional array with sites along the first dimension, visits along the second, and species along the third. Additionally, we must supply the `n_aug` argument to `make_flocker_data()`, specifying how many all-zero pseudospecies to augment the data with.
 
 ```{r data-augmented, message = FALSE}
 set.seed(2)

@@ -27,7 +27,7 @@ fitted_flocker(
 \item{new_data}{Optional new data at which to evaluate occupancy predictions. 
 New data can be passed as a flocker_data object produced by 
 \code{make_flocker_data} or as a dataframe with one row per desired
-predicton. If `NULL` (the default) expected values are generated for the 
+prediction. If `NULL` (the default) expected values are generated for the 
 original data as formatted by make_flocker_data.}
 
 \item{unit_level}{Logical; defaults to FALSE. Relevant only when `new_data`
@@ -76,7 +76,7 @@ Get expected values of the posterior predictive distribution for the modeled
 probabilities (occupancy, detection, colonization, extinction, autologistic).
 }
 \details{
-The probabilities returned are conditional probabilties (e.g. detection 
+The probabilities returned are conditional probabilities (e.g. detection 
 conditional on occupancy, colonization conditional on previous 
 non-occupancy, etc). These probabilities are not conditioned on the 
 observed histories (e.g. the occupancy probability is not fixed to one 

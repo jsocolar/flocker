@@ -8,7 +8,7 @@
 ## `example_flocker_data`
 A list with elements appropriate to pass to make_flocker_data:
 \describe{
-  \item{obs}{A detection/nondetection matrix. Rows are units and colums are
+  \item{obs}{A detection/nondetection matrix. Rows are units and columns are
   visits}
   \item{unit_covs}{A data.frame of four unit covs. `uc1` and `uc2` are 
   numeric; `grp` and `species` are categorical. Every level of `species` is

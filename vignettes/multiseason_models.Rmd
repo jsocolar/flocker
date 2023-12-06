@@ -47,7 +47,7 @@ algorithm to draw valid posterior samples for the sequence of latent states]
 The HMM conceptualizes the latent occupancy state as a Markov-like process (the
 process need not be strictly Markovian, because the transition probabilities can 
 vary by timestep), where the transition probabilities between the two possible 
-states (occupied or unoccupied) are a colonization probabilility $\mathcal{C}$, 
+states (occupied or unoccupied) are a colonization probability $\mathcal{C}$, 
 an extinction probability $\mathcal{E}$, and their complements $1 - \mathcal{C}$ 
 and $1 - \mathcal{E}$. The complement of the extinction probability turns out to 
 be particularly important; we call it the *persistence* probability 
@@ -124,7 +124,7 @@ simply be this equilibrium frequency, eliminating the need to parameterize
 and fit initial occupancy separately from colonization and extinction.
 `flocker` is equipped to fit models without any separate predictor for initial 
 occupancy, and instead to begin with the equilibrium frequencies implied by the 
-coloniziation and extinction probabilities modeled for the first timestep. 
+colonization and extinction probabilities modeled for the first timestep. 
 Note that this approach is sometimes valid even if the colonization and 
 extinction probabilities begin to vary during the timeseries being modeled,
 as long as they are invariant for a substantial period up to and including the
@@ -132,11 +132,11 @@ first year modeled. As a concrete example, consider a study system that begins
 in an equilibrium condition, but in which some sites burn in a forest fire 
 partway through the study. If the impact of the burn on colonization and 
 extinction probabilities is modeled adequately, 
-then the modeled probabilites prior to the burn will reflect the equilibrium
+then the modeled probabilities prior to the burn will reflect the equilibrium
 colonization and extinction probabilities in the pre-burn state. It is for this 
 reason that, when using equilibrium frequencies as initial occupancy 
 probabilities, `flocker` always computes the equilibrium based on the 
-probabilites modeled for the first timestep.
+probabilities modeled for the first timestep.
 
 As an aside, we somewhat regularly encounter confusion that conflates initial 
 occupancy probabilities $\mathcal{O}$ with colonization probabilities 
