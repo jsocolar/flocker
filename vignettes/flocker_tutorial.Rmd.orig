@@ -602,7 +602,7 @@ mod4 <- flock(
   flocker_data = fd_rep_varying
   )
 ```
-For more on `brms` syntax for random effects syntax, see the [documentation here](https://cran.r-project.org/web/packages/brms/vignettes/brms_multilevel.pdf).
+For more on `brms` syntax for random effects syntax, see the [documentation here](https://journal.r-project.org/archive/2018/RJ-2018-017/index.html).
 
 ### Nonlinear models
 Via `brms`, `flocker` supports Gaussian processes of arbitrary dimensionality

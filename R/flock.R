@@ -535,46 +535,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
 flocker_fit_code_util <- function (
   output, f_use, data, data2, family, stanvars, threads = NULL, ...
  ) {
-  if (family$name == "occupancy_single_threaded") {
-    if (output == "code") {
-      out <- brms::make_stancode(f_use, 
-                                 data = data,
-                                 data2 = data2,
-                                 family = family, 
-                                 stanvars = stanvars,
-                                 threads_per_chain = threads,
-                                 ...)
-    } else if (output == "data") {
-      out <- brms::make_standata(f_use, 
-                                 data = data,
-                                 data2 = data2,
-                                 family = family, 
-                                 stanvars = stanvars,
-                                 threads_per_chain = threads,
-                                 ...)
-    } else if (output == "model") {
-      print("tt")
-      cml <- cmdstanr::cmdstan_make_local()
-      cpp_stan_threads <- list("STAN_THREADS=true")
-      cmdstanr::cmdstan_make_local(cpp_options = cpp_stan_threads)
-      out <- brms::brm(f_use, 
-                       data = data,
-                       data2 = data2,
-                       family = family, 
-                       stanvars = stanvars,
-                       threads_per_chain = threads,
-                       ...)
-      cmdstanr::cmdstan_make_local(cpp_options = cml, append = F)
-    } else if (output == "prior") {
-      out <- brms::get_prior(f_use, 
-                             data = data,
-                             data2 = data2,
-                             family = family, 
-                             stanvars = stanvars,
-                             threads_per_chain = threads,
-                             ...)
-    }
-  } else if (!is.null(threads)){ # this covers the rep-constant case where
+  if (!is.null(threads)){ # this covers the rep-constant case where
     # native brms threading is available
     if (output == "code") {
       out <- brms::make_stancode(f_use, 
