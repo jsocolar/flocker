@@ -29,7 +29,12 @@ To get started, check out our
 For installation instructions, see below.
 
 ### Installation
-Install `flocker` in R with
+Install the latest CRAN release of `flocker` with
+```
+install.packages("flocker")
+```
+
+Install the current development version of `flocker` with
 ```
 # install.packages("remotes")
 remotes::install_github("jsocolar/flocker")
@@ -41,7 +46,7 @@ To do so, first install R package `cmdstanr` with
 ```
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
-You must additionally install cmdstan itself. We strongly recommend using
+You must additionally install `cmdstan` itself. We strongly recommend using
 `cmdstanr` to manage the cmdstan installation:
 ```
 cmdstanr::install_cmdstan()
