@@ -53,7 +53,6 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
   
   assertthat::assert_that(is.null(new_data) | is_flocker_data(new_data))
 
-  new_data2 <- new_data
   if (is.null(new_data)) {
     new_data <- flocker_fit$data
   } else {
@@ -95,13 +94,13 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
   
   
   Z_samp <- get_Z(flocker_fit, draw_ids = draw_ids, history_condition = history_condition, 
-                  sample = TRUE, new_data = new_data2, 
+                  sample = TRUE, new_data = new_data, 
                   allow_new_levels = allow_new_levels, sample_new_levels = sample_new_levels)
   
   lps <- fitted_flocker(
     flocker_fit, 
     components = "det",
-    draw_ids = draw_ids, new_data = new_data2, allow_new_levels = allow_new_levels, 
+    draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
     sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
   )
   theta_all <- boot::inv.logit(lps$linpred_det)
