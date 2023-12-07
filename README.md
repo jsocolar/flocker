@@ -66,7 +66,7 @@ To contribute to `flocker` (very much appreciated!) have a look at existing open
 issues, or open a new issue to discuss.
 
 ### Citing flocker
-When using `flocker`, please site the [companion manuscript](https://www.biorxiv.org/content/10.1101/2023.10.26.564080v1):
+When using `flocker`, please cite the [companion manuscript](https://www.biorxiv.org/content/10.1101/2023.10.26.564080v1):
 * Socolar, J.B. & Mills, S.C. (2023). "Introducing flocker: an R package for flexible occupancy modeling via brms and Stan." https://doi.org/10.1101/2023.10.26.564080
 
 Additionally, please consider citing [Stan](https://mc-stan.org/users/citations/)
