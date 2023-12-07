@@ -49,12 +49,12 @@
 #'     details).
 #' @export
 #' @examples 
+#' \dontrun{
 #' fitted_flocker(
 #'   example_flocker_model_single, 
-#'   summarise = TRUE, 
-#'   draw_ids = 1:3
+#'   summarise = TRUE
 #' )
-#' 
+#' }
 fitted_flocker <- function(
     flocker_fit, 
     components = c("occ", "det", "col", "ex", "auto", "Omega"),
