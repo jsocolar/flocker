@@ -50,6 +50,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/sbc.html">SBC for flocker models</a>
+    </li>
+    <li>
       <a href="../articles/augmented_models.html">Data-augmented models in flocker</a>
     </li>
     <li>
@@ -63,9 +66,6 @@
     </li>
     <li>
       <a href="../articles/nonlinear_models.html">Nonlinear models in flocker</a>
-    </li>
-    <li>
-      <a href="../articles/sbc.html">SBC for flocker models</a>
     </li>
   </ul>
 </li>
@@ -106,20 +106,20 @@ Socolar</h4>
 <p><img align="right" src="../reference/figures/flocker_sticker.png" width="30%" style="border:none;"></p>
 <p>Here we show how we can use <code>flocker</code> to fit nonlinear
 occupancy models via <code>brms</code>. In most occupancy models,
-occupancy and detection probabilties are modeled as logit-linear
+occupancy and detection probabilities are modeled as logit-linear
 combinations of covariates. In some models (e.g. those with splines or
 Gaussian processes), probabilities are modeled as the sum of more
-flexibile functions of covariates. These are straightforward to fit in
+flexible functions of covariates. These are straightforward to fit in
 <code>flocker</code> using the <code>brms</code> functions
 <code><a href="https://paul-buerkner.github.io/brms/reference/s.html" class="external-link">s()</a></code>, <code><a href="https://paul-buerkner.github.io/brms/reference/s.html" class="external-link">t2()</a></code>, and <code><a href="https://paul-buerkner.github.io/brms/reference/gp.html" class="external-link">gp()</a></code>; see the <a href="https://jsocolar.github.io/flocker/articles/flocker_tutorial.html" class="external-link">flocker
 tutorial vignette</a> for details.</p>
 <p>This vignette focuses on more complicated nonlinear models that
 require the use of special nonlinear <code>brms</code> formulas. We
-showcase two models. The first fits a parameteric nonlinear predictor.
+showcase two models. The first fits a parametric nonlinear predictor.
 The second fits a model with a spatially varying coefficient that is
 given a gaussian process prior.</p>
 <div class="section level2">
-<h2 id="parameteric-nonlinear-predictor">Parameteric nonlinear predictor<a class="anchor" aria-label="anchor" href="#parameteric-nonlinear-predictor"></a>
+<h2 id="parametric-nonlinear-predictor">Parametric nonlinear predictor<a class="anchor" aria-label="anchor" href="#parametric-nonlinear-predictor"></a>
 </h2>
 <p>In this scenario, we consider a model where the response is a
 specific nonlinear parametric function whose parameters are fitted and
@@ -198,7 +198,7 @@ conventions for all of the relevant distributional parameters
 (<code>det</code> and one or more of <code>occ</code>,
 <code>colo</code>, <code>ex</code>, <code>autologistic</code>,
 <code>Omega</code>). If fitting a data-augmented model, it will be
-requried to pass the <code>Omega ~ 1</code> formula within the
+required to pass the <code>Omega ~ 1</code> formula within the
 <code>brmsformula</code> (When passing the traditional one-sided formula
 to <code>f_det</code>, <code>flocker</code> includes the formula for
 <code>Omega</code> internally and automatically).</p></li>
@@ -254,14 +254,14 @@ contribution to the likelihood.</p></li>
 <p>It works!</p>
 <p>Note that if desired, we could fit more complicated formulas than
 <code>~ 1</code> for any of the nonlinear parameters. For more see the
-<a href="https://cran.r-project.org/web/packages/brms/vignettes/brms_nonlinear.html" class="external-link">brms
+<a href="https://paul-buerkner.github.io/brms/articles/brms_nonlinear.html" class="external-link">brms
 nonlinear model vignette</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="spatially-varying-coefficients-via-a-gaussian-process">Spatially varying coefficients via a Gaussian process<a class="anchor" aria-label="anchor" href="#spatially-varying-coefficients-via-a-gaussian-process"></a>
 </h2>
 <p>The <code><a href="https://paul-buerkner.github.io/brms/reference/gp.html" class="external-link">gp()</a></code> function in <code>brms</code> includes a
-Gaussian process of arbitary dimension in the linear predictor. We can
+Gaussian process of arbitrary dimension in the linear predictor. We can
 use the nonlinear formula syntax to tell <code>brms</code> to include a
 Gaussian process prior on a coefficient as well.</p>
 <p>First we simulate some data wherein the logit of the occupancy

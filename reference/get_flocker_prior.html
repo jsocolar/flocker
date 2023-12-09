@@ -32,6 +32,9 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu"><li>
+      <a href="../articles/sbc.html">SBC for flocker models</a>
+    </li>
+    <li>
       <a href="../articles/augmented_models.html">Data-augmented models in flocker</a>
     </li>
     <li>
@@ -45,9 +48,6 @@
     </li>
     <li>
       <a href="../articles/nonlinear_models.html">Nonlinear models in flocker</a>
-    </li>
-    <li>
-      <a href="../articles/sbc.html">SBC for flocker models</a>
     </li>
   </ul></li>
       </ul><ul class="nav navbar-nav navbar-right"><li>
@@ -179,14 +179,15 @@ with single-season rep-constant models, and must be set to NULL otherwise.</p></
     <div id="ref-examples">
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="va">sfd</span> <span class="op">&lt;-</span> <span class="fu"><a href="simulate_flocker_data.html">simulate_flocker_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fd</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_flocker_data.html">make_flocker_data</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span> <span class="va">example_flocker_data</span><span class="op">$</span><span class="va">obs</span>, </span></span>
-<span class="r-in"><span> <span class="va">example_flocker_data</span><span class="op">$</span><span class="va">unit_covs</span>,</span></span>
-<span class="r-in"><span> <span class="va">example_flocker_data</span><span class="op">$</span><span class="va">event_covs</span></span></span>
+<span class="r-in"><span> <span class="va">sfd</span><span class="op">$</span><span class="va">obs</span>, </span></span>
+<span class="r-in"><span> <span class="va">sfd</span><span class="op">$</span><span class="va">unit_covs</span>,</span></span>
+<span class="r-in"><span> <span class="va">sfd</span><span class="op">$</span><span class="va">event_covs</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">get_flocker_prior</span><span class="op">(</span></span></span>
-<span class="r-in"><span> f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">grp</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span> f_det <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="va">ec1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">grp</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span> f_occ <span class="op">=</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">uc1</span><span class="op">)</span> <span class="op">+</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">species</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span> f_det <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="va">ec1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">species</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span> flocker_data <span class="op">=</span> <span class="va">fd</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>

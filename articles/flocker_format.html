@@ -50,6 +50,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/sbc.html">SBC for flocker models</a>
+    </li>
+    <li>
       <a href="../articles/augmented_models.html">Data-augmented models in flocker</a>
     </li>
     <li>
@@ -63,9 +66,6 @@
     </li>
     <li>
       <a href="../articles/nonlinear_models.html">Nonlinear models in flocker</a>
-    </li>
-    <li>
-      <a href="../articles/sbc.html">SBC for flocker models</a>
     </li>
   </ul>
 </li>
@@ -95,7 +95,7 @@ and the <code>flocker_data</code> format</h1>
                         <h4 data-toc-skip class="author">Jacob
 Socolar</h4>
             
-            <h4 data-toc-skip class="date">2023-12-05</h4>
+            <h4 data-toc-skip class="date">2023-12-09</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/jsocolar/flocker/blob/HEAD/vignettes/flocker_format.Rmd" class="external-link"><code>vignettes/flocker_format.Rmd</code></a></small>
       <div class="hidden name"><code>flocker_format.Rmd</code></div>
@@ -110,7 +110,7 @@ incorporate <code>Stan</code> code for custom likelihood functions.
 <code>brms</code> can then fit models using these likelihoods where the
 distributional parameters of the custom likelihood are given linear
 predictors in the usual way. Relatively straightforward examples are
-given in the <a href="https://cran.r-project.org/web/packages/brms/vignettes/brms_customfamilies.html" class="external-link">brms
+given in the <a href="https://paul-buerkner.github.io/brms/articles/brms_customfamilies.html" class="external-link">brms
 custom families vignette</a>, but <code>brms</code> provides surprising
 flexibility to do fancy things with custom families. In this vignette, I
 show how we use this flexibility to harness <code>brms</code> to
@@ -203,7 +203,7 @@ equal to three plus the maximum number of repeat visits to any site. The
 repeat visits and is generated on-the-fly at runtime. Here’s how it
 looks for a dataset with a maximum of four repeat visits:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu">flocker</span><span class="fu">:::</span><span class="fu"><a href="../reference/make_occupancy_single_lpmf.html">make_occupancy_single_lpmf</a></span><span class="op">(</span><span class="fl">4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu">flocker</span><span class="fu">:::</span><span class="fu">make_occupancy_single_lpmf</span><span class="op">(</span><span class="fl">4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   real occupancy_single_lpmf(</span></span>
 <span><span class="co">##     array[] int y, // detection data</span></span>
 <span><span class="co">##     vector mu, // lin pred for detection</span></span>
@@ -276,7 +276,7 @@ first are the multi-season families, which group closure-units into
 series within which the occupancy state changes via modeled colonization
 and extinction dynamics. The second are data-augmented multi-species
 models, in which closure-units are grouped within species whose presence
-in the community (and thus availablility for detection) is modeled
+in the community (and thus availability for detection) is modeled
 explicitly.</p>
 <div class="section level3">
 <h3 id="the-multi-species-format">The multi-species format<a class="anchor" aria-label="anchor" href="#the-multi-species-format"></a>
@@ -284,7 +284,7 @@ explicitly.</p>
 <p>For we fit multi-species models via a hidden Markov model (HMM)
 approach to the likelihood. This vignette does not cover the
 implementation of that likelihood in detail–just the necessary data that
-we need to send to the un-looped likelihood function. Suppose the data
+we need to send to the unlooped likelihood function. Suppose the data
 contain <span class="math inline">\(S\)</span> distinct series
 (i.e. distinct hidden Markov sequences), <span class="math inline">\(U\)</span> closure-units (i.e. the sum over series
 of the number of timesteps per series). The data are ordered so that the
@@ -321,11 +321,11 @@ the maximum number of timesteps in any series plus the maximum number of
 visits in any timestep. Here’s <code>Stan</code> code to decode this
 format and compute the likelihood for 5 timesteps with a maximum of 4
 repeat visits, in this case for the colonization-extinction flavor of
-multispecies model. Note that this likeliihood includes custom functions
+multispecies model. Note that this likelihood includes custom functions
 that <code>flocker</code> defines elsewhere and passes to the custom
 family via <code>stanvars</code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu">flocker</span><span class="fu">:::</span><span class="fu"><a href="../reference/make_occupancy_multi_colex_lpmf.html">make_occupancy_multi_colex_lpmf</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu">flocker</span><span class="fu">:::</span><span class="fu">make_occupancy_multi_colex_lpmf</span><span class="op">(</span><span class="fl">4</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   real occupancy_multi_colex_lpmf(</span></span>
 <span><span class="co">##     array[] int y, // detection data</span></span>
 <span><span class="co">##     vector mu, // linear predictor for detection</span></span>
@@ -424,7 +424,7 @@ the maximum number of visits at any site. Here’s <code>Stan</code> code
 to decode this format and compute the likelihood a dataset with a
 maximum of 4 repeat visits.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu">flocker</span><span class="fu">:::</span><span class="fu"><a href="../reference/make_occupancy_augmented_lpmf.html">make_occupancy_augmented_lpmf</a></span><span class="op">(</span><span class="fl">4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu">flocker</span><span class="fu">:::</span><span class="fu">make_occupancy_augmented_lpmf</span><span class="op">(</span><span class="fl">4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##   real occupancy_augmented_lpmf(</span></span>
 <span><span class="co">##     array[] int y, // detection data</span></span>
 <span><span class="co">##     vector mu, // lin pred for detection</span></span>

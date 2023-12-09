@@ -50,6 +50,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/sbc.html">SBC for flocker models</a>
+    </li>
+    <li>
       <a href="../articles/augmented_models.html">Data-augmented models in flocker</a>
     </li>
     <li>
@@ -63,9 +66,6 @@
     </li>
     <li>
       <a href="../articles/nonlinear_models.html">Nonlinear models in flocker</a>
-    </li>
-    <li>
-      <a href="../articles/sbc.html">SBC for flocker models</a>
     </li>
   </ul>
 </li>
@@ -135,10 +135,10 @@ indices <span class="math inline">\(i\)</span> pertaining to species
 <span class="math inline">\(s\)</span>, <span class="math inline">\(r_s\)</span> is an indicator that takes the value
 <span class="math inline">\(1\)</span> if there is at least one positive
 detection of the (pseudo)species in the entire dataset and <span class="math inline">\(0\)</span> otherwise.</p>
-<p>Fitting the data-augmented model in requires passing the observed
-data as a three-dimensional array with sites along the first dimension,
-visits along the second, and species along the third. Additionally, we
-must supply the <code>n_aug</code> argument to
+<p>Fitting the data-augmented model in <code>flocker</code> requires
+passing the observed data as a three-dimensional array with sites along
+the first dimension, visits along the second, and species along the
+third. Additionally, we must supply the <code>n_aug</code> argument to
 <code><a href="../reference/make_flocker_data.html">make_flocker_data()</a></code>, specifying how many all-zero
 pseudospecies to augment the data with.</p>
 <pre><code>#&gt; Formatting data for a single-season multispecies occupancy model with data augmentation for never-observed species. For details, see make_flocker_data_augmented.  All warnings and error messages should be interpreted in the context of make_flocker_data_augmented

@@ -50,6 +50,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/sbc.html">SBC for flocker models</a>
+    </li>
+    <li>
       <a href="../articles/augmented_models.html">Data-augmented models in flocker</a>
     </li>
     <li>
@@ -63,9 +66,6 @@
     </li>
     <li>
       <a href="../articles/nonlinear_models.html">Nonlinear models in flocker</a>
-    </li>
-    <li>
-      <a href="../articles/sbc.html">SBC for flocker models</a>
     </li>
   </ul>
 </li>
@@ -94,7 +94,7 @@
                         <h4 data-toc-skip class="author">Jacob
 Socolar</h4>
             
-            <h4 data-toc-skip class="date">2023-12-05</h4>
+            <h4 data-toc-skip class="date">2023-12-09</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/jsocolar/flocker/blob/HEAD/vignettes/multiseason_models.Rmd" class="external-link"><code>vignettes/multiseason_models.Rmd</code></a></small>
       <div class="hidden name"><code>multiseason_models.Rmd</code></div>
@@ -129,7 +129,7 @@ conceptualizes the latent occupancy state as a Markov-like process (the
 process need not be strictly Markovian, because the transition
 probabilities can vary by timestep), where the transition probabilities
 between the two possible states (occupied or unoccupied) are a
-colonization probabilility <span class="math inline">\(\mathcal{C}\)</span>, an extinction probability
+colonization probability <span class="math inline">\(\mathcal{C}\)</span>, an extinction probability
 <span class="math inline">\(\mathcal{E}\)</span>, and their complements
 <span class="math inline">\(1 - \mathcal{C}\)</span> and <span class="math inline">\(1 - \mathcal{E}\)</span>. The complement of the
 extinction probability turns out to be particularly important; we call
@@ -214,7 +214,7 @@ frequency, eliminating the need to parameterize and fit initial
 occupancy separately from colonization and extinction.
 <code>flocker</code> is equipped to fit models without any separate
 predictor for initial occupancy, and instead to begin with the
-equilibrium frequencies implied by the coloniziation and extinction
+equilibrium frequencies implied by the colonization and extinction
 probabilities modeled for the first timestep. Note that this approach is
 sometimes valid even if the colonization and extinction probabilities
 begin to vary during the timeseries being modeled, as long as they are
@@ -223,11 +223,12 @@ modeled. As a concrete example, consider a study system that begins in
 an equilibrium condition, but in which some sites burn in a forest fire
 partway through the study. If the impact of the burn on colonization and
 extinction probabilities is modeled adequately, then the modeled
-probabilites prior to the burn will reflect the equilibrium colonization
-and extinction probabilities in the pre-burn state. It is for this
-reason that, when using equilibrium frequencies as initial occupancy
-probabilities, <code>flocker</code> always computes the equilibrium
-based on the probabilites modeled for the first timestep.</p>
+probabilities prior to the burn will reflect the equilibrium
+colonization and extinction probabilities in the pre-burn state. It is
+for this reason that, when using equilibrium frequencies as initial
+occupancy probabilities, <code>flocker</code> always computes the
+equilibrium based on the probabilities modeled for the first
+timestep.</p>
 <p>As an aside, we somewhat regularly encounter confusion that conflates
 initial occupancy probabilities <span class="math inline">\(\mathcal{O}\)</span> with colonization
 probabilities <span class="math inline">\(\mathcal{C}\)</span>. This
