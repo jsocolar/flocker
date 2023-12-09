@@ -13,7 +13,7 @@ vignette: >
 
 <img align="right" src="../man/figures/flocker_sticker.png" width=30% style="border:none;">
 
-`flocker` is an R package for fitting [occupancy models](https://jsocolar.github.io/closureOccupancy/) that incorportate 
+`flocker` is an R package for fitting [occupancy models](https://jsocolar.github.io/closureOccupancy/) that incorporate 
 sophisticated effects structures using simple formula-based syntax. `flocker` is 
 built on R package `brms`, which in turn is a front-end for `Stan`. 
 
@@ -58,7 +58,7 @@ vignette, including:
  *rep-constant*.
 
 ## Installation and feedback
-[Installation instructions are available here](https://jsocolar.github.io/flocker). 
+[Installation instructions are available here](https://jsocolar.github.io/flocker/). 
 To request features or report bugs (much appreciated!), please [open an issue on GitHub](https://github.com/jsocolar/flocker/issues).
 
 To make `flocker` and `brms` functions globally available within an R session 
@@ -691,7 +691,7 @@ mod4 <- flock(
   flocker_data = fd_rep_varying
   )
 ```
-For more on `brms` syntax for random effects syntax, see the [documentation here](https://cran.r-project.org/web/packages/brms/vignettes/brms_multilevel.pdf).
+For more on `brms` syntax for random effects syntax, see the [documentation here](https://journal.r-project.org/archive/2018/RJ-2018-017/index.html).
 
 ### Nonlinear models
 Via `brms`, `flocker` supports Gaussian processes of arbitrary dimensionality

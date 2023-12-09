@@ -4,7 +4,7 @@
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/jsocolar/flocker/workflows/R-CMD-check/badge.svg)](https://github.com/jsocolar/flocker/actions?workflow=R-CMD-check)
 [![Coverage
-Status](https://codecov.io/gh/jsocolar/flocker/branch/main/graph/badge.svg)](https://codecov.io/gh/jsocolar/flocker)
+Status](https://codecov.io/gh/jsocolar/flocker/branch/main/graph/badge.svg)](https://app.codecov.io/gh/jsocolar/flocker)
 <!-- badges: end -->
 
 
@@ -29,7 +29,12 @@ To get started, check out our
 For installation instructions, see below.
 
 ### Installation
-Install `flocker` in R with
+Install the latest CRAN release of `flocker` with
+```
+install.packages("flocker")
+```
+
+Install the current development version of `flocker` with
 ```
 # install.packages("remotes")
 remotes::install_github("jsocolar/flocker")
@@ -41,7 +46,7 @@ To do so, first install R package `cmdstanr` with
 ```
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
-You must additionally install cmdstan itself. We strongly recommend using
+You must additionally install `cmdstan` itself. We strongly recommend using
 `cmdstanr` to manage the cmdstan installation:
 ```
 cmdstanr::install_cmdstan()
@@ -61,7 +66,7 @@ To contribute to `flocker` (very much appreciated!) have a look at existing open
 issues, or open a new issue to discuss.
 
 ### Citing flocker
-When using `flocker`, please site the [companion manuscript](https://www.biorxiv.org/content/10.1101/2023.10.26.564080v1):
+When using `flocker`, please cite the [companion manuscript](https://www.biorxiv.org/content/10.1101/2023.10.26.564080v1):
 * Socolar, J.B. & Mills, S.C. (2023). "Introducing flocker: an R package for flexible occupancy modeling via brms and Stan." https://doi.org/10.1101/2023.10.26.564080
 
 Additionally, please consider citing [Stan](https://mc-stan.org/users/citations/)

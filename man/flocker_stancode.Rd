@@ -70,15 +70,19 @@ with single-season rep-constant models, and must be set to NULL otherwise.}
 
 \item{...}{additional arguments passed to \code{brms::brm()}}
 }
+\value{
+generated stancode
+}
 \description{
 Generate stan code for an occupancy model
 }
 \examples{
 \dontrun{
+sfd <- simulate_flocker_data()
 fd <- make_flocker_data(
- example_flocker_data$obs, 
- example_flocker_data$unit_covs,
- example_flocker_data$event_covs
+ sfd$obs, 
+ sfd$unit_covs,
+ sfd$event_covs
 )
 flocker_stancode(f_occ = ~ uc1 + s(uc2) + (1|grp),
           f_det = ~ uc1 + ec1 + s(ec2) + (1|grp),

@@ -1,48 +1,53 @@
 Package: flocker
-Version: 0.2-0
 Title: Flexible Occupancy Estimation in R
-Authors@R: 
-    c(person("Jacob B.", "Socolar", email = "jacob.socolar@gmail.com",
-             role = c("aut", "cre")),
-      person("Simon C.", "Mills", role = c("aut")),
-      person("Paul-Christian", "Bürkner", role = c("ctb")))
-Depends: 
-	R (>= 4.1.0)
-Imports:
-	brms (>= 2.16.0),
-	cmdstanr (>= 0.4.0),
-	loo (>= 2.0.0),
-	stats,
-	boot,
-	matrixStats,
-	assertthat,
-	abind,
-	withr,
-	MASS
-Suggests:
-    testthat (>= 2.1.0),
-    knitr,
-    rmarkdown,
-    ape,
-    posterior (>= 1.0.0),
-    rstan (>= 2.26),
-    tibble
-Remotes: 
-	stan-dev/cmdstanr,
-	hyunjimoon/SBC
-Description: Fit flexible occupancy models in Stan via brms. Flocker brings 
-   the full variety of brms effects structures to the relevant distributional 
-   terms in multiple classes of occupancy model, including standard 
-   single-season models, models with data augmentation for never-observed 
-   species, dynamic (multiseason) models with explicit colonization and 
-   extinction processes, and dynamic models with autologistic occupancy 
-   dynamics. Depending on the model class, flocker can specify formulas for any 
-   of occupancy, detection, colonization, extinction, and/or the autologistic 
-   term.
-Encoding: UTF-8
+Version: 0.2-0
+Authors@R: c(
+    person("Jacob B.", "Socolar", , "jacob.socolar@gmail.com", role = c("aut", "cre", "cph")),
+    person("Simon C.", "Mills", role = "aut"),
+    person("Paul-Christian", "Bürkner", role = "ctb")
+  )
+Description: Fit occupancy models in 'Stan' via 'brms'. The full variety
+    of 'brms' formula-based effects structures are available to use in
+    multiple classes of occupancy model, including standard single-season
+    models, models with data augmentation for never-observed species,
+    dynamic (multiseason) models with explicit colonization and extinction
+    processes, and dynamic models with autologistic occupancy dynamics.
+    Formulas can be specified for all relevant distributional terms,
+    including detection and one or more of occupancy, colonization,
+    extinction, and autologistic depending on the model type. Several
+    important forms of model post-processing are provided.  References:
+    Bürkner (2017) <doi:10.18637/jss.v080.i01>; Carpenter et al. (2017)
+    <doi:10.18637/jss.v076.i01>; Socolar & Mills (2023)
+    <doi:10.1101/2023.10.26.564080>.
 License: BSD_3_clause + file LICENSE
-URL: https://github.com/jsocolar/flocker
+URL: https://github.com/jsocolar/flocker,
+    https://jsocolar.github.io/flocker/
 BugReports: https://github.com/jsocolar/flocker/issues
-RoxygenNote: 7.2.3
-VignetteBuilder: knitr
+Depends: 
+    R (>= 4.1.0)
+Imports:
+    abind,
+    assertthat,
+    boot,
+    brms (>= 2.16.0),
+    loo (>= 2.0.0),
+    MASS,
+    matrixStats,
+    stats,
+    utils,
+    withr
+Suggests:
+    BH (>= 1.75.0-0),
+    knitr,
+    RcppEigen (>= 0.3.3.9.3),
+    rmarkdown,
+    rstan (>= 2.26.0),
+    spelling,
+    testthat (>= 2.1.0),
+    tibble
+VignetteBuilder: 
+    knitr
+Encoding: UTF-8
 LazyData: true
+RoxygenNote: 7.2.3
+Language: en-US

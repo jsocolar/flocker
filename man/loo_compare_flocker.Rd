@@ -14,6 +14,9 @@ loo_compare_flocker(model_list, model_names = NULL, thin = NULL)
 \item{thin}{specify the amount of thinning required. 1 or NULL results in no 
 thinning, 2 retains every other value, 3 every third, etc.}
 }
+\value{
+a `compare.loo` matrix
+}
 \description{
 LOO comparisons for flocker models.
 }

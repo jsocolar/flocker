@@ -193,6 +193,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
 #' @param obs if history_condition is true, the observed histories
 #' @return a matrix of fitted Z probabilities or sampled Z values. Rows are
 #'   units and columns are posterior iterations.
+#' @noRd
 get_Z_single <- function(lps, sample, history_condition, obs = NULL){
   if(length(dim(lps$linpred_occ)) == 3) { # from flockerdata
     lpo <- lps$linpred_occ[ , 1, ] # first index is unit, second is visit, third is draw
@@ -239,6 +240,7 @@ get_Z_single <- function(lps, sample, history_condition, obs = NULL){
 #' @param obs if history_condition is true, the observed histories
 #' @return a matrix of fitted Z probabilities or sampled Z values. Rows are
 #'   units and columns are posterior iterations.
+#' @noRd
 get_Z_single_C <- function(lps, sample, history_condition, obs = NULL){
   if(length(dim(lps$linpred_occ)) == 3) { # from flockerdata
     lpo <- lps$linpred_occ[ , 1, ] # first index is unit, second is visit, third is draw
@@ -291,6 +293,7 @@ get_Z_single_C <- function(lps, sample, history_condition, obs = NULL){
 #' @param obs if history_condition is true, the observed histories
 #' @return an array of fitted Z probabilities or sampled Z values. Rows are
 #'   units and columns are posterior iterations.
+#' @noRd
 get_Z_augmented <- function(lps, sample, history_condition, obs = NULL){
   lpo <- lps$linpred_occ[ , 1, , ] # first index is point, second is visit, third is species, fourth is draw
   n_point <- nrow(lpo)
@@ -365,6 +368,7 @@ get_Z_augmented <- function(lps, sample, history_condition, obs = NULL){
 #'   columns are timesteps, and slices are draws.
 #' @details History-conditioning is via the forward-backward algorithm (forward-
 #'  filtering-backward-sampling when sample is TRUE)
+#' @noRd
 get_Z_dynamic <- function(
     init, colo, ex, history_condition, sample, obs = NULL, det = NULL
     ){
@@ -423,6 +427,7 @@ get_Z_dynamic <- function(
 #' @param sample Should the return be posterior probabilities of occupancy (FALSE),
 #'     valid posterior predictive samples (TRUE)
 #' @return vector of occupancy probabilities or posterior predictive samples
+#' @noRd
 forward_sim <- function(init, colo, ex, sample = FALSE){
   assertthat::assert_that(identical(is.na(colo), is.na(ex)))
   assertthat::assert_that(identical(length(colo), length(ex)))
@@ -472,6 +477,7 @@ forward_sim <- function(init, colo, ex, sample = FALSE){
 #' @param colo a vector giving the colonization probs
 #' @param ex a vector giving the extinction probs
 #' @return a vector of posterior Z probabilities
+#' @noRd
 forward_backward_algorithm <- function(el0, el1, init, colo, ex) {
   # Run the forward algorithm to get forward probabilities
   forward_probs <- forward_algorithm(el0, el1, init, colo, ex)
@@ -490,6 +496,7 @@ forward_backward_algorithm <- function(el0, el1, init, colo, ex) {
 
 #' Forward filtering backward sampling algorithm
 #' @inheritParams forward_backward_algorithm
+#' @noRd
 forward_backward_sampling <- function(el0, el1, init, colo, ex) {
   # Run the forward algorithm to get forward probabilities
   forward_probs <- forward_algorithm(el0, el1, init, colo, ex)
@@ -533,6 +540,7 @@ forward_backward_sampling <- function(el0, el1, init, colo, ex) {
 #' @inheritParams forward_backward_algorithm
 #' @return an n x 2 matrix giving the forward probabilities associated with 
 #'   non-occupancy (first column) and occupancy (second column)
+#' @noRd
 forward_algorithm <- function(el0, el1, init, colo, ex) {
   n <- length(el0)
   assertthat::assert_that(length(el1) == n)
@@ -566,6 +574,7 @@ forward_algorithm <- function(el0, el1, init, colo, ex) {
 #' Backward algorithm
 #' @inheritParams forward_backward_algorithm
 #' @return an n x 2 matrix giving the backward probabilities
+#' @noRd
 backward_algorithm <- function(el0, el1, colo, ex) {
   n <- length(el0)
   assertthat::assert_that(length(el1) == n)

@@ -40,17 +40,17 @@
 #' @return a \code{brmsfit} containing the fitted occupancy model. 
 #' @examples
 #' \dontrun{
+#' sfd <- simulate_flocker_data()
 #' fd <- make_flocker_data(
-#'  example_flocker_data$obs, 
-#'  example_flocker_data$unit_covs,
-#'  example_flocker_data$event_covs
+#'  sfd$obs, 
+#'  sfd$unit_covs,
+#'  sfd$event_covs
 #' )
-#' flock(f_occ = ~ uc1 + s(uc2) + (1|grp),
-#'           f_det = ~ uc1 + ec1 + s(ec2) + (1|grp),
+#' flock(f_occ = ~ s(uc1) + + (1|species),
+#'           f_det = ~ uc1 + ec1 + (1|species),
 #'           flocker_data = fd,
 #'           refresh = 50, chains = 1, warmup = 5, iter = 200,
-#'           adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123,
-#'           backend = "cmdstanr")
+#'           adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123)
 #' }
 #' @export
 flock <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL, 
@@ -67,13 +67,15 @@ flock <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL,
 
 #' Generate stan code for an occupancy model
 #' @inheritParams flock
+#' @return generated stancode
 #' @export
 #' @examples
 #' \dontrun{
+#' sfd <- simulate_flocker_data()
 #' fd <- make_flocker_data(
-#'  example_flocker_data$obs, 
-#'  example_flocker_data$unit_covs,
-#'  example_flocker_data$event_covs
+#'  sfd$obs, 
+#'  sfd$unit_covs,
+#'  sfd$event_covs
 #' )
 #' flocker_stancode(f_occ = ~ uc1 + s(uc2) + (1|grp),
 #'           f_det = ~ uc1 + ec1 + s(ec2) + (1|grp),
@@ -95,16 +97,18 @@ flocker_stancode <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL,
 
 #' Generate stan data for an occupancy model
 #' @inheritParams flock
+#' @return generated stan data
 #' @export
 #' @examples
 #' \dontrun{
+#' sfd <- simulate_flocker_data()
 #' fd <- make_flocker_data(
-#'  example_flocker_data$obs, 
-#'  example_flocker_data$unit_covs,
-#'  example_flocker_data$event_covs
+#'  sfd$obs, 
+#'  sfd$unit_covs,
+#'  sfd$event_covs
 #' )
-#' flocker_standata(f_occ = ~ uc1 + s(uc2) + (1|grp),
-#'           f_det = ~ uc1 + ec1 + s(ec2) + (1|grp),
+#' flocker_standata(f_occ = ~ s(uc1) + + (1|species),
+#'           f_det = ~ uc1 + ec1 + (1|species),
 #'           flocker_data = fd,
 #'           refresh = 50, chains = 1, warmup = 5, iter = 200,
 #'           adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123,
@@ -129,14 +133,15 @@ flocker_standata <- function(f_occ=NULL, f_det, flocker_data, data2 = NULL,
 #' @export
 #' @examples
 #' \dontrun{
+#' sfd <- simulate_flocker_data()
 #' fd <- make_flocker_data(
-#'  example_flocker_data$obs, 
-#'  example_flocker_data$unit_covs,
-#'  example_flocker_data$event_covs
+#'  sfd$obs, 
+#'  sfd$unit_covs,
+#'  sfd$event_covs
 #' )
 #' get_flocker_prior(
-#'  f_occ = ~ uc1 + + (1|grp),
-#'  f_det = ~ uc1 + ec1 + (1|grp),
+#'  f_occ = ~ s(uc1) + + (1|species),
+#'  f_det = ~ uc1 + ec1 + (1|species),
 #'  flocker_data = fd
 #' )
 #' }
@@ -185,7 +190,8 @@ get_flocker_prior <- function(f_occ=NULL, f_det, flocker_data, data2 = NULL,
 #' @param threads NULL or positive integer. If integer, the number of threads
 #'  to use per chain in within chain parallelization.
 #' @param ... additional arguments passed to \code{brms::brm()}
-#' @return stan code for brms model or a \code{brmsfit} containing the fitted occupancy model. 
+#' @return stan code for brms model or a \code{brmsfit} containing the fitted occupancy model.
+#' @noRd
 flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL, 
                   multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
                   augmented = FALSE, threads = NULL,
@@ -532,49 +538,11 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
 #' @param threads brms threads
 #' @param ... brms ...
 #' @return output of brms::brm or brms::make_stancode or brms::make_standata
+#' @noRd
 flocker_fit_code_util <- function (
   output, f_use, data, data2, family, stanvars, threads = NULL, ...
  ) {
-  if (family$name == "occupancy_single_threaded") {
-    if (output == "code") {
-      out <- brms::make_stancode(f_use, 
-                                 data = data,
-                                 data2 = data2,
-                                 family = family, 
-                                 stanvars = stanvars,
-                                 threads_per_chain = threads,
-                                 ...)
-    } else if (output == "data") {
-      out <- brms::make_standata(f_use, 
-                                 data = data,
-                                 data2 = data2,
-                                 family = family, 
-                                 stanvars = stanvars,
-                                 threads_per_chain = threads,
-                                 ...)
-    } else if (output == "model") {
-      print("tt")
-      cml <- cmdstanr::cmdstan_make_local()
-      cpp_stan_threads <- list("STAN_THREADS=true")
-      cmdstanr::cmdstan_make_local(cpp_options = cpp_stan_threads)
-      out <- brms::brm(f_use, 
-                       data = data,
-                       data2 = data2,
-                       family = family, 
-                       stanvars = stanvars,
-                       threads_per_chain = threads,
-                       ...)
-      cmdstanr::cmdstan_make_local(cpp_options = cml, append = F)
-    } else if (output == "prior") {
-      out <- brms::get_prior(f_use, 
-                             data = data,
-                             data2 = data2,
-                             family = family, 
-                             stanvars = stanvars,
-                             threads_per_chain = threads,
-                             ...)
-    }
-  } else if (!is.null(threads)){ # this covers the rep-constant case where
+  if (!is.null(threads)){ # this covers the rep-constant case where
     # native brms threading is available
     if (output == "code") {
       out <- brms::make_stancode(f_use, 

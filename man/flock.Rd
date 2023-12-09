@@ -78,16 +78,16 @@ Fit an occupancy model
 }
 \examples{
 \dontrun{
+sfd <- simulate_flocker_data()
 fd <- make_flocker_data(
- example_flocker_data$obs, 
- example_flocker_data$unit_covs,
- example_flocker_data$event_covs
+ sfd$obs, 
+ sfd$unit_covs,
+ sfd$event_covs
 )
-flock(f_occ = ~ uc1 + s(uc2) + (1|grp),
-          f_det = ~ uc1 + ec1 + s(ec2) + (1|grp),
+flock(f_occ = ~ s(uc1) + + (1|species),
+          f_det = ~ uc1 + ec1 + (1|species),
           flocker_data = fd,
           refresh = 50, chains = 1, warmup = 5, iter = 200,
-          adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123,
-          backend = "cmdstanr")
+          adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123)
 }
 }

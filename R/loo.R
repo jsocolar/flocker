@@ -35,6 +35,7 @@ loo_flocker <- function(x, thin = NULL) {
 #' @param x a flocker_fit object
 #' @param thin specify the amount of thinning required. 1 or NULL implies no thinning, 2 implies every other value, 3 every third, etc.
 #' @return a loo object
+#' @noRd
 loo_flocker_onefit <- function(x, thin = NULL) {
   type <- type_flocker_fit(x)
   # do thinning 
@@ -62,6 +63,7 @@ loo_flocker_onefit <- function(x, thin = NULL) {
 #' @param thin specify the amount of thinning required. 1 or NULL results in no 
 #'    thinning, 2 retains every other value, 3 every third, etc.
 #' @param model_names An optional vector of names for the models.
+#' @return a `compare.loo` matrix
 #' @export
 #' @examples
 #' \dontrun{

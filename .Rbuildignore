@@ -7,3 +7,5 @@
 ^license.md$
 ^doc$
 ^Meta$
+^cran-comments\.md$
+^vignettes/articles$

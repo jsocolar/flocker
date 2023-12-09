@@ -14,19 +14,19 @@ vignette: >
 <img align="right" src="../man/figures/flocker_sticker.png" width=30% style="border:none;">
 
 Here we show how we can use `flocker` to fit nonlinear occupancy models via 
-`brms`. In most occupancy models, occupancy and detection probabilties are 
+`brms`. In most occupancy models, occupancy and detection probabilities are 
 modeled as logit-linear combinations of covariates. In some models (e.g. those 
 with splines or Gaussian processes), probabilities are modeled as the sum of 
-more flexibile functions of covariates. These are straightforward to fit in
+more flexible functions of covariates. These are straightforward to fit in
 `flocker` using the `brms` functions `s()`, `t2()`, and `gp()`; see the [flocker tutorial vignette](https://jsocolar.github.io/flocker/articles/flocker_tutorial.html) for 
 details.
 
 This vignette focuses on more complicated nonlinear models that require the use
 of special nonlinear `brms` formulas. We showcase two models. The first fits
-a parameteric nonlinear predictor. The second fits a model with a spatially
+a parametric nonlinear predictor. The second fits a model with a spatially
 varying coefficient that is given a gaussian process prior.
 
-## Parameteric nonlinear predictor
+## Parametric nonlinear predictor
 In this scenario, we consider a model where the response is a specific nonlinear 
 parametric function whose parameters are fitted and might or might not depend on covariates. Suppose for example that an expanding population of a territorial 
 species undergoes logistic growth, and also that some unknown proportion of 
@@ -96,7 +96,7 @@ obligatory to pass the entire formula for all distributional parameters as a
 single `brmsformula` object. This means in turn that the user must be familiar 
 with `flocker`'s internal naming conventions for all of the relevant 
 distributional parameters (`det` and one or more of `occ`, `colo`, `ex`, 
-`autologistic`, `Omega`). If fitting a data-augmented model, it will be requried 
+`autologistic`, `Omega`). If fitting a data-augmented model, it will be required 
 to pass the `Omega ~ 1` formula within the `brmsformula` (When passing the 
 traditional one-sided formula to `f_det`, `flocker` includes the formula for 
 `Omega` internally and automatically).
@@ -158,10 +158,10 @@ summary(fit)
 
 It works! 
 
-Note that if desired, we could fit more complicated formulas than `~ 1` for any of the nonlinear parameters. For more see the [brms nonlinear model vignette](https://cran.r-project.org/web/packages/brms/vignettes/brms_nonlinear.html).
+Note that if desired, we could fit more complicated formulas than `~ 1` for any of the nonlinear parameters. For more see the [brms nonlinear model vignette](https://paul-buerkner.github.io/brms/articles/brms_nonlinear.html).
 
 ## Spatially varying coefficients via a Gaussian process
-The `gp()` function in `brms` includes a Gaussian process of arbitary dimension
+The `gp()` function in `brms` includes a Gaussian process of arbitrary dimension
 in the linear predictor. We can use the nonlinear formula syntax to tell `brms`
 to include a Gaussian process prior on a coefficient as well.
 

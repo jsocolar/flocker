@@ -169,6 +169,7 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
 #' vignette at 
 #' https://cran.r-project.org/web/packages/brms/vignettes/brms_customfamilies.html
 #' @return The log-likelihood for observation i
+#' @noRd
 log_lik_occupancy_single_C <- function(i, prep) {
   mu <- brms::get_dpar(prep, "mu", i = i)
   occ <- brms::get_dpar(prep, "occ", i = i)
@@ -185,6 +186,7 @@ log_lik_occupancy_single_C <- function(i, prep) {
 #' @return The log-likelihood
 #' @details By omitting the binomial coefficient, the log-likelihood is directly
 #'   comparable to log-likelihoods from rep-varying models.
+#' @noRd
 occupancy_single_C_lpmf <- Vectorize(
   function (y, mu, occ, trials) {
     if (y == 0) {
@@ -209,6 +211,7 @@ occupancy_single_C_lpmf <- Vectorize(
 #' @param occ logit-scale occupancy probability
 #' @param trials number of reps
 #' @return The log-likelihood
+#' @noRd
 occupancy_single_C_lpmf_with_coef <- Vectorize(
   function (y, mu, occ, trials) {
     if (y == 0) {
@@ -240,6 +243,7 @@ occupancy_single_C_lpmf_with_coef <- Vectorize(
 #'  visits, slices are timesteps, and slice_2s are draws.
 #' @return A log-likelihood matrix. Rows are sites, 
 #'   columns are draws.
+#' @noRd
 log_lik_dynamic <- function(init, colo, ex, obs, det){
   assertthat::assert_that(is.matrix(init))
   assertthat::assert_that(is.array(colo))
