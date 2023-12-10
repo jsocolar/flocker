@@ -87,7 +87,7 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
         new_data[, random_effects[i]] <- paste0(new_data[, random_effects[i]], 
                                               "_resampled")
       }
-      new_data <- list(data = new_data)
+      new_data <- list(data = new_data, type = attributes(flocker_fit)$data_type)
       class(new_data) <- "flocker_data"
     }
     assertthat::assert_that(
