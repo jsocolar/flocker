@@ -69,7 +69,7 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
       new_data <- new_data$data
     }
     
-    random_effects <- flocker_fit$ranef$group
+    random_effects <- unique(flocker_fit$ranef$group)
     if (length(random_effects) > 0) {
       potential_conflicts <- vector()
       for(i in 1:length(random_effects)) {
@@ -90,6 +90,10 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
       new_data <- list(data = new_data, type = attributes(flocker_fit)$data_type)
       class(new_data) <- "flocker_data"
     }
+    assertthat::assert_that(
+      identical(allow_new_levels, TRUE),
+      msg = "set `allow_new_levels` to TRUE for mixed predictive checking"
+    )
     assertthat::assert_that(
       identical(sample_new_levels, "gaussian"),
       msg = "set `sample_new_levels` to 'gaussian' for mixed predictive checking"
