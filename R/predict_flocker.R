@@ -61,6 +61,10 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
     if (is.null(new_data)) {
       new_data <- flocker_fit$data
     } else {
+      assertthat::assert_that(
+        identical(new_data$type, attributes(flocker_fit)$data_type),
+        msg = "the new_data data type does not match the flocker_fit data type"
+      )
       new_data <- new_data$data
     }
     
