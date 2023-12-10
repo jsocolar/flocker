@@ -91,7 +91,7 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
       class(new_data) <- "flocker_data"
     }
     assertthat::assert_that(
-      sample_new_levels = "gaussian",
+      identical(sample_new_levels, "gaussian"),
       msg = "set `sample_new_levels` to 'gaussian' for mixed predictive checking"
       )
   }
