@@ -46,11 +46,6 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
     msg = "`mixed` must be a single logical"
   )
   
-  assertthat::assert_that(
-    !mixed | is.null(new_data),
-    msg = "`mixed` must be `FALSE` if new_data is supplied"
-  )
-  
   assertthat::assert_that(is.null(new_data) | is_flocker_data(new_data))
   
   total_iter <- brms::ndraws(flocker_fit)
