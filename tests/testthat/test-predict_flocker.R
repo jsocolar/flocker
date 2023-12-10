@@ -56,6 +56,6 @@ test_that("new_data works as expected", {
 })
 
 test_that("mixed checks work", {
-  p_single_mixed <- predict_flocker(example_flocker_model_single, mixed = TRUE)
+  p_single_mixed <- predict_flocker(example_flocker_model_single, mixed = TRUE, sample_new_levels = "gaussian")
   expect_true(all(p_single_mixed %in% c(0,1)))
 })
