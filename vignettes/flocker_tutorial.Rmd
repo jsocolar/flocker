@@ -774,7 +774,7 @@ transect, yielding a one-dimensional analog of a spatial autologistic occupancy
 model.
 
 A second caution is to remind users that in multi-species models, users will 
-likely want to fit separate spatial terms by species ([Doser et al 2022](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.13897)). 
+likely want to fit separate spatial terms by species ([Doser et al 2022](https://besjournals.onlinelibrary.wiley.com/doi/10.1111/2041-210X.13897)). 
 For Gaussian processes, this can be achieved via the `by` argument to 
 `brms::gp()`. For some conditional autoregressive structures (those that allow 
 disconnected islands), this can be achieved by passing a block-diagonal 
