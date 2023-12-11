@@ -8,7 +8,6 @@ SBC
 al
 asymptote
 asymptotes
-aug
 autologistic
 bernoulli
 brms
@@ -27,8 +26,6 @@ et
 exchangeability
 flocker's
 frac
-grp
-init
 inits
 interpretable
 jss
@@ -52,7 +49,6 @@ textrm
 th
 timeseries
 toolchain
-uc
 unadvisable
 unlooped
 vectorization
