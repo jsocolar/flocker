@@ -46,19 +46,7 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
     msg = "`mixed` must be a single logical"
   )
   
-  assertthat::assert_that(
-    !mixed | is.null(new_data),
-    msg = "`mixed` must be `FALSE` if new_data is supplied"
-  )
-  
   assertthat::assert_that(is.null(new_data) | is_flocker_data(new_data))
-
-  new_data2 <- new_data
-  if (is.null(new_data)) {
-    new_data <- flocker_fit$data
-  } else {
-    new_data <- new_data$data
-  }
   
   total_iter <- brms::ndraws(flocker_fit)
   
@@ -70,7 +58,17 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
   
   # rename all random effect levels so they show up as new levels
   if (mixed) {
-    random_effects <- flocker_fit$ranef$group
+    if (is.null(new_data)) {
+      new_data <- flocker_fit$data
+    } else {
+      assertthat::assert_that(
+        identical(new_data$type, attributes(flocker_fit)$data_type),
+        msg = "the new_data data type does not match the flocker_fit data type"
+      )
+      new_data <- new_data$data
+    }
+    
+    random_effects <- unique(flocker_fit$ranef$group)
     if (length(random_effects) > 0) {
       potential_conflicts <- vector()
       for(i in 1:length(random_effects)) {
@@ -88,20 +86,28 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
         new_data[, random_effects[i]] <- paste0(new_data[, random_effects[i]], 
                                               "_resampled")
       }
+      new_data <- list(data = new_data, type = attributes(flocker_fit)$data_type)
+      class(new_data) <- "flocker_data"
     }
-    sample_new_levels = "gaussian"
-    message("`sample_new_levels` set to 'gaussian' for mixed predictive checking")
+    assertthat::assert_that(
+      identical(allow_new_levels, TRUE),
+      msg = "set `allow_new_levels` to TRUE for mixed predictive checking"
+    )
+    assertthat::assert_that(
+      identical(sample_new_levels, "gaussian"),
+      msg = "set `sample_new_levels` to 'gaussian' for mixed predictive checking"
+      )
   }
   
   
   Z_samp <- get_Z(flocker_fit, draw_ids = draw_ids, history_condition = history_condition, 
-                  sample = TRUE, new_data = new_data2, 
+                  sample = TRUE, new_data = new_data, 
                   allow_new_levels = allow_new_levels, sample_new_levels = sample_new_levels)
   
   lps <- fitted_flocker(
     flocker_fit, 
     components = "det",
-    draw_ids = draw_ids, new_data = new_data2, allow_new_levels = allow_new_levels, 
+    draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
     sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
   )
   theta_all <- boot::inv.logit(lps$linpred_det)
@@ -109,7 +115,7 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
   
   assertthat::assert_that(
     ndim > 2,
-    msg = "this shouldn't happen; please report a bug"
+    msg = "predict_flocker error 1. This shouldn't happen; please report a bug"
   )
   
   Z_samp_array <- abind::abind(rep(list(Z_samp), dim(theta_all)[2]), along = ndim) |>
@@ -117,7 +123,7 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
   
   assertthat::assert_that(
     identical(dim(theta_all), dim(Z_samp_array)),
-    msg = "this shouldn't happen; please report a bug"
+    msg = "predict_flocker error 2. This shouldn't happen; please report a bug"
   )
   
   predictions <- new_array(theta_all, stats::rbinom(length(theta_all), 1, theta_all * Z_samp_array))

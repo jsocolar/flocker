@@ -56,6 +56,18 @@ test_that("new_data works as expected", {
 })
 
 test_that("mixed checks work", {
-  p_single_mixed <- predict_flocker(example_flocker_model_single, mixed = TRUE)
+  p_single_mixed <- predict_flocker(
+    example_flocker_model_single, mixed = TRUE, 
+    allow_new_levels = TRUE, sample_new_levels = "gaussian"
+    )
+  expect_true(all(p_single_mixed %in% c(0,1)))
+  
+  sfd <- simulate_flocker_data(n_pt = 5, n_sp = 5, n_rep = 2)
+  fd <- make_flocker_data(sfd$obs, sfd$unit_covs, sfd$event_covs)
+  p_single_mixed <- predict_flocker(
+    example_flocker_model_single, mixed = TRUE, 
+    allow_new_levels = TRUE, sample_new_levels = "gaussian",
+    new_data = fd
+  )
   expect_true(all(p_single_mixed %in% c(0,1)))
 })
