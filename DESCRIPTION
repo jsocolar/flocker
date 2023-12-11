@@ -1,6 +1,6 @@
 Package: flocker
 Title: Flexible Occupancy Estimation in R
-Version: 0.2-0
+Version: 1.0-0
 Authors@R: c(
     person("Jacob B.", "Socolar", , "jacob.socolar@gmail.com", role = c("aut", "cre", "cph")),
     person("Simon C.", "Mills", role = "aut"),
@@ -8,7 +8,7 @@ Authors@R: c(
   )
 Description: Fit occupancy models in 'Stan' via 'brms'. The full variety
     of 'brms' formula-based effects structures are available to use in
-    multiple classes of occupancy model, including standard single-season
+    multiple classes of occupancy model, including single-season
     models, models with data augmentation for never-observed species,
     dynamic (multiseason) models with explicit colonization and extinction
     processes, and dynamic models with autologistic occupancy dynamics.
@@ -29,7 +29,7 @@ Imports:
     abind,
     assertthat,
     boot,
-    brms (>= 2.16.0),
+    brms (>= 2.20.3),
     loo (>= 2.0.0),
     MASS,
     matrixStats,
