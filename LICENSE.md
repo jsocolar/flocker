@@ -1,6 +1,6 @@
 BSD 3-Clause License
 
-Copyright (c) 2021, Jacob B. Socolar & Simon C. Mills
+Copyright (c) 2023, flocker package authors
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
