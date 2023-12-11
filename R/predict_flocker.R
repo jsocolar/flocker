@@ -126,7 +126,7 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
     msg = "predict_flocker error 2. This shouldn't happen; please report a bug"
   )
   
-  predictions <- new_array(theta_all, stats::rbinom(length(theta_all), 1, theta_all * Z_samp_array))
+  predictions <- new_array(theta_all, rbinom2(length(theta_all), 1, theta_all * Z_samp_array))
   
   predictions
 }

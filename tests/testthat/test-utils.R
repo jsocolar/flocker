@@ -66,7 +66,7 @@ test_that("array utils work properly", {
   
   m <- matrix(1:9, nrow = 3, ncol = 3)
   data_vector <- 1:2 # insufficient length
-  new_m <- new_matrix(m, data = data_vector)
+  expect_warning(new_m <- new_matrix(m, data = data_vector))
   expected_matrix <- matrix(rep(data_vector, length.out = 9), nrow = 3, ncol = 3)
   expect_equal(new_m, expected_matrix)
   
@@ -409,9 +409,11 @@ test_that("get_positions works properly", {
     ragged_rep = TRUE,
     missing_seasons = TRUE
   )
-  fd <- make_flocker_data(
-    sd$obs, sd$unit_covs, sd$event_covs, 
-    type = "multi")
+  suppressWarnings({
+    fd <- make_flocker_data(
+      sd$obs, sd$unit_covs, sd$event_covs, 
+      type = "multi")
+  })
   ps <- get_positions(fd)
   expect_true(
     all.equal(
@@ -444,9 +446,12 @@ test_that("get_positions works properly", {
   )
   sd$obs[,,1] <- NA
   
-  fd <- make_flocker_data(
-    sd$obs, sd$unit_covs, sd$event_covs, 
-    type = "multi")
+  suppressWarnings({
+    fd <- make_flocker_data(
+      sd$obs, sd$unit_covs, sd$event_covs, 
+      type = "multi")
+  })
+
   ps <- get_positions(fd)
   expect_true(
     all.equal(
@@ -897,4 +902,13 @@ test_that("remove_rownames works correctly", {
     tb1_expected <- tibble::tibble(a = 1:3, b = 4:6)
     expect_equal(remove_rownames(tb1), tb1_expected)
   }
+})
+
+test_that("rbinom2 works correctly", {
+  r1 <- withr::with_seed(seed = 1, code = stats::rbinom(10, rep(c(1,2), 5), runif(10)))
+  r2 <- withr::with_seed(seed = 1, code = rbinom2(10, rep(c(1,2), 5), runif(10)))
+  expect_identical(r2, r1)
+  r3 <- withr::with_seed(seed = 1, code = rbinom2(11, c(rep(c(1,2), 5), 1), c(runif(10), NA)))
+  expect_identical(r3[1:10], r1)
+  expect_true(is.na(r3[11]))
 })

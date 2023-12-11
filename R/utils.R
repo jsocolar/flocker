@@ -874,3 +874,28 @@ remove_rownames <- function(m) {
   rownames(m) <- NULL
   m
 }
+
+#' rbinom without warning about NAs in the probs
+#' @param n single integer number of observations
+#' @param size number of trials
+#' @param prob probability of success on each trial
+#' @noRd
+rbinom2 <- function(n, size, prob) {
+  if(!any(is.na(prob))) {
+    out <- stats::rbinom(n, size, prob)
+  } else {
+    assertthat::assert_that(length(prob) == n)
+    assertthat::assert_that(length(size) %in% c(1,n))
+    out <- rep(NA, n)
+    incl <- !is.na(prob)
+    n2 <- sum(incl)
+    if(length(size) > 1){
+      size2 <- size[incl]
+    } else {
+      size2 <- size
+    }
+    prob2 <- prob[incl]
+    out[!is.na(prob)] <- stats::rbinom(n2, size2, prob2)
+  }
+  out
+}
