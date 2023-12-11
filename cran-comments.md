@@ -4,4 +4,5 @@
 
 * This is a new release.
 * `urlchecker::url_check()` is intermittently returing 403s. I have verified and 
-double-checked the links involved.
+double-checked the links involved, and they appear to all be in good working
+order and publicly accessible.
