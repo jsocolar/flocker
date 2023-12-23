@@ -26,7 +26,5 @@ In single-season models, rows are units (e.g. points or
   for leave-one-species-out CV).
 }
 \examples{
-\dontrun{
 log_lik_flocker(example_flocker_model_single)
-}
 }

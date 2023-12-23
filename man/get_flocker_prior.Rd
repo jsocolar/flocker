@@ -79,7 +79,6 @@ A dataframe summarizing the parameters on which priors can
 Get prior for occupancy model
 }
 \examples{
-\dontrun{
 sfd <- simulate_flocker_data()
 fd <- make_flocker_data(
  sfd$obs, 
@@ -91,5 +90,4 @@ get_flocker_prior(
  f_det = ~ uc1 + ec1 + (1|species),
  flocker_data = fd
 )
-}
 }

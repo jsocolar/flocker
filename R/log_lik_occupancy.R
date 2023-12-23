@@ -10,9 +10,7 @@
 #'   for leave-one-species-out CV).
 #' @export
 #' @examples 
-#' \dontrun{
 #' log_lik_flocker(example_flocker_model_single)
-#' }
 
 log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
   assertthat::assert_that(is_flocker_fit(flocker_fit))

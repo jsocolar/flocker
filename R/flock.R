@@ -39,18 +39,21 @@
 #' @param ... additional arguments passed to \code{brms::brm()}
 #' @return a \code{brmsfit} containing the fitted occupancy model. 
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' sfd <- simulate_flocker_data()
 #' fd <- make_flocker_data(
 #'  sfd$obs, 
 #'  sfd$unit_covs,
 #'  sfd$event_covs
 #' )
-#' flock(f_occ = ~ s(uc1) + + (1|species),
-#'           f_det = ~ uc1 + ec1 + (1|species),
-#'           flocker_data = fd,
-#'           refresh = 50, chains = 1, warmup = 5, iter = 200,
-#'           adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123)
+#' flock(
+#'   f_occ = ~ s(uc1) + (1|species),
+#'   f_det = ~ uc1 + ec1 + (1|species),
+#'   flocker_data = fd,
+#'   refresh = 50, chains = 1, warmup = 5, iter = 200,
+#'   control = list(adapt_engaged = FALSE, stepsize = .05, max_treedepth = 5),
+#'   seed = 123
+#'   )
 #' }
 #' @export
 flock <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL, 
@@ -70,20 +73,22 @@ flock <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL,
 #' @return generated stancode
 #' @export
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' sfd <- simulate_flocker_data()
 #' fd <- make_flocker_data(
 #'  sfd$obs, 
 #'  sfd$unit_covs,
 #'  sfd$event_covs
 #' )
-#' flocker_stancode(f_occ = ~ uc1 + s(uc2) + (1|grp),
-#'           f_det = ~ uc1 + ec1 + s(ec2) + (1|grp),
-#'           flocker_data = fd,
-#'           refresh = 50, chains = 1, warmup = 5, iter = 200,
-#'           adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123,
-#'           backend = "cmdstanr")
-#' }
+#' flocker_stancode(
+#'   f_occ = ~ s(uc1) + (1|species),
+#'   f_det = ~ uc1 + ec1 + (1|species),
+#'   flocker_data = fd,
+#'   refresh = 50, chains = 1, warmup = 5, iter = 200,
+#'   control = list(adapt_engaged = FALSE, stepsize = .05, max_treedepth = 5),
+#'   seed = 123
+#'   )
+#'   }
 flocker_stancode <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL, 
                   multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
                   augmented = FALSE, threads = NULL,
@@ -100,20 +105,20 @@ flocker_stancode <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL,
 #' @return generated stan data
 #' @export
 #' @examples
-#' \dontrun{
 #' sfd <- simulate_flocker_data()
 #' fd <- make_flocker_data(
 #'  sfd$obs, 
 #'  sfd$unit_covs,
 #'  sfd$event_covs
 #' )
-#' flocker_standata(f_occ = ~ s(uc1) + + (1|species),
-#'           f_det = ~ uc1 + ec1 + (1|species),
-#'           flocker_data = fd,
-#'           refresh = 50, chains = 1, warmup = 5, iter = 200,
-#'           adapt_engaged = F, step_size = .05, max_treedepth = 5, seed = 123,
-#'           backend = "cmdstanr")
-#' }
+#' flocker_standata(
+#'   f_occ = ~ s(uc1) + (1|species),
+#'   f_det = ~ uc1 + ec1 + (1|species),
+#'   flocker_data = fd,
+#'   refresh = 50, chains = 1, warmup = 5, iter = 200,
+#'   control = list(adapt_engaged = FALSE, stepsize = .05, max_treedepth = 5),
+#'   seed = 123
+#'   )
 flocker_standata <- function(f_occ=NULL, f_det, flocker_data, data2 = NULL, 
                              multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
                              augmented = FALSE, threads = NULL,
@@ -132,7 +137,6 @@ flocker_standata <- function(f_occ=NULL, f_det, flocker_data, data2 = NULL,
 #'  See \code{?brms::get_prior} for further details.
 #' @export
 #' @examples
-#' \dontrun{
 #' sfd <- simulate_flocker_data()
 #' fd <- make_flocker_data(
 #'  sfd$obs, 
@@ -144,7 +148,6 @@ flocker_standata <- function(f_occ=NULL, f_det, flocker_data, data2 = NULL,
 #'  f_det = ~ uc1 + ec1 + (1|species),
 #'  flocker_data = fd
 #' )
-#' }
 get_flocker_prior <- function(f_occ=NULL, f_det, flocker_data, data2 = NULL, 
                              multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
                              augmented = FALSE, threads = NULL,

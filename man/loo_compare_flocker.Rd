@@ -21,7 +21,7 @@ a `compare.loo` matrix
 LOO comparisons for flocker models.
 }
 \examples{
-\dontrun{
+\donttest{
 ml <- rep(list(example_flocker_model_single), 3)
 loo_compare_flocker(ml)
 }

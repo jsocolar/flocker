@@ -66,7 +66,7 @@ loo_flocker_onefit <- function(x, thin = NULL) {
 #' @return a `compare.loo` matrix
 #' @export
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' ml <- rep(list(example_flocker_model_single), 3)
 #' loo_compare_flocker(ml)
 #' }

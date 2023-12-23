@@ -83,7 +83,7 @@ observed histories (e.g. the occupancy probability is not fixed to one
 at sites with a detection; it is estimated only based on the covariates).
 }
 \examples{
-\dontrun{
+\donttest{
 fitted_flocker(
   example_flocker_model_single, 
   summarise = TRUE

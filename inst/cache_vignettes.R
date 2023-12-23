@@ -10,6 +10,8 @@
 # can be made with extreme care by changing both the .Rmd.orig files and the
 # .Rmd files with computation cached.
 
+old_wd <- getwd()
+
 setwd(paste0(dirname(rstudioapi::getActiveDocumentContext()$path), "/.."))
 
 knitr::knit(
@@ -31,3 +33,5 @@ knitr::knit(
   "vignettes/sbc.Rmd.orig", 
   output = "vignettes/sbc.Rmd"
 )
+
+setwd(old_wd)

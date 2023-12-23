@@ -49,7 +49,7 @@
 #'     details).
 #' @export
 #' @examples 
-#' \dontrun{
+#' \donttest{
 #' fitted_flocker(
 #'   example_flocker_model_single, 
 #'   summarise = TRUE
