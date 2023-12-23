@@ -179,19 +179,88 @@ with single-season rep-constant models, and must be set to NULL otherwise.</p></
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="va">sfd</span> <span class="op">&lt;-</span> <span class="fu"><a href="simulate_flocker_data.html">simulate_flocker_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fd</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_flocker_data.html">make_flocker_data</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span> <span class="va">sfd</span><span class="op">$</span><span class="va">obs</span>, </span></span>
 <span class="r-in"><span> <span class="va">sfd</span><span class="op">$</span><span class="va">unit_covs</span>,</span></span>
 <span class="r-in"><span> <span class="va">sfd</span><span class="op">$</span><span class="va">event_covs</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">flock</span><span class="op">(</span>f_occ <span class="op">=</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">uc1</span><span class="op">)</span> <span class="op">+</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">species</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>          f_det <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="va">ec1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">species</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>          flocker_data <span class="op">=</span> <span class="va">fd</span>,</span></span>
-<span class="r-in"><span>          refresh <span class="op">=</span> <span class="fl">50</span>, chains <span class="op">=</span> <span class="fl">1</span>, warmup <span class="op">=</span> <span class="fl">5</span>, iter <span class="op">=</span> <span class="fl">200</span>,</span></span>
-<span class="r-in"><span>          adapt_engaged <span class="op">=</span> <span class="cn">F</span>, step_size <span class="op">=</span> <span class="fl">.05</span>, max_treedepth <span class="op">=</span> <span class="fl">5</span>, seed <span class="op">=</span> <span class="fl">123</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Formatting data for a single-season occupancy model. For details, see make_flocker_data_static. All warnings and error messages should be interpreted in the context of make_flocker_data_static</span>
+<span class="r-in"><span><span class="fu">flock</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">uc1</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">species</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="va">ec1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">species</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  flocker_data <span class="op">=</span> <span class="va">fd</span>,</span></span>
+<span class="r-in"><span>  refresh <span class="op">=</span> <span class="fl">50</span>, chains <span class="op">=</span> <span class="fl">1</span>, warmup <span class="op">=</span> <span class="fl">5</span>, iter <span class="op">=</span> <span class="fl">200</span>,</span></span>
+<span class="r-in"><span>  control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>adapt_engaged <span class="op">=</span> <span class="cn">FALSE</span>, stepsize <span class="op">=</span> <span class="fl">.05</span>, max_treedepth <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  seed <span class="op">=</span> <span class="fl">123</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Compiling Stan program...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Start sampling</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 1).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Gradient evaluation took 0.007784 seconds</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 77.84 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Adjust your expectations accordingly!</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Iteration:   1 / 200 [  0%]  (Warmup)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Iteration:   6 / 200 [  3%]  (Sampling)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Iteration:  55 / 200 [ 27%]  (Sampling)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Iteration: 105 / 200 [ 52%]  (Sampling)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Iteration: 155 / 200 [ 77%]  (Sampling)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Iteration: 200 / 200 [100%]  (Sampling)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:  Elapsed Time: 0.411 seconds (Warm-up)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:                30.913 seconds (Sampling)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:                31.324 seconds (Total)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>There were 195 transitions after warmup that exceeded the maximum treedepth. Increase max_treedepth above 5. See</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> https://mc-stan.org/misc/warnings.html#maximum-treedepth-exceeded</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>There were 1 chains where the estimated Bayesian Fraction of Missing Information was low. See</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> https://mc-stan.org/misc/warnings.html#bfmi-low</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Examine the pairs() plot to diagnose sampling problems</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>The largest R-hat is 1.12, indicating chains have not mixed.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Running the chains for more iterations may help. See</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> https://mc-stan.org/misc/warnings.html#r-hat</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Running the chains for more iterations may help. See</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> https://mc-stan.org/misc/warnings.html#bulk-ess</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Running the chains for more iterations may help. See</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> https://mc-stan.org/misc/warnings.html#tail-ess</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Parts of the model have not converged (some Rhats are &gt; 1.05). Be careful when analysing the results! We recommend running more iterations and/or setting stronger priors.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Family: occupancy_single </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Links: mu = identity; occ = identity </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Formula: ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ff_rep_index1, ff_rep_index2, ff_rep_index3, ff_rep_index4) ~ uc1 + ec1 + (1 | species) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          occ ~ s(uc1) + (1 | species)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Data: data (Number of observations: 6000) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Draws: 1 chains, each with iter = 200; warmup = 5; thin = 1;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          total post-warmup draws = 195</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Smooth Terms: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sds(occ_suc1_1)     0.84      0.61     0.01     2.43 1.01       21       21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Group-Level Effects: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ~species (Number of levels: 30) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sd(Intercept)         0.85      0.15     0.60     1.12 0.99       73       49</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sd(occ_Intercept)     0.98      0.18     0.73     1.40 1.06       70       25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Population-Level Effects: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept         0.26      0.18    -0.05     0.61 1.00       59       59</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> occ_Intercept    -0.06      0.21    -0.48     0.35 1.00       34      104</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> uc1               0.07      0.06    -0.04     0.17 1.00      257      164</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ec1               0.31      0.05     0.21     0.39 1.00      241      173</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> occ_suc1_1       -1.92      1.67    -5.48     0.42 1.12       10       48</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> and Tail_ESS are effective sample size measures, and Rhat is the potential</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> scale reduction factor on split chains (at convergence, Rhat = 1).</span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </div>

@@ -179,20 +179,176 @@ with single-season rep-constant models, and must be set to NULL otherwise.</p></
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="va">sfd</span> <span class="op">&lt;-</span> <span class="fu"><a href="simulate_flocker_data.html">simulate_flocker_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fd</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_flocker_data.html">make_flocker_data</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span> <span class="va">sfd</span><span class="op">$</span><span class="va">obs</span>, </span></span>
 <span class="r-in"><span> <span class="va">sfd</span><span class="op">$</span><span class="va">unit_covs</span>,</span></span>
 <span class="r-in"><span> <span class="va">sfd</span><span class="op">$</span><span class="va">event_covs</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">flocker_stancode</span><span class="op">(</span>f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="fu">s</span><span class="op">(</span><span class="va">uc2</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">grp</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>          f_det <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="va">ec1</span> <span class="op">+</span> <span class="fu">s</span><span class="op">(</span><span class="va">ec2</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">grp</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>          flocker_data <span class="op">=</span> <span class="va">fd</span>,</span></span>
-<span class="r-in"><span>          refresh <span class="op">=</span> <span class="fl">50</span>, chains <span class="op">=</span> <span class="fl">1</span>, warmup <span class="op">=</span> <span class="fl">5</span>, iter <span class="op">=</span> <span class="fl">200</span>,</span></span>
-<span class="r-in"><span>          adapt_engaged <span class="op">=</span> <span class="cn">F</span>, step_size <span class="op">=</span> <span class="fl">.05</span>, max_treedepth <span class="op">=</span> <span class="fl">5</span>, seed <span class="op">=</span> <span class="fl">123</span>,</span></span>
-<span class="r-in"><span>          backend <span class="op">=</span> <span class="st">"cmdstanr"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Formatting data for a single-season occupancy model. For details, see make_flocker_data_static. All warnings and error messages should be interpreted in the context of make_flocker_data_static</span>
+<span class="r-in"><span><span class="fu">flocker_stancode</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">uc1</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">species</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="va">ec1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">species</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  flocker_data <span class="op">=</span> <span class="va">fd</span>,</span></span>
+<span class="r-in"><span>  refresh <span class="op">=</span> <span class="fl">50</span>, chains <span class="op">=</span> <span class="fl">1</span>, warmup <span class="op">=</span> <span class="fl">5</span>, iter <span class="op">=</span> <span class="fl">200</span>,</span></span>
+<span class="r-in"><span>  control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>adapt_engaged <span class="op">=</span> <span class="cn">FALSE</span>, stepsize <span class="op">=</span> <span class="fl">.05</span>, max_treedepth <span class="op">=</span> <span class="fl">5</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  seed <span class="op">=</span> <span class="fl">123</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> // generated with brms 2.20.4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> functions {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     real occupancy_single_lpmf(</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     array[] int y, // detection data</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     vector mu, // lin pred for detection</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     vector occ, // lin pred for occupancy. Elements after vint1[1] irrelevant.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     array[] int vint1, // # units (n_unit). Elements after 1 irrelevant.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     array[] int vint2, // # sampling events per unit (n_rep). Elements after vint1[1] irrelevant.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     array[] int vint3, // Indicator for &gt; 0 detections (Q). Elements after vint1[1] irrelevant.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     array[] int vint4,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     array[] int vint5,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     array[] int vint6,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     array[] int vint7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // Create array of the rep indices that correspond to each unit.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     array[vint1[1], 4] int index_array;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       index_array[,1] = vint4[1:vint1[1]];</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       index_array[,2] = vint5[1:vint1[1]];</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       index_array[,3] = vint6[1:vint1[1]];</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       index_array[,4] = vint7[1:vint1[1]];</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // Initialize and compute log-likelihood</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     real lp = 0;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     for (i in 1:vint1[1]) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       array[vint2[i]] int indices = index_array[i, 1:vint2[i]];</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       if (vint3[i] == 1) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         lp += bernoulli_logit_lpmf(1 | occ[i]);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         lp += bernoulli_logit_lpmf(y[indices] | mu[indices]);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       if (vint3[i] == 0) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         lp += log_sum_exp(bernoulli_logit_lpmf(1 | occ[i]) + </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                               sum(log1m_inv_logit(mu[indices])), bernoulli_logit_lpmf(0 | occ[i]));</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     return(lp);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> data {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1&gt; N;  // total number of observations</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int Y;  // response variable</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // data for custom integer vectors</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int vint1;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // data for custom integer vectors</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int vint2;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // data for custom integer vectors</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int vint3;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // data for custom integer vectors</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int vint4;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // data for custom integer vectors</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int vint5;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // data for custom integer vectors</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int vint6;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // data for custom integer vectors</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int vint7;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1&gt; K;  // number of population-level effects</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   matrix[N, K] X;  // population-level design matrix</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1&gt; Kc;  // number of population-level effects after centering</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // data for splines</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int Ks_occ;  // number of linear effects</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   matrix[N, Ks_occ] Xs_occ;  // design matrix for the linear effects</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // data for spline 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int nb_occ_1;  // number of bases</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[nb_occ_1] int knots_occ_1;  // number of knots</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // basis function matrices</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   matrix[N, knots_occ_1[1]] Zs_occ_1_1;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // data for group-level effects of ID 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1&gt; N_1;  // number of grouping levels</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1&gt; M_1;  // number of coefficients per level</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int&lt;lower=1&gt; J_1;  // grouping indicator per observation</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // group-level predictor values</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[N] Z_1_1;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // data for group-level effects of ID 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1&gt; N_2;  // number of grouping levels</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1&gt; M_2;  // number of coefficients per level</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int&lt;lower=1&gt; J_2;  // grouping indicator per observation</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // group-level predictor values</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[N] Z_2_occ_1;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int prior_only;  // should the likelihood be ignored?</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> transformed data {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   matrix[N, Kc] Xc;  // centered version of X without an intercept</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[Kc] means_X;  // column means of X before centering</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   for (i in 2:K) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     means_X[i - 1] = mean(X[, i]);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     Xc[, i - 1] = X[, i] - means_X[i - 1];</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> parameters {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[Kc] b;  // regression coefficients</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   real Intercept;  // temporary intercept for centered predictors</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   real Intercept_occ;  // temporary intercept for centered predictors</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[Ks_occ] bs_occ;  // unpenalized spline coefficients</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // parameters for spline 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // standardized penalized spline coefficients</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[knots_occ_1[1]] zs_occ_1_1;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector&lt;lower=0&gt;[nb_occ_1] sds_occ_1;  // SDs of penalized spline coefficients</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector&lt;lower=0&gt;[M_1] sd_1;  // group-level standard deviations</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[M_1] vector[N_1] z_1;  // standardized group-level effects</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector&lt;lower=0&gt;[M_2] sd_2;  // group-level standard deviations</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[M_2] vector[N_2] z_2;  // standardized group-level effects</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> transformed parameters {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // penalized spline coefficients</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[knots_occ_1[1]] s_occ_1_1;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[N_1] r_1_1;  // actual group-level effects</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[N_2] r_2_occ_1;  // actual group-level effects</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   real lprior = 0;  // prior contributions to the log posterior</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // compute penalized spline coefficients</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   s_occ_1_1 = sds_occ_1[1] * zs_occ_1_1;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   r_1_1 = (sd_1[1] * (z_1[1]));</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   r_2_occ_1 = (sd_2[1] * (z_2[1]));</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   lprior += student_t_lpdf(Intercept | 3, 0, 2.5);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   lprior += student_t_lpdf(sds_occ_1 | 3, 0, 2.5)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     - 1 * student_t_lccdf(0 | 3, 0, 2.5);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   lprior += student_t_lpdf(sd_1 | 3, 0, 2.5)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     - 1 * student_t_lccdf(0 | 3, 0, 2.5);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   lprior += student_t_lpdf(sd_2 | 3, 0, 2.5)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     - 1 * student_t_lccdf(0 | 3, 0, 2.5);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> model {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // likelihood including constants</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   if (!prior_only) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     // initialize linear predictor term</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     vector[N] mu = rep_vector(0.0, N);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     // initialize linear predictor term</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     vector[N] occ = rep_vector(0.0, N);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     mu += Intercept + Xc * b;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     occ += Intercept_occ + Xs_occ * bs_occ + Zs_occ_1_1 * s_occ_1_1;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     for (n in 1:N) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       // add more terms to the linear predictor</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       mu[n] += r_1_1[J_1[n]] * Z_1_1[n];</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     for (n in 1:N) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       // add more terms to the linear predictor</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       occ[n] += r_2_occ_1[J_2[n]] * Z_2_occ_1[n];</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     target += occupancy_single_lpmf(Y | mu, occ, vint1, vint2, vint3, vint4, vint5, vint6, vint7);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // priors including constants</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   target += lprior;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   target += std_normal_lpdf(zs_occ_1_1);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   target += std_normal_lpdf(z_1[1]);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   target += std_normal_lpdf(z_2[1]);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> generated quantities {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // actual population-level intercept</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   real b_Intercept = Intercept - dot_product(means_X, b);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // actual population-level intercept</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   real b_occ_Intercept = Intercept_occ;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-in"><span>  <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </div>

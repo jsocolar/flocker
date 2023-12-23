@@ -109,9 +109,151 @@
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span><span class="fu">log_lik_flocker</span><span class="op">(</span><span class="va">example_flocker_model_single</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">log_lik_flocker</span><span class="op">(</span><span class="va">example_flocker_model_single</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             site_1     site_2     site_3    site_4    site_5     site_6</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_1 -0.87891758 -0.5597283 -0.8252117 -1.943163 -2.097238 -0.6440278</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_2 -0.77305511 -0.2623331 -0.4178537 -2.512035 -4.737141 -0.3356766</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_3 -0.21096295 -0.7271022 -0.5800918 -3.179967 -2.170735 -0.6083554</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_4 -0.08673553 -0.7403768 -0.9607153 -3.276819 -3.461628 -0.7544938</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_5 -0.40036394 -0.8696530 -0.8339110 -2.085036 -2.572523 -0.8068541</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_6 -0.66920482 -0.7739873 -0.8001075 -2.430320 -1.956537 -0.7551397</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_7 -0.09215167 -0.5310144 -0.6741906 -3.189182 -1.875427 -0.5679291</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_8 -0.30523172 -0.4757615 -0.4825484 -2.586512 -1.518854 -0.4658906</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>            site_7    site_8    site_9   site_10    site_11    site_12   site_13</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_1 -0.9924530 -2.731411 -3.234262 -4.005054 -0.5365798 -0.6254423 -3.079324</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_2 -0.5348009 -4.856002 -3.483731 -3.772242 -0.2869831 -0.3129835 -3.658535</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_3 -0.4723265 -2.674439 -3.130066 -3.650284 -0.6722063 -0.6483157 -3.274728</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_4 -0.7437716 -4.345119 -2.085552 -2.797655 -0.7513833 -0.8004936 -4.192567</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_5 -0.7083146 -3.386394 -2.018494 -3.765140 -0.5697973 -0.8334238 -3.167069</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_6 -0.7873685 -2.385257 -3.328710 -3.812360 -0.7535037 -0.7665819 -2.943182</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_7 -0.6718816 -2.536176 -3.866100 -4.099667 -0.5465667 -0.5694589 -3.632175</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_8 -0.4812510 -1.970520 -4.924409 -5.076458 -0.4679467 -0.4716973 -3.284056</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           site_14    site_15    site_16    site_17     site_18    site_19</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_1 -0.5018729 -0.3389531 -0.8653871 -0.7992531 -0.23002184 -0.3123688</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_2 -0.4751614 -0.4718973 -0.5843060 -0.4764098 -0.60669447 -0.1133998</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_3 -0.4045043 -0.3583822 -0.3596700 -0.4620661 -0.20943290 -1.3211313</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_4 -0.3279614 -0.2510413 -0.2795428 -0.4855568 -0.07883871 -0.0509454</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_5 -0.4449195 -0.2742904 -0.5889667 -0.6967435 -0.23761697 -1.5600575</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_6 -0.6651154 -0.5918989 -0.7150666 -0.7430469 -0.49745291 -0.8819645</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_7 -0.3410051 -0.2619090 -0.3136435 -0.4829660 -0.07847817 -0.2714011</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_8 -0.3647182 -0.2892029 -0.4107507 -0.4483865 -0.15151707 -0.4835975</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           site_20   site_21   site_22    site_23   site_24   site_25   site_26</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_1 -0.3755507 -7.851043 -3.768770 -0.6126683 -6.215604 -2.836559 -2.994910</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_2 -0.2003850 -5.102267 -3.997444 -1.0911630 -3.163826 -3.313834 -3.034481</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_3 -0.7647025 -1.702316 -4.999056 -0.6084213 -3.327844 -3.679849 -3.174248</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_4 -0.4338517 -2.569300 -2.946781 -0.6610667 -4.183526 -4.292509 -3.873074</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_5 -0.2852839 -4.565646 -4.382289 -0.6981140 -3.386514 -3.498286 -3.182267</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_6 -0.7125152 -4.189913 -4.148620 -0.7676379 -3.504605 -3.064089 -3.406331</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_7 -0.4490793 -2.429049 -4.581673 -0.8652063 -3.262614 -3.094173 -3.077116</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_8 -0.4644687 -3.433147 -4.672091 -0.5855575 -3.302310 -3.843564 -3.099333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           site_27    site_28   site_29   site_30    site_31    site_32</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_1 -0.2252793 -1.8443219 -2.267364 -2.582375 -1.3612906 -1.1567991</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_2 -1.1043927 -1.0661440 -2.375431 -2.817362 -1.0144854 -1.0226241</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_3 -0.6569741 -0.5238500 -2.844846 -3.099807 -0.5195898 -0.5439364</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_4 -0.8219116 -0.4330563 -4.079735 -4.802280 -0.5055839 -0.5477811</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_5 -0.6599413 -0.7646075 -2.479718 -2.979901 -0.7103488 -0.7033877</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_6 -0.6622283 -0.9455785 -3.062325 -2.864636 -0.8195013 -0.8030414</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_7 -0.7810296 -0.9776631 -2.718527 -2.690042 -0.8654679 -0.8738753</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_8 -0.5803299 -0.5937159 -2.358490 -3.197589 -0.5744877 -0.5758734</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           site_33    site_34    site_35   site_36    site_37     site_38</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_1 -0.3726850 -0.2066755 -0.1674808 -5.521951 -0.2692863 -0.01603136</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_2 -0.9957654 -0.9305708 -0.8628720 -2.895637 -1.0115490 -0.70924907</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_3 -0.6178370 -0.6377410 -0.6321649 -4.886695 -0.6390489 -0.74462679</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_4 -0.7693034 -0.8759418 -0.9145038 -4.144671 -0.8233709 -1.37105365</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_5 -0.6379256 -0.5900853 -0.5522466 -3.535806 -0.6336565 -0.44427829</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_6 -0.6609828 -0.5855939 -0.5427447 -3.579156 -0.6413767 -0.38207936</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_7 -0.7887396 -0.7308034 -0.6916432 -4.347835 -0.7753726 -0.57163944</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_8 -0.5648382 -0.5487696 -0.5297860 -4.081815 -0.5673963 -0.49766270</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          site_39   site_40   site_41     site_42   site_43   site_44</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_1 -2.505388 -3.062977 -2.588723 -0.16371531 -2.880414 -2.802050</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_2 -2.882697 -3.378901 -2.124933 -0.10077460 -2.617515 -2.659242</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_3 -3.885600 -4.171268 -1.801393 -0.16355201 -1.586281 -2.212497</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_4 -5.541089 -4.435989 -1.261960 -0.02657529 -2.315110 -1.923592</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_5 -3.003995 -3.596557 -1.650537 -0.01072913 -2.576427 -2.222495</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_6 -2.910039 -3.518018 -1.346116 -0.12459328 -1.955039 -2.077377</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_7 -3.181297 -3.743519 -3.461980 -0.03782123 -1.938655 -3.079759</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_8 -3.299295 -3.818085 -1.359286 -0.15982784 -1.956094 -2.176377</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             site_45     site_46   site_47      site_48      site_49     site_50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_1 -0.076075057 -0.31103251 -2.705061 -0.143615449 -0.145803053 -0.16633358</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_2 -0.045445904 -0.16589019 -3.092403 -0.077642761 -0.077325080 -0.09697319</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_3 -0.035230259 -0.32401055 -2.631790 -0.084972526 -0.088839246 -0.13880464</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_4 -0.001281782 -0.10710424 -2.760883 -0.008549257 -0.009238782 -0.01909699</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_5 -0.000781172 -0.07303318 -2.380217 -0.005502942 -0.005757812 -0.01004680</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_6 -0.031426303 -0.27143768 -2.547609 -0.079257888 -0.080415296 -0.11509565</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_7 -0.006045436 -0.17137842 -2.451071 -0.025329233 -0.026519184 -0.03810974</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_8 -0.030581864 -0.25092676 -2.740338 -0.064578587 -0.065956234 -0.11390121</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>            site_51     site_52    site_53   site_54    site_55    site_56</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_1 -0.20774931 -0.25626289 -0.5991579 -2.776743 -0.8769837 -1.1372157</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_2 -0.11750367 -0.14143077 -0.2879000 -3.174318 -0.4394834 -0.5082383</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_3 -0.18746954 -0.26214743 -0.6346159 -2.274036 -1.0394361 -0.8853790</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_4 -0.03575411 -0.07235454 -0.3843646 -2.173254 -0.9156003 -1.0235502</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_5 -0.02026179 -0.04038359 -0.4712743 -2.298511 -1.1540075 -1.3370805</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_6 -0.15701565 -0.21259485 -0.6082220 -2.743963 -1.0335972 -1.2640885</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_7 -0.06449825 -0.10865594 -0.6471338 -2.199059 -1.1387671 -0.7782948</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_8 -0.15011440 -0.21590360 -0.4579260 -2.271001 -0.8071308 -0.7782043</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           site_57   site_58       site_59      site_60   site_61    site_62</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_1 -0.7040048 -2.993500 -1.343771e-02 -0.089061011 -3.076350 -0.3734605</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_2 -0.3176978 -4.162081 -1.248792e-02 -0.064922554 -2.438216 -0.3697498</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_3 -0.6182911 -4.609549 -5.308854e-03 -0.085570033 -2.438884 -0.2366897</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_4 -0.4018544 -4.244773 -1.159029e-05 -0.006156103 -2.367145 -1.0042482</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_5 -0.6309109 -3.569854 -5.990316e-06 -0.001961713 -2.782414 -0.3588091</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_6 -0.7023399 -4.162157 -3.343681e-03 -0.062214085 -3.137486 -0.5915801</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_7 -0.6963371 -4.703440 -1.616892e-04 -0.008953396 -2.509339 -0.5574330</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_8 -0.4384940 -4.202516 -7.034980e-03 -0.117013691 -2.197424 -0.8408139</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           site_63    site_64   site_65    site_66   site_67    site_68</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_1 -0.6592435 -1.3441938 -3.410962 -0.5165405 -3.529440 -0.3716090</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_2 -0.4985821 -0.5265267 -4.574796 -0.4298433 -4.164472 -0.3708889</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_3 -0.4385336 -0.9705245 -4.246387 -0.3512846 -3.495157 -0.2208957</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_4 -1.1056869 -1.2562112 -2.339772 -1.0552163 -3.267660 -1.0099060</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_5 -0.4888874 -0.7595208 -3.329619 -0.4270844 -3.679656 -0.3574416</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_6 -0.5906132 -0.3510018 -2.795904 -0.5459721 -4.541115 -0.6656161</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_7 -0.6929439 -0.7785639 -3.684710 -0.6159270 -3.850159 -0.5688892</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_8 -1.0376709 -0.9119395 -2.707158 -0.9222736 -3.521014 -0.8705235</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          site_69   site_70    site_71    site_72   site_73   site_74   site_75</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_1 -4.241889 -3.852462 -0.4210623 -0.4700972 -3.252844 -3.424920 -2.903192</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_2 -3.304476 -3.763361 -0.3907962 -0.4126679 -3.465016 -4.019245 -2.963614</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_3 -4.945558 -4.301389 -0.2742255 -0.3119250 -3.695222 -3.484480 -2.853292</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_4 -4.373917 -3.377272 -1.0228693 -1.0402146 -3.258875 -3.272841 -2.351949</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_5 -4.604050 -3.968156 -0.3826392 -0.4056405 -3.620066 -3.669402 -2.960054</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_6 -3.264712 -3.399621 -0.5654067 -0.5656401 -3.482091 -4.330618 -3.027726</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_7 -3.162873 -3.435744 -0.5774960 -0.5998781 -3.234529 -3.678348 -2.886115</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_8 -3.782905 -3.309234 -0.8729138 -0.9042583 -3.277025 -3.561173 -2.353170</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          site_76    site_77    site_78     site_79   site_80   site_81</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_1 -2.874999 -0.8130038 -1.3938292 -0.12837585 -4.412647 -2.258352</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_2 -3.207441 -0.5240656 -0.4708502 -0.20400301 -4.211876 -2.457934</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_3 -3.479064 -0.5853811 -1.0293908 -0.05336183 -4.593276 -1.741401</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_4 -3.164827 -1.1407627 -1.2628384 -0.88319622 -3.466592 -1.920207</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_5 -3.362048 -0.5527914 -0.7802040 -0.20707341 -4.235363 -1.409522</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_6 -3.233532 -0.4918153 -0.3058177 -0.99205482 -3.979088 -1.517008</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_7 -2.957819 -0.7160213 -0.7358648 -0.40233500 -3.789103 -2.002276</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_8 -3.221517 -1.0048302 -0.8460237 -0.51335025 -3.550238 -2.153234</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          site_82    site_83   site_84    site_85   site_86   site_87    site_88</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_1 -3.266105 -0.3942287 -3.043158 -0.2244774 -3.516885 -3.759867 -0.2830539</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_2 -2.784376 -0.7174877 -2.975304 -0.6257611 -3.045959 -3.499992 -0.6795961</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_3 -3.013702 -0.3622389 -2.765293 -0.1095776 -3.528535 -4.895282 -0.1751916</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_4 -1.992498 -0.7238079 -2.667207 -0.3875317 -3.223443 -4.419191 -0.5197989</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_5 -2.981529 -0.4116809 -2.730660 -0.1614889 -3.327863 -4.539812 -0.2335002</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_6 -2.345676 -0.3402927 -2.896581 -0.1002847 -3.644684 -5.406092 -0.1595821</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_7 -3.618281 -0.5767602 -2.654560 -0.1561684 -3.376414 -3.195903 -0.2561739</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_8 -2.592336 -0.9105561 -2.709176 -0.5622250 -2.969400 -3.248759 -0.6937769</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           site_89   site_90    site_91    site_92    site_93   site_94</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_1 -0.2770110 -3.596252 -0.3477487 -0.3723918 -0.4838838 -3.568473</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_2 -0.6606507 -3.016598 -0.7608306 -0.7741518 -0.8163780 -3.139153</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_3 -0.1771753 -3.597125 -0.2893264 -0.3441917 -0.5404334 -3.412956</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_4 -0.4980348 -3.404741 -0.7681999 -0.8463057 -1.0430856 -2.601902</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_5 -0.2408483 -3.100311 -0.3700574 -0.4203008 -0.5560921 -3.888582</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_6 -0.1693596 -3.767625 -0.3223468 -0.4045755 -0.4965654 -3.689492</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_7 -0.2557357 -3.680486 -0.3529767 -0.4143333 -0.7759275 -3.244410</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_8 -0.6754796 -3.043434 -0.8396955 -0.8894552 -1.1067953 -2.930878</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          site_95   site_96    site_97   site_98   site_99   site_100</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_1 -3.369413 -2.929728 -0.4984285 -2.766637 -4.419232 -0.2907612</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_2 -3.098964 -2.657628 -0.8022316 -2.470054 -3.271457 -0.7596424</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_3 -3.095683 -2.399502 -0.5302864 -1.757681 -6.199384 -0.2138548</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_4 -2.901815 -2.116047 -0.9945519 -1.883444 -3.750963 -0.7883172</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_5 -3.157848 -2.659354 -0.5406105 -2.354512 -5.980767 -0.3215979</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_6 -3.213288 -2.692500 -0.4474061 -2.657996 -6.242662 -0.3826895</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_7 -2.995837 -2.569147 -0.8555885 -2.364995 -5.650015 -0.1903686</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw_8 -2.895333 -2.507089 -1.1244276 -2.456556 -3.417929 -0.7211745</span>
 </code></pre></div>
     </div>
   </div>

@@ -181,19 +181,50 @@ with single-season rep-constant models, and must be set to NULL otherwise.</p></
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span><span class="va">sfd</span> <span class="op">&lt;-</span> <span class="fu"><a href="simulate_flocker_data.html">simulate_flocker_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">sfd</span> <span class="op">&lt;-</span> <span class="fu"><a href="simulate_flocker_data.html">simulate_flocker_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fd</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_flocker_data.html">make_flocker_data</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span> <span class="va">sfd</span><span class="op">$</span><span class="va">obs</span>, </span></span>
 <span class="r-in"><span> <span class="va">sfd</span><span class="op">$</span><span class="va">unit_covs</span>,</span></span>
 <span class="r-in"><span> <span class="va">sfd</span><span class="op">$</span><span class="va">event_covs</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Formatting data for a single-season occupancy model. For details, see make_flocker_data_static. All warnings and error messages should be interpreted in the context of make_flocker_data_static</span>
 <span class="r-in"><span><span class="fu">get_flocker_prior</span><span class="op">(</span></span></span>
 <span class="r-in"><span> f_occ <span class="op">=</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">uc1</span><span class="op">)</span> <span class="op">+</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">species</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span> f_det <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="va">ec1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">species</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span> flocker_data <span class="op">=</span> <span class="va">fd</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 prior     class      coef   group resp dpar nlpar lb ub</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  student_t(3, 0, 2.5) Intercept                                        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                (flat)         b                                        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                (flat)         b       ec1                              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                (flat)         b       uc1                              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  student_t(3, 0, 2.5)        sd                                    0   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  student_t(3, 0, 2.5)        sd           species                  0   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  student_t(3, 0, 2.5)        sd Intercept species                  0   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                (flat) Intercept                         occ            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                (flat)         b                         occ            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                (flat)         b    suc1_1               occ            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  student_t(3, 0, 2.5)        sd                         occ        0   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  student_t(3, 0, 2.5)        sd           species       occ        0   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  student_t(3, 0, 2.5)        sd Intercept species       occ        0   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  student_t(3, 0, 2.5)       sds                         occ        0   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  student_t(3, 0, 2.5)       sds    s(uc1)               occ        0   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        source</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       default</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       default</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  (vectorized)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  (vectorized)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       default</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  (vectorized)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  (vectorized)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       default</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       default</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  (vectorized)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       default</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  (vectorized)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  (vectorized)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       default</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  (vectorized)</span>
 </code></pre></div>
     </div>
   </div>
