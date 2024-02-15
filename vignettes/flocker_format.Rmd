@@ -51,8 +51,8 @@ As noted, the `flocker` approach to fitting in `brms` contains one substantial r
 ## Even fancier families
 Flocker provides a set of families that are more involved still. The first are the multi-season families, which group closure-units into series within which the occupancy state changes via modeled colonization and extinction dynamics. The second are data-augmented multi-species models, in which closure-units are grouped within species whose presence in the community (and thus availability for detection) is modeled explicitly.
 
-### The multi-species format
-For we fit multi-species models via a hidden Markov model (HMM) approach to the likelihood. This vignette does not cover the implementation of that likelihood in detail--just the necessary data that we need to send to the unlooped likelihood function. Suppose the data contain $S$ distinct series (i.e. distinct hidden Markov sequences), $U$ closure-units (i.e. the sum over series of the number of timesteps per series). The data are ordered so that the first $S$ rows correspond to the first repeat visit to the first timestep of all series (or to a ghost row if a given series has no visits in the first timestep), and the first $U$ rows correspond to the first repeat visit to each closure-unit (i.e. timestep, or a ghost row if a given timestep contains no visits).
+### The multi-season format
+We fit multi-season models via a hidden Markov model (HMM) approach to the likelihood. This vignette does not cover the implementation of that likelihood in detail--just the necessary data that we need to send to the unlooped likelihood function. Suppose the data contain $S$ distinct series (i.e. distinct hidden Markov sequences), $U$ closure-units (i.e. the sum over series of the number of timesteps per series). The data are ordered so that the first $S$ rows correspond to the first repeat visit to the first timestep of all series (or to a ghost row if a given series has no visits in the first timestep), and the first $U$ rows correspond to the first repeat visit to each closure-unit (i.e. timestep, or a ghost row if a given timestep contains no visits).
 
 We pass:
 
