@@ -98,7 +98,7 @@ and the <code>flocker_data</code> format</h1>
                         <h4 data-toc-skip class="author">Jacob
 Socolar</h4>
             
-            <h4 data-toc-skip class="date">2024-02-05</h4>
+            <h4 data-toc-skip class="date">2024-02-15</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/jsocolar/flocker/blob/HEAD/vignettes/flocker_format.Rmd" class="external-link"><code>vignettes/flocker_format.Rmd</code></a></small>
       <div class="hidden name"><code>flocker_format.Rmd</code></div>
@@ -282,21 +282,19 @@ models, in which closure-units are grouped within species whose presence
 in the community (and thus availability for detection) is modeled
 explicitly.</p>
 <div class="section level3">
-<h3 id="the-multi-species-format">The multi-species format<a class="anchor" aria-label="anchor" href="#the-multi-species-format"></a>
+<h3 id="the-multi-season-format">The multi-season format<a class="anchor" aria-label="anchor" href="#the-multi-season-format"></a>
 </h3>
-<p>For we fit multi-species models via a hidden Markov model (HMM)
-approach to the likelihood. This vignette does not cover the
-implementation of that likelihood in detail–just the necessary data that
-we need to send to the unlooped likelihood function. Suppose the data
-contain <span class="math inline">\(S\)</span> distinct series
-(i.e. distinct hidden Markov sequences), <span class="math inline">\(U\)</span> closure-units (i.e. the sum over series
-of the number of timesteps per series). The data are ordered so that the
-first <span class="math inline">\(S\)</span> rows correspond to the
-first repeat visit to the first timestep of all series (or to a ghost
-row if a given series has no visits in the first timestep), and the
-first <span class="math inline">\(U\)</span> rows correspond to the
-first repeat visit to each closure-unit (i.e. timestep, or a ghost row
-if a given timestep contains no visits).</p>
+<p>We fit multi-season models via a hidden Markov model (HMM) approach
+to the likelihood. This vignette does not cover the implementation of
+that likelihood in detail–just the necessary data that we need to send
+to the unlooped likelihood function. Suppose the data contain <span class="math inline">\(S\)</span> distinct series (i.e. distinct hidden
+Markov sequences), <span class="math inline">\(U\)</span> closure-units
+(i.e. the sum over series of the number of timesteps per series). The
+data are ordered so that the first <span class="math inline">\(S\)</span> rows correspond to the first repeat
+visit to the first timestep of all series (or to a ghost row if a given
+series has no visits in the first timestep), and the first <span class="math inline">\(U\)</span> rows correspond to the first repeat
+visit to each closure-unit (i.e. timestep, or a ghost row if a given
+timestep contains no visits).</p>
 <p>We pass:</p>
 <ul>
 <li>A <code>vint</code> term for the number of series <span class="math inline">\(S\)</span>. Elements after the first are
