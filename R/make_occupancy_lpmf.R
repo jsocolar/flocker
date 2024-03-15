@@ -15,8 +15,8 @@ make_occupancy_single_lpmf <- function (max_rep) {
     array[] int y, // detection data
     vector mu, // lin pred for detection
     vector occ, // lin pred for occupancy. Elements after vint1[1] irrelevant.
-    array[] int vint1, // # units (n_unit). Elements after 1 irrelevant.
-    array[] int vint2, // # sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
+    array[] int vint1, // n units (n_unit). Elements after 1 irrelevant.
+    array[] int vint2, // n sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
     array[] int vint3, // Indicator for > 0 detections (Q). Elements after vint1[1] irrelevant.
   
   // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):"
@@ -96,11 +96,11 @@ make_occupancy_augmented_lpmf <- function (max_rep) {
     vector mu, // lin pred for detection
     vector occ, // lin pred for occupancy. Elements after vint1[1] irrelevant.
     vector Omega, // lin pred for availability.  Elements after 1 irrelevant.
-    array[] int vint1, // # units (n_unit). Elements after 1 irrelevant.
-    array[] int vint2, // # sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
+    array[] int vint1, // n units (n_unit). Elements after 1 irrelevant.
+    array[] int vint2, // n sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
     array[] int vint3, // Indicator for > 0 detections (Q). Elements after vint1[1] irrelevant.
     
-    array[] int vint4, // # species (observed + augmented). Elements after 1 irrelevant.
+    array[] int vint4, // n species (observed + augmented). Elements after 1 irrelevant.
     array[] int vint5, // Indicator for species was observed.  Elements after vint4[1] irrelevant
     
     array[] int vint6, // species
@@ -337,10 +337,10 @@ make_occupancy_multi_colex_lpmf <- function (max_rep, max_year) {
     vector occ, // linear predictor for initial occupancy. Elements after vint1[1] irrelevant.
     vector colo, // linear predictor for colonization. Elements after vint2[1] irrelevant.
     vector ex, // linear predictor for extinction. Elements after vint2[1] irrelevant.
-    array[] int vint1, // # of series (# of HMMs). Elements after 1 irrelevant.
-    array[] int vint2, // # units (series-years). Elements after 1 irrelevant.
-    array[] int vint3, // # years per series. Elements after vint1[1] irrelevant.
-    array[] int vint4, // # sampling events per unit (n_rep). Elements after vint2[1] irrelevant.
+    array[] int vint1, // n series (n HMMs). Elements after 1 irrelevant.
+    array[] int vint2, // n units (series-years). Elements after 1 irrelevant.
+    array[] int vint3, // n years per series. Elements after vint1[1] irrelevant.
+    array[] int vint4, // n sampling events per unit (n_rep). Elements after vint2[1] irrelevant.
     array[] int vint5, // Indicator for > 0 detections (Q). Elements after vint2[1] irrelevant.
   
   // indices for jth unit (first rep) for each series. Elements after vint1[1] irrelevant."
@@ -431,10 +431,10 @@ make_occupancy_multi_colex_eq_lpmf <- function (max_rep, max_year) {
     vector mu, // linear predictor for detection
     vector colo, // linear predictor for colonization. Elements after vint2[1] irrelevant.
     vector ex, // linear predictor for extinction. Elements after vint2[1] irrelevant.
-    array[] int vint1, // # of series (# of HMMs). Elements after 1 irrelevant.
-    array[] int vint2, // # units (series-years). Elements after 1 irrelevant.
-    array[] int vint3, // # years per series. Elements after vint1[1] irrelevant.
-    array[] int vint4, // # sampling events per unit (n_rep). Elements after vint2[1] irrelevant.
+    array[] int vint1, // n of series (n HMMs). Elements after 1 irrelevant.
+    array[] int vint2, // n units (series-years). Elements after 1 irrelevant.
+    array[] int vint3, // n years per series. Elements after vint1[1] irrelevant.
+    array[] int vint4, // n sampling events per unit (n_rep). Elements after vint2[1] irrelevant.
     array[] int vint5, // Indicator for > 0 detections (Q). Elements after vint2[1] irrelevant.
   
   // indices for jth unit (first rep) for each series. Elements after vint1[1] irrelevant."
@@ -528,10 +528,10 @@ make_occupancy_multi_autologistic_lpmf <- function (max_rep, max_year) {
     vector occ, // linear predictor for initial occupancy. Elements after vint1[1] irrelevant.
     vector colo, // linear predictor for colonization. Elements after vint2[1] irrelevant.
     vector autologistic, // logit-scale offset for persistence. Elements after vint2[1] irrelevant.
-    array[] int vint1, // # of series (# of HMMs). Elements after 1 irrelevant.
-    array[] int vint2, // # units (series-years). Elements after 1 irrelevant.
-    array[] int vint3, // # years per series. Elements after vint1[1] irrelevant.
-    array[] int vint4, // # sampling events per unit (n_rep). Elements after vint2[1] irrelevant.
+    array[] int vint1, // n series (n HMMs). Elements after 1 irrelevant.
+    array[] int vint2, // n units (series-years). Elements after 1 irrelevant.
+    array[] int vint3, // n years per series. Elements after vint1[1] irrelevant.
+    array[] int vint4, // n sampling events per unit (n_rep). Elements after vint2[1] irrelevant.
     array[] int vint5, // Indicator for > 0 detections (Q). Elements after vint2[1] irrelevant.
   
   // indices for jth unit (first rep) for each series. Elements after vint1[1] irrelevant."
@@ -624,10 +624,10 @@ make_occupancy_multi_autologistic_eq_lpmf <- function (max_rep, max_year) {
     vector mu, // linear predictor for detection
     vector colo, // linear predictor for colonization. Elements after vint2[1] irrelevant.
     vector autologistic, // logit-scale offset for persistence. Elements after vint2[1] irrelevant.
-    array[] int vint1, // # of series (# of HMMs). Elements after 1 irrelevant.
-    array[] int vint2, // # units (series-years). Elements after 1 irrelevant.
-    array[] int vint3, // # years per series. Elements after vint1[1] irrelevant.
-    array[] int vint4, // # sampling events per unit (n_rep). Elements after vint2[1] irrelevant.
+    array[] int vint1, // n series (n HMMs). Elements after 1 irrelevant.
+    array[] int vint2, // n units (series-years). Elements after 1 irrelevant.
+    array[] int vint3, // n years per series. Elements after vint1[1] irrelevant.
+    array[] int vint4, // n sampling events per unit (n_rep). Elements after vint2[1] irrelevant.
     array[] int vint5, // Indicator for > 0 detections (Q). Elements after vint2[1] irrelevant.
   
   // indices for jth unit (first rep) for each series. Elements after vint1[1] irrelevant."
@@ -714,8 +714,8 @@ make_occupancy_single_threaded_lpmf <- function (max_rep, grainsize) {
     array[] int y, // detection data
     vector occ,
     vector mu, // lin pred for detection
-    array[] int vint1, // # units (n_unit). Elements after 1 irrelevant.
-    array[] int vint2, // # sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
+    array[] int vint1, // n units (n_unit). Elements after 1 irrelevant.
+    array[] int vint2, // n sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
     array[] int vint3, // Indicator for > 0 detections (Q). Elements after vint1[1] irrelevant.
   
   // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):"
@@ -734,8 +734,8 @@ make_occupancy_single_threaded_lpmf <- function (max_rep, grainsize) {
   sf_text1.2 <- paste0("      ", grainsize, ", // grainsize")
   sf_text1.3 <- "      y, // detection data
       mu, // lin pred for detection
-      vint1, // # units (n_unit). Elements after 1 irrelevant.
-      vint2, // # sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
+      vint1, // n units (n_unit). Elements after 1 irrelevant.
+      vint2, // n sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
       vint3, // Indicator for > 0 detections (Q). Elements after vint1[1] irrelevant.
   
       // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):"
@@ -770,8 +770,8 @@ make_occupancy_single_partial_sum <- function (max_rep) {
     int end,
     array[] int y, // detection data
     vector mu, // lin pred for detection
-    array[] int vint1, // # units (n_unit). Elements after 1 irrelevant.
-    array[] int vint2, // # sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
+    array[] int vint1, // n units (n_unit). Elements after 1 irrelevant.
+    array[] int vint2, // n sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
     array[] int vint3, // Indicator for > 0 detections (Q). Elements after vint1[1] irrelevant.
   
   // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):"
