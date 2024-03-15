@@ -431,7 +431,7 @@ make_occupancy_multi_colex_eq_lpmf <- function (max_rep, max_year) {
     vector mu, // linear predictor for detection
     vector colo, // linear predictor for colonization. Elements after vint2[1] irrelevant.
     vector ex, // linear predictor for extinction. Elements after vint2[1] irrelevant.
-    array[] int vint1, // n of series (n HMMs). Elements after 1 irrelevant.
+    array[] int vint1, // n series (n HMMs). Elements after 1 irrelevant.
     array[] int vint2, // n units (series-years). Elements after 1 irrelevant.
     array[] int vint3, // n years per series. Elements after vint1[1] irrelevant.
     array[] int vint4, // n sampling events per unit (n_rep). Elements after vint2[1] irrelevant.
