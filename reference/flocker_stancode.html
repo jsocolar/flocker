@@ -201,8 +201,8 @@ with single-season rep-constant models, and must be set to NULL otherwise.</p></
 <span class="r-out co"><span class="r-pr">#&gt;</span>     array[] int y, // detection data</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     vector mu, // lin pred for detection</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     vector occ, // lin pred for occupancy. Elements after vint1[1] irrelevant.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     array[] int vint1, // # units (n_unit). Elements after 1 irrelevant.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     array[] int vint2, // # sampling events per unit (n_rep). Elements after vint1[1] irrelevant.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     array[] int vint1, // n units (n_unit). Elements after 1 irrelevant.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     array[] int vint2, // n sampling events per unit (n_rep). Elements after vint1[1] irrelevant.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     array[] int vint3, // Indicator for &gt; 0 detections (Q). Elements after vint1[1] irrelevant.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):</span>

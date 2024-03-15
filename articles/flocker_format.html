@@ -98,7 +98,7 @@ and the <code>flocker_data</code> format</h1>
                         <h4 data-toc-skip class="author">Jacob
 Socolar</h4>
             
-            <h4 data-toc-skip class="date">2024-02-15</h4>
+            <h4 data-toc-skip class="date">2024-03-15</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/jsocolar/flocker/blob/HEAD/vignettes/flocker_format.Rmd" class="external-link"><code>vignettes/flocker_format.Rmd</code></a></small>
       <div class="hidden name"><code>flocker_format.Rmd</code></div>
@@ -211,8 +211,8 @@ looks for a dataset with a maximum of four repeat visits:</p>
 <span><span class="co">##     array[] int y, // detection data</span></span>
 <span><span class="co">##     vector mu, // lin pred for detection</span></span>
 <span><span class="co">##     vector occ, // lin pred for occupancy. Elements after vint1[1] irrelevant.</span></span>
-<span><span class="co">##     array[] int vint1, // # units (n_unit). Elements after 1 irrelevant.</span></span>
-<span><span class="co">##     array[] int vint2, // # sampling events per unit (n_rep). Elements after vint1[1] irrelevant.</span></span>
+<span><span class="co">##     array[] int vint1, // n units (n_unit). Elements after 1 irrelevant.</span></span>
+<span><span class="co">##     array[] int vint2, // n sampling events per unit (n_rep). Elements after vint1[1] irrelevant.</span></span>
 <span><span class="co">##     array[] int vint3, // Indicator for &gt; 0 detections (Q). Elements after vint1[1] irrelevant.</span></span>
 <span><span class="co">##   </span></span>
 <span><span class="co">##   // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):</span></span>
@@ -333,10 +333,10 @@ family via <code>stanvars</code>:</p>
 <span><span class="co">##     vector occ, // linear predictor for initial occupancy. Elements after vint1[1] irrelevant.</span></span>
 <span><span class="co">##     vector colo, // linear predictor for colonization. Elements after vint2[1] irrelevant.</span></span>
 <span><span class="co">##     vector ex, // linear predictor for extinction. Elements after vint2[1] irrelevant.</span></span>
-<span><span class="co">##     array[] int vint1, // # of series (# of HMMs). Elements after 1 irrelevant.</span></span>
-<span><span class="co">##     array[] int vint2, // # units (series-years). Elements after 1 irrelevant.</span></span>
-<span><span class="co">##     array[] int vint3, // # years per series. Elements after vint1[1] irrelevant.</span></span>
-<span><span class="co">##     array[] int vint4, // # sampling events per unit (n_rep). Elements after vint2[1] irrelevant.</span></span>
+<span><span class="co">##     array[] int vint1, // n series (n HMMs). Elements after 1 irrelevant.</span></span>
+<span><span class="co">##     array[] int vint2, // n units (series-years). Elements after 1 irrelevant.</span></span>
+<span><span class="co">##     array[] int vint3, // n years per series. Elements after vint1[1] irrelevant.</span></span>
+<span><span class="co">##     array[] int vint4, // n sampling events per unit (n_rep). Elements after vint2[1] irrelevant.</span></span>
 <span><span class="co">##     array[] int vint5, // Indicator for &gt; 0 detections (Q). Elements after vint2[1] irrelevant.</span></span>
 <span><span class="co">##   </span></span>
 <span><span class="co">##   // indices for jth unit (first rep) for each series. Elements after vint1[1] irrelevant.</span></span>
@@ -431,11 +431,11 @@ maximum of 4 repeat visits.</p>
 <span><span class="co">##     vector mu, // lin pred for detection</span></span>
 <span><span class="co">##     vector occ, // lin pred for occupancy. Elements after vint1[1] irrelevant.</span></span>
 <span><span class="co">##     vector Omega, // lin pred for availability.  Elements after 1 irrelevant.</span></span>
-<span><span class="co">##     array[] int vint1, // # units (n_unit). Elements after 1 irrelevant.</span></span>
-<span><span class="co">##     array[] int vint2, // # sampling events per unit (n_rep). Elements after vint1[1] irrelevant.</span></span>
+<span><span class="co">##     array[] int vint1, // n units (n_unit). Elements after 1 irrelevant.</span></span>
+<span><span class="co">##     array[] int vint2, // n sampling events per unit (n_rep). Elements after vint1[1] irrelevant.</span></span>
 <span><span class="co">##     array[] int vint3, // Indicator for &gt; 0 detections (Q). Elements after vint1[1] irrelevant.</span></span>
 <span><span class="co">##     </span></span>
-<span><span class="co">##     array[] int vint4, // # species (observed + augmented). Elements after 1 irrelevant.</span></span>
+<span><span class="co">##     array[] int vint4, // n species (observed + augmented). Elements after 1 irrelevant.</span></span>
 <span><span class="co">##     array[] int vint5, // Indicator for species was observed.  Elements after vint4[1] irrelevant</span></span>
 <span><span class="co">##     </span></span>
 <span><span class="co">##     array[] int vint6, // species</span></span>
