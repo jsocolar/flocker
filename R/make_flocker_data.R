@@ -43,6 +43,9 @@
 #' @param n_aug Number of pseudo-species to augment. Only applicable if 
 #'    \code{type = "augmented"}.
 #' @param quiet Hide progress bars and informational messages?
+#' @param newdata_checks If TRUE, turn off checks that must pass in order
+#' to use the data for model fitting, but not in other contexts (e.g. making
+#' predictions or assessing log-likelihoods over new data).
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 #' @examples
@@ -54,7 +57,7 @@
 #' )
 make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
                               type = "single", n_aug = NULL,
-                              quiet = FALSE) {
+                              quiet = FALSE, newdata_checks = FALSE) {
   assertthat::assert_that(
     type %in% flocker_data_input_types(),
     msg = paste0("Invalid type argument. Type given as '", type, "' but must ",
@@ -111,15 +114,20 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
   }
   
   if (type == "single") {
-    out <- make_flocker_data_static(obs, unit_covs, event_covs, quiet)
+    out <- make_flocker_data_static(
+      obs, unit_covs, event_covs, quiet, newdata_checks
+      )
     out$unit_covs <- names(unit_covs)
     out$event_covs <- names(event_covs)
   } else if (type == "multi") {
-    out <- make_flocker_data_dynamic(obs, unit_covs, event_covs, quiet)
+    out <- make_flocker_data_dynamic(
+      obs, unit_covs, event_covs, quiet, newdata_checks
+      )
     out$unit_covs <- names(unit_covs[[1]])
     out$event_covs <- names(event_covs)
   } else if (type == "augmented") {
-    out <- make_flocker_data_augmented(obs, n_aug, unit_covs, event_covs, quiet)
+    out <- make_flocker_data_augmented(
+      obs, n_aug, unit_covs, event_covs, quiet, newdata_checks)
     out$unit_covs <- names(unit_covs)
     out$event_covs <- names(event_covs)
   }
@@ -141,6 +149,9 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
 #' @param event_covs A named list of I x J matrices, each one corresponding to a covariate
 #' that varies across repeated sampling events within closure-units
 #' @param quiet Hide progress bars and informational messages?
+#' @param newdata_checks If TRUE, turn off checks that must pass in order
+#' to use the data for model fitting, but not in other contexts (e.g. making
+#' predictions or assessing log-likelihoods over new data).
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 #' @examples
@@ -150,7 +161,10 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
 #'  sfd$unit_covs,
 #'  sfd$event_covs
 #' )
-make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL, quiet = FALSE) {
+make_flocker_data_static <- function(
+    obs, unit_covs = NULL, event_covs = NULL, 
+    quiet = FALSE, newdata_checks = FALSE
+    ) {
   assertthat::assert_that(
     length(dim(obs)) == 2,
     msg = "in a single-season model, obs must have exactly two dimensions"
@@ -158,8 +172,11 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL, q
   n_unit <- nrow(obs)
   n_rep <- ncol(obs)
   assertthat::assert_that(
-    n_rep >= 2, 
-    msg = "obs must contain at least two columns."
+    newdata_checks | (n_rep >= 2), 
+    msg = paste0(
+      "obs must contain at least two columns unless being used for newdata ",
+      "(see newdata_checks argument)."
+    )
   )
   unique_y <- unique(obs)[!is.na(unique(obs))]
   assertthat::assert_that(
@@ -288,22 +305,31 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL, q
 #' @param event_covs A named list of I x J x K arrays, each one corresponding to 
 #' a covariate that varies across repeated sampling events within closure-units
 #' @param quiet Hide progress bars and informational messages?
+#' @param newdata_checks If TRUE, turn off checks that must pass in order
+#' to use the data for model fitting, but not in other contexts (e.g. making
+#' predictions or assessing log-likelihoods over new data).
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
-                                      quiet = FALSE) {
+                                      quiet = FALSE, newdata_checks = FALSE) {
   n_year <- nslice(obs) # nslice checks that obs is a 3-D array
   n_series <- nrow(obs)
   n_rep <- ncol(obs)
   n_total <- n_year*n_series*n_rep
   
   assertthat::assert_that(
-    n_year > 1, msg = "obs must contain at least two slices (seasons/years)"
+    newdata_checks | (n_year > 1), 
+    msg = paste0(
+      "obs must contain at least two slices (seasons/years) or you must ",
+      "format data explicitly as newdata (see newdata_checks argument)."
+    )
   )
   assertthat::assert_that(
-    n_rep > 1, 
-    msg = paste0("obs must contain at least two columns (repeat visits to at ",
-                 "least one unit)"
+    newdata_checks | (n_rep > 1), 
+    msg = paste0(
+      "obs must contain at least two columns (repeat visits to at ",
+      "least one unit), or you mus format data explicitly as newdata (see ",
+      "newdata_checks argument)."
     )
   )
   unique_y <- unique(obs)[!is.na(unique(obs))]
