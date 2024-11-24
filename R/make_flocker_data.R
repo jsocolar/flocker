@@ -132,7 +132,7 @@ make_flocker_data_static <- function(
     obs, unit_covs = NULL, event_covs = NULL, 
     quiet = FALSE, newdata_checks = FALSE
     ) {
-  standard_mfd_checks(obs, unit_covs, event_covs, "single", n_aug, quiet, newdata_checks)
+  standard_mfd_checks(obs, unit_covs, event_covs, "single", NULL, quiet, newdata_checks)
   
   n_unit <- nrow(obs)
   n_rep <- ncol(obs)
@@ -210,7 +210,7 @@ make_flocker_data_static <- function(
 make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
                                       quiet = FALSE, newdata_checks = FALSE) {
   
-  standard_mfd_checks(obs, unit_covs, event_covs, "multi", n_aug, quiet, newdata_checks)
+  standard_mfd_checks(obs, unit_covs, event_covs, "multi", NULL, quiet, newdata_checks)
   
   n_year <- nslice(obs) # nslice checks that obs is a 3-D array
   n_series <- nrow(obs)
