@@ -30,7 +30,9 @@ covariate that varies across repeated sampling events within sites}
 
 \item{quiet}{Hide progress bars and informational messages?}
 
-\item{newdata_checks}{turn off some checking for newdata?}
+\item{newdata_checks}{If TRUE, turn off checks that must pass in order
+to use the data for model fitting, but not in other contexts (e.g. making
+predictions or assessing log-likelihoods over new data).}
 }
 \value{
 A flocker_data list that can be passed as data to \code{flocker()}.
