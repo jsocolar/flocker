@@ -4,7 +4,15 @@
 \alias{standard_mfd_checks}
 \title{input checking for make_flocker_data}
 \usage{
-standard_mfd_checks(obs, unit_covs, event_covs, type, quiet, newdata_checks)
+standard_mfd_checks(
+  obs,
+  unit_covs,
+  event_covs,
+  type,
+  n_aug,
+  quiet,
+  newdata_checks
+)
 }
 \arguments{
 \item{obs}{If \code{type = "single"}, an I x J matrix-like object where 
@@ -43,6 +51,9 @@ within sites (no dependence on species is allowed).}
 \code{"multi"} for a multi-season (dynamic) model, or
 \code{"augmented"} for a single-season multi-species model with 
 data-augmentation for never-observed pseudospecies.}
+
+\item{n_aug}{Number of pseudo-species to augment. Only applicable if 
+\code{type = "augmented"}.}
 
 \item{quiet}{Hide progress bars and informational messages?}
 

@@ -58,7 +58,7 @@
 make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
                               type = "single", n_aug = NULL,
                               quiet = FALSE, newdata_checks = FALSE) {
-  standard_mfd_checks(obs, unit_covs, event_covs, type, quiet, newdata_checks)
+  standard_mfd_checks(obs, unit_covs, event_covs, type, n_aug, quiet, newdata_checks)
 
   if (!quiet) {
     if (type == "single") {
@@ -132,7 +132,7 @@ make_flocker_data_static <- function(
     obs, unit_covs = NULL, event_covs = NULL, 
     quiet = FALSE, newdata_checks = FALSE
     ) {
-  standard_mfd_checks(obs, unit_covs, event_covs, "single", quiet, newdata_checks)
+  standard_mfd_checks(obs, unit_covs, event_covs, "single", n_aug, quiet, newdata_checks)
   
   n_unit <- nrow(obs)
   n_rep <- ncol(obs)
@@ -210,7 +210,7 @@ make_flocker_data_static <- function(
 make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
                                       quiet = FALSE, newdata_checks = FALSE) {
   
-  standard_mfd_checks(obs, unit_covs, event_covs, "multi", quiet, newdata_checks)
+  standard_mfd_checks(obs, unit_covs, event_covs, "multi", n_aug, quiet, newdata_checks)
   
   n_year <- nslice(obs) # nslice checks that obs is a 3-D array
   n_series <- nrow(obs)
@@ -377,7 +377,7 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
 #' @export
 make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL, 
                                         event_covs = NULL, quiet = FALSE) {
-  standard_mfd_checks(obs, unit_covs, event_covs, "augmented", quiet, newdata_checks)
+  standard_mfd_checks(obs, unit_covs, event_covs, "augmented", n_aug, quiet, newdata_checks)
   obs1 <- obs[,,1]
   n_rep <- ncol(obs1)
   n_sp_obs <- dim(obs)[3]
@@ -447,7 +447,7 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
 #' input checking for make_flocker_data
 #' @inheritParams make_flocker_data
 standard_mfd_checks <- function(
-    obs, unit_covs, event_covs, type, quiet, newdata_checks
+    obs, unit_covs, event_covs, type, n_aug, quiet, newdata_checks
 ) {
   
   unique_y <- unique(obs)
