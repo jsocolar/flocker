@@ -2,7 +2,7 @@
 % Please edit documentation in R/make_flocker_data.R
 \name{make_flocker_data_augmented}
 \alias{make_flocker_data_augmented}
-\title{#' Format data for data-augmented occupancy model, to be passed to 
+\title{Format data for data-augmented occupancy model, to be passed to 
  \code{flock()}.}
 \usage{
 make_flocker_data_augmented(
@@ -33,6 +33,6 @@ covariate that varies across repeated sampling events within sites}
 A flocker_data list that can be passed as data to \code{flocker()}.
 }
 \description{
-#' Format data for data-augmented occupancy model, to be passed to 
+Format data for data-augmented occupancy model, to be passed to 
  \code{flock()}.
 }
