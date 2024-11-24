@@ -377,7 +377,7 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
 #' @export
 make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL, 
                                         event_covs = NULL, quiet = FALSE) {
-  standard_mfd_checks(obs, unit_covs, event_covs, "augmented", n_aug, quiet, newdata_checks)
+  standard_mfd_checks(obs, site_covs, event_covs, "augmented", n_aug, quiet, newdata_checks)
   obs1 <- obs[,,1]
   n_rep <- ncol(obs1)
   n_sp_obs <- dim(obs)[3]
@@ -739,6 +739,7 @@ standard_mfd_checks <- function(
   
   #### augmented checks ####
   if(type == "augmented"){
+    site_covs <- unit_covs
     obs1 <- obs[,,1]
     n_rep <- ncol(obs1)
     na_obs <- which(is.na(obs1))
