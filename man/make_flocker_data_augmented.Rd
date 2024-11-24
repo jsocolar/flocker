@@ -10,7 +10,8 @@ make_flocker_data_augmented(
   n_aug,
   site_covs = NULL,
   event_covs = NULL,
-  quiet = FALSE
+  quiet = FALSE,
+  newdata_checks = FALSE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ across repeated sampling events.}
 covariate that varies across repeated sampling events within sites}
 
 \item{quiet}{Hide progress bars and informational messages?}
+
+\item{newdata_checks}{turn off some checking for newdata?}
 }
 \value{
 A flocker_data list that can be passed as data to \code{flocker()}.

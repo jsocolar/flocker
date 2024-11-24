@@ -373,10 +373,12 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
 #' @param event_covs A named list of I x J matrices, each one corresponding to a 
 #' covariate that varies across repeated sampling events within sites
 #' @param quiet Hide progress bars and informational messages?
+#' @param newdata_checks turn off some checking for newdata?
 #' @return A flocker_data list that can be passed as data to \code{flocker()}.
 #' @export
 make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL, 
-                                        event_covs = NULL, quiet = FALSE) {
+                                        event_covs = NULL, quiet = FALSE, 
+                                        newdata_checks = FALSE) {
   standard_mfd_checks(obs, site_covs, event_covs, "augmented", n_aug, quiet, newdata_checks)
   obs1 <- obs[,,1]
   n_rep <- ncol(obs1)
