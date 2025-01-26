@@ -46,7 +46,7 @@ jobs:
       
       # Install QuickJSR from source (only on macOS)
       - name: Install QuickJSR from source
-        if: matrix.config.os == 'macos-latest'
+        if: ${{ runner.os == 'macOS' }}
         run: Rscript -e 'install.packages("QuickJSR", type = "source")'
 
       - uses: r-lib/actions/check-r-package@v2
