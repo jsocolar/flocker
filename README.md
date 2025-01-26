@@ -13,9 +13,9 @@ the extended `lme4` formula syntax provided by R package `brms`. Also
 included are functions to format data for occupancy modeling and functions 
 for model post-processing, including posterior predictions, the posterior
 distribution of the latent true occupancy state, and model comparison. 
-`flocker` is under active development: development priorities include better 
-integrated functionality for posterior predictive checking and full
-cross-validation.
+`flocker` is under active development: development priorities include new model
+types, better integrated functionality for posterior predictive checking, and 
+full cross-validation.
 
 Compared to existing R packages for fitting occupancy models, `flocker` is 
 substantially more flexible in the variety of models that can 
