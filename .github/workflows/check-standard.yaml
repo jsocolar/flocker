@@ -43,6 +43,11 @@ jobs:
         with:
           extra-packages: any::rcmdcheck
           needs: check
+      
+      # Install QuickJSR from source (only on macOS)
+      - name: Install QuickJSR from source
+        if: matrix.config.os == 'macos-latest'
+        run: Rscript -e 'install.packages("QuickJSR", type = "source")'
 
       - uses: r-lib/actions/check-r-package@v2
         with:
