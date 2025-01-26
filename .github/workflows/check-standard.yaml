@@ -39,15 +39,10 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
-      # Install QuickJSR from source only on macOS
-      - name: Install QuickJSR from source
-        if: ${{ runner.os == 'macOS' }}
-        run: Rscript -e 'install.packages("QuickJSR", type = "source")'
-
-      # Install all other dependencies with pak
-      - name: Install dependencies with pak
-        run: |
-          Rscript -e 'pak::pkg_install("any::rcmdcheck", dependencies = TRUE)'
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
 
       - uses: r-lib/actions/check-r-package@v2
         with:
