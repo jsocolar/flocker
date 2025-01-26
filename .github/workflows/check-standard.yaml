@@ -44,7 +44,19 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         run: Rscript -e 'install.packages("QuickJSR", type = "source")'
 
-      - uses: r-lib/actions/setup-r-dependencies@v2
+      # Setup dependencies with exclusion on macOS
+      - name: Setup R dependencies (macOS-specific)
+        if: ${{ runner.os == 'macOS' }}
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+          exclude: QuickJSR
+
+      # Setup dependencies normally on other OSs
+      - name: Setup R dependencies (non-macOS)
+        if: ${{ runner.os != 'macOS' }}
+        uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck
           needs: check
