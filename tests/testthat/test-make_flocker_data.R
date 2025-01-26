@@ -43,7 +43,7 @@ test_that("make_flocker_data works correctly", {
   obs <- rep(1, 3000)
   expect_error(fd <- make_flocker_data(obs), 
                "in a single-season model, obs must have exactly two dimensions")
-  obs <- matrix(1:3000, ncol=1)
+  obs <- matrix(rep(1, 3000), ncol=1)
   expect_error(fd <- make_flocker_data(obs), 
                "obs must contain at least two columns.")
   obs <- example_data$obs

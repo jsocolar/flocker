@@ -43,6 +43,9 @@
 #' @param n_aug Number of pseudo-species to augment. Only applicable if 
 #'    \code{type = "augmented"}.
 #' @param quiet Hide progress bars and informational messages?
+#' @param newdata_checks If TRUE, turn off checks that must pass in order
+#' to use the data for model fitting, but not in other contexts (e.g. making
+#' predictions or assessing log-likelihoods over new data).
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 #' @examples
@@ -54,39 +57,9 @@
 #' )
 make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
                               type = "single", n_aug = NULL,
-                              quiet = FALSE) {
-  assertthat::assert_that(
-    type %in% flocker_data_input_types(),
-    msg = paste0("Invalid type argument. Type given as '", type, "' but must ",
-                 "be one of the following: ", 
-                 paste(flocker_data_input_types(), collapse = ", "))
-  )
-  assertthat::assert_that(
-    !any(names(unit_covs) %in% names(event_covs)) &
-      !any(names(unit_covs[[1]]) %in% names(event_covs)),
-    msg = "overlapping names detected between unit_covs and event_covs"
-  )
-  for (i in seq_along(flocker_reserved())) {
-    assertthat::assert_that(
-      !any(grepl(flocker_reserved()[i], names(unit_covs))),
-      msg = paste0("names of unit_covs include a reserved string matching ",
-                   "the following regular expression: ", 
-                   flocker_reserved()[i])
-    )
-    assertthat::assert_that(
-      !any(grepl(flocker_reserved()[i], names(unit_covs[[1]]))),
-      msg = paste0("names of unit_covs include a reserved string matching ",
-                   "the following regular expression: ", 
-                   flocker_reserved()[i])
-    )
-    assertthat::assert_that(
-      !any(grepl(flocker_reserved()[i], names(event_covs))),
-      msg = paste0("names of event_covs include a reserved string matching ",
-                   "the following regular expression: ", 
-                   flocker_reserved()[i])
-    )
-  }
-  
+                              quiet = FALSE, newdata_checks = FALSE) {
+  standard_mfd_checks(obs, unit_covs, event_covs, type, n_aug, quiet, newdata_checks)
+
   if (!quiet) {
     if (type == "single") {
       message(paste0("Formatting data for a single-season occupancy model. For ",
@@ -105,21 +78,23 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
                      "error messages should be interpreted in the context of ",
                      "make_flocker_data_augmented"))
     }
-    if (!is.null(n_aug) & (type != "augmented")) {
-      warning(paste0("n_aug is set but will be ignored for type = '", type, "'."))
-    }
   }
   
   if (type == "single") {
-    out <- make_flocker_data_static(obs, unit_covs, event_covs, quiet)
+    out <- make_flocker_data_static(
+      obs, unit_covs, event_covs, quiet, newdata_checks
+      )
     out$unit_covs <- names(unit_covs)
     out$event_covs <- names(event_covs)
   } else if (type == "multi") {
-    out <- make_flocker_data_dynamic(obs, unit_covs, event_covs, quiet)
+    out <- make_flocker_data_dynamic(
+      obs, unit_covs, event_covs, quiet, newdata_checks
+      )
     out$unit_covs <- names(unit_covs[[1]])
     out$event_covs <- names(event_covs)
   } else if (type == "augmented") {
-    out <- make_flocker_data_augmented(obs, n_aug, unit_covs, event_covs, quiet)
+    out <- make_flocker_data_augmented(
+      obs, n_aug, unit_covs, event_covs, quiet, newdata_checks)
     out$unit_covs <- names(unit_covs)
     out$event_covs <- names(event_covs)
   }
@@ -141,6 +116,9 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
 #' @param event_covs A named list of I x J matrices, each one corresponding to a covariate
 #' that varies across repeated sampling events within closure-units
 #' @param quiet Hide progress bars and informational messages?
+#' @param newdata_checks If TRUE, turn off checks that must pass in order
+#' to use the data for model fitting, but not in other contexts (e.g. making
+#' predictions or assessing log-likelihoods over new data).
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 #' @examples
@@ -150,79 +128,15 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
 #'  sfd$unit_covs,
 #'  sfd$event_covs
 #' )
-make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL, quiet = FALSE) {
-  assertthat::assert_that(
-    length(dim(obs)) == 2,
-    msg = "in a single-season model, obs must have exactly two dimensions"
-  )
+make_flocker_data_static <- function(
+    obs, unit_covs = NULL, event_covs = NULL, 
+    quiet = FALSE, newdata_checks = FALSE
+    ) {
+  standard_mfd_checks(obs, unit_covs, event_covs, "single", NULL, quiet, newdata_checks)
+  
   n_unit <- nrow(obs)
   n_rep <- ncol(obs)
-  assertthat::assert_that(
-    n_rep >= 2, 
-    msg = "obs must contain at least two columns."
-  )
-  unique_y <- unique(obs)[!is.na(unique(obs))]
-  assertthat::assert_that(
-    all(unique_y %in% c(0, 1)),
-    msg = "obs may only contain the values 0, 1, or NA"
-  )
-  assertthat::assert_that(
-    !any(is.na(obs[ , 1])), 
-    msg = paste0("obs has NAs in its first column; this is not allowed in ", 
-                 "single-season models"
-    )
-  )
-  
-  if (n_rep > 2) {
-    for (j in 2:(n_rep - 1)) {
-      the_nas <- is.na(obs[ , j])
-      if (any(the_nas)) {
-        the_nas2 <- which(the_nas)
-        assertthat::assert_that(
-          all(is.na(obs[the_nas2, j+1])),
-          msg = "Some rows of obs have non-trailing NAs"
-        )
-      }
-    }
-  }
-  assertthat::assert_that(
-    !all(is.na(obs[ , n_rep])),
-    msg = "The final column of obs contains only NAs."
-  )
-  if (!is.null(unit_covs)) {
-    assertthat::assert_that(
-      nrow(unit_covs) == nrow(obs),
-      msg = "Different numbers of rows found for obs and unit_covs."
-    )
-    assertthat::assert_that(
-      !any(is.na(unit_covs)),
-      msg = "A unit covariate contains missing values."
-    )
-  }
-  if (!is.null(event_covs)) {
-    assertthat::assert_that(
-      is_named_list(event_covs), 
-      msg = "event_covs must be NULL or a named list with no duplicate names."
-    )
-    n_event_covs <- length(event_covs)
-    missing_covs <- vector()
-    for (ec in 1:n_event_covs) {
-      assertthat::assert_that(
-        all.equal(dim(event_covs[[ec]]), dim(obs)),
-        msg = paste0(
-          "Dimension mismatch found between obs and event_covs[[", ec, "]]."
-        )
-      )
-      missing_covs <- unique(c(missing_covs, which(is.na(event_covs[[ec]]))))
-    }
-    if (length(missing_covs) > 0) {
-      assertthat::assert_that(
-        all(missing_covs %in% which(is.na(obs))),
-        msg = paste0("An event covariate contains missing values ",
-                     "at a position where the response is not missing.")
-        )
-    }
-  }
+
   if (is.null(event_covs)) {
     n_trial <- rowSums(!is.na(obs))
     n_suc <- rowSums(obs, na.rm = T)
@@ -288,154 +202,20 @@ make_flocker_data_static <- function(obs, unit_covs = NULL, event_covs = NULL, q
 #' @param event_covs A named list of I x J x K arrays, each one corresponding to 
 #' a covariate that varies across repeated sampling events within closure-units
 #' @param quiet Hide progress bars and informational messages?
+#' @param newdata_checks If TRUE, turn off checks that must pass in order
+#' to use the data for model fitting, but not in other contexts (e.g. making
+#' predictions or assessing log-likelihoods over new data).
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
-                                      quiet = FALSE) {
+                                      quiet = FALSE, newdata_checks = FALSE) {
+  
+  standard_mfd_checks(obs, unit_covs, event_covs, "multi", NULL, quiet, newdata_checks)
+  
   n_year <- nslice(obs) # nslice checks that obs is a 3-D array
   n_series <- nrow(obs)
   n_rep <- ncol(obs)
   n_total <- n_year*n_series*n_rep
-  
-  assertthat::assert_that(
-    n_year > 1, msg = "obs must contain at least two slices (seasons/years)"
-  )
-  assertthat::assert_that(
-    n_rep > 1, 
-    msg = paste0("obs must contain at least two columns (repeat visits to at ",
-                 "least one unit)"
-    )
-  )
-  unique_y <- unique(obs)[!is.na(unique(obs))]
-  assertthat::assert_that(
-    all(unique_y %in% c(0, 1)),
-    msg = "obs may only contain the values 0, 1, or NA"
-  )
-  
-  # Check that no NAs are non-trailing across columns (i.e. reps within series-
-  # years)
-  for (k in seq(n_year)) {
-    for (j in 1:(n_rep - 1)) {
-      the_nas <- is.na(obs[ , j, k])
-      if (any(the_nas)) {
-        the_nas2 <- which(the_nas)
-        assertthat::assert_that(
-          all(is.na(obs[the_nas2, j+1, k])),
-          msg = paste0("Some rows/slices of obs have non-trailing NAs ", 
-                       "across columns."
-          )
-        )
-      }
-    }
-  }
-  
-  # Check that the first and final reps contain at least one non-NA
-  assertthat::assert_that(
-    !all(is.na(obs[ , 1, ])),
-    msg = "The first column (replicate visit) of obs contains only NAs."
-  )
-  assertthat::assert_that(
-    !all(is.na(obs[ , n_rep, ])),
-    msg = "The final column (replicate visit) of obs contains only NAs."
-  )
-  assertthat::assert_that(
-    is.null(unit_covs) | is.list(unit_covs),
-    msg = "unit_covs must be a list or NULL."
-  )
-  assertthat::assert_that(
-    is.null(event_covs) | is_named_list(event_covs),
-    msg = "event_covs must be a named list or NULL."
-  )
-  if (all(is.na(obs[ , , 1]))) {
-    warning("The first slice (season) of obs contains only NAs")
-  }  
-  if (all(is.na(obs[ , , n_year]))) {
-    warning("The final slice (season) of obs contains only NAs")
-  }
-  if (!is.null(unit_covs)) {
-    assertthat::assert_that(
-      length(unit_covs) == n_year,
-      msg = "If provided, unit_covs must have length equal to dim(obs)[3]"
-    )
-    for (k in 1:n_year) {
-      assertthat::assert_that(
-        is.data.frame(unit_covs[[k]]),
-        msg = "All elements of unit_covs must be dataframes."
-      )
-      assertthat::assert_that(
-        identical(dim(unit_covs[[k]]), dim(unit_covs[[1]])),
-        msg = "All elements of unit_covs must have identical dimensions."
-      )
-      assertthat::assert_that(
-        identical(names(unit_covs[[k]]), names(unit_covs[[1]])),
-        msg = "All elements of unit_covs must have identical column names."
-      )
-      assertthat::assert_that(
-        !any(is.na(unit_covs[[k]])),
-        msg = paste0("NA unit covariates are not allowed in dynamic models. ",
-                         "It is safe to impute dummy values in the following ",
-                         "circumstances.",
-                         "Note, however, that imputing values can interfere ",
-                         "with brms's default behavior of centering the ", 
-                         "columns of the design matrix. To avoid nonintuitive ",
-                         "prior specifications for the intercepts, impute the ", 
-                         "mean value rather than any other choice of dummy.", 
-                         "1) the model uses explicit initial occupancy ",
-                         "probabilities, and a unit covariate is used only for ",
-                         "initial occupancy and not for detection, ",
-                         "colonization or extinction; impute values for years ",
-                         "after the first. ",
-                         "2) the model uses explicit initial occupancy ",
-                         "probabilities, and a unit covariate is used only for ",
-                         "colonization/extinction and not for initial ",
-                         "occupancy or detection; impute values for the first ",
-                         "year. ",
-                         "3) a unit covariate is used only for detection; ",
-                         "impute values for the first visit at units with no ",
-                         "visits. ",
-                         "4) a unit covariate for colonization or extinction ",
-                         "is unavailable at a timestep with no observed data ",
-                         "at the end of the timeseries, or a timestep that is ",
-                         "part of a block of timesteps with no observed data ",
-                         "reaching uninterrupted to the and of the timeseries, ",
-                         "and inference on likely occupancy probabilties is ", 
-                         "not desired at any of those timesteps; impute values ",
-                         "for the trailing block of timesteps with no observations.")
-      )
-    }
-    assertthat::assert_that(
-      nrow(unit_covs[[1]]) == n_series,
-      msg = "each element of unit_covs must have the same number of rows as obs"
-    )
-  }
-  if (!is.null(event_covs)) {
-    assertthat::assert_that(
-      is_named_list(event_covs),
-      msg = "If provided, event_covs must be a named list."
-    )
-    n_event_covs <- length(event_covs)
-    missing_covs <- vector()
-    for (ec in 1:n_event_covs) {
-      assertthat::assert_that(
-        all.equal(dim(event_covs[[ec]]), dim(obs)),
-        msg = paste0("Dimension mismatch found between obs and event_covs[[", ec, "]].")
-      )
-      missing_covs <- unique(c(missing_covs, which(is.na(event_covs[[ec]]))))
-    }
-    if (length(missing_covs) > 0) {
-      assertthat::assert_that(
-        all(missing_covs %in% which(is.na(obs))),
-        msg = paste0("An event covariate contains missing values ",
-                     "at a position where the response is not missing.")
-      )
-    }
-  }
-  assertthat::assert_that(
-    !is.null(event_covs),
-    msg = paste0("Construction alert! The model contains no event covariates. ",
-                 "This is fine, but for now please add a dummy event covariate.",
-                 "You do not need to use this covariate in your model formula.")
-  )
   
   # All unit covs are guaranteed to be not NA provided the unit is not part of, 
   # a block of trailing NAs, and all event covs are not NA provided that the 
@@ -444,11 +224,6 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
   # add dummy data for the first visit to each unit, whether the unit was
   # sampled or not, unless the unit is part of a block of trailing NAs.
   n_year_obs <- apply(obs[ , 1, ], 1, max_position_not_na)
-  assertthat::assert_that(
-    !any(n_year_obs == 0),
-    msg = paste0("at least one series (i.e. row; generally a site or a ",
-                 "species-site) has no observations at any timestep")
-  )
   for (i in seq_along(n_year_obs)) {
     obs[i, 1, 1 : n_year_obs[i]][is.na(obs[i, 1, 1 : n_year_obs[i]])] <- -99
   }
@@ -586,7 +361,7 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
 
 ##### make_flocker_data_augmented #####
 
-#' #' Format data for data-augmented occupancy model, to be passed to 
+#' Format data for data-augmented occupancy model, to be passed to 
 #'  \code{flock()}.
 #' @param obs An I x J x K array where rows I are sites, columns J are 
 #'  repeat sampling events, and slices K are species. Allowable values are 1 
@@ -598,86 +373,17 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
 #' @param event_covs A named list of I x J matrices, each one corresponding to a 
 #' covariate that varies across repeated sampling events within sites
 #' @param quiet Hide progress bars and informational messages?
+#' @param newdata_checks If TRUE, turn off checks that must pass in order
+#' to use the data for model fitting, but not in other contexts (e.g. making
+#' predictions or assessing log-likelihoods over new data).
 #' @return A flocker_data list that can be passed as data to \code{flocker()}.
 #' @export
 make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL, 
-                                        event_covs = NULL, quiet = FALSE) {
-  assertthat::assert_that(
-    length(dim(obs)) == 3,
-    msg = "obs must have exactly three dimensions."
-  )
-  assertthat::assert_that(
-    is_one_pos_int(n_aug),
-    msg = "n_aug must be a positive integer"
-  )
+                                        event_covs = NULL, quiet = FALSE, 
+                                        newdata_checks = FALSE) {
+  standard_mfd_checks(obs, site_covs, event_covs, "augmented", n_aug, quiet, newdata_checks)
   obs1 <- obs[,,1]
-  na_obs <- which(is.na(obs1))
-  for (i in 2:dim(obs)[3]) {
-    na_obs_i <- which(is.na(obs[,,i]))
-    assertthat::assert_that(
-      identical(na_obs, na_obs_i),
-      msg = "Different species have different sampling events NA"
-    )
-  }
   n_rep <- ncol(obs1)
-  assertthat::assert_that(
-    n_rep >= 2,
-    msg = "obs must contain at least two columns."
-  )
-  assertthat::assert_that(
-    all(unique(obs) %in% c(0, 1, NA)),
-    msg = "obs contains values other than 0, 1, NA."
-  )
-  assertthat::assert_that(
-    all(!is.na(obs1[ , 1])),
-    msg = "Some sites have NAs on the first sampling event."
-  )
-  if (n_rep > 2) {
-    for (j in 2:(n_rep - 1)) {
-      the_nas <- is.na(obs1[ , j])
-      if (any(the_nas)) {
-        the_nas2 <- which(the_nas)
-        assertthat::assert_that(all(is.na(obs1[the_nas2, j+1])),
-                                msg = "Some sites have non-trailing NA visits."
-        )
-      }
-    }
-  }
-  assertthat::assert_that(!all(is.na(obs1[ , n_rep])),
-                          msg = "The final repeat event contains only NAs."
-  )
-
-  if (!is.null(site_covs)) {
-    assertthat::assert_that(
-      nrow(site_covs) == nrow(obs1),
-      msg = "Different numbers of rows found for obs and site_covs."
-    )
-    assertthat::assert_that(
-      all(!is.na(site_covs)),
-      msg = "A site covariate contains missing values."
-    )
-  }
-  if (!is.null(event_covs)) {
-    assertthat::assert_that(
-      is_named_list(event_covs),
-      msg = "event_covs must be NULL or a named list with unique names"
-    )
-    n_event_covs <- length(event_covs)
-    missing_covs <- vector()
-    for (ec in 1:n_event_covs) {
-      if (!identical(dim(event_covs[[ec]]), dim(obs1))) {
-        stop(paste0("Dimension mismatch found between obs and event_covs[[", ec, "]]."))
-      }
-      missing_covs <- unique(c(missing_covs, which(is.na(event_covs[[ec]]))))
-    }
-    if (length(missing_covs) > 0) {
-      if (!all(missing_covs %in% which(is.na(obs1)))) {
-        stop(paste0("An event covariate contains missing values ",
-                    "at a position where the response is not missing."))
-      }
-    }
-  }
-  
   n_sp_obs <- dim(obs)[3]
   n_sp <- n_sp_obs + n_aug
   n_site <- dim(obs)[1]
@@ -738,5 +444,381 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
   
   class(out) <- c("list", "flocker_data")
   out
+}
+
+
+##### mfd input checking #####
+#' input checking for make_flocker_data
+#' @inheritParams make_flocker_data
+standard_mfd_checks <- function(
+    obs, unit_covs, event_covs, type, n_aug, quiet, newdata_checks
+) {
+  
+  unique_y <- unique(obs)
+  assertthat::assert_that(
+    all(unique_y %in% c(0, 1, NA)),
+    msg = "obs may only contain the values 0, 1, or NA"
+  )
+  
+  assertthat::assert_that(
+    is.null(event_covs) | is_named_list(event_covs),
+    msg = "event_covs must be a named list or NULL"
+    )
+  
+  assertthat::assert_that(
+    type %in% flocker_data_input_types(),
+    msg = paste0("Invalid type argument. Type given as '", type, "' but must ",
+                 "be one of the following: ", 
+                 paste(flocker_data_input_types(), collapse = ", "))
+  )
+  
+  assertthat::assert_that(
+    !any(names(unit_covs) %in% names(event_covs)) &
+      !any(names(unit_covs[[1]]) %in% names(event_covs)),
+    msg = "overlapping names detected between unit_covs and event_covs"
+  )
+  
+  for (i in seq_along(flocker_reserved())) {
+    assertthat::assert_that(
+      !any(grepl(flocker_reserved()[i], names(unit_covs))),
+      msg = paste0("names of unit_covs include a reserved string matching ",
+                   "the following regular expression: ", 
+                   flocker_reserved()[i])
+    )
+    assertthat::assert_that(
+      !any(grepl(flocker_reserved()[i], names(unit_covs[[1]]))),
+      msg = paste0("names of unit_covs include a reserved string matching ",
+                   "the following regular expression: ", 
+                   flocker_reserved()[i])
+    )
+    assertthat::assert_that(
+      !any(grepl(flocker_reserved()[i], names(event_covs))),
+      msg = paste0("names of event_covs include a reserved string matching ",
+                   "the following regular expression: ", 
+                   flocker_reserved()[i])
+    )
+  }
+  
+  assertthat::assert_that(
+    is_one_logical(quiet),
+    msg = "quiet must be TRUE or FALSE"
+  )
+  assertthat::assert_that(
+    is_one_logical(newdata_checks),
+    msg = "newdata_checks must be TRUE or FALSE"
+  )
+  
+  #### type specific checks ####
+  if (!quiet & !is.null(n_aug) & (type != "augmented")) {
+    warning(paste0("n_aug is set but will be ignored for type = '", type, "'."))
+  }
+  
+  #### single checks ####
+  if(type == "single") {
+    n_unit <- nrow(obs)
+    n_rep <- ncol(obs)
+    
+    assertthat::assert_that(
+      length(dim(obs)) == 2,
+      msg = "in a single-season model, obs must have exactly two dimensions"
+    )
+    
+    assertthat::assert_that(
+      !any(is.na(obs[ , 1])), 
+      msg = paste0("obs has NAs in its first column; this is not allowed in ", 
+                   "single-season models"
+      )
+    )
+    
+    assertthat::assert_that(
+      newdata_checks | (n_rep >= 2), 
+      msg = paste0(
+        "obs must contain at least two columns unless being used for newdata ",
+        "(see newdata_checks argument)."
+      )
+    )
+    
+    if (n_rep > 2) {
+      for (j in 2:(n_rep - 1)) {
+        the_nas <- is.na(obs[ , j])
+        if (any(the_nas)) {
+          the_nas2 <- which(the_nas)
+          assertthat::assert_that(
+            all(is.na(obs[the_nas2, j+1])),
+            msg = "Some rows of obs have non-trailing NAs"
+          )
+        }
+      }
+    }
+    assertthat::assert_that(
+      !all(is.na(obs[ , n_rep])),
+      msg = "The final column of obs contains only NAs."
+    )
+    if (!is.null(unit_covs)) {
+      assertthat::assert_that(
+        nrow(unit_covs) == nrow(obs),
+        msg = "Different numbers of rows found for obs and unit_covs."
+      )
+      assertthat::assert_that(
+        !any(is.na(unit_covs)),
+        msg = "A unit covariate contains missing values."
+      )
+    }
+    if (!is.null(event_covs)) {
+      assertthat::assert_that(
+        is_named_list(event_covs), 
+        msg = "event_covs must be NULL or a named list with no duplicate names."
+      )
+      n_event_covs <- length(event_covs)
+      missing_covs <- vector()
+      for (ec in 1:n_event_covs) {
+        assertthat::assert_that(
+          all.equal(dim(event_covs[[ec]]), dim(obs)),
+          msg = paste0(
+            "Dimension mismatch found between obs and event_covs[[", ec, "]]."
+          )
+        )
+        missing_covs <- unique(c(missing_covs, which(is.na(event_covs[[ec]]))))
+      }
+      if (length(missing_covs) > 0) {
+        assertthat::assert_that(
+          all(missing_covs %in% which(is.na(obs))),
+          msg = paste0("An event covariate contains missing values ",
+                       "at a position where the response is not missing.")
+        )
+      }
+    }
+  }
+  
+  #### multi checks ####
+  if(type == "multi") {
+    n_year <- nslice(obs) # nslice checks that obs is a 3-D array
+    n_series <- nrow(obs)
+    n_rep <- ncol(obs)
+    n_total <- n_year*n_series*n_rep
+    
+    assertthat::assert_that(
+      newdata_checks | (n_year > 1), 
+      msg = paste0(
+        "obs must contain at least two slices (seasons/years) or you must ",
+        "format data explicitly as newdata (see newdata_checks argument)."
+      )
+    )
+    assertthat::assert_that(
+      newdata_checks | (n_rep > 1), 
+      msg = paste0(
+        "obs must contain at least two columns (repeat visits to at ",
+        "least one unit), or you mus format data explicitly as newdata (see ",
+        "newdata_checks argument)."
+      )
+    )
+    
+    # Check that no NAs are non-trailing across columns (i.e. reps within series-
+    # years)
+    for (k in seq(n_year)) {
+      for (j in 1:(n_rep - 1)) {
+        the_nas <- is.na(obs[ , j, k])
+        if (any(the_nas)) {
+          the_nas2 <- which(the_nas)
+          assertthat::assert_that(
+            all(is.na(obs[the_nas2, j+1, k])),
+            msg = paste0("Some rows/slices of obs have non-trailing NAs ", 
+                         "across columns."
+            )
+          )
+        }
+      }
+    }
+    
+    # Check that the first and final reps contain at least one non-NA
+    assertthat::assert_that(
+      !all(is.na(obs[ , 1, ])),
+      msg = "The first column (replicate visit) of obs contains only NAs."
+    )
+    assertthat::assert_that(
+      (!all(is.na(obs[ , n_rep, ]))) | newdata_checks,
+      msg = "The final column (replicate visit) of obs contains only NAs."
+    )
+    assertthat::assert_that(
+      is.null(unit_covs) | is.list(unit_covs),
+      msg = "unit_covs must be a list or NULL."
+    )
+    assertthat::assert_that(
+      is.null(event_covs) | is_named_list(event_covs),
+      msg = "event_covs must be a named list or NULL."
+    )
+    if (all(is.na(obs[ , , 1]))) {
+      warning("The first slice (season) of obs contains only NAs")
+    }  
+    if (all(is.na(obs[ , , n_year]))) {
+      warning("The final slice (season) of obs contains only NAs")
+    }
+    if (!is.null(unit_covs)) {
+      assertthat::assert_that(
+        length(unit_covs) == n_year,
+        msg = "If provided, unit_covs must have length equal to dim(obs)[3]"
+      )
+      for (k in 1:n_year) {
+        assertthat::assert_that(
+          is.data.frame(unit_covs[[k]]),
+          msg = "All elements of unit_covs must be dataframes."
+        )
+        assertthat::assert_that(
+          identical(dim(unit_covs[[k]]), dim(unit_covs[[1]])),
+          msg = "All elements of unit_covs must have identical dimensions."
+        )
+        assertthat::assert_that(
+          identical(names(unit_covs[[k]]), names(unit_covs[[1]])),
+          msg = "All elements of unit_covs must have identical column names."
+        )
+        assertthat::assert_that(
+          !any(is.na(unit_covs[[k]])),
+          msg = paste0("NA unit covariates are not allowed in dynamic models. ",
+                       "It is safe to impute dummy values in the following ",
+                       "circumstances.",
+                       "Note, however, that imputing values can interfere ",
+                       "with brms's default behavior of centering the ", 
+                       "columns of the design matrix. To avoid nonintuitive ",
+                       "prior specifications for the intercepts, impute the ", 
+                       "mean value rather than any other choice of dummy.", 
+                       "1) the model uses explicit initial occupancy ",
+                       "probabilities, and a unit covariate is used only for ",
+                       "initial occupancy and not for detection, ",
+                       "colonization or extinction; impute values for years ",
+                       "after the first. ",
+                       "2) the model uses explicit initial occupancy ",
+                       "probabilities, and a unit covariate is used only for ",
+                       "colonization/extinction and not for initial ",
+                       "occupancy or detection; impute values for the first ",
+                       "year. ",
+                       "3) a unit covariate is used only for detection; ",
+                       "impute values for the first visit at units with no ",
+                       "visits. ",
+                       "4) a unit covariate for colonization or extinction ",
+                       "is unavailable at a timestep with no observed data ",
+                       "at the end of the timeseries, or a timestep that is ",
+                       "part of a block of timesteps with no observed data ",
+                       "reaching uninterrupted to the and of the timeseries, ",
+                       "and inference on likely occupancy probabilties is ", 
+                       "not desired at any of those timesteps; impute values ",
+                       "for the trailing block of timesteps with no observations.")
+        )
+      }
+      assertthat::assert_that(
+        nrow(unit_covs[[1]]) == n_series,
+        msg = "each element of unit_covs must have the same number of rows as obs"
+      )
+    }
+    if (!is.null(event_covs)) {
+      n_event_covs <- length(event_covs)
+      missing_covs <- vector()
+      for (ec in 1:n_event_covs) {
+        assertthat::assert_that(
+          all.equal(dim(event_covs[[ec]]), dim(obs)),
+          msg = paste0("Dimension mismatch found between obs and event_covs[[", ec, "]].")
+        )
+        missing_covs <- unique(c(missing_covs, which(is.na(event_covs[[ec]]))))
+      }
+      assertthat::assert_that(
+        all(missing_covs %in% which(is.na(obs))),
+        msg = paste0("An event covariate contains missing values ",
+                     "at a position where the response is not missing.")
+      )
+    }
+    assertthat::assert_that(
+      !is.null(event_covs),
+      msg = paste0("Construction alert! The model contains no event covariates. ",
+                   "This is fine, but for now please add a dummy event covariate.",
+                   "You do not need to use this covariate in your model formula.")
+    )
+    
+    
+    n_year_obs <- apply(obs[ , 1, ], 1, max_position_not_na)
+    assertthat::assert_that(
+      !any(n_year_obs == 0),
+      msg = paste0("at least one series (i.e. row; generally a site or a ",
+                   "species-site) has no observations at any timestep")
+    )
+  }
+  
+  #### augmented checks ####
+  if(type == "augmented"){
+    site_covs <- unit_covs
+    obs1 <- obs[,,1]
+    n_rep <- ncol(obs1)
+    na_obs <- which(is.na(obs1))
+    
+    assertthat::assert_that(
+      length(dim(obs)) == 3,
+      msg = "obs must have exactly three dimensions."
+    )
+    assertthat::assert_that(
+      is_one_pos_int(n_aug),
+      msg = "n_aug must be a positive integer"
+    )
+    
+    for (i in 2:dim(obs)[3]) {
+      na_obs_i <- which(is.na(obs[,,i]))
+      assertthat::assert_that(
+        identical(na_obs, na_obs_i),
+        msg = "Different species have different sampling events NA"
+      )
+    }
+    
+    assertthat::assert_that(
+      n_rep >= 2,
+      msg = "obs must contain at least two columns."
+    )
+
+    assertthat::assert_that(
+      all(!is.na(obs1[ , 1])),
+      msg = "Some sites have NAs on the first sampling event."
+    )
+    if (n_rep > 2) {
+      for (j in 2:(n_rep - 1)) {
+        the_nas <- is.na(obs1[ , j])
+        if (any(the_nas)) {
+          the_nas2 <- which(the_nas)
+          assertthat::assert_that(all(is.na(obs1[the_nas2, j+1])),
+                                  msg = "Some sites have non-trailing NA visits."
+          )
+        }
+      }
+    }
+    assertthat::assert_that(!all(is.na(obs1[ , n_rep])),
+                            msg = "The final repeat event contains only NAs."
+    )
+    
+    if (!is.null(site_covs)) {
+      assertthat::assert_that(
+        nrow(site_covs) == nrow(obs1),
+        msg = "Different numbers of rows found for obs and site_covs."
+      )
+      assertthat::assert_that(
+        all(!is.na(site_covs)),
+        msg = "A site covariate contains missing values."
+      )
+    }
+    if (!is.null(event_covs)) {
+      assertthat::assert_that(
+        is_named_list(event_covs),
+        msg = "event_covs must be NULL or a named list with unique names"
+      )
+      n_event_covs <- length(event_covs)
+      missing_covs <- vector()
+      for (ec in 1:n_event_covs) {
+        assertthat::assert_that(
+          identical(dim(event_covs[[ec]]), dim(obs1)),
+          msg = paste0("Dimension mismatch found between obs and event_covs[[", ec, "]].")
+        )
+        missing_covs <- unique(c(missing_covs, which(is.na(event_covs[[ec]]))))
+      }
+      assertthat::assert_that(
+        all(missing_covs %in% which(is.na(obs1))),
+        msg = paste0("An event covariate contains missing values ",
+                     "at a position where the response is not missing.")
+      )
+    }
+  }
 }
 

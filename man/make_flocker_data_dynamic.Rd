@@ -9,7 +9,8 @@ make_flocker_data_dynamic(
   obs,
   unit_covs = NULL,
   event_covs = NULL,
-  quiet = FALSE
+  quiet = FALSE,
+  newdata_checks = FALSE
 )
 }
 \arguments{
@@ -29,6 +30,10 @@ dataframes must have I rows.}
 a covariate that varies across repeated sampling events within closure-units}
 
 \item{quiet}{Hide progress bars and informational messages?}
+
+\item{newdata_checks}{If TRUE, turn off checks that must pass in order
+to use the data for model fitting, but not in other contexts (e.g. making
+predictions or assessing log-likelihoods over new data).}
 }
 \value{
 A flocker_data list that can be passed as data to \code{flock()}.

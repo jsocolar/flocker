@@ -2,7 +2,7 @@
 % Please edit documentation in R/make_flocker_data.R
 \name{make_flocker_data_augmented}
 \alias{make_flocker_data_augmented}
-\title{#' Format data for data-augmented occupancy model, to be passed to 
+\title{Format data for data-augmented occupancy model, to be passed to 
  \code{flock()}.}
 \usage{
 make_flocker_data_augmented(
@@ -10,7 +10,8 @@ make_flocker_data_augmented(
   n_aug,
   site_covs = NULL,
   event_covs = NULL,
-  quiet = FALSE
+  quiet = FALSE,
+  newdata_checks = FALSE
 )
 }
 \arguments{
@@ -28,11 +29,15 @@ across repeated sampling events.}
 covariate that varies across repeated sampling events within sites}
 
 \item{quiet}{Hide progress bars and informational messages?}
+
+\item{newdata_checks}{If TRUE, turn off checks that must pass in order
+to use the data for model fitting, but not in other contexts (e.g. making
+predictions or assessing log-likelihoods over new data).}
 }
 \value{
 A flocker_data list that can be passed as data to \code{flocker()}.
 }
 \description{
-#' Format data for data-augmented occupancy model, to be passed to 
+Format data for data-augmented occupancy model, to be passed to 
  \code{flock()}.
 }

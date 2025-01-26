@@ -69,7 +69,6 @@ jobs:
         shell: Rscript {0}
 
 
-
       - name: Cache R packages
 
         uses: actions/cache@v2
@@ -88,6 +87,8 @@ jobs:
 
         run: |
 
+          install.packages("QuickJSR", type = "source")
+          
           install.packages(c("remotes"))
 
           remotes::install_deps(dependencies = TRUE)
