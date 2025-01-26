@@ -1,99 +1,36 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>/404.html</loc>
-  </url>
-  <url>
-    <loc>/LICENSE-text.html</loc>
-  </url>
-  <url>
-    <loc>/LICENSE.html</loc>
-  </url>
-  <url>
-    <loc>/articles/augmented_models.html</loc>
-  </url>
-  <url>
-    <loc>/articles/flocker_format.html</loc>
-  </url>
-  <url>
-    <loc>/articles/flocker_tutorial.html</loc>
-  </url>
-  <url>
-    <loc>/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>/articles/multiseason_models.html</loc>
-  </url>
-  <url>
-    <loc>/articles/nonlinear_models.html</loc>
-  </url>
-  <url>
-    <loc>/articles/sbc.html</loc>
-  </url>
-  <url>
-    <loc>/authors.html</loc>
-  </url>
-  <url>
-    <loc>/index.html</loc>
-  </url>
-  <url>
-    <loc>/news/index.html</loc>
-  </url>
-  <url>
-    <loc>/reference/example_flocker_model_single.html</loc>
-  </url>
-  <url>
-    <loc>/reference/fitted_flocker.html</loc>
-  </url>
-  <url>
-    <loc>/reference/flock.html</loc>
-  </url>
-  <url>
-    <loc>/reference/flocker_stancode.html</loc>
-  </url>
-  <url>
-    <loc>/reference/flocker_standata.html</loc>
-  </url>
-  <url>
-    <loc>/reference/get_Z.html</loc>
-  </url>
-  <url>
-    <loc>/reference/get_flocker_prior.html</loc>
-  </url>
-  <url>
-    <loc>/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>/reference/log1m_inv_logit.html</loc>
-  </url>
-  <url>
-    <loc>/reference/log_inv_logit.html</loc>
-  </url>
-  <url>
-    <loc>/reference/log_lik_flocker.html</loc>
-  </url>
-  <url>
-    <loc>/reference/loo_compare_flocker.html</loc>
-  </url>
-  <url>
-    <loc>/reference/loo_flocker.html</loc>
-  </url>
-  <url>
-    <loc>/reference/make_flocker_data.html</loc>
-  </url>
-  <url>
-    <loc>/reference/make_flocker_data_augmented.html</loc>
-  </url>
-  <url>
-    <loc>/reference/make_flocker_data_dynamic.html</loc>
-  </url>
-  <url>
-    <loc>/reference/make_flocker_data_static.html</loc>
-  </url>
-  <url>
-    <loc>/reference/predict_flocker.html</loc>
-  </url>
-  <url>
-    <loc>/reference/simulate_flocker_data.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>/404.html</loc></url>
+<url><loc>/LICENSE-text.html</loc></url>
+<url><loc>/LICENSE.html</loc></url>
+<url><loc>/articles/augmented_models.html</loc></url>
+<url><loc>/articles/flocker_format.html</loc></url>
+<url><loc>/articles/flocker_tutorial.html</loc></url>
+<url><loc>/articles/index.html</loc></url>
+<url><loc>/articles/multiseason_models.html</loc></url>
+<url><loc>/articles/nonlinear_models.html</loc></url>
+<url><loc>/articles/sbc.html</loc></url>
+<url><loc>/authors.html</loc></url>
+<url><loc>/index.html</loc></url>
+<url><loc>/news/index.html</loc></url>
+<url><loc>/reference/example_flocker_model_single.html</loc></url>
+<url><loc>/reference/fitted_flocker.html</loc></url>
+<url><loc>/reference/flock.html</loc></url>
+<url><loc>/reference/flocker_stancode.html</loc></url>
+<url><loc>/reference/flocker_standata.html</loc></url>
+<url><loc>/reference/get_Z.html</loc></url>
+<url><loc>/reference/get_flocker_prior.html</loc></url>
+<url><loc>/reference/index.html</loc></url>
+<url><loc>/reference/log1m_inv_logit.html</loc></url>
+<url><loc>/reference/log_inv_logit.html</loc></url>
+<url><loc>/reference/log_lik_flocker.html</loc></url>
+<url><loc>/reference/loo_compare_flocker.html</loc></url>
+<url><loc>/reference/loo_flocker.html</loc></url>
+<url><loc>/reference/make_flocker_data.html</loc></url>
+<url><loc>/reference/make_flocker_data_augmented.html</loc></url>
+<url><loc>/reference/make_flocker_data_dynamic.html</loc></url>
+<url><loc>/reference/make_flocker_data_static.html</loc></url>
+<url><loc>/reference/predict_flocker.html</loc></url>
+<url><loc>/reference/simulate_flocker_data.html</loc></url>
+<url><loc>/reference/standard_mfd_checks.html</loc></url>
 </urlset>
+

@@ -6,20 +6,19 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Multiseason models in flocker • flocker</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
 <script src="../pkgdown.js"></script><meta property="og:title" content="Multiseason models in flocker">
-<meta property="og:description" content="flocker">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
-    
+
 
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -45,14 +44,11 @@
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
-     
+
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/sbc.html">SBC for flocker models</a>
-    </li>
-    <li>
       <a href="../articles/augmented_models.html">Data-augmented models in flocker</a>
     </li>
     <li>
@@ -67,6 +63,9 @@
     <li>
       <a href="../articles/nonlinear_models.html">Nonlinear models in flocker</a>
     </li>
+    <li>
+      <a href="../articles/sbc.html">SBC for flocker models</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -77,7 +76,7 @@
 <li>
   <a href="https://github.com/jsocolar/flocker/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
-     
+
   </a>
 </li>
       </ul>
@@ -88,7 +87,7 @@
 </div>
 <!--/.navbar -->
 
-      
+
 
       </header><div class="row">
   <div class="col-md-9 contents">
@@ -97,9 +96,9 @@
                         <h4 data-toc-skip class="author">Jacob
 Socolar</h4>
             
-            <h4 data-toc-skip class="date">2024-03-15</h4>
+            <h4 data-toc-skip class="date">2025-01-26</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/jsocolar/flocker/blob/HEAD/vignettes/multiseason_models.Rmd" class="external-link"><code>vignettes/multiseason_models.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/jsocolar/flocker/blob/main/vignettes/multiseason_models.Rmd" class="external-link"><code>vignettes/multiseason_models.Rmd</code></a></small>
       <div class="hidden name"><code>multiseason_models.Rmd</code></div>
 
     </div>
@@ -132,13 +131,23 @@ conceptualizes the latent occupancy state as a Markov-like process (the
 process need not be strictly Markovian, because the transition
 probabilities can vary by timestep), where the transition probabilities
 between the two possible states (occupied or unoccupied) are a
-colonization probability <span class="math inline">\(\mathcal{C}\)</span>, an extinction probability
-<span class="math inline">\(\mathcal{E}\)</span>, and their complements
-<span class="math inline">\(1 - \mathcal{C}\)</span> and <span class="math inline">\(1 - \mathcal{E}\)</span>. The complement of the
-extinction probability turns out to be particularly important; we call
-it the <em>persistence</em> probability <span class="math inline">\(\mathcal{P} = 1 - \mathcal{E}\)</span>.</p>
-<p>To specify the HMM, we need a model for the <span class="math inline">\(\mathcal{C}\)</span>, a model for <span class="math inline">\(\mathcal{E}\)</span>, and a model for the initial
-occupancy probability <span class="math inline">\(\mathcal{O}\)</span>
+colonization probability
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒞</mi><annotation encoding="application/x-tex">\mathcal{C}</annotation></semantics></math>,
+an extinction probability
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ℰ</mi><annotation encoding="application/x-tex">\mathcal{E}</annotation></semantics></math>,
+and their complements
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>−</mo><mi>𝒞</mi></mrow><annotation encoding="application/x-tex">1 - \mathcal{C}</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>−</mo><mi>ℰ</mi></mrow><annotation encoding="application/x-tex">1 - \mathcal{E}</annotation></semantics></math>.
+The complement of the extinction probability turns out to be
+particularly important; we call it the <em>persistence</em> probability
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒫</mi><mo>=</mo><mn>1</mn><mo>−</mo><mi>ℰ</mi></mrow><annotation encoding="application/x-tex">\mathcal{P} = 1 - \mathcal{E}</annotation></semantics></math>.</p>
+<p>To specify the HMM, we need a model for the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒞</mi><annotation encoding="application/x-tex">\mathcal{C}</annotation></semantics></math>,
+a model for
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ℰ</mi><annotation encoding="application/x-tex">\mathcal{E}</annotation></semantics></math>,
+and a model for the initial occupancy probability
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒪</mi><annotation encoding="application/x-tex">\mathcal{O}</annotation></semantics></math>
 in the first timestep. We also need a model for the probability of
 observing the data in any particular timestep conditional on the true
 occupancy state in that timestep (in the HMM literature, this
@@ -161,15 +170,18 @@ detection sub-model in a single-season model.</p>
 <h4 id="colonization-and-extinction">Colonization and extinction<a class="anchor" aria-label="anchor" href="#colonization-and-extinction"></a>
 </h4>
 <p>In “colonization-extinction” models, logit colonization probabilities
-<span class="math inline">\(\mathcal{C}\)</span> and logit extinction
-probabilities <span class="math inline">\(\mathcal{E}\)</span> are both
-assumed to vary according to separate predictors based on covariates
-that may vary across timesteps within series but never across visits
-within closure-units.</p>
-<p>In “autologistic” models, the occupancy probability in timestep <span class="math inline">\(t + 1\)</span> is assumed to depend on a suite of
-site characteristics plus a term that depends on the latent true
-occupancy state at time <span class="math inline">\(t\)</span>. Some
-treatments write the autologistic model in terms of an “occupancy
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒞</mi><annotation encoding="application/x-tex">\mathcal{C}</annotation></semantics></math>
+and logit extinction probabilities
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ℰ</mi><annotation encoding="application/x-tex">\mathcal{E}</annotation></semantics></math>
+are both assumed to vary according to separate predictors based on
+covariates that may vary across timesteps within series but never across
+visits within closure-units.</p>
+<p>In “autologistic” models, the occupancy probability in timestep
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">t + 1</annotation></semantics></math>
+is assumed to depend on a suite of site characteristics plus a term that
+depends on the latent true occupancy state at time
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>.
+Some treatments write the autologistic model in terms of an “occupancy
 probability” that depends on covariates plus the “autologistic term”
 that gets added on the logit scale when the site was previously
 occupied. However, it is easier to understand this model in terms of its
@@ -178,45 +190,56 @@ colonization and extinction probabilities. In fact, the so-called
 probability, because it reflects the probability of occupancy
 conditional on non-occupancy during the previous timestep. The
 logit-scale sum of the colonization probability and the autologistic
-term gives the probability of persistence <span class="math inline">\(\mathcal{P}\)</span>.</p>
+term gives the probability of persistence
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒫</mi><annotation encoding="application/x-tex">\mathcal{P}</annotation></semantics></math>.</p>
 <p>Thus, the autologistic model differs from the colonization-extinction
 model in that it assumes that colonization and extinction probabilities
 are related to one another via an offset that relates colonization to
 persistence. If the offset is modeled as constant, then we can think of
 this model as ascribing a “suitability” to each site that defines the
-position of a pair of probabilities <span class="math inline">\(\mathcal{C}\)</span> and <span class="math inline">\(\mathcal{P}\)</span> that differ by a constant on
-the logit scale. In practice, <span class="math inline">\(\mathcal{P}\)</span> is almost always larger than
-<span class="math inline">\(\mathcal{C}\)</span>, and so the offset is
-positive.</p>
+position of a pair of probabilities
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒞</mi><annotation encoding="application/x-tex">\mathcal{C}</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒫</mi><annotation encoding="application/x-tex">\mathcal{P}</annotation></semantics></math>
+that differ by a constant on the logit scale. In practice,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒫</mi><annotation encoding="application/x-tex">\mathcal{P}</annotation></semantics></math>
+is almost always larger than
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒞</mi><annotation encoding="application/x-tex">\mathcal{C}</annotation></semantics></math>,
+and so the offset is positive.</p>
 <p>In addition to the standard autologistic model that treats the offset
 as a constant, <code>flocker</code> also affords the flexibility to
 model the offset via its own covariate-based predictor, which
-reintroduces flexibility in the relationship between <span class="math inline">\(\mathcal{P}\)</span> and <span class="math inline">\(\mathcal{C}\)</span>, but tends to retain the idea
-that these probabilities ought to be related to one another and ought to
-tend to move in tandem.</p>
+reintroduces flexibility in the relationship between
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒫</mi><annotation encoding="application/x-tex">\mathcal{P}</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒞</mi><annotation encoding="application/x-tex">\mathcal{C}</annotation></semantics></math>,
+but tends to retain the idea that these probabilities ought to be
+related to one another and ought to tend to move in tandem.</p>
 </div>
 <div class="section level4">
 <h4 id="initial-occupancy">Initial occupancy<a class="anchor" aria-label="anchor" href="#initial-occupancy"></a>
 </h4>
 <p>Most examples of multiseason occupancy models in the literature
-include an explicit model for the initial occupancy probability <span class="math inline">\(\mathcal{O}\)</span> via its own covariate-based
-predictor, which is analogous to the occupancy predictor in a
-single-season model. Thus, a colonization-extinction model would contain
-predictors for detection, colonization, extinction, and initial
-occupancy; an autologistic model would contain linear predictors for
-detection, colonization, the colonization-persistence offset (often
-modeled as a constant), and initial occupancy. <code>flocker</code> can
-fit either model.</p>
+include an explicit model for the initial occupancy probability
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒪</mi><annotation encoding="application/x-tex">\mathcal{O}</annotation></semantics></math>
+via its own covariate-based predictor, which is analogous to the
+occupancy predictor in a single-season model. Thus, a
+colonization-extinction model would contain predictors for detection,
+colonization, extinction, and initial occupancy; an autologistic model
+would contain linear predictors for detection, colonization, the
+colonization-persistence offset (often modeled as a constant), and
+initial occupancy. <code>flocker</code> can fit either model.</p>
 <p>Borrowing from the HMM literature, <code>flocker</code> also comes
-with optional functionality to handle <span class="math inline">\(\mathcal{O}\)</span> differently. Any pair of
-time-invariant colonization and extinction probabilities defines an
-equilibrium proportion of sites that are occupied. If colonization and
-extinction remain constant for a long time prior to the first timestep,
-the initial occupancy probability should simply be this equilibrium
-frequency, eliminating the need to parameterize and fit initial
-occupancy separately from colonization and extinction.
-<code>flocker</code> is equipped to fit models without any separate
-predictor for initial occupancy, and instead to begin with the
+with optional functionality to handle
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒪</mi><annotation encoding="application/x-tex">\mathcal{O}</annotation></semantics></math>
+differently. Any pair of time-invariant colonization and extinction
+probabilities defines an equilibrium proportion of sites that are
+occupied. If colonization and extinction remain constant for a long time
+prior to the first timestep, the initial occupancy probability should
+simply be this equilibrium frequency, eliminating the need to
+parameterize and fit initial occupancy separately from colonization and
+extinction. <code>flocker</code> is equipped to fit models without any
+separate predictor for initial occupancy, and instead to begin with the
 equilibrium frequencies implied by the colonization and extinction
 probabilities modeled for the first timestep. Note that this approach is
 sometimes valid even if the colonization and extinction probabilities
@@ -233,16 +256,18 @@ occupancy probabilities, <code>flocker</code> always computes the
 equilibrium based on the probabilities modeled for the first
 timestep.</p>
 <p>As an aside, we somewhat regularly encounter confusion that conflates
-initial occupancy probabilities <span class="math inline">\(\mathcal{O}\)</span> with colonization
-probabilities <span class="math inline">\(\mathcal{C}\)</span>. This
-confusion apparently arises from the notion that the autologistic model
-consists of a single-season occupancy model plus an autologistic term,
-which leads people to incorrectly surmise that the linear predictor
-without the autologistic term gives an occupancy probability. It does
-not; it gives a colonization probability, which is typically much lower.
-Any modeling exercise that enforces equality between initial occupancy
-probabilities and subsequent colonization probabilities should be viewed
-skeptically.</p>
+initial occupancy probabilities
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒪</mi><annotation encoding="application/x-tex">\mathcal{O}</annotation></semantics></math>
+with colonization probabilities
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒞</mi><annotation encoding="application/x-tex">\mathcal{C}</annotation></semantics></math>.
+This confusion apparently arises from the notion that the autologistic
+model consists of a single-season occupancy model plus an autologistic
+term, which leads people to incorrectly surmise that the linear
+predictor without the autologistic term gives an occupancy probability.
+It does not; it gives a colonization probability, which is typically
+much lower. Any modeling exercise that enforces equality between initial
+occupancy probabilities and subsequent colonization probabilities should
+be viewed skeptically.</p>
 </div>
 </div>
 <div class="section level2">
@@ -373,9 +398,7 @@ simulate directly from these other model types.<a href="#fnref4" class="footnote
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
 
-        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
-    </nav>
-</div>
+      </div>
 
 </div>
 
@@ -388,16 +411,16 @@ simulate directly from these other model types.<a href="#fnref4" class="footnote
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
       </footer>
 </div>
 
-  
 
 
-  
+
+
 
   </body>
 </html>

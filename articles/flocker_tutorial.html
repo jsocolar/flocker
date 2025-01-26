@@ -6,20 +6,19 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fitting occupancy models with flocker • flocker</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
 <script src="../pkgdown.js"></script><meta property="og:title" content="Fitting occupancy models with flocker">
-<meta property="og:description" content="flocker">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
-    
+
 
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -45,14 +44,11 @@
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
-     
+
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/sbc.html">SBC for flocker models</a>
-    </li>
-    <li>
       <a href="../articles/augmented_models.html">Data-augmented models in flocker</a>
     </li>
     <li>
@@ -67,6 +63,9 @@
     <li>
       <a href="../articles/nonlinear_models.html">Nonlinear models in flocker</a>
     </li>
+    <li>
+      <a href="../articles/sbc.html">SBC for flocker models</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -77,7 +76,7 @@
 <li>
   <a href="https://github.com/jsocolar/flocker/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
-     
+
   </a>
 </li>
       </ul>
@@ -88,7 +87,7 @@
 </div>
 <!--/.navbar -->
 
-      
+
 
       </header><div class="row">
   <div class="col-md-9 contents">
@@ -99,7 +98,7 @@
             
             <h4 data-toc-skip class="date">2023-10-20</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/jsocolar/flocker/blob/HEAD/vignettes/flocker_tutorial.Rmd" class="external-link"><code>vignettes/flocker_tutorial.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/jsocolar/flocker/blob/main/vignettes/flocker_tutorial.Rmd" class="external-link"><code>vignettes/flocker_tutorial.Rmd</code></a></small>
       <div class="hidden name"><code>flocker_tutorial.Rmd</code></div>
 
     </div>
@@ -307,7 +306,7 @@ after formatting the data for a rep-varying model.</p>
 <span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">uc1</span> <span class="op">|</span> <span class="va">species</span><span class="op">)</span>,</span>
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">uc1</span> <span class="op">|</span> <span class="va">species</span><span class="op">)</span>,</span>
 <span>  flocker_data <span class="op">=</span> <span class="va">fd_rep_constant</span>,</span>
-<span>  save_pars <span class="op">=</span> <span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/save_pars.html" class="external-link">save_pars</a></span><span class="op">(</span>all <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, <span class="co"># for loo with moment matching</span></span>
+<span>  save_pars <span class="op">=</span> <span class="fu"><a href="https://paulbuerkner.com/brms/reference/save_pars.html" class="external-link">save_pars</a></span><span class="op">(</span>all <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, <span class="co"># for loo with moment matching</span></span>
 <span>  silent <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  refresh <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  cores <span class="op">=</span> <span class="fl">4</span></span>
@@ -486,7 +485,7 @@ types. For example:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">predictions_rep_constant</span> <span class="op">&lt;-</span> <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstantools/reference/posterior_predict.html" class="external-link">posterior_predict</a></span><span class="op">(</span><span class="va">rep_constant</span><span class="op">)</span></span>
 <span><span class="va">loo_rep_constant</span> <span class="op">&lt;-</span> <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/loo/reference/loo.html" class="external-link">loo</a></span><span class="op">(</span><span class="va">rep_constant</span>, moment_match <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/conditional_effects.brmsfit.html" class="external-link">conditional_effects</a></span><span class="op">(</span><span class="va">rep_constant</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/conditional_effects.brmsfit.html" class="external-link">conditional_effects</a></span><span class="op">(</span><span class="va">rep_constant</span><span class="op">)</span></span></code></pre></div>
 <p>The following functions work on all model types available in
 <code>flocker</code>.</p>
 </div>
@@ -629,14 +628,14 @@ Here are some useful pieces of syntax:</p>
 <h3 id="priors">Priors<a class="anchor" aria-label="anchor" href="#priors"></a>
 </h3>
 <p>Priors can be implemented as they would with any <code>brms</code>
-model. Priors can be specified using <code><a href="https://paul-buerkner.github.io/brms/reference/set_prior.html" class="external-link">set_prior()</a></code>, with
+model. Priors can be specified using <code><a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link">set_prior()</a></code>, with
 priors specified for groups of parameters (via <code>class</code>) or
 individual parameters (via <code>coef</code>). The priors used for a
 particular model can be retrieved using
 <code><a href="https://mc-stan.org/rstantools/reference/prior_summary.html" class="external-link">brms::prior_summary()</a></code>, and the names of the parameters and
 their default priors can be displayed prior to model fitting using
 <code><a href="../reference/get_flocker_prior.html">get_flocker_prior()</a></code> which is a drop-in replacement for
-<code><a href="https://paul-buerkner.github.io/brms/reference/get_prior.html" class="external-link">brms::get_prior()</a></code>.</p>
+<code><a href="https://paulbuerkner.com/brms/reference/default_prior.html" class="external-link">brms::get_prior()</a></code>.</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_flocker_prior.html">get_flocker_prior</a></span><span class="op">(</span></span>
 <span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">uc1</span> <span class="op">|</span> <span class="va">species</span><span class="op">)</span>,</span>
@@ -690,18 +689,18 @@ for the parameter governing detection. Specifying priors for parameters
 in formulas other than detection can be done with reference to the
 <code>dpar</code> column, e.g.:</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">user_prior</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(0, 1)"</span>, coef <span class="op">=</span> <span class="st">"uc1"</span><span class="op">)</span>, </span>
-<span>                <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(0, 3)"</span>, coef <span class="op">=</span> <span class="st">"uc1"</span>, dpar <span class="op">=</span> <span class="st">"occ"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">user_prior</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(0, 1)"</span>, coef <span class="op">=</span> <span class="st">"uc1"</span><span class="op">)</span>, </span>
+<span>                <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(0, 3)"</span>, coef <span class="op">=</span> <span class="st">"uc1"</span>, dpar <span class="op">=</span> <span class="st">"occ"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>where the <code>uc1</code> parameter in the occupancy component is
 specified by the addition of the <code>dpar</code> argument, and the
 <code>uc1</code> parameter in the detection component is specified
 without reference to <code>dpar</code>.</p>
 <p>For more on priors in <code>brms</code>, see
-<code><a href="https://paul-buerkner.github.io/brms/reference/set_prior.html" class="external-link">?brms::set_prior</a></code>.</p>
+<code><a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link">?brms::set_prior</a></code>.</p>
 <p>Users should understand the implications of the default
 <code>brms</code> behavior to internally center the design matrix, which
 affects how the prior on the intercept gets set (see
-<code><a href="https://paul-buerkner.github.io/brms/reference/set_prior.html" class="external-link">?brms::set_prior</a></code>). Here is an example, based on a
+<code><a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link">?brms::set_prior</a></code>). Here is an example, based on a
 single-season rep-varying model, wherein we set a logistic prior on the
 value of the intercepts (flat on the probability scale) when all
 predictors are held at their means and a moderately regularizing prior
@@ -712,10 +711,10 @@ on the coefficients:</p>
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="va">ec1</span>,</span>
 <span>  flocker_data <span class="op">=</span> <span class="va">fd_rep_varying</span>,</span>
 <span>  prior <span class="op">=</span> </span>
-<span>    <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"logistic(0,1)"</span>, class <span class="op">=</span> <span class="st">"Intercept"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"logistic(0,1)"</span>, class <span class="op">=</span> <span class="st">"Intercept"</span>, dpar <span class="op">=</span> <span class="st">"occ"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(0,2)"</span>, class <span class="op">=</span> <span class="st">"b"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(0,2)"</span>, class <span class="op">=</span> <span class="st">"b"</span>, dpar <span class="op">=</span> <span class="st">"occ"</span><span class="op">)</span>,</span>
+<span>    <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"logistic(0,1)"</span>, class <span class="op">=</span> <span class="st">"Intercept"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"logistic(0,1)"</span>, class <span class="op">=</span> <span class="st">"Intercept"</span>, dpar <span class="op">=</span> <span class="st">"occ"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(0,2)"</span>, class <span class="op">=</span> <span class="st">"b"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(0,2)"</span>, class <span class="op">=</span> <span class="st">"b"</span>, dpar <span class="op">=</span> <span class="st">"occ"</span><span class="op">)</span>,</span>
 <span>  cores <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  silent <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  refresh <span class="op">=</span> <span class="fl">0</span></span>
@@ -737,10 +736,10 @@ regularizing prior on the coefficients:</p>
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">Intercept</span> <span class="op">+</span> <span class="va">ec1</span>,</span>
 <span>  flocker_data <span class="op">=</span> <span class="va">fd_rep_varying</span>,</span>
 <span>  prior <span class="op">=</span> </span>
-<span>    <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(0,2)"</span>, class <span class="op">=</span> <span class="st">"b"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(0,2)"</span>, class <span class="op">=</span> <span class="st">"b"</span>, dpar <span class="op">=</span> <span class="st">"occ"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(1, 1)"</span>, class <span class="op">=</span> <span class="st">"b"</span>, coef <span class="op">=</span> <span class="st">"Intercept"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(-1, 1)"</span>, class <span class="op">=</span> <span class="st">"b"</span>, coef <span class="op">=</span> <span class="st">"Intercept"</span>, dpar <span class="op">=</span> <span class="st">"occ"</span><span class="op">)</span>,</span>
+<span>    <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(0,2)"</span>, class <span class="op">=</span> <span class="st">"b"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(0,2)"</span>, class <span class="op">=</span> <span class="st">"b"</span>, dpar <span class="op">=</span> <span class="st">"occ"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(1, 1)"</span>, class <span class="op">=</span> <span class="st">"b"</span>, coef <span class="op">=</span> <span class="st">"Intercept"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/set_prior.html" class="external-link">set_prior</a></span><span class="op">(</span><span class="st">"normal(-1, 1)"</span>, class <span class="op">=</span> <span class="st">"b"</span>, coef <span class="op">=</span> <span class="st">"Intercept"</span>, dpar <span class="op">=</span> <span class="st">"occ"</span><span class="op">)</span>,</span>
 <span>  cores <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  silent <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  refresh <span class="op">=</span> <span class="fl">0</span></span>
@@ -812,22 +811,22 @@ here</a>.</p>
 <h3 id="nonlinear-models">Nonlinear models<a class="anchor" aria-label="anchor" href="#nonlinear-models"></a>
 </h3>
 <p>Via <code>brms</code>, <code>flocker</code> supports Gaussian
-processes of arbitrary dimensionality (<code><a href="https://paul-buerkner.github.io/brms/reference/gp.html" class="external-link">brms::gp()</a></code>) as well
+processes of arbitrary dimensionality (<code><a href="https://paulbuerkner.com/brms/reference/gp.html" class="external-link">brms::gp()</a></code>) as well
 as <code>mgcv</code> syntax for thin-plate regression splines
-(<code><a href="https://paul-buerkner.github.io/brms/reference/s.html" class="external-link">brms::s()</a></code>) and tensor product smooths
-(<code><a href="https://paul-buerkner.github.io/brms/reference/s.html" class="external-link">brms::t2()</a></code>), and <code>brms</code> syntax for monotonic
-effects of ordinal factors via <code><a href="https://paul-buerkner.github.io/brms/reference/mo.html" class="external-link">brms::mo()</a></code> (<a href="https://paul-buerkner.github.io/brms/articles/brms_monotonic.html" class="external-link">see
+(<code><a href="https://paulbuerkner.com/brms/reference/s.html" class="external-link">brms::s()</a></code>) and tensor product smooths
+(<code><a href="https://paulbuerkner.com/brms/reference/s.html" class="external-link">brms::t2()</a></code>), and <code>brms</code> syntax for monotonic
+effects of ordinal factors via <code><a href="https://paulbuerkner.com/brms/reference/mo.html" class="external-link">brms::mo()</a></code> (<a href="https://paul-buerkner.github.io/brms/articles/brms_monotonic.html" class="external-link">see
 here</a>). For example:</p>
 <div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mod5</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span></span>
-<span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/s.html" class="external-link">s</a></span><span class="op">(</span><span class="va">uc1</span><span class="op">)</span>, </span>
-<span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/s.html" class="external-link">t2</a></span><span class="op">(</span><span class="va">uc1</span>, <span class="va">ec1</span><span class="op">)</span>, </span>
+<span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="fu"><a href="https://paulbuerkner.com/brms/reference/s.html" class="external-link">s</a></span><span class="op">(</span><span class="va">uc1</span><span class="op">)</span>, </span>
+<span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="fu"><a href="https://paulbuerkner.com/brms/reference/s.html" class="external-link">t2</a></span><span class="op">(</span><span class="va">uc1</span>, <span class="va">ec1</span><span class="op">)</span>, </span>
 <span>  flocker_data <span class="op">=</span> <span class="va">fd_rep_varying</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
 <span><span class="va">mod6</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span></span>
 <span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span>, </span>
-<span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/gp.html" class="external-link">gp</a></span><span class="op">(</span><span class="va">uc1</span>, <span class="va">ec1</span><span class="op">)</span>, </span>
+<span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="fu"><a href="https://paulbuerkner.com/brms/reference/gp.html" class="external-link">gp</a></span><span class="op">(</span><span class="va">uc1</span>, <span class="va">ec1</span><span class="op">)</span>, </span>
 <span>  flocker_data <span class="op">=</span> <span class="va">fd_rep_varying</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p>In addition, <code>brms</code> provides the ability to estimate
@@ -841,7 +840,7 @@ models vignette</a>.</p>
 <h3 id="phylogenetic-models">Phylogenetic models<a class="anchor" aria-label="anchor" href="#phylogenetic-models"></a>
 </h3>
 <p>Phylogenetic effects can be included by providing a covariance matrix
-as a <code>data2</code> argument and using the <code><a href="https://paul-buerkner.github.io/brms/reference/gr.html" class="external-link">brms::gr()</a></code>
+as a <code>data2</code> argument and using the <code><a href="https://paulbuerkner.com/brms/reference/gr.html" class="external-link">brms::gr()</a></code>
 function to link species identities in <code>flocker_data</code> with
 the supplied covariance matrix. Note that phylogenetic effects can be
 included in either the occupancy component, the detection component, or
@@ -855,15 +854,15 @@ multiple phylogenetic effects within a single occupancy model (see <a href="http
 <span><span class="va">A</span> <span class="op">&lt;-</span> <span class="fu">ape</span><span class="fu">::</span><span class="fu">vcv.phylo</span><span class="op">(</span><span class="va">phylogeny</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">mod8</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span></span>
-<span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/gr.html" class="external-link">gr</a></span><span class="op">(</span><span class="va">species</span>, cov <span class="op">=</span> <span class="va">A</span><span class="op">)</span><span class="op">)</span>, </span>
+<span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/gr.html" class="external-link">gr</a></span><span class="op">(</span><span class="va">species</span>, cov <span class="op">=</span> <span class="va">A</span><span class="op">)</span><span class="op">)</span>, </span>
 <span>  f_det <span class="op">=</span> <span class="op">~</span>  <span class="fl">1</span> <span class="op">+</span> <span class="va">ec1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">species</span><span class="op">)</span>, </span>
 <span>  flocker_data <span class="op">=</span> <span class="va">fd_rep_varying</span>, </span>
 <span>  data2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>A <span class="op">=</span> <span class="va">A</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
 <span><span class="va">mod9</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span></span>
-<span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/gr.html" class="external-link">gr</a></span><span class="op">(</span><span class="va">species</span>, cov <span class="op">=</span> <span class="va">A</span><span class="op">)</span><span class="op">)</span>, </span>
-<span>  f_det <span class="op">=</span> <span class="op">~</span>  <span class="fl">1</span> <span class="op">+</span> <span class="va">ec1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="fu"><a href="https://paul-buerkner.github.io/brms/reference/gr.html" class="external-link">gr</a></span><span class="op">(</span><span class="va">species</span>, cov <span class="op">=</span> <span class="va">A</span><span class="op">)</span><span class="op">)</span>, </span>
+<span>  f_occ <span class="op">=</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/gr.html" class="external-link">gr</a></span><span class="op">(</span><span class="va">species</span>, cov <span class="op">=</span> <span class="va">A</span><span class="op">)</span><span class="op">)</span>, </span>
+<span>  f_det <span class="op">=</span> <span class="op">~</span>  <span class="fl">1</span> <span class="op">+</span> <span class="va">ec1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="fu"><a href="https://paulbuerkner.com/brms/reference/gr.html" class="external-link">gr</a></span><span class="op">(</span><span class="va">species</span>, cov <span class="op">=</span> <span class="va">A</span><span class="op">)</span><span class="op">)</span>, </span>
 <span>  flocker_data <span class="op">=</span> <span class="va">fd_rep_varying</span>, </span>
 <span>  data2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>A <span class="op">=</span> <span class="va">A</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
@@ -876,8 +875,8 @@ here</a> for further details about specifying phylogenetic effects in
 </h3>
 <p>In addition to spatial Gaussian processes, <code>brms</code> provides
 a variety of autoregressive structures, both one-dimensional (see
-<code>brms::ar()</code>, <code><a href="https://paul-buerkner.github.io/brms/reference/arma.html" class="external-link">brms::arma()</a></code>) and two-dimensional
-(see <code><a href="https://paul-buerkner.github.io/brms/reference/car.html" class="external-link">brms::car()</a></code>, <code><a href="https://paul-buerkner.github.io/brms/reference/sar.html" class="external-link">brms::sar()</a></code>. <a href="https://paul-buerkner.github.io/brms/reference/car.html" class="external-link">See
+<code>brms::ar()</code>, <code><a href="https://paulbuerkner.com/brms/reference/arma.html" class="external-link">brms::arma()</a></code>) and two-dimensional
+(see <code><a href="https://paulbuerkner.com/brms/reference/car.html" class="external-link">brms::car()</a></code>, <code><a href="https://paulbuerkner.com/brms/reference/sar.html" class="external-link">brms::sar()</a></code>. <a href="https://paul-buerkner.github.io/brms/reference/car.html" class="external-link">See
 here</a> for details about conditional autoregressive (CAR) models in
 <code>brms</code>, and note that <code><a href="../reference/flock.html">flock()</a></code> accepts a
 <code>data2</code> argument that it can pass to <code>brms</code> as
@@ -900,7 +899,7 @@ spatial autologistic occupancy model.</p>
 <p>A second caution is to remind users that in multi-species models,
 users will likely want to fit separate spatial terms by species (<a href="https://besjournals.onlinelibrary.wiley.com/doi/10.1111/2041-210X.13897" class="external-link">Doser
 et al 2022</a>). For Gaussian processes, this can be achieved via the
-<code>by</code> argument to <code><a href="https://paul-buerkner.github.io/brms/reference/gp.html" class="external-link">brms::gp()</a></code>. For some
+<code>by</code> argument to <code><a href="https://paulbuerkner.com/brms/reference/gp.html" class="external-link">brms::gp()</a></code>. For some
 conditional autoregressive structures (those that allow disconnected
 islands), this can be achieved by passing a block-diagonal adjacency
 matrix wherein species are disconnected components.</p>
@@ -921,8 +920,8 @@ here</a> for relevant <code>brms</code> documentation.</p>
 <h2 id="additional-fitting-arguments">Additional fitting arguments<a class="anchor" aria-label="anchor" href="#additional-fitting-arguments"></a>
 </h2>
 <p><code>flock</code> will pass any relevant parameters forward to
-<code><a href="https://paul-buerkner.github.io/brms/reference/brm.html" class="external-link">brms::brm()</a></code>, giving the user important control over the
-algorithmic details of how the model is fit. See <code><a href="https://paul-buerkner.github.io/brms/reference/brm.html" class="external-link">?brms::brm</a></code>
+<code><a href="https://paulbuerkner.com/brms/reference/brm.html" class="external-link">brms::brm()</a></code>, giving the user important control over the
+algorithmic details of how the model is fit. See <code><a href="https://paulbuerkner.com/brms/reference/brm.html" class="external-link">?brms::brm</a></code>
 for details. To speed up the execution, we recommend supplying the
 argument <code>backend = "cmdstanr"</code>. This requires the
 <code>cmdstanr</code> package and a working installation of
@@ -936,9 +935,7 @@ here</a> for instructions to get started and further details.</p>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
 
-        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
-    </nav>
-</div>
+      </div>
 
 </div>
 
@@ -951,16 +948,16 @@ here</a> for instructions to get started and further details.</p>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
       </footer>
 </div>
 
-  
 
 
-  
+
+
 
   </body>
 </html>
