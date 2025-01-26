@@ -87,13 +87,13 @@ jobs:
 
         run: |
 
+          install.packages("QuickJSR", type = "source")
+          
           install.packages(c("remotes"))
 
           remotes::install_deps(dependencies = TRUE)
 
           remotes::install_cran("covr")
-          
-          install.packages("QuickJSR", type = "source")
 
         shell: Rscript {0}
 
