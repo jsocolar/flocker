@@ -4,12 +4,29 @@
 \alias{log_lik_flocker}
 \title{Compute unit-wise or series-wise log-likelihood matrix for a flocker_fit object}
 \usage{
-log_lik_flocker(flocker_fit, draw_ids = NULL)
+log_lik_flocker(
+  flocker_fit,
+  new_data = NULL,
+  allow_new_levels = FALSE,
+  sample_new_levels = "uncertainty",
+  draw_ids = NULL
+)
 }
 \arguments{
 \item{flocker_fit}{A flocker_fit object}
 
-\item{draw_ids}{the draw ids to compute log-likelihoods for. Defaults to using the full posterior.}
+\item{new_data}{optional new data at which to compute log likelihood}
+
+\item{allow_new_levels}{allow new levels for random effect terms in 
+'new_data'? Will error if set to 'FALSE' and new levels are provided in 
+'new_data'.}
+
+\item{sample_new_levels}{If new_data is provided and contains random effect 
+levels not present in the original data, how should predictions be 
+handled? See '?brms::prepare_predictions' for options.}
+
+\item{draw_ids}{the draw ids to compute log-likelihoods for. Defaults to 
+using the full posterior.}
 }
 \value{
 A posterior log-likelihood matrix, where iterations are rows and 
