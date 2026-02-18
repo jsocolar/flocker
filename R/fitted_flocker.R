@@ -282,6 +282,9 @@ fitted_flocker <- function(
   }
   
   for(i in seq_along(out)){
+    if(length(dim(out[[i]])) == 2){
+      out[[i]] <- array(out[[i]], dim = c(dim(out[[i]]), 1))
+    }
     dimnames(out[[i]]) <- dn
   }
   out

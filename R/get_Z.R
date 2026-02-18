@@ -522,7 +522,7 @@ forward_backward_sampling <- function(el0, el1, init, colo, ex) {
   
   if(n > 1){
     # get transition probabilities matrix
-    trans <- matrix(c(1 - colo, colo, ex, 1 - ex), nrow = n_tot)[2:n, ]
+    trans <- matrix(c(1 - colo, colo, ex, 1 - ex), nrow = n_tot)[2:n, , drop = FALSE]
     
     # Iterate over the timesteps in reverse, starting from the second-to-last timestep
     for (t in (n - 1):1) {
