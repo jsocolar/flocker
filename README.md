@@ -6,6 +6,7 @@
 [![Coverage
 Status](https://codecov.io/gh/jsocolar/flocker/branch/main/graph/badge.svg)](https://app.codecov.io/gh/jsocolar/flocker)
 [![R-CMD-check](https://github.com/jsocolar/flocker/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jsocolar/flocker/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/jsocolar/flocker/graph/badge.svg)](https://app.codecov.io/gh/jsocolar/flocker)
 <!-- badges: end -->
 
 
