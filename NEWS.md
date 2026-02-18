@@ -1,3 +1,9 @@
+# flocker 1.0-1
+* fixed a bug that was throwing an uninformative error when making predictions in multiseason models where history_condition is TRUE
+* dramatic efficiency improvements to `get_positions` as applied to multiseason models.
+* groundwork laid for enabling log-likelihood computations over new data.
+
+
 # flocker 1.0-0
 
 * Initial CRAN submission.
