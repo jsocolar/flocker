@@ -378,33 +378,37 @@ get_positions <- function(data_object, unit_level = FALSE) {
     max_year <- max(n_year)
     max_visit <- max(n_visit)
     
+    unit_index_frame <- the_data[paste0("ff_unit_index", seq_len(max_year))][seq_len(n_series), ]
     if(!unit_level){
       index_array <- array(dim = c(n_series, max_visit, max_year))
-      rep_index_frame <- the_data[paste0("ff_rep_index", seq_len(max_visit))]
-      unit_index_frame <- the_data[paste0("ff_unit_index", seq_len(max_year))]
-      for(r in seq_len(nrow(the_data))){
-        rep_pos <- which(rep_index_frame == r, arr.ind = TRUE)
-        unit_id <- rep_pos[1]
-        if(!is.na(unit_id)){
-          visit_id <- rep_pos[2]
-          unit_pos <- which(unit_index_frame == unit_id, arr.ind = TRUE)
-          series_id <- unit_pos[1]
-          year_id <- unit_pos[2]
-          index_array[series_id, visit_id, year_id] <- r
-        }
-      }
+      rep_index_frame <- the_data[paste0("ff_rep_index", seq_len(max_visit))][seq_len(n_unit), ]
+      rep_mat  <- as.matrix(rep_index_frame)
+      unit_mat <- as.matrix(unit_index_frame)
+      
+      rc        <- which(!is.na(rep_mat), arr.ind = TRUE)
+      r_vals    <- rep_mat[rc]
+      unit_ids  <- rc[, 1]
+      visit_ids <- rc[, 2]
+      
+      uc           <- which(!is.na(unit_mat), arr.ind = TRUE)
+      unit_vals    <- unit_mat[uc]
+      series_lookup <- uc[, 1][match(unit_ids, unit_vals)]
+      year_lookup   <- uc[, 2][match(unit_ids, unit_vals)]
+      
+      valid <- !is.na(series_lookup)
+      index_array[cbind(series_lookup[valid], visit_ids[valid], year_lookup[valid])] <- r_vals[valid]
+      
+      index_array[index_array == -99] <- NA
+      
       return(index_array)
     } else {
       index_slice <- array(dim = c(n_series, max_year))
-      unit_index_frame <- the_data[paste0("ff_unit_index", seq_len(max_year))]
-      for(r in seq_len(nrow(the_data))){
-        unit_pos <- which(unit_index_frame == r, arr.ind = TRUE)
-        series_id <- unit_pos[1]
-        if(!is.na(series_id)){
-          year_id <- unit_pos[2]
-          index_slice[series_id, year_id] <- r
-        }
-      }
+      unit_mat <- as.matrix(unit_index_frame)
+      uc <- which(!is.na(unit_mat), arr.ind = TRUE)
+      index_slice[uc] <- unit_mat[uc]
+      
+      index_slice[index_slice == -99] <- NA
+      
       return(index_slice)
     }
   }
