@@ -33,7 +33,6 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
     )
     
     psi_all <- lps$linpred_occ[ , 1, ] # first index is unit, second is visit, third is draw
-    n_unit <- nrow(psi_all)
     theta_all <- lps$linpred_det
     
     gp <- get_positions(flocker_fit)
@@ -61,13 +60,9 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
       flocker_fit, draw_ids = draw_ids, new_data = NULL, allow_new_levels = FALSE, 
       response = TRUE, unit_level = FALSE
     )
-    lpo <- lps$linpred_occ[ , 1, , ] # first index is point, second is visit, third is species, fourth is draw
-    n_point <- nrow(lpo)
-    n_species <- ncol(lpo)
-    n_unit <- n_point * n_species
-    psi_all <- boot::inv.logit(lpo)
-    Omega <- boot::inv.logit(lps$linpred_Omega[1,1,,])
-    theta_all <- boot::inv.logit(lps$linpred_det)
+    psi_all <- lps$linpred_occ[ , 1, , ] # first index is point, second is visit, third is species, fourth is draw
+    Omega <- lps$linpred_Omega[1,1,,]
+    theta_all <- lps$linpred_det
 
     # get emission likelihoods
     el_0 <- el_1 <- new_array(psi_all)
@@ -250,7 +245,6 @@ log_lik_dynamic <- function(init, colo, ex, obs, det){
   assertthat::assert_that(is.array(det))
   
   nsite <- nrow(init)
-  ntimestep <- ncol(colo)
   ndraw <- ncol(init)
   
   assertthat::assert_that(identical(dim(obs), dim(det)[1:3]))
