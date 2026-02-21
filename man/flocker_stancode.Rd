@@ -77,7 +77,6 @@ generated stancode
 Generate stan code for an occupancy model
 }
 \examples{
-\donttest{
 sfd <- simulate_flocker_data()
 fd <- make_flocker_data(
  sfd$obs, 
@@ -92,5 +91,4 @@ flocker_stancode(
   control = list(adapt_engaged = FALSE, stepsize = .05, max_treedepth = 5),
   seed = 123
   )
-  }
 }

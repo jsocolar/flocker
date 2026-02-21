@@ -1,8 +1,8 @@
 test_that("check log_lik functions work correctly", {
   # single (package data model - 100 units, 4 draws)
-  ll_test <- log_lik_flocker(example_flocker_model_single)
+  ll_test <- log_lik_flocker(example_flocker_model_single2)
   expect_equal(dim(ll_test), c(4, 160))
-  ll_test_sub <- log_lik_flocker(example_flocker_model_single, draw_ids = 1:2)
+  ll_test_sub <- log_lik_flocker(example_flocker_model_single2, draw_ids = 1:2)
   expect_equal(dim(ll_test_sub), c(2, 160))
   expect_equal(class(ll_test), c("matrix", "array"))
   expect_equal(class(as.vector(ll_test)), "numeric")
@@ -65,22 +65,22 @@ test_that("log_lik_flocker new_data argument works correctly", {
   
   # non-flocker_data should error
   expect_error(
-    log_lik_flocker(example_flocker_model_single, new_data = data.frame(x = 1)),
+    log_lik_flocker(example_flocker_model_single2, new_data = data.frame(x = 1)),
     "must be a flocker_data object"
   )
   
   # wrong data type should error
   expect_error(
-    log_lik_flocker(example_flocker_model_single, new_data = mfd_multi_colex_ex),
+    log_lik_flocker(example_flocker_model_single2, new_data = mfd_multi_colex_ex),
     "data type in new_data does not match"
   )
   
   # --- equality checks: passing training data as new_data should match default ---
   
   # single (uses shipped package data mfd_single)
-  ll_default <- log_lik_flocker(example_flocker_model_single)
+  ll_default <- log_lik_flocker(example_flocker_model_single2)
   ll_newdata <- log_lik_flocker(
-    example_flocker_model_single,
+    example_flocker_model_single2,
     new_data = mfd_single,
     allow_new_levels = FALSE
   )

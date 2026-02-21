@@ -8,6 +8,21 @@ if (file.exists(setup_cache_path)) {
 } else {
   set.seed(1)
   
+  suppressWarnings({
+    example_flocker_model_single2 <- flock(
+      f_occ = ~ 0 + Intercept + uc1 + (1 + uc1 | species),
+      f_det = ~ 0 + Intercept + uc1 + ec1 + (1 + uc1 + ec1 | species),
+      flocker_data = mfd_single,
+      cores = 2,
+      chains = 2,
+      iter = 1000,
+      warmup = 998,
+      save_warmup = FALSE,
+      refresh = 0,
+      silent = 2
+    )
+  })
+  
   #### single-season rep-constant model ####
   suppressWarnings({
     fd <- simulate_flocker_data(n_pt = 20, n_sp = 5)
@@ -150,6 +165,7 @@ if (file.exists(setup_cache_path)) {
   })
   
   cache <- list(
+    example_flocker_model_single2 = example_flocker_model_single2,
     mfd_single_C = mfd_single_C,
     example_flocker_model_single_C = example_flocker_model_single_C,
     mfd_aug = mfd_aug,

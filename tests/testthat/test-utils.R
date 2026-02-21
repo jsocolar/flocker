@@ -189,14 +189,14 @@ test_that("fdtl function returns expected dataframe", {
 })
 
 test_that("is_flocker_fit works", {
-  expect_true(is_flocker_fit(example_flocker_model_single))
+  expect_true(is_flocker_fit(example_flocker_model_single2))
   expect_false(is_flocker_fit("foo"))
   expect_false(is_flocker_fit(NULL))
-  expect_false(is_flocker_fit(list(f = example_flocker_model_single)))
+  expect_false(is_flocker_fit(list(f = example_flocker_model_single2)))
 })
 
 test_that("type_flocker_fit function returns expected string", {
-  expect_identical(type_flocker_fit(example_flocker_model_single), "single")
+  expect_identical(type_flocker_fit(example_flocker_model_single2), "single")
   
   # Create a dummy flocker_fit object
   dummy_flocker_fit <- structure(

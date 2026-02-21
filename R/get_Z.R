@@ -24,7 +24,7 @@
 #'     final dimension
 #' @export
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' get_Z(example_flocker_model_single)
 #' }
 get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE, 

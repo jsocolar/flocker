@@ -1,4 +1,5 @@
 ## code to prepare `example_flocker_model_single`
+library(flocker)
 
 set.seed(1)
 
@@ -21,4 +22,11 @@ example_flocker_model_single <- flock(
 )
 
 usethis::use_data(mfd_single, overwrite = TRUE)
-usethis::use_data(example_flocker_model_single, overwrite = TRUE)
+
+dir.create("inst/extdata", recursive = TRUE, showWarnings = FALSE)
+
+saveRDS(
+  example_flocker_model_single,
+  file = "inst/extdata/example_flocker_model_single.rds",
+  compress = "xz"
+)

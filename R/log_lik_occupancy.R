@@ -18,7 +18,9 @@
 #'   for leave-one-species-out CV).
 #' @export
 #' @examples 
+#' \dontrun{
 #' log_lik_flocker(example_flocker_model_single)
+#' }
 
 log_lik_flocker <- function(
     flocker_fit, new_data = NULL, allow_new_levels = FALSE,
