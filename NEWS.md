@@ -1,3 +1,8 @@
+# flocker 1.0-2 -- 20 Feb 2026
+* fixed a bug that resulted in incorrect log likelihoods returned by log_lik_flocker for the data augmented model. Model fitting was not affected, and posteriors were correct.
+* log-likelihood computations now enabled over new data.
+* some behind the scenes hygiene improvements
+
 # flocker 1.0-1
 * fixed a bug that was throwing an uninformative error when making predictions in multiseason models where history_condition is TRUE
 * dramatic efficiency improvements to `get_positions` as applied to multiseason models.
