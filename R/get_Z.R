@@ -291,10 +291,11 @@ get_Z_single_C <- function(lps, sample, history_condition, obs = NULL){
 #' @param sample logical: return fitted probabilities or bernoulli samples
 #' @param history_condition logical: condition on the observed history?
 #' @param obs if history_condition is true, the observed histories
+#' @param quiet suppress messages and text bar when computing emission probabilties
 #' @return an array of fitted Z probabilities or sampled Z values. Rows are
 #'   units and columns are posterior iterations.
 #' @noRd
-get_Z_augmented <- function(lps, sample, history_condition, obs = NULL){
+get_Z_augmented <- function(lps, sample, history_condition, obs = NULL, quiet = TRUE){
   lpo <- lps$linpred_occ[ , 1, , ] # first index is point, second is visit, third is species, fourth is draw
   n_point <- nrow(lpo)
   n_species <- ncol(lpo)
@@ -316,10 +317,15 @@ get_Z_augmented <- function(lps, sample, history_condition, obs = NULL){
     # get emission likelihoods
     el_0 <- el_1 <- new_array(psi_all)
     
-    message("computing emission probabilities")
-    pb <- utils::txtProgressBar(max = ncol(psi_all))
+    if(! quiet){
+      message("computing emission probabilities")
+      pb <- utils::txtProgressBar(max = ncol(psi_all))
+    }
+
     for(j in seq_len(ncol(psi_all))){
-      utils::setTxtProgressBar(pb, j)
+      if(! quiet){
+        utils::setTxtProgressBar(pb, j)
+      }
       for(i in seq_len(nslice(psi_all))){
         el_0[ , j, i] <- emission_likelihood(0, obs[,,j], theta_all[,,j,i])
         el_1[ , j, i] <- emission_likelihood(1, obs[,,j], theta_all[,,j,i])

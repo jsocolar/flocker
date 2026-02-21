@@ -45,12 +45,12 @@ test_that("predict flocker works as expected", {
 
 test_that("new_data works as expected", {
   fd1 <- simulate_flocker_data(n_sp = 5, n_pt = 5)
-  mfd1 <- make_flocker_data(fd1$obs, fd1$unit_covs, fd1$event_covs)
+  mfd1 <- make_flocker_data(fd1$obs, fd1$unit_covs, fd1$event_covs, quiet = TRUE)
   expect_silent(predict_flocker(example_flocker_model_single, new_data = mfd1))
   expect_error(predict_flocker(example_flocker_model_single, history_condition = FALSE, new_data = fd1$unit_covs))
   
   fd2 <- simulate_flocker_data(n_sp = 5, n_pt = 5, n_season = 3, multiseason = "colex", multi_init = "explicit")
-  mfd2 <- make_flocker_data(fd2$obs, fd2$unit_covs, fd2$event_covs, type = "multi")
+  mfd2 <- make_flocker_data(fd2$obs, fd2$unit_covs, fd2$event_covs, type = "multi", quiet = TRUE)
   expect_silent(predict_flocker(example_flocker_model_multi_colex_ex, new_data = mfd2))
   expect_silent(predict_flocker(example_flocker_model_multi_auto_eq, new_data = mfd2))
 })
@@ -63,7 +63,7 @@ test_that("mixed checks work", {
   expect_true(all(p_single_mixed %in% c(0,1)))
   
   sfd <- simulate_flocker_data(n_pt = 5, n_sp = 5, n_rep = 2)
-  fd <- make_flocker_data(sfd$obs, sfd$unit_covs, sfd$event_covs)
+  fd <- make_flocker_data(sfd$obs, sfd$unit_covs, sfd$event_covs, quiet = TRUE)
   p_single_mixed <- predict_flocker(
     example_flocker_model_single, mixed = TRUE, 
     allow_new_levels = TRUE, sample_new_levels = "gaussian",

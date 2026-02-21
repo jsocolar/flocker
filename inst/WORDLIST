@@ -1,5 +1,6 @@
 Autologistic
 CMD
+Codecov
 Doser
 HMMs
 Markovian
@@ -26,12 +27,12 @@ et
 exchangeability
 flocker's
 frac
-inits
-interpretable
 jss
+lik
 markov
 mathcal
 metacommunity
+mfd
 multiseason
 multispecies
 nondetection
@@ -47,9 +48,7 @@ stancode
 termina
 textrm
 th
-timeseries
 toolchain
 unadvisable
 unlooped
 vectorization
-vectorized

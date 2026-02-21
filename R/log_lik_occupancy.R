@@ -110,10 +110,7 @@ log_lik_flocker <- function(
 
     # get emission likelihoods
     el_0 <- el_1 <- new_array(psi_all)
-    message("computing emission probabilities")
-    pb <- utils::txtProgressBar(max = ncol(psi_all))
     for(j in seq_len(ncol(psi_all))){
-      utils::setTxtProgressBar(pb, j)
       for(i in seq_len(nslice(psi_all))){
         el_0[ , j, i] <- emission_likelihood(0, obs[,,j], theta_all[,,j,i])
         el_1[ , j, i] <- emission_likelihood(1, obs[,,j], theta_all[,,j,i])
