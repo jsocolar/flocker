@@ -44,13 +44,11 @@ Suggests:
     rstan (>= 2.26.0),
     spelling,
     testthat (>= 2.1.0),
-    tibble,
-    terra,
-    lubridate
+    tibble
 VignetteBuilder: 
     knitr
 Encoding: UTF-8
 LazyData: true
 LazyDataCompression: xz
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.3
 Language: en-US

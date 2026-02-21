@@ -1,9 +1,9 @@
-## code to prepare `example_flocker_model_xx` datasets
+## code to prepare `example_flocker_model_single`
 
 set.seed(1)
 
 #### single-season model ####
-fd <- simulate_flocker_data(n_pt = 20, n_sp = 5)
+fd <- simulate_flocker_data(n_pt = 20, n_sp = 8)
 mfd_single <- make_flocker_data(
   fd$obs, 
   fd$unit_covs,

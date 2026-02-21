@@ -1,9 +1,9 @@
 test_that("check log_lik functions work correctly", {
   # single (package data model - 100 units, 4 draws)
   ll_test <- log_lik_flocker(example_flocker_model_single)
-  expect_equal(dim(ll_test), c(8, 100))
+  expect_equal(dim(ll_test), c(8, 160))
   ll_test_sub <- log_lik_flocker(example_flocker_model_single, draw_ids = 1:2)
-  expect_equal(dim(ll_test_sub), c(2, 100))
+  expect_equal(dim(ll_test_sub), c(2, 160))
   expect_equal(class(ll_test), c("matrix", "array"))
   expect_equal(class(as.vector(ll_test)), "numeric")
   expect_lte(max(ll_test), 0)
