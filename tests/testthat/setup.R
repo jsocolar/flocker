@@ -13,7 +13,8 @@ if (file.exists(setup_cache_path)) {
     fd <- simulate_flocker_data(n_pt = 20, n_sp = 5)
     mfd_single_C <- make_flocker_data(
       fd$obs, 
-      fd$unit_covs
+      fd$unit_covs,
+      quiet = TRUE
     )
     example_flocker_model_single_C <- flock(
       f_occ = ~ 0 + Intercept + uc1 + (1 + uc1 | species),
@@ -32,7 +33,8 @@ if (file.exists(setup_cache_path)) {
       fd$unit_covs, 
       fd$event_covs,
       type = "augmented",
-      n_aug = 10
+      n_aug = 10,
+      quiet = TRUE
     )
     example_flocker_model_aug <- flock(
       f_occ = ~ 0 + Intercept + (1 | ff_species),
@@ -51,7 +53,8 @@ if (file.exists(setup_cache_path)) {
       ragged_rep = TRUE, missing_seasons = TRUE
     )
     mfd_multi_colex_ex <- make_flocker_data(
-      fd$obs, fd$unit_covs, fd$event_covs, type = "multi"
+      fd$obs, fd$unit_covs, fd$event_covs, type = "multi",
+      quiet = TRUE
     )
     example_flocker_model_multi_colex_ex <- flock(
       f_occ = ~ 0 + Intercept + uc1,
@@ -73,7 +76,8 @@ if (file.exists(setup_cache_path)) {
       ragged_rep = TRUE, missing_seasons = TRUE
     )
     mfd_multi_colex_eq <- make_flocker_data(
-      fd$obs, fd$unit_covs, fd$event_covs, type = "multi"
+      fd$obs, fd$unit_covs, fd$event_covs, type = "multi",
+      quiet = TRUE
     )
     example_flocker_model_multi_colex_eq <- flock(
       f_det = ~ 0 + Intercept + uc1 + ec1,
@@ -94,7 +98,8 @@ if (file.exists(setup_cache_path)) {
       ragged_rep = TRUE, missing_seasons = TRUE
     )
     mfd_multi_auto_ex <- make_flocker_data(
-      fd$obs, fd$unit_covs, fd$event_covs, type = "multi"
+      fd$obs, fd$unit_covs, fd$event_covs, type = "multi",
+      quiet = TRUE
     )
     example_flocker_model_multi_auto_ex <- flock(
       f_occ = ~ 0 + Intercept + uc1,
@@ -116,7 +121,8 @@ if (file.exists(setup_cache_path)) {
       ragged_rep = TRUE, missing_seasons = TRUE
     )
     mfd_multi_auto_eq <- make_flocker_data(
-      fd$obs, fd$unit_covs, fd$event_covs, type = "multi"
+      fd$obs, fd$unit_covs, fd$event_covs, type = "multi",
+      quiet = TRUE
     )
     example_flocker_model_multi_auto_eq <- flock(
       f_det = ~ 0 + Intercept + uc1 + ec1,
