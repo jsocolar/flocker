@@ -16,7 +16,7 @@ example_flocker_model_single <- flock(
   cores = 2,
   chains = 2,
   iter = 1000,
-  warmup = 996,
+  warmup = 998,
   save_warmup = FALSE
 )
 
