@@ -22,7 +22,9 @@ if (file.exists(setup_cache_path)) {
       flocker_data = mfd_single_C,
       cores = 1,
       iter = 8,
-      save_warmup = FALSE
+      save_warmup = FALSE,
+      refresh = 0,
+      silent = 2
     )
     
     #### data augmented model ####
@@ -43,7 +45,9 @@ if (file.exists(setup_cache_path)) {
       augmented = TRUE,
       cores = 1,
       iter = 8,
-      save_warmup = FALSE
+      save_warmup = FALSE,
+      refresh = 0,
+      silent = 2
     )
     
     #### multiseason colex with explicit inits ####
@@ -66,7 +70,9 @@ if (file.exists(setup_cache_path)) {
       multi_init = "explicit",
       cores = 1,
       iter = 8,
-      save_warmup = FALSE
+      save_warmup = FALSE,
+      refresh = 0,
+      silent = 2
     )
     
     #### multiseason colex with equilibrium inits ####
@@ -88,7 +94,9 @@ if (file.exists(setup_cache_path)) {
       multi_init = "equilibrium",
       cores = 1,
       iter = 8,
-      save_warmup = FALSE
+      save_warmup = FALSE,
+      refresh = 0,
+      silent = 2
     )
     
     #### multiseason autologistic with explicit inits ####
@@ -111,7 +119,9 @@ if (file.exists(setup_cache_path)) {
       multi_init = "explicit",
       cores = 1,
       iter = 8,
-      save_warmup = FALSE
+      save_warmup = FALSE,
+      refresh = 0,
+      silent = 2
     )
     
     #### multiseason autologistic with equilibrium inits ####
@@ -133,7 +143,9 @@ if (file.exists(setup_cache_path)) {
       multi_init = "equilibrium",
       cores = 1,
       iter = 8,
-      save_warmup = FALSE
+      save_warmup = FALSE,
+      refresh = 0,
+      silent = 2
     )
   })
   
