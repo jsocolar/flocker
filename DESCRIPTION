@@ -45,9 +45,12 @@ Suggests:
     spelling,
     testthat (>= 2.1.0),
     tibble
+    terra
+    lubridate
 VignetteBuilder: 
     knitr
 Encoding: UTF-8
 LazyData: true
+LazyDataCompression: xz
 RoxygenNote: 7.2.3
 Language: en-US
