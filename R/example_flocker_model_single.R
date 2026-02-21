@@ -64,7 +64,7 @@
             
             if (interactive() && !warned && !in_pkgload_or_roxygen) {
               .notify_example_model_load()
-              warned <- TRUE
+              warned <<- TRUE
             }
             
             path <- system.file("extdata", "example_flocker_model_single.rds", package = pkgname)
