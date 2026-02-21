@@ -44,8 +44,8 @@ Suggests:
     rstan (>= 2.26.0),
     spelling,
     testthat (>= 2.1.0),
-    tibble
-    terra
+    tibble,
+    terra,
     lubridate
 VignetteBuilder: 
     knitr
