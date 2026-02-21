@@ -45,7 +45,7 @@ log_lik_flocker <- function(
     a <- attributes(flocker_fit)
     fit_datatype <- a$data_type
     assertthat::assert_that(
-      flocker_data$type == fit_datatype,
+      new_data$type == fit_datatype,
       msg = "the data type in new_data does not match the data type in flocker_fit"
     )
   }
@@ -86,7 +86,7 @@ log_lik_flocker <- function(
       t()
   } else if (lik_type == "single_C") {
     ll <- brms::log_lik(
-      flocker_fit, newdata = new_data, draw_ids = draw_ids, 
+      flocker_fit, newdata = new_data$data, draw_ids = draw_ids, #note that if new_data is NULL, new_data$data is also NULL
       allow_new_levels = allow_new_levels,
       sample_new_levels = sample_new_levels)
   } else if (lik_type == "augmented") {
