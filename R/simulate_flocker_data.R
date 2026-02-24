@@ -467,7 +467,7 @@ sfd <- function(
     
     out <- list(obs = remove_rownames(obs), 
                 unit_covs = remove_rownames(unit_covs),
-                event_covs = lapply(event_covs, remove_rownames) # this yields an empty list if event_covs is NULL
+                event_covs = if (is.null(event_covs)) NULL else lapply(event_covs, remove_rownames)
                 )
   } else if (augmented) {
     visit_full$id_unit <- interaction(visit_full$id_point, visit_full$species)
@@ -502,7 +502,7 @@ sfd <- function(
     out <- list(
       obs = remove_rownames(abind::abind(obs_temp, along = 3)),
       unit_covs = remove_rownames(unit_covs),
-      event_covs = lapply(event_covs, remove_rownames)
+      event_covs = if (is.null(event_covs)) NULL else lapply(event_covs, remove_rownames)
     )
     
   } else if (n_season > 1) {
@@ -528,7 +528,7 @@ sfd <- function(
     }
     
     if(rep_constant){
-      event_covs <- list()
+      event_covs <- NULL
     } else {
       event_covs <- list(ec1 = remove_rownames(abind::abind(events_temp, along = 3)))
     }

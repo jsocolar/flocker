@@ -4,18 +4,18 @@ expect_named <- function(x, nm) {
 
 expect_array_dim <- function(x, d) {
   testthat::expect_true(is.array(x))
-  testthat::expect_identical(dim(x), d)
+  testthat::expect_equal(dim(x), d)
 }
 
 test_that("single-season rep_constant shapes are correct", {
   fd <- simulate_flocker_data(n_pt = 7, n_sp = 3, n_rep = 4, rep_constant = TRUE, seed = 1)
   
   expect_true(is.matrix(fd$obs))
-  expect_identical(dim(fd$obs), c(7*3, 4))
+  expect_equal(dim(fd$obs), c(7*3, 4))
   
   expect_true(is.data.frame(fd$unit_covs))
   expect_named(fd$unit_covs, c("uc1","species"))
-  expect_identical(nrow(fd$unit_covs), 7*3)
+  expect_equal(nrow(fd$unit_covs), 7*3)
   
   expect_true(is.null(fd$event_covs))
   expect_true(is.list(fd$params))
@@ -26,12 +26,12 @@ test_that("single-season rep_varying includes event covariates with correct shap
   fd <- simulate_flocker_data(n_pt = 5, n_sp = 2, n_rep = 3, rep_constant = FALSE, seed = 2)
   
   expect_true(is.matrix(fd$obs))
-  expect_identical(dim(fd$obs), c(5*2, 3))
+  expect_equal(dim(fd$obs), c(5*2, 3))
   
   expect_true(is.list(fd$event_covs))
   expect_true("ec1" %in% names(fd$event_covs))
   expect_true(is.matrix(fd$event_covs$ec1))
-  expect_identical(dim(fd$event_covs$ec1), c(5*2, 3))
+  expect_equal(dim(fd$event_covs$ec1), c(5*2, 3))
 })
 
 test_that("seed produces deterministic output", {
@@ -128,16 +128,16 @@ test_that("multiseason output shapes are correct", {
                               rep_constant=FALSE, seed=1)
   
   expect_true(is.array(fd$obs))
-  expect_identical(dim(fd$obs), c(4*2, 3, 5))
+  expect_equal(dim(fd$obs), c(4*2, 3, 5))
   
   expect_true(is.list(fd$unit_covs))
   expect_length(fd$unit_covs, 5)
   expect_true(all(vapply(fd$unit_covs, is.data.frame, logical(1))))
-  expect_identical(nrow(fd$unit_covs[[1]]), 8)
+  expect_equal(nrow(fd$unit_covs[[1]]), 8)
   
   expect_true(is.list(fd$event_covs))
   expect_true(is.array(fd$event_covs$ec1))
-  expect_identical(dim(fd$event_covs$ec1), c(8, 3, 5))
+  expect_equal(dim(fd$event_covs$ec1), c(8, 3, 5))
 })
 
 test_that("ragged_rep introduces missing visits", {
@@ -160,17 +160,17 @@ test_that("augmented output is trimmed and has expected shapes", {
                               rep_constant=FALSE, seed=2)
   
   expect_true(is.array(fd$obs))
-  expect_identical(dim(fd$obs)[1:2], c(30, 4))
+  expect_equal(dim(fd$obs)[1:2], c(30, 4))
   expect_true(dim(fd$obs)[3] <= 20)      # trimmed, maybe equal but often less
   expect_true(dim(fd$obs)[3] >= 1)
   
   expect_true(is.data.frame(fd$unit_covs))
   expect_named(fd$unit_covs, c("uc1"))
-  expect_identical(nrow(fd$unit_covs), 30)
+  expect_equal(nrow(fd$unit_covs), 30)
   
   expect_true(is.list(fd$event_covs))
   expect_true(is.matrix(fd$event_covs$ec1))
-  expect_identical(dim(fd$event_covs$ec1), c(30, 4))
+  expect_equal(dim(fd$event_covs$ec1), c(30, 4))
 })
 
 test_that("coef set is correct: single-season rep-constant", {
