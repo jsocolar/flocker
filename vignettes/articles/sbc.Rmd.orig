@@ -16,8 +16,15 @@ params:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.path = "man/figures/sbc_vignette/",
+  fig.retina = 2
+)
+dir.create("man/figures/sbc_vignette", recursive = TRUE, showWarnings = FALSE)
+
 ```
+
 ### Rmd parameters
 ```{r display_params, echo = FALSE}
 data.frame(

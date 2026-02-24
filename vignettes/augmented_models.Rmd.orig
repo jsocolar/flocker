@@ -39,14 +39,16 @@ d <- simulate_flocker_data(
     )
 fd = make_flocker_data(
   d$obs, d$unit_covs, d$event_covs,
-  type = "augmented", n_aug = 100
+  type = "augmented", n_aug = 100,
+  quiet = TRUE
   )
 fm <- flock(
   f_occ = ~ (1 | ff_species),
   f_det = ~ uc1 + ec1 + (1 + uc1 + ec1 | ff_species),
   flocker_data = fd,
   augmented = TRUE,
-  cores = 4
+  cores = 4,
+  refresh = 0
   )
 
 ```
