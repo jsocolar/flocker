@@ -189,14 +189,14 @@ test_that("fdtl function returns expected dataframe", {
 })
 
 test_that("is_flocker_fit works", {
-  expect_true(is_flocker_fit(example_flocker_model_single))
+  expect_true(is_flocker_fit(example_flocker_model_single2))
   expect_false(is_flocker_fit("foo"))
   expect_false(is_flocker_fit(NULL))
-  expect_false(is_flocker_fit(list(f = example_flocker_model_single)))
+  expect_false(is_flocker_fit(list(f = example_flocker_model_single2)))
 })
 
 test_that("type_flocker_fit function returns expected string", {
-  expect_identical(type_flocker_fit(example_flocker_model_single), "single")
+  expect_identical(type_flocker_fit(example_flocker_model_single2), "single")
   
   # Create a dummy flocker_fit object
   dummy_flocker_fit <- structure(
@@ -237,7 +237,7 @@ test_that("get_positions works properly", {
   sd <- simulate_flocker_data()
   fd <- make_flocker_data(
     sd$obs, sd$unit_covs, sd$event_covs, 
-    type = "single")
+    type = "single", quiet = TRUE)
   ps <- get_positions(fd)
   expect_true(
     all.equal(
@@ -259,7 +259,7 @@ test_that("get_positions works properly", {
   sd <- simulate_flocker_data(ragged_rep = TRUE)
   fd <- make_flocker_data(
     sd$obs, sd$unit_covs, sd$event_covs, 
-    type = "single")
+    type = "single", quiet = TRUE)
   ps <- get_positions(fd)
   expect_true(
     all.equal(
@@ -281,7 +281,7 @@ test_that("get_positions works properly", {
   sd <- simulate_flocker_data(rep_constant = TRUE)
   fd <- make_flocker_data(
     sd$obs, sd$unit_covs, 
-    type = "single")
+    type = "single", quiet = TRUE)
   ps <- get_positions(fd)
   expect_true(
     all.equal(
@@ -303,7 +303,7 @@ test_that("get_positions works properly", {
   sd <- simulate_flocker_data(rep_constant = TRUE, ragged_rep = TRUE)
   fd <- make_flocker_data(
     sd$obs, sd$unit_covs, 
-    type = "single")
+    type = "single", quiet = TRUE)
   ps <- get_positions(fd)
   expect_true(
     all.equal(
@@ -325,7 +325,7 @@ test_that("get_positions works properly", {
   sd <- simulate_flocker_data(augmented = TRUE)
   fd <- make_flocker_data(
     sd$obs, sd$unit_covs, sd$event_covs, 
-    type = "augmented", n_aug = 1)
+    type = "augmented", n_aug = 1, quiet = TRUE)
   ps <- get_positions(fd)
   expect_true(
     all.equal(
@@ -347,7 +347,7 @@ test_that("get_positions works properly", {
   sd <- simulate_flocker_data(augmented = TRUE, ragged_rep = TRUE)
   fd <- make_flocker_data(
     sd$obs, sd$unit_covs, sd$event_covs, 
-    type = "augmented", n_aug = 1)
+    type = "augmented", n_aug = 1, quiet = TRUE)
   ps <- get_positions(fd)
   expect_true(
     all.equal(
@@ -376,7 +376,7 @@ test_that("get_positions works properly", {
   )
   fd <- make_flocker_data(
     sd$obs, sd$unit_covs, sd$event_covs, 
-    type = "multi")
+    type = "multi", quiet = TRUE)
   ps <- get_positions(fd)
   expect_true(
     all.equal(
@@ -412,7 +412,7 @@ test_that("get_positions works properly", {
   suppressWarnings({
     fd <- make_flocker_data(
       sd$obs, sd$unit_covs, sd$event_covs, 
-      type = "multi")
+      type = "multi", quiet = TRUE)
   })
   ps <- get_positions(fd)
   expect_true(
@@ -449,7 +449,7 @@ test_that("get_positions works properly", {
   suppressWarnings({
     fd <- make_flocker_data(
       sd$obs, sd$unit_covs, sd$event_covs, 
-      type = "multi")
+      type = "multi", quiet = TRUE)
   })
 
   ps <- get_positions(fd)
@@ -584,14 +584,14 @@ test_that("Z_from_emission handles scalar inputs correctly", {
 })
 
 sd <- simulate_flocker_data()
-fd_single <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs)
-fd_single_C <- make_flocker_data(sd$obs, sd$unit_covs)
+fd_single <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs, quiet = TRUE)
+fd_single_C <- make_flocker_data(sd$obs, sd$unit_covs, quiet = TRUE)
 
 sd <- simulate_flocker_data(augmented = TRUE)
-fd_augmented <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs, type = "augmented", n_aug = 10)
+fd_augmented <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs, type = "augmented", n_aug = 10, quiet = TRUE)
 
 sd <- simulate_flocker_data(n_season = 3, multiseason = "colex", multi_init = "explicit")
-fd_multi <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs, type = "multi")
+fd_multi <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs, type = "multi", quiet = TRUE)
 
 test_that("validate_flock_params works as expected", {
   f_occ <- ~ uc1
@@ -695,7 +695,7 @@ test_that("is_flocker_data works", {
   expect_false(is_flocker_data(sfd))
   
   expect_true(
-    make_flocker_data(sfd$obs, sfd$unit_covs) |>
+    make_flocker_data(sfd$obs, sfd$unit_covs, quiet = TRUE) |>
       is_flocker_data()
   )
 })  

@@ -4,7 +4,7 @@ test_that("make_flocker_data works correctly", {
   unit_covs <- example_data$unit_covs
   event_covs <- example_data$event_covs
   
-  fd <- make_flocker_data(obs, unit_covs, event_covs)
+  fd <- make_flocker_data(obs, unit_covs, event_covs, quiet = TRUE)
   expect_equal(fd$type, "single")
   expect_equal(class(fd), c("list", "flocker_data"))
   expect_equal(names(fd), c("data", "n_rep", "type", "unit_covs", "event_covs"))
@@ -19,12 +19,12 @@ test_that("make_flocker_data works correctly", {
   expect_true(all(fd$data$y %in% c(0,1,-99)))
   
   event_covs[[1]] <- matrix(1:6000, ncol = 4)
-  fd <- make_flocker_data(obs, unit_covs, event_covs)
+  fd <- make_flocker_data(obs, unit_covs, event_covs, quiet = TRUE)
   expect_equal(fd$data$ec1, 1:6000)
   
   
   obs[2,4] <- NA
-  fd <- make_flocker_data(obs, unit_covs, event_covs)
+  fd <- make_flocker_data(obs, unit_covs, event_covs, quiet = TRUE)
   expect_equal(
     sum(fd$data[1:1500, c("ff_rep_index1", "ff_rep_index2", "ff_rep_index3")] - 
           matrix(1:4500, ncol = 3)), 0)
@@ -34,27 +34,27 @@ test_that("make_flocker_data works correctly", {
   expect_equal(fd$data$ec1[4501:5999], c(4501, 4503:6000))
   
   obs[,4] <- NA
-  expect_error(fd <- make_flocker_data(obs),
+  expect_error(fd <- make_flocker_data(obs, quiet = TRUE),
                  "The final column of obs contains only NAs.")
   
   obs <- array(obs, dim = c(nrow(obs), ncol(obs), 1))
-  expect_error(fd <- make_flocker_data(obs), 
+  expect_error(fd <- make_flocker_data(obs, quiet = TRUE), 
                "in a single-season model, obs must have exactly two dimensions")
   obs <- rep(1, 3000)
-  expect_error(fd <- make_flocker_data(obs), 
+  expect_error(fd <- make_flocker_data(obs, quiet = TRUE), 
                "in a single-season model, obs must have exactly two dimensions")
   obs <- matrix(rep(1, 3000), ncol=1)
-  expect_error(fd <- make_flocker_data(obs), 
+  expect_error(fd <- make_flocker_data(obs, quiet = TRUE), 
                "obs must contain at least two columns.")
   obs <- example_data$obs
   obs[1,1] <- 2
-  expect_error(fd <- make_flocker_data(obs))
+  expect_error(fd <- make_flocker_data(obs, quiet = TRUE))
   obs[1,1] <- NA
-  expect_error(fd <- make_flocker_data(obs), 
+  expect_error(fd <- make_flocker_data(obs, quiet = TRUE), 
                "obs has NAs in its first column")
   obs[1,1] <- 1
   obs[1,2] <- NA
-  expect_error(fd <- make_flocker_data(obs), 
+  expect_error(fd <- make_flocker_data(obs, quiet = TRUE), 
                "Some rows of obs have non-trailing NAs")
 
   # Still need to add checks for the rest of the error messages, and for proper error messages using rep-constant data

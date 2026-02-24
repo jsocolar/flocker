@@ -1,5 +1,5 @@
 test_that("get_Z gives valid returns", {
-  Z_single <- get_Z(example_flocker_model_single)
+  Z_single <- get_Z(example_flocker_model_single2)
   expect_true(all(Z_single >= 0))
   expect_true(all(Z_single <= 1))
   expect_true(any(Z_single == 1))
@@ -36,7 +36,7 @@ test_that("get_Z gives valid returns", {
   
   
   
-  Z_single_nohist <- get_Z(example_flocker_model_single, history_condition = FALSE)
+  Z_single_nohist <- get_Z(example_flocker_model_single2, history_condition = FALSE)
   expect_true(all(Z_single_nohist >= 0))
   expect_true(all(Z_single_nohist <= 1))
   expect_true(sum(Z_single == 1) > sum(Z_single_nohist == 1))
@@ -75,7 +75,7 @@ test_that("get_Z gives valid returns", {
 
 
 test_that("get_Z with sampling gives valid returns", {
-  Z_single <- get_Z(example_flocker_model_single, sample = TRUE)
+  Z_single <- get_Z(example_flocker_model_single2, sample = TRUE)
   expect_true(all(Z_single %in% c(0, 1, NA)))
   
   Z_single_C <- get_Z(example_flocker_model_single_C, sample = TRUE)
@@ -100,10 +100,10 @@ test_that("get_Z with sampling gives valid returns", {
 
 test_that("new_data works as expected", {
   fd1 <- simulate_flocker_data(n_sp = 5)
-  mfd1 <- make_flocker_data(fd1$obs, fd1$unit_covs, fd1$event_covs)
-  expect_silent(get_Z(example_flocker_model_single, new_data = mfd1))
-  expect_silent(get_Z(example_flocker_model_single, history_condition = FALSE, new_data = fd1$unit_covs))
-  expect_error(get_Z(example_flocker_model_single, history_condition = TRUE, new_data = fd1$unit_covs))
+  mfd1 <- make_flocker_data(fd1$obs, fd1$unit_covs, fd1$event_covs, quiet = TRUE)
+  expect_silent(get_Z(example_flocker_model_single2, new_data = mfd1))
+  expect_silent(get_Z(example_flocker_model_single2, history_condition = FALSE, new_data = fd1$unit_covs))
+  expect_error(get_Z(example_flocker_model_single2, history_condition = TRUE, new_data = fd1$unit_covs))
 })
 
 

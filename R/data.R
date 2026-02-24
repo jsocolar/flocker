@@ -1,8 +1,8 @@
-#' Example single-season flocker model
+#' Data for example single-season flocker model
 #'
-#' A fitted single-season occupancy model from flocker
+#' A flocker_data object for a single-season occupancy model
 #'
-#' @format ## `example_flocker_model_single`
+#' @format ## `mfd_single`
 #' A flocker_fit and brmsfit object
 #' @source data-raw/example_flocker_model.R
-"example_flocker_model_single"
+"mfd_single"

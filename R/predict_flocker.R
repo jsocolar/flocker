@@ -28,7 +28,7 @@
 #'     stacked along the final dimension.
 #' @export
 #' @examples 
-#' \donttest{
+#' \dontrun{
 #' unconditioned_preds <- predict_flocker(example_flocker_model_single)
 #' conditioned_preds <- predict_flocker(
 #'  example_flocker_model_single, 

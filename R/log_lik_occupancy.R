@@ -1,6 +1,14 @@
 #' Compute unit-wise or series-wise log-likelihood matrix for a flocker_fit object
 #' @param flocker_fit A flocker_fit object
-#' @param draw_ids the draw ids to compute log-likelihoods for. Defaults to using the full posterior. 
+#' @param new_data optional new data at which to compute log likelihood
+#' @param allow_new_levels allow new levels for random effect terms in 
+#'    'new_data'? Will error if set to 'FALSE' and new levels are provided in 
+#'    'new_data'.
+#' @param sample_new_levels If new_data is provided and contains random effect 
+#'    levels not present in the original data, how should predictions be 
+#'    handled? See '?brms::prepare_predictions' for options.
+#' @param draw_ids the draw ids to compute log-likelihoods for. Defaults to 
+#'    using the full posterior. 
 #' @return A posterior log-likelihood matrix, where iterations are rows and 
 #'    units, series, or species are columns.
 #' @details In single-season models, rows are units (e.g. points or 
@@ -10,9 +18,14 @@
 #'   for leave-one-species-out CV).
 #' @export
 #' @examples 
+#' \dontrun{
 #' log_lik_flocker(example_flocker_model_single)
+#' }
 
-log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
+log_lik_flocker <- function(
+    flocker_fit, new_data = NULL, allow_new_levels = FALSE,
+    sample_new_levels = "uncertainty", draw_ids = NULL
+    ) {
   assertthat::assert_that(is_flocker_fit(flocker_fit))
   ndraws <- brms::ndraws(flocker_fit)
   if(!is.null(draw_ids)){
@@ -23,20 +36,43 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
     ndraws <- length(draw_ids)
   }
   
+  if(!is.null(new_data)){
+    assertthat::assert_that(
+      is_flocker_data(new_data),
+      msg = paste0(
+        "new_data, if provided, must be a flocker_data object formatted ",
+        "by `make_flocker_data`"
+      )
+    )
+    a <- attributes(flocker_fit)
+    fit_datatype <- a$data_type
+    assertthat::assert_that(
+      new_data$type == fit_datatype,
+      msg = "the data type in new_data does not match the data type in flocker_fit"
+    )
+  }
   
   lik_type <- type_flocker_fit(flocker_fit)
   
   if (lik_type %in% c("single")) {
     lps <- fitted_flocker(
-      flocker_fit, draw_ids = draw_ids, new_data = NULL, allow_new_levels = FALSE, 
+      flocker_fit, draw_ids = draw_ids, new_data = new_data, 
+      allow_new_levels = allow_new_levels, 
+      sample_new_levels = sample_new_levels, 
       response = TRUE, unit_level = FALSE
     )
     
     psi_all <- lps$linpred_occ[ , 1, ] # first index is unit, second is visit, third is draw
     theta_all <- lps$linpred_det
+    if (is.null(new_data)) {
+      gp <- get_positions(flocker_fit)
+      the_data <- flocker_fit$data
+    } else {
+      gp <- get_positions(new_data)
+      the_data <- new_data$data
+    }
     
-    gp <- get_positions(flocker_fit)
-    obs <- new_matrix(gp, flocker_fit$data$ff_y[gp])
+    obs <- new_matrix(gp, the_data$ff_y[gp])
 
     # get emission likelihoods
     el_0 <- el_1 <- matrix(nrow = nrow(psi_all), ncol = ncol(psi_all))
@@ -51,13 +87,23 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
     ll <- log((psi_all * el_1) + (1 - psi_all) * el_0) |>
       t()
   } else if (lik_type == "single_C") {
-    ll <- brms::log_lik(flocker_fit, draw_ids = draw_ids)
+    ll <- brms::log_lik(
+      flocker_fit, newdata = new_data$data, draw_ids = draw_ids, #note that if new_data is NULL, new_data$data is also NULL
+      allow_new_levels = allow_new_levels,
+      sample_new_levels = sample_new_levels)
   } else if (lik_type == "augmented") {
-    gp <- get_positions(flocker_fit)
-    obs <- new_array(gp, flocker_fit$data$ff_y[gp])
-    
+    if(is.null(new_data)){
+      gp <- get_positions(flocker_fit)
+      obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+    } else {
+      gp <- get_positions(new_data)
+      obs <- new_array(gp, new_data$data$ff_y[gp])
+    }
+
     lps <- fitted_flocker(
-      flocker_fit, draw_ids = draw_ids, new_data = NULL, allow_new_levels = FALSE, 
+      flocker_fit, draw_ids = draw_ids, new_data = new_data, 
+      allow_new_levels = allow_new_levels, 
+      sample_new_levels = sample_new_levels, 
       response = TRUE, unit_level = FALSE
     )
     psi_all <- lps$linpred_occ[ , 1, , ] # first index is point, second is visit, third is species, fourth is draw
@@ -66,10 +112,7 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
 
     # get emission likelihoods
     el_0 <- el_1 <- new_array(psi_all)
-    message("computing emission probabilities")
-    pb <- utils::txtProgressBar(max = ncol(psi_all))
     for(j in seq_len(ncol(psi_all))){
-      utils::setTxtProgressBar(pb, j)
       for(i in seq_len(nslice(psi_all))){
         el_0[ , j, i] <- emission_likelihood(0, obs[,,j], theta_all[,,j,i])
         el_1[ , j, i] <- emission_likelihood(1, obs[,,j], theta_all[,,j,i])
@@ -82,15 +125,26 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
     ll <- log(elw1 * Omega + elw0 * (1 - Omega)) |>
       t()
   } else if (lik_type %in% c("multi_colex")) {
-    gp <- get_positions(flocker_fit)
-    obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+    if(is.null(new_data)){
+      gp <- get_positions(flocker_fit)
+      obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+    } else {
+      gp <- get_positions(new_data)
+      obs <- new_array(gp, new_data$data$ff_y[gp])
+    }
     
     lps1 <- fitted_flocker(
       flocker_fit, components = c("det"),
+      new_data = new_data,
+      allow_new_levels = allow_new_levels,
+      sample_new_levels = sample_new_levels,
       draw_ids = draw_ids
     )
     lps2 <- fitted_flocker(
       flocker_fit, components = c("occ", "colo", "ex"),
+      new_data = new_data,
+      allow_new_levels = allow_new_levels,
+      sample_new_levels = sample_new_levels,
       draw_ids = draw_ids, unit_level = TRUE
     )
     init <- lps2$linpred_occ[,1,]
@@ -100,15 +154,26 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
     ll <- log_lik_dynamic(init, colo, ex, obs, det) |>
       t()
   } else if (lik_type %in% c("multi_colex_eq")) {
-    gp <- get_positions(flocker_fit)
-    obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+    if(is.null(new_data)){
+      gp <- get_positions(flocker_fit)
+      obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+    } else {
+      gp <- get_positions(new_data)
+      obs <- new_array(gp, new_data$data$ff_y[gp])
+    }
     
     lps1 <- fitted_flocker(
       flocker_fit, components = c("det"),
+      new_data = new_data,
+      allow_new_levels = allow_new_levels,
+      sample_new_levels = sample_new_levels,
       draw_ids = draw_ids
     )
     lps2 <- fitted_flocker(
       flocker_fit, components = c("col", "ex"),
+      new_data = new_data,
+      allow_new_levels = allow_new_levels,
+      sample_new_levels = sample_new_levels,
       draw_ids = draw_ids, unit_level = TRUE
     )
     colo <- lps2$linpred_col
@@ -118,14 +183,26 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
     ll <- log_lik_dynamic(init, colo, ex, obs, det) |>
       t()
   } else if (lik_type == "multi_autologistic") {
-    gp <- get_positions(flocker_fit)
-    obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+    if(is.null(new_data)){
+      gp <- get_positions(flocker_fit)
+      obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+    } else {
+      gp <- get_positions(new_data)
+      obs <- new_array(gp, new_data$data$ff_y[gp])
+    }
     
-    lps1 <- fitted_flocker(flocker_fit, components = c("det"), 
-                           draw_ids = draw_ids
+    lps1 <- fitted_flocker(
+      flocker_fit, components = c("det"), 
+      new_data = new_data,
+      allow_new_levels = allow_new_levels,
+      sample_new_levels = sample_new_levels,
+      draw_ids = draw_ids
     )
     lps2 <- fitted_flocker(
       flocker_fit, components = c("occ", "colo", "auto"),
+      new_data = new_data,
+      allow_new_levels = allow_new_levels,
+      sample_new_levels = sample_new_levels,
       draw_ids = draw_ids, unit_level = TRUE
     )
     init <- lps2$linpred_occ[,1,]
@@ -135,14 +212,26 @@ log_lik_flocker <- function(flocker_fit, draw_ids = NULL) {
     ll <- log_lik_dynamic(init, colo, ex, obs, det) |>
       t()
   } else if (lik_type == "multi_autologistic_eq") {
-    gp <- get_positions(flocker_fit)
-    obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+    if(is.null(new_data)){
+      gp <- get_positions(flocker_fit)
+      obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+    } else {
+      gp <- get_positions(new_data)
+      obs <- new_array(gp, new_data$data$ff_y[gp])
+    }
     
-    lps1 <- fitted_flocker(flocker_fit, components = c("det"), 
-                           draw_ids = draw_ids
+    lps1 <- fitted_flocker(
+      flocker_fit, components = c("det"), 
+      new_data = new_data,
+      allow_new_levels = allow_new_levels,
+      sample_new_levels = sample_new_levels,
+      draw_ids = draw_ids
     )
     lps2 <- fitted_flocker(
       flocker_fit, components = c("col", "auto"),
+      new_data = new_data,
+      allow_new_levels = allow_new_levels,
+      sample_new_levels = sample_new_levels,
       draw_ids = draw_ids, unit_level = TRUE
     )
     colo <- lps2$linpred_col

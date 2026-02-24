@@ -1,12 +1,14 @@
 sd <- simulate_flocker_data()
-fd_single <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs)
+fd_single <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs, quiet = TRUE)
 fd_single_C <- make_flocker_data(sd$obs, sd$unit_covs)
 
 sd <- simulate_flocker_data(augmented = TRUE)
-fd_augmented <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs, type = "augmented", n_aug = 10)
+fd_augmented <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs, type = "augmented", n_aug = 10,
+                                  quiet = TRUE)
 
 sd <- simulate_flocker_data(n_season = 3, multiseason = "colex", multi_init = "explicit")
-fd_multi <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs, type = "multi")
+fd_multi <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs, type = "multi",
+                              quiet = TRUE)
 
 
 test_that("flocker_stancode works as expected", {

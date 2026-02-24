@@ -1,6 +1,6 @@
 Package: flocker
 Title: Flexible Occupancy Estimation with Stan
-Version: 1.0-1
+Version: 1.0-2
 Authors@R: c(
     person("Jacob B.", "Socolar", , "jacob.socolar@gmail.com", role = c("aut", "cre", "cph")),
     person("Simon C.", "Mills", role = "aut"),
@@ -49,5 +49,6 @@ VignetteBuilder:
     knitr
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.3
+LazyDataCompression: xz
+RoxygenNote: 7.3.3
 Language: en-US
