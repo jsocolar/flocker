@@ -28,14 +28,53 @@
 #'   be simulated without any covariate influence on occupancy.
 #' @param rep_constant logical: create data with unit covariates only (TRUE) 
 #'   or data that includes event covariates (FALSE)
-#' @param params a named list containing of parameter values to use in simulation.
-#'   Any required parameters whose names are not in this list will be assigned their
-#'   default values. To see the parameter names and structures required, run with 
-#'   `params = NULL` (the default) and examine the `$params` element of the output.
-#' @param covariates a dataframe of covariate values to use in simulation, or
-#'   NULL to simulate values. To see the covariate names and structures required,
-#'   run with `covariates = NULL` (the default) and examine the `$covariates` element
-#'   of the output.
+#' @param params A named list controlling the coefficients used to generate the
+#'   latent occupancy state and detections. Supported names are:
+#'   \itemize{
+#'     \item \code{coefs}: A numeric data.frame of per-species coefficient
+#'       values. Must have \code{n_sp} rows and
+#'       one column for each coefficient required by the requested model type.
+#'       Column names must match the required set (order does not matter).
+#'       If supplied, \code{coef_means} and \code{Sigma} must not be supplied.
+#'     \item \code{coef_means}: Numeric vector of length \code{n_coef} giving the
+#'       mean of the multivariate normal distribution used to simulate per-species
+#'       coefficients when \code{coefs} is not supplied.
+#'     \item \code{Sigma}: Numeric \code{n_coef x n_coef} symmetric covariance
+#'       matrix for the multivariate normal distribution used to simulate per-species
+#'       coefficients when \code{coefs} is not supplied.
+#'   }
+#'
+#'   If \code{params = NULL} (the default), coefficients are simulated from a
+#'   multivariate normal prior with \code{coef_means = rep(0, n_coef)} and a
+#'   default \code{Sigma}. The dimension \code{n_coef} and the required coefficient
+#'   names depend on the requested model type:
+#'   \describe{
+#'     \item{Always}{\code{det_intercept}, \code{det_slope_unit}}
+#'     \item{If \code{rep_constant = FALSE}}{\code{det_slope_visit}}
+#'     \item{If \code{n_season == 1} or \code{multi_init == "explicit"}}{\code{occ_intercept}}
+#'     \item{If \code{n_season == 1} or \code{multi_init == "explicit"}, and \code{augmented = FALSE}}{\code{occ_slope_unit}}
+#'     \item{If \code{n_season > 1}}{\code{col_intercept}, \code{col_slope_unit}}
+#'     \item{If \code{multiseason == "colex"}}{\code{ex_intercept}, \code{ex_slope_unit}}
+#'     \item{If \code{multiseason == "autologistic"}}{\code{auto_intercept}, \code{auto_slope_unit}}
+#'   }
+#'
+#'   Notes:
+#'   \itemize{
+#'     \item When \code{augmented = TRUE}, \code{occ_slope_unit} is not used and
+#'       occupancy is simulated with no covariate effect.
+#'     \item Any names in \code{params} other than \code{coefs}, \code{coef_means},
+#'       and \code{Sigma} are rejected with an error.
+#'   }
+#' @param covariates A named list of realized covariate values to use in the 
+#'   simulation. Supported names are:
+#'   \itemize{
+#'     \item \code{uc1}: numeric vector of length \code{n_pt} giving the unit-level covariate.
+#'     \item \code{ec1}: numeric vector of length \code{n_pt * n_season * n_rep}
+#'       giving the event-level covariate (ignored if \code{rep_constant = TRUE}).
+#'   }
+#'   If \code{NULL} (the default), covariates are simulated internally from 
+#'   standard normal distributions.
+#'   \code{ec1} is assumed not to vary by species.
 #' @param seed random seed. NULL uses (and updates) the existing RNG state. Other values
 #'   do not update the global RNG state.
 #' @param ragged_rep logical: create data with variable (TRUE) or constant 
@@ -80,7 +119,7 @@ simulate_flocker_data <- function(
   )
   assertthat::assert_that(
     is.null(multi_init) | isTRUE(multi_init %in% c("explicit", "equilibrium")),
-    msg = "multiseason must be NULL, 'explicit', or 'equilibrium'"
+    msg = "multi_init must be NULL, 'explicit', or 'equilibrium'"
   )
   assertthat::assert_that(is_one_logical(augmented), msg = "augmented must be a single logical")
   assertthat::assert_that(is_one_logical(rep_constant), msg = "rep_constant must be a single logical")
@@ -160,6 +199,72 @@ sfd <- function(
   # If coefs not specified directly, simulate from the prior (either passed via
   # params or otherwise the default prior).
   n_coef <- length(coef_names)
+  
+  np <- names(params)
+  
+  # Disallow unknown params keys (they don't affect simulation)
+  allowed_keys <- c("coefs", "coef_means", "Sigma")
+  unknown_keys <- setdiff(np, allowed_keys)
+  if (length(unknown_keys) > 0) {
+    stop(
+      "simulate_flocker_data(): 'params' contains unsupported names that are ignored: ",
+      paste(unknown_keys, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  
+  if ("coefs" %in% np) {
+    if ("coef_means" %in% np || "Sigma" %in% np) {
+      stop(
+        "simulate_flocker_data(): if params$coefs is provided, do not also provide ",
+        "params$coef_means or params$Sigma (they would be ignored).",
+        call. = FALSE
+      )
+    }
+    
+    assertthat::assert_that(
+      is.data.frame(params$coefs),
+      msg = "params$coefs, if provided, must be a data.frame"
+    )
+    assertthat::assert_that(
+      nrow(params$coefs) == n_sp,
+      msg = "params$coefs, if provided, must have n_sp rows (one per species)"
+    )
+    assertthat::assert_that(
+      all(vapply(params$coefs, is.numeric, logical(1))),
+      msg = "params$coefs must have all-numeric columns"
+    )
+    assertthat::assert_that(
+      setequal(colnames(params$coefs), coef_names),
+      msg = "params$coefs must contain exactly the required coefficient names"
+    )
+    
+    params$coefs <- params$coefs[, coef_names, drop = FALSE]
+  } else {
+    # If coefs absent, validate coef_means/Sigma if present
+    if ("coef_means" %in% np) {
+      assertthat::assert_that(
+        length(params$coef_means) == length(coef_names),
+        msg = "params$coef_means must have length equal to the number of coefficients"
+      )
+    }
+    if ("Sigma" %in% np) {
+      assertthat::assert_that(
+        is.matrix(params$Sigma),
+        nrow(params$Sigma) == length(coef_names),
+        ncol(params$Sigma) == length(coef_names),
+        msg = "params$Sigma must be an n_coef x n_coef matrix"
+      )
+      assertthat::assert_that(
+        isTRUE(all.equal(params$Sigma, t(params$Sigma))),
+        msg = "params$Sigma must be symmetric"
+      )
+      
+      # could add a check for PSD here, but for now we'll rely on errors from MASS::mvnorm
+    }
+  }
+  
+  
   np <- names(params)
   if (!("coefs" %in% np)) { # coef values not specified directly
     if (!("coef_means" %in% np)) {
@@ -194,9 +299,15 @@ sfd <- function(
 
     names(params$coefs) <- coef_names
   }
+  
+  # Ensure all required coefficient names are present (order irrelevant)
   assertthat::assert_that(
-    identical(names(params$coefs), coef_names)
+    setequal(names(params$coefs), coef_names),
+    msg = "params$coefs must contain exactly the required coefficient names"
   )
+  
+  # Reorder columns into canonical order
+  params$coefs <- params$coefs[, coef_names, drop = FALSE]
   coefs <- params$coefs
   
   # Create covariates (currently assume that unit covariates are the same
@@ -208,6 +319,13 @@ sfd <- function(
   if(is.null(covariates)) {
     covariates <- list(
       uc1 = stats::rnorm(n_pt)[unit_backbone$id_point]
+    )
+  } else {
+    assertthat::assert_that(is.list(covariates), msg = "covariates must be a named list")
+    assertthat::assert_that("uc1" %in% names(covariates), msg = "covariates must include uc1")
+    assertthat::assert_that(
+      is.numeric(covariates$uc1) && length(covariates$uc1) == n_pt,
+      msg = "covariates$uc1 must be numeric of length n_pt"
     )
   }
   
@@ -285,7 +403,12 @@ sfd <- function(
     coefs$det_slope_unit[as.integer(visit_full$species)] * visit_full$uc1
   
   if (!rep_constant) {
-    if (!("ec1" %in% names(covariates))) {
+    if ("ec1" %in% names(covariates)) {
+      assertthat::assert_that(
+        is.numeric(covariates$ec1) && length(covariates$ec1) == n_pt * n_season * n_rep,
+        msg = "covariates$ec1 must be numeric of length n_pt * n_season * n_rep"
+      )
+    } else {
       covariates$ec1 <- stats::rnorm(n_pt*n_season*n_rep)[ # we don't allow ec1 to vary by species;
         # this allows the covariate to play nicely with augmented models.
         

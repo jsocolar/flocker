@@ -18,14 +18,12 @@ params:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
-```{r display_params}
-params <- list(
-  n_sims = 1000,
-  n_sites = 200,
-  n_sims_augmented = 200,
-  n_sites_augmented = 50,
-  n_pseudospecies_augmented = 50
+### Rmd parameters
+```{r display_params, echo = FALSE}
+data.frame(
+  Parameter = names(params),
+  value = unlist(params, use.names = FALSE),
+  row.names = NULL
 )
 
 ```
@@ -290,17 +288,19 @@ writeLines(scode, model_name)
 
 colex_ex_generator <- function(N){  
   fd <- simulate_flocker_data(
-    n_pt = params$n_sites, n_sp = 1, n_season = 4,
+    n_pt = N, n_sp = 1, n_season = 4,
     params = list(
+      coefs = data.frame(
         det_intercept = rnorm(1),
         det_slope_unit = rnorm(1),
         det_slope_visit = rnorm(1),
         occ_intercept = rnorm(1),
         occ_slope_unit = rnorm(1),
-        colo_intercept = rnorm(1),
-        colo_slope_unit = rnorm(1),
+        col_intercept = rnorm(1),
+        col_slope_unit = rnorm(1),
         ex_intercept = rnorm(1),
         ex_slope_unit = rnorm(1)
+        )
     ),
     seed = NULL,
     rep_constant = FALSE,
@@ -367,15 +367,17 @@ plot_ecdf_diff(colex_ex_results)
 model_name <- paste0(tempdir(), "/sbc_colex_eq_model.stan")
 fd <- simulate_flocker_data(
   n_pt = params$n_sites, n_sp = 1, n_season = 4,
-  params = list(
-      det_intercept = rnorm(1),
-      det_slope_unit = rnorm(1),
-      det_slope_visit = rnorm(1),
-      colo_intercept = rnorm(1),
-      colo_slope_unit = rnorm(1),
-      ex_intercept = rnorm(1),
-      ex_slope_unit = rnorm(1)
-  ),
+    params = list(
+      coefs = data.frame(
+        det_intercept = rnorm(1),
+        det_slope_unit = rnorm(1),
+        det_slope_visit = rnorm(1),
+        col_intercept = rnorm(1),
+        col_slope_unit = rnorm(1),
+        ex_intercept = rnorm(1),
+        ex_slope_unit = rnorm(1)
+        )
+    ),
   seed = NULL,
   rep_constant = FALSE,
   multiseason = "colex",
@@ -403,8 +405,9 @@ writeLines(scode, model_name)
 
 colex_eq_generator <- function(N){  
   fd <- simulate_flocker_data(
-    n_pt = params$n_sites, n_sp = 1, n_season = 4,
+    n_pt = N, n_sp = 1, n_season = 4,
     params = list(
+      coefs = data.frame(
         det_intercept = rnorm(1),
         det_slope_unit = rnorm(1),
         det_slope_visit = rnorm(1),
@@ -412,6 +415,7 @@ colex_eq_generator <- function(N){
         col_slope_unit = rnorm(1),
         ex_intercept = rnorm(1),
         ex_slope_unit = rnorm(1)
+        )
     ),
     seed = NULL,
     rep_constant = FALSE,
@@ -475,17 +479,19 @@ plot_ecdf_diff(colex_eq_results)
 model_name <- paste0(tempdir(), "/sbc_auto_ex_model.stan")
 fd <- simulate_flocker_data(
   n_pt = params$n_sites, n_sp = 1, n_season = 4,
-  params = list(
-      det_intercept = rnorm(1),
-      det_slope_unit = rnorm(1),
-      det_slope_visit = rnorm(1),
-      occ_intercept = rnorm(1),
-      occ_slope_unit = rnorm(1),
-      col_intercept = rnorm(1),
-      col_slope_unit = rnorm(1),
-      auto_intercept = rnorm(1),
-      auto_slope_unit = rnorm(1)
-  ),
+    params = list(
+      coefs = data.frame(
+        det_intercept = rnorm(1),
+        det_slope_unit = rnorm(1),
+        det_slope_visit = rnorm(1),
+        occ_intercept = rnorm(1),
+        occ_slope_unit = rnorm(1),
+        col_intercept = rnorm(1),
+        col_slope_unit = rnorm(1),
+        auto_intercept = rnorm(1),
+        auto_slope_unit = rnorm(1)
+        )
+    ),
   seed = NULL,
   rep_constant = FALSE,
   multiseason = "autologistic",
@@ -515,17 +521,19 @@ writeLines(scode, model_name)
 
 auto_ex_generator <- function(N){  
   fd <- simulate_flocker_data(
-    n_pt = params$n_sites, n_sp = 1, n_season = 4,
+    n_pt = N, n_sp = 1, n_season = 4,
     params = list(
+      coefs = data.frame(
         det_intercept = rnorm(1),
         det_slope_unit = rnorm(1),
         det_slope_visit = rnorm(1),
         occ_intercept = rnorm(1),
         occ_slope_unit = rnorm(1),
-        colo_intercept = rnorm(1),
-        colo_slope_unit = rnorm(1),
+        col_intercept = rnorm(1),
+        col_slope_unit = rnorm(1),
         auto_intercept = rnorm(1),
         auto_slope_unit = rnorm(1)
+        )
     ),
     seed = NULL,
     rep_constant = FALSE,
@@ -592,13 +600,17 @@ plot_ecdf_diff(auto_ex_results)
 model_name <- paste0(tempdir(), "/sbc_auto_eq_model.stan")
 fd <- simulate_flocker_data(
   n_pt = params$n_sites, n_sp = 1, n_season = 4,
-  params = list(
-      det_intercept = rnorm(1),
-      det_slope_unit = rnorm(1),
-      det_slope_visit = rnorm(1),
-      auto_intercept = rnorm(1),
-      auto_slope_unit = rnorm(1)
-  ),
+    params = list(
+      coefs = data.frame(
+        det_intercept = rnorm(1),
+        det_slope_unit = rnorm(1),
+        det_slope_visit = rnorm(1),
+        col_intercept = rnorm(1),
+        col_slope_unit = rnorm(1),
+        auto_intercept = rnorm(1),
+        auto_slope_unit = rnorm(1)
+        )
+    ),
   seed = NULL,
   rep_constant = FALSE,
   multiseason = "autologistic",
@@ -626,8 +638,9 @@ writeLines(scode, model_name)
 
 auto_eq_generator <- function(N){  
   fd <- simulate_flocker_data(
-    n_pt = params$n_sites, n_sp = 1, n_season = 4,
+    n_pt = N, n_sp = 1, n_season = 4,
     params = list(
+      coefs = data.frame(
         det_intercept = rnorm(1),
         det_slope_unit = rnorm(1),
         det_slope_visit = rnorm(1),
@@ -635,6 +648,7 @@ auto_eq_generator <- function(N){
         col_slope_unit = rnorm(1),
         auto_intercept = rnorm(1),
         auto_slope_unit = rnorm(1)
+        )
     ),
     seed = NULL,
     rep_constant = FALSE,
@@ -701,23 +715,21 @@ model_name <- paste0(tempdir(), "/sbc_augmented_model.stan")
 omega <- boot::inv.logit(rnorm(1, 0, .1))
 available <- rbinom(1, params$n_pseudospecies_augmented, omega)
 unavailable <- params$n_pseudospecies_augmented - available
-coef_means <- rnorm(5) # normal prior on random effect means
-sigma <- abs(rnorm(5)) # half-normal prior on all random effect sds
-Sigma <- diag(5) * sigma
+
+coef_means <- rnorm(5)        # population-level effects (std_normal)
+sigma <- abs(rnorm(5))        # half-normal(0,1) for sd parameters
+
+coefs_df <- data.frame(
+  det_intercept  = rnorm(available, coef_means[1], sigma[1]),
+  det_slope_unit = rnorm(available, coef_means[2], sigma[2]),
+  det_slope_visit= rnorm(available, coef_means[3], sigma[3]),
+  occ_intercept  = rnorm(available, coef_means[4], sigma[4]),
+  occ_slope_unit = rnorm(available, coef_means[5], sigma[5])
+)
 
 fd <- simulate_flocker_data(
   n_pt = params$n_sites_augmented, n_sp = available,
-  params = list(
-    coef_means = coef_means,
-    Sigma = Sigma,
-    coefs = data.frame(
-      det_intercept = rnorm(available, coef_means[1], sigma[1]),
-      det_slope_unit = rnorm(available, coef_means[2], sigma[2]),
-      det_slope_visit = rnorm(available, coef_means[3], sigma[3]),
-      occ_intercept = rnorm(available, coef_means[4], sigma[4]),
-      occ_slope_unit = rnorm(available, coef_means[5], sigma[5])
-    )
-  ),
+  params = list(coefs = coefs_df),
   seed = NULL,
   rep_constant = FALSE,
   ragged_rep = TRUE
@@ -760,54 +772,54 @@ aug_generator <- function(N){
   omega <- boot::inv.logit(rnorm(1, 0, .1))
   available <- rbinom(1, params$n_pseudospecies_augmented, omega)
   unavailable <- params$n_pseudospecies_augmented - available
-  coef_means <- rnorm(5) # normal prior on random effect means
-  sigma <- abs(rnorm(5)) # half-normal prior on all random effect sds
-  Sigma <- diag(5) * sigma
-  
+
+  coef_means <- rnorm(5)
+  sigma <- abs(rnorm(5))
+
+  coefs_df <- data.frame(
+    det_intercept   = rnorm(available, coef_means[1], sigma[1]),
+    det_slope_unit  = rnorm(available, coef_means[2], sigma[2]),
+    det_slope_visit = rnorm(available, coef_means[3], sigma[3]),
+    occ_intercept   = rnorm(available, coef_means[4], sigma[4]),
+    occ_slope_unit  = rnorm(available, coef_means[5], sigma[5])
+  )
+
   fd <- simulate_flocker_data(
     n_pt = params$n_sites_augmented, n_sp = available,
-    params = list(
-      coef_means = coef_means,
-      Sigma = Sigma,
-      coefs = data.frame(
-        det_intercept = rnorm(available, coef_means[1], sigma[1]),
-        det_slope_unit = rnorm(available, coef_means[2], sigma[2]),
-        det_slope_visit = rnorm(available, coef_means[3], sigma[3]),
-        occ_intercept = rnorm(available, coef_means[4], sigma[4]),
-        occ_slope_unit = rnorm(available, coef_means[5], sigma[5])
-      )
-    ),
+    params = list(coefs = coefs_df),
     seed = NULL,
     rep_constant = FALSE,
     ragged_rep = TRUE
   )
-  
+
   obs_aug <- fd$obs[seq_len(params$n_sites_augmented), ]
-  
   for(i in 2:available){
     obs_aug <- abind::abind(
       obs_aug, 
       fd$obs[((i - 1) * params$n_sites_augmented) + seq_len(params$n_sites_augmented), ], 
       along = 3
-      )
+    )
   }
-  
+
   event_covs_aug <- list(ec1 = fd$event_covs$ec1[seq_len(params$n_sites_augmented), ])
   unit_covs_aug <- data.frame(uc1 = fd$unit_covs[seq_len(params$n_sites_augmented), "uc1"])
-  
-  flocker_data = make_flocker_data(
+
+  flocker_data <- make_flocker_data(
     obs_aug, unit_covs_aug, event_covs_aug,
     type = "augmented", n_aug = unavailable,
-    quiet = TRUE)
-  # format for return
+    quiet = TRUE
+  )
+
   list(
     variables = list(
-      `b[1]` = fd$params$coef_means[1],
-      `b[2]` = fd$params$coef_means[2],
-      `b[3]` = fd$params$coef_means[3],
-      `b_occ[1]` = fd$params$coef_means[4],
-      `b_occ[2]` = fd$params$coef_means[5],
+      `b[1]` = coef_means[1],
+      `b[2]` = coef_means[2],
+      `b[3]` = coef_means[3],
+      `b_occ[1]` = coef_means[4],
+      `b_occ[2]` = coef_means[5],
       `Intercept_Omega` = boot::logit(omega)
+      # Optional but recommended for “fuller” SBC on the augmented model:
+      # `sd_1[1]` = sigma[1], ...
     ),
     generated = flocker_standata(
       f_occ = ~ 0 + Intercept + uc1 + (1 + uc1 || ff_species),
