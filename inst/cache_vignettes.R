@@ -5,6 +5,7 @@ if (!file.exists("DESCRIPTION")) {
 suppressPackageStartupMessages({
   library(withr)
   library(knitr)
+  library(rmarkdown)
 })
 
 find_pkg_root <- function() {
@@ -22,9 +23,10 @@ pkg_root <- find_pkg_root()
 vigs <- list(
   c("vignettes/augmented_models.Rmd.orig", "vignettes/augmented_models.Rmd"),
   c("vignettes/flocker_tutorial.Rmd.orig", "vignettes/flocker_tutorial.Rmd"),
-  c("vignettes/nonlinear_models.Rmd.orig", "vignettes/nonlinear_models.Rmd.orig"), # (if desired)
   c("vignettes/nonlinear_models.Rmd.orig", "vignettes/nonlinear_models.Rmd"),
-  c("vignettes/articles/sbc.Rmd.orig", "vignettes/articles/sbc.Rmd")
+  c("vignettes/articles/sbc.Rmd.orig", "vignettes/articles/sbc.Rmd"),
+  c("vignettes/articles/sbc_multi.Rmd.orig", "vignettes/articles/sbc_multi.Rmd"),
+  c("vignettes/articles/sbc_aug.Rmd.orig", "vignettes/articles/sbc_aug.Rmd")
 )
 
 with_dir(pkg_root, {
@@ -44,15 +46,74 @@ with_dir(pkg_root, {
     }
     
     message("Knitting ", infile, " -> ", outfile)
-    knitr::knit(infile, output = outfile, envir = globalenv())
+    
+    env <- new.env(parent = globalenv())
+    env$params <- rmarkdown::yaml_front_matter(infile)$params
+    
+    knitr::knit(infile, output = outfile, envir = env)
   }
   
-  knit_one(vigs[[1]][1], vigs[[1]][2])
-  knit_one(vigs[[2]][1], vigs[[2]][2])
-  knit_one(vigs[[4]][1], vigs[[4]][2])
+  for(i in 1:3){
+    knit_one(vigs[[i]][[1]], vigs[[i]][[2]])
+  }
+  for(i in 4:6){
+    # SBC: force figures into man/figures/sbc_vignette
+    knit_one(vigs[[i]][[1]], vigs[[i]][[2]], fig_path = "man/figures/sbc_vignette")
+  }
+
+})
+
+# ---- Post-process cached articles to fix figure paths (Pandoc resolves relative
+# paths from the input document directory, so vignettes/articles/* need ../man/...) ----
+
+fix_article_fig_paths <- function(rmd_path,
+                                  from = "man/figures/sbc_vignette/",
+                                  to   = "../../man/figures/sbc_vignette/") {
+  # Only makes changes if the file exists and actually contains the "from" string,
+  # and avoids double-prepending if it already has "../".
+  stopifnot(length(rmd_path) == 1)
   
-  # SBC: force figures into man/figures/sbc_vignette
-  knit_one(vigs[[5]][1], vigs[[5]][2], fig_path = "man/figures/sbc_vignette")
+  if (!file.exists(rmd_path)) {
+    warning("Skipping missing file: ", rmd_path)
+    return(invisible(FALSE))
+  }
+  
+  lines <- readLines(rmd_path, warn = FALSE)
+  
+  # 1) HTML: <img src="man/figures/...">
+  # Replace src="man/figures/..." but NOT src="../man/figures/..."
+  lines2 <- gsub(
+    pattern = paste0('src="', from),
+    replacement = paste0('src="', to),
+    x = lines,
+    fixed = TRUE
+  )
+  
+  # 2) Markdown: ![](man/figures/...)
+  # Replace (man/figures/...) but NOT (../man/figures/...)
+  lines2 <- gsub(
+    pattern = paste0("](", from),
+    replacement = paste0("](", to),
+    x = lines2,
+    fixed = TRUE
+  )
+  
+  changed <- !identical(lines, lines2)
+  if (changed) {
+    writeLines(lines2, rmd_path)
+    message("Rewrote figure paths in ", rmd_path)
+  } else {
+    message("No figure paths to rewrite in ", rmd_path)
+  }
+  
+  invisible(changed)
+}
+
+# Apply to the cached article outputs (the .Rmd files, not the .orig)
+article_outfiles <- vapply(vigs[4:6], `[[`, character(1), 2)
+
+with_dir(pkg_root, {
+  for (f in article_outfiles) fix_article_fig_paths(f)
 })
 
 message("Done.")

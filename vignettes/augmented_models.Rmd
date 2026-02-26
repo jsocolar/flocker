@@ -68,21 +68,21 @@ summary(fm)
 #> Multilevel Hyperparameters:
 #> ~ff_species (Number of levels: 128) 
 #>                    Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-#> sd(Intercept)          1.62      0.29     1.15     2.27 1.01      772     1742
-#> sd(uc1)                0.26      0.11     0.07     0.50 1.00     1195     1230
-#> sd(ec1)                0.39      0.09     0.23     0.60 1.00     1818     2758
-#> sd(occ_Intercept)      1.55      0.29     1.09     2.21 1.01      783     1409
-#> cor(Intercept,uc1)     0.75      0.22     0.15     0.98 1.00     2272     2469
-#> cor(Intercept,ec1)     0.57      0.19     0.13     0.87 1.00     2700     2839
-#> cor(uc1,ec1)           0.60      0.25    -0.02     0.94 1.00      970     2089
+#> sd(Intercept)          1.58      0.27     1.15     2.19 1.00      961     1454
+#> sd(uc1)                0.25      0.11     0.06     0.49 1.00     1244     1032
+#> sd(ec1)                0.39      0.09     0.23     0.58 1.00     2281     2648
+#> sd(occ_Intercept)      1.60      0.33     1.10     2.38 1.00      912     1233
+#> cor(Intercept,uc1)     0.74      0.22     0.15     0.98 1.00     2157     2522
+#> cor(Intercept,ec1)     0.56      0.20     0.10     0.86 1.00     2935     2678
+#> cor(uc1,ec1)           0.57      0.27    -0.07     0.94 1.00      793     1486
 #> 
 #> Regression Coefficients:
 #>                 Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-#> Intercept           0.46      0.33    -0.25     1.11 1.02      400      810
-#> occ_Intercept       0.29      0.33    -0.38     0.90 1.01      622     1188
-#> Omega_Intercept    -1.27      0.22    -1.69    -0.86 1.00     7937     2655
-#> uc1                 0.01      0.08    -0.15     0.15 1.00      827     1825
-#> ec1                 0.07      0.09    -0.12     0.25 1.01      957     1780
+#> Intercept           0.48      0.31    -0.14     1.10 1.01      351      528
+#> occ_Intercept       0.24      0.34    -0.47     0.89 1.01      525     1094
+#> Omega_Intercept    -1.27      0.22    -1.70    -0.85 1.00     7528     3124
+#> uc1                 0.01      0.07    -0.14     0.16 1.00      797     1472
+#> ec1                 0.07      0.09    -0.10     0.25 1.00     1082     1803
 #> 
 #> Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
 #> and Tail_ESS are effective sample size measures, and Rhat is the potential

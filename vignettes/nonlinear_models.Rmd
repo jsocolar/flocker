@@ -1,7 +1,7 @@
 ---
 title: "Nonlinear models in flocker"
 author: "Jacob Socolar"
-date: "2023-10-21"
+date: "2026-02-24"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Nonlinear models in flocker}
@@ -23,10 +23,10 @@ details.
 
 This vignette focuses on more complicated nonlinear models that require the use
 of special nonlinear `brms` formulas. We showcase two models. The first fits
-a parametric nonlinear predictor. The second fits a model with a spatially
+a parameteric nonlinear predictor. The second fits a model with a spatially
 varying coefficient that is given a gaussian process prior.
 
-## Parametric nonlinear predictor
+## Parameteric nonlinear predictor
 In this scenario, we consider a model where the response is a specific nonlinear 
 parametric function whose parameters are fitted and might or might not depend on covariates. Suppose for example that an expanding population of a territorial 
 species undergoes logistic growth, and also that some unknown proportion of 
@@ -38,7 +38,7 @@ inflection point. At multiple discrete times, we randomly sample several sites
 to survey, and survey each of those sites over several repeat visits.
 
 
-```r
+``` r
 library(flocker); library(brms)
 set.seed(3)
 
@@ -65,6 +65,7 @@ fd <- make_flocker_data(
   unit_covs = data.frame(t = data[,c("t")]),
   event_covs <- list(dummy = matrix(rnorm(n_visit*nrow(data)), ncol = 3))
 )
+
 ```
 
 We wish to fit an occupancy model that recovers the unknown parameters $L$, $k$, 
@@ -96,7 +97,7 @@ obligatory to pass the entire formula for all distributional parameters as a
 single `brmsformula` object. This means in turn that the user must be familiar 
 with `flocker`'s internal naming conventions for all of the relevant 
 distributional parameters (`det` and one or more of `occ`, `colo`, `ex`, 
-`autologistic`, `Omega`). If fitting a data-augmented model, it will be required 
+`autologistic`, `Omega`). If fitting a data-augmented model, it will be requried 
 to pass the `Omega ~ 1` formula within the `brmsformula` (When passing the 
 traditional one-sided formula to `f_det`, `flocker` includes the formula for 
 `Omega` internally and automatically).
@@ -109,7 +110,7 @@ they make no contribution to the likelihood.
 With all of that said, we can go ahead and fit this model!
 
 
-```r
+``` r
 fit <- flock(f_det = brms::bf(
                  det ~ 1 + dummy,
                  occ ~ log(L/(1 + exp(-k*(t - t0)) - L)),
@@ -130,7 +131,7 @@ fit <- flock(f_det = brms::bf(
 ```
 
 
-```r
+``` r
 summary(fit)
 #>  Family: occupancy_single 
 #>   Links: mu = identity; occ = identity 
@@ -143,13 +144,13 @@ summary(fit)
 #>   Draws: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
 #>          total post-warmup draws = 4000
 #> 
-#> Population-Level Effects: 
+#> Regression Coefficients:
 #>              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-#> Intercept       -0.91      0.13    -1.18    -0.66 1.00     2535     2318
-#> L_Intercept      0.50      0.10     0.38     0.77 1.00     1241      864
-#> k_Intercept      0.19      0.08     0.07     0.36 1.00     1283     1433
-#> t0_Intercept    -5.90      3.38   -10.34     3.17 1.00     1248      921
-#> dummy            0.00      0.08    -0.15     0.15 1.00     2620     2236
+#> Intercept       -0.91      0.13    -1.15    -0.66 1.00     2377     2339
+#> L_Intercept      0.51      0.10     0.38     0.75 1.00     1624     1252
+#> k_Intercept      0.18      0.08     0.07     0.37 1.00     1576     1945
+#> t0_Intercept    -5.75      3.44   -10.32     3.48 1.00     1466     1157
+#> dummy            0.00      0.08    -0.15     0.15 1.00     2417     2072
 #> 
 #> Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
 #> and Tail_ESS are effective sample size measures, and Rhat is the potential
@@ -172,7 +173,7 @@ quite a few of data points to constrain the standard deviation of the Gaussian
 process, so we simulate with 2000 sites:
 
 
-```r
+``` r
 set.seed(1)
 n <- 2000 # sample size
 lscale <- 0.3 # square root of l of the gaussian kernel
@@ -207,6 +208,7 @@ obs <- matrix(nrow = n, ncol = n_visit)
 for(j in 1:n_visit){
   obs[,j] <- gp_data$Z * rbinom(n, 1, boot::inv.logit(det_intercept))
 }
+
 ```
 
 
@@ -214,7 +216,7 @@ And here's how we can fit this model in `flocker`! Because we have a large numbe
 computational efficiency.
 
 
-```r
+``` r
 fd2 <- make_flocker_data(obs = obs, unit_covs = gp_data[, c("x", "y", "covariate")])
 svc_mod <- flock(
   f_det = brms::bf(
@@ -227,10 +229,11 @@ svc_mod <- flock(
   flocker_data = fd2,
   cores = 4
 )
+
 ```
 
 
-```r
+``` r
 summary(svc_mod)
 #>  Family: occupancy_single_C 
 #>   Links: mu = identity; occ = identity 
@@ -242,15 +245,15 @@ summary(svc_mod)
 #>   Draws: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
 #>          total post-warmup draws = 4000
 #> 
-#> Gaussian Process Terms: 
+#> Gaussian Process Hyperparameters:
 #>                Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-#> sdgp(g_gpxy)       1.66      0.75     0.73     3.66 1.00     2849     3317
-#> lscale(g_gpxy)     0.23      0.11     0.08     0.50 1.00     3850     3141
+#> sdgp(g_gpxy)       1.65      0.72     0.73     3.51 1.00     3024     3017
+#> lscale(g_gpxy)     0.23      0.11     0.08     0.50 1.00     4346     3149
 #> 
-#> Population-Level Effects: 
+#> Regression Coefficients:
 #>                  Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-#> Intercept           -1.04      0.06    -1.15    -0.94 1.00     5532     2810
-#> occint_Intercept     0.09      0.09    -0.08     0.27 1.00     5736     3182
+#> Intercept           -1.04      0.06    -1.15    -0.93 1.00     6193     3413
+#> occint_Intercept     0.09      0.09    -0.08     0.26 1.00     6464     3223
 #> 
 #> Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
 #> and Tail_ESS are effective sample size measures, and Rhat is the potential
