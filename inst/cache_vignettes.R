@@ -1,37 +1,119 @@
-# This script creates .Rmd vignettes that include pre-computed R output so that
-# whent they get built on CI it's a lightweight operation.
+if (!file.exists("DESCRIPTION")) {
+  stop("Run this script from the package root (where DESCRIPTION lives).")
+}
 
-# This script should be run every time there is an update to the vignettes
-# or an update to the package for which the vignettes are a desirable
-# part of the test harness (but ideally the actual test harness should be 
-# sufficient for testing, and we shouldn't rely on vignettes).
+suppressPackageStartupMessages({
+  library(withr)
+  library(knitr)
+  library(rmarkdown)
+})
 
-# Edits that touch only the text of the vignettes, and not the R computation,
-# can be made with extreme care by changing both the .Rmd.orig files and the
-# .Rmd files with computation cached.
+find_pkg_root <- function() {
+  path <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
+  repeat {
+    if (file.exists(file.path(path, "DESCRIPTION"))) return(path)
+    parent <- normalizePath(file.path(path, ".."), winslash = "/", mustWork = TRUE)
+    if (identical(parent, path)) stop("Could not find package root (no DESCRIPTION found).")
+    path <- parent
+  }
+}
 
-old_wd <- getwd()
+pkg_root <- find_pkg_root()
 
-setwd(paste0(dirname(rstudioapi::getActiveDocumentContext()$path), "/.."))
-
-knitr::knit(
-  "vignettes/augmented_models.Rmd.orig", 
-  output = "vignettes/augmented_models.Rmd"
+vigs <- list(
+  c("vignettes/augmented_models.Rmd.orig", "vignettes/augmented_models.Rmd"),
+  c("vignettes/flocker_tutorial.Rmd.orig", "vignettes/flocker_tutorial.Rmd"),
+  c("vignettes/nonlinear_models.Rmd.orig", "vignettes/nonlinear_models.Rmd"),
+  c("vignettes/articles/sbc.Rmd.orig", "vignettes/articles/sbc.Rmd"),
+  c("vignettes/articles/sbc_multi.Rmd.orig", "vignettes/articles/sbc_multi.Rmd"),
+  c("vignettes/articles/sbc_aug.Rmd.orig", "vignettes/articles/sbc_aug.Rmd")
 )
 
-knitr::knit(
-  "vignettes/flocker_tutorial.Rmd.orig", 
-  output = "vignettes/flocker_tutorial.Rmd"
-)
+with_dir(pkg_root, {
+  # Ensure relative paths in chunks resolve from package root
+  old_root <- knitr::opts_knit$get("root.dir")
+  on.exit(knitr::opts_knit$set(root.dir = old_root), add = TRUE)
+  knitr::opts_knit$set(root.dir = pkg_root)
+  
+  knit_one <- function(infile, outfile, fig_path = NULL) {
+    dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
+    
+    if (!is.null(fig_path)) {
+      dir.create(fig_path, recursive = TRUE, showWarnings = FALSE)
+      old_fig <- knitr::opts_chunk$get("fig.path")
+      on.exit(knitr::opts_chunk$set(fig.path = old_fig), add = TRUE)
+      knitr::opts_chunk$set(fig.path = paste0(fig_path, "/"))
+    }
+    
+    message("Knitting ", infile, " -> ", outfile)
+    
+    env <- new.env(parent = globalenv())
+    env$params <- rmarkdown::yaml_front_matter(infile)$params
+    
+    knitr::knit(infile, output = outfile, envir = env)
+  }
+  
+  for(i in 1:3){
+    knit_one(vigs[[i]][[1]], vigs[[i]][[2]])
+  }
+  for(i in 4:6){
+    # SBC: force figures into man/figures/sbc_vignette
+    knit_one(vigs[[i]][[1]], vigs[[i]][[2]], fig_path = "man/figures/sbc_vignette")
+  }
 
-knitr::knit(
-  "vignettes/nonlinear_models.Rmd.orig", 
-  output = "vignettes/nonlinear_models.Rmd"
-)
+})
 
-knitr::knit(
-  "vignettes/sbc.Rmd.orig", 
-  output = "vignettes/sbc.Rmd"
-)
+# ---- Post-process cached articles to fix figure paths (Pandoc resolves relative
+# paths from the input document directory, so vignettes/articles/* need ../man/...) ----
 
-setwd(old_wd)
+fix_article_fig_paths <- function(rmd_path,
+                                  from = "man/figures/sbc_vignette/",
+                                  to   = "../../man/figures/sbc_vignette/") {
+  # Only makes changes if the file exists and actually contains the "from" string,
+  # and avoids double-prepending if it already has "../".
+  stopifnot(length(rmd_path) == 1)
+  
+  if (!file.exists(rmd_path)) {
+    warning("Skipping missing file: ", rmd_path)
+    return(invisible(FALSE))
+  }
+  
+  lines <- readLines(rmd_path, warn = FALSE)
+  
+  # 1) HTML: <img src="man/figures/...">
+  # Replace src="man/figures/..." but NOT src="../man/figures/..."
+  lines2 <- gsub(
+    pattern = paste0('src="', from),
+    replacement = paste0('src="', to),
+    x = lines,
+    fixed = TRUE
+  )
+  
+  # 2) Markdown: ![](man/figures/...)
+  # Replace (man/figures/...) but NOT (../man/figures/...)
+  lines2 <- gsub(
+    pattern = paste0("](", from),
+    replacement = paste0("](", to),
+    x = lines2,
+    fixed = TRUE
+  )
+  
+  changed <- !identical(lines, lines2)
+  if (changed) {
+    writeLines(lines2, rmd_path)
+    message("Rewrote figure paths in ", rmd_path)
+  } else {
+    message("No figure paths to rewrite in ", rmd_path)
+  }
+  
+  invisible(changed)
+}
+
+# Apply to the cached article outputs (the .Rmd files, not the .orig)
+article_outfiles <- vapply(vigs[4:6], `[[`, character(1), 2)
+
+with_dir(pkg_root, {
+  for (f in article_outfiles) fix_article_fig_paths(f)
+})
+
+message("Done.")

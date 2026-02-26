@@ -53,15 +53,54 @@ be simulated without any covariate influence on occupancy.}
 \item{rep_constant}{logical: create data with unit covariates only (TRUE) 
 or data that includes event covariates (FALSE)}
 
-\item{params}{a named list containing of parameter values to use in simulation.
-Any required parameters whose names are not in this list will be assigned their
-default values. To see the parameter names and structures required, run with 
-`params = NULL` (the default) and examine the `$params` element of the output.}
+\item{params}{A named list controlling the coefficients used to generate the
+  latent occupancy state and detections. Supported names are:
+  \itemize{
+    \item \code{coefs}: A numeric data.frame of per-species coefficient
+      values. Must have \code{n_sp} rows and
+      one column for each coefficient required by the requested model type.
+      Column names must match the required set (order does not matter).
+      If supplied, \code{coef_means} and \code{Sigma} must not be supplied.
+    \item \code{coef_means}: Numeric vector of length \code{n_coef} giving the
+      mean of the multivariate normal distribution used to simulate per-species
+      coefficients when \code{coefs} is not supplied.
+    \item \code{Sigma}: Numeric \code{n_coef x n_coef} symmetric covariance
+      matrix for the multivariate normal distribution used to simulate per-species
+      coefficients when \code{coefs} is not supplied.
+  }
 
-\item{covariates}{a dataframe of covariate values to use in simulation, or
-NULL to simulate values. To see the covariate names and structures required,
-run with `covariates = NULL` (the default) and examine the `$covariates` element
-of the output.}
+  If \code{params = NULL} (the default), coefficients are simulated from a
+  multivariate normal prior with \code{coef_means = rep(0, n_coef)} and a
+  default \code{Sigma}. The dimension \code{n_coef} and the required coefficient
+  names depend on the requested model type:
+  \describe{
+    \item{Always}{\code{det_intercept}, \code{det_slope_unit}}
+    \item{If \code{rep_constant = FALSE}}{\code{det_slope_visit}}
+    \item{If \code{n_season == 1} or \code{multi_init == "explicit"}}{\code{occ_intercept}}
+    \item{If \code{n_season == 1} or \code{multi_init == "explicit"}, and \code{augmented = FALSE}}{\code{occ_slope_unit}}
+    \item{If \code{n_season > 1}}{\code{col_intercept}, \code{col_slope_unit}}
+    \item{If \code{multiseason == "colex"}}{\code{ex_intercept}, \code{ex_slope_unit}}
+    \item{If \code{multiseason == "autologistic"}}{\code{auto_intercept}, \code{auto_slope_unit}}
+  }
+
+  Notes:
+  \itemize{
+    \item When \code{augmented = TRUE}, \code{occ_slope_unit} is not used and
+      occupancy is simulated with no covariate effect.
+    \item Any names in \code{params} other than \code{coefs}, \code{coef_means},
+      and \code{Sigma} are rejected with an error.
+  }}
+
+\item{covariates}{A named list of realized covariate values to use in the 
+simulation. Supported names are:
+\itemize{
+  \item \code{uc1}: numeric vector of length \code{n_pt} giving the unit-level covariate.
+  \item \code{ec1}: numeric vector of length \code{n_pt * n_season * n_rep}
+    giving the event-level covariate (ignored if \code{rep_constant = TRUE}).
+}
+If \code{NULL} (the default), covariates are simulated internally from 
+standard normal distributions.
+\code{ec1} is assumed not to vary by species.}
 
 \item{seed}{random seed. NULL uses (and updates) the existing RNG state. Other values
 do not update the global RNG state.}
