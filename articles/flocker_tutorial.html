@@ -64,7 +64,13 @@
       <a href="../articles/nonlinear_models.html">Nonlinear models in flocker</a>
     </li>
     <li>
-      <a href="../articles/sbc.html">SBC for flocker models</a>
+      <a href="../articles/sbc_aug.html">SBC for data-augmented flocker models</a>
+    </li>
+    <li>
+      <a href="../articles/sbc_multi.html">SBC for multi-season flocker models</a>
+    </li>
+    <li>
+      <a href="../articles/sbc.html">SBC for single-season flocker models</a>
     </li>
   </ul>
 </li>
@@ -96,7 +102,7 @@
                         <h4 data-toc-skip class="author">Jacob Socolar
 &amp; Simon Mills</h4>
             
-            <h4 data-toc-skip class="date">2023-10-20</h4>
+            <h4 data-toc-skip class="date">2026-02-24</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/jsocolar/flocker/blob/main/vignettes/flocker_tutorial.Rmd" class="external-link"><code>vignettes/flocker_tutorial.Rmd</code></a></small>
       <div class="hidden name"><code>flocker_tutorial.Rmd</code></div>
@@ -107,7 +113,7 @@
     
 <p><img align="right" src="../reference/figures/flocker_sticker.png" width="30%" style="border:none;"></p>
 <p><code>flocker</code> is an R package for fitting <a href="https://jsocolar.github.io/closureOccupancy/" class="external-link">occupancy models</a>
-that incorporate sophisticated effects structures using simple
+that incorportate sophisticated effects structures using simple
 formula-based syntax. <code>flocker</code> is built on R package
 <code>brms</code>, which in turn is a front-end for
 <code>Stan</code>.</p>
@@ -450,10 +456,7 @@ pseudospecies to augment the data with.</p>
 <span>  cores <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  silent <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  refresh <span class="op">=</span> <span class="fl">0</span></span>
-<span>  <span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.</span></span>
-<span><span class="co">#&gt; Running the chains for more iterations may help. See</span></span>
-<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#bulk-ess</span></span></code></pre></div>
+<span>  <span class="op">)</span></span></code></pre></div>
 <p>Here, the random effect of species is specified using the special
 grouping keyword <code>ff_species</code> (names beginning with
 <code>ff_</code> are reserved in <code>flocker</code> and are not
@@ -591,11 +594,10 @@ the rep-constant model.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">rep_constant</span>, <span class="va">rep_varying</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.</span></span>
-<span></span>
 <span><span class="co">#&gt; Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.</span></span>
 <span><span class="co">#&gt;        elpd_diff se_diff</span></span>
 <span><span class="co">#&gt; model2    0.0       0.0 </span></span>
-<span><span class="co">#&gt; model1 -171.1      17.2</span></span></code></pre></div>
+<span><span class="co">#&gt; model1 -121.0      16.1</span></span></code></pre></div>
 <p>Likewise, we can compare the four flavors of multi-season model that
 we fit above. Recall that the data were simulated under
 colonization-extinction dynamics (rather than autologistic) and under
@@ -607,9 +609,9 @@ expected, the <code>multi_colex</code> model performs best:</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;        elpd_diff se_diff</span></span>
 <span><span class="co">#&gt; model1   0.0       0.0  </span></span>
-<span><span class="co">#&gt; model3  -7.8       4.1  </span></span>
-<span><span class="co">#&gt; model2 -27.1       7.2  </span></span>
-<span><span class="co">#&gt; model4 -32.9       7.9</span></span></code></pre></div>
+<span><span class="co">#&gt; model2 -16.5       6.2  </span></span>
+<span><span class="co">#&gt; model3 -41.7       9.5  </span></span>
+<span><span class="co">#&gt; model4 -57.5      10.8</span></span></code></pre></div>
 <p>Flocker also provides the function <code><a href="../reference/loo_flocker.html">loo_flocker()</a></code> to
 return a table of <code>elpd_loo</code>, <code>p_loo</code>, and
 <code>looic</code> estimates from <code><a href="https://mc-stan.org/loo/reference/loo.html" class="external-link">loo::loo()</a></code> or
@@ -642,45 +644,45 @@ their default priors can be displayed prior to model fitting using
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="va">uc1</span> <span class="op">+</span> <span class="va">ec1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">uc1</span> <span class="op">+</span> <span class="va">ec1</span> <span class="op">|</span> <span class="va">species</span><span class="op">)</span>,</span>
 <span>  flocker_data <span class="op">=</span> <span class="va">fd_rep_varying</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="co">#&gt;                 prior     class      coef   group resp dpar nlpar lb ub       source</span></span>
-<span><span class="co">#&gt;                (flat)         b                                              default</span></span>
-<span><span class="co">#&gt;                (flat)         b       ec1                               (vectorized)</span></span>
-<span><span class="co">#&gt;                (flat)         b       uc1                               (vectorized)</span></span>
-<span><span class="co">#&gt;                lkj(1)       cor                                              default</span></span>
-<span><span class="co">#&gt;                lkj(1)       cor           species                       (vectorized)</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5) Intercept                                              default</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd                                    0         default</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd           species                  0    (vectorized)</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       ec1 species                  0    (vectorized)</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd Intercept species                  0    (vectorized)</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       uc1 species                  0    (vectorized)</span></span>
-<span><span class="co">#&gt;                (flat)         b                         occ                  default</span></span>
-<span><span class="co">#&gt;                (flat)         b       uc1               occ             (vectorized)</span></span>
-<span><span class="co">#&gt;                (flat) Intercept                         occ                  default</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd                         occ        0         default</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd           species       occ        0    (vectorized)</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd Intercept species       occ        0    (vectorized)</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       uc1 species       occ        0    (vectorized)</span></span>
+<span><span class="co">#&gt;                 prior     class      coef   group resp dpar nlpar lb ub tag       source</span></span>
+<span><span class="co">#&gt;                (flat)         b                                                  default</span></span>
+<span><span class="co">#&gt;                (flat)         b       ec1                                   (vectorized)</span></span>
+<span><span class="co">#&gt;                (flat)         b       uc1                                   (vectorized)</span></span>
+<span><span class="co">#&gt;                lkj(1)       cor                                                  default</span></span>
+<span><span class="co">#&gt;                lkj(1)       cor           species                           (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5) Intercept                                                  default</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd                                    0             default</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd           species                  0        (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       ec1 species                  0        (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd Intercept species                  0        (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       uc1 species                  0        (vectorized)</span></span>
+<span><span class="co">#&gt;                (flat)         b                         occ                      default</span></span>
+<span><span class="co">#&gt;                (flat)         b       uc1               occ                 (vectorized)</span></span>
+<span><span class="co">#&gt;                (flat) Intercept                         occ                      default</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd                         occ        0             default</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd           species       occ        0        (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd Intercept species       occ        0        (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       uc1 species       occ        0        (vectorized)</span></span>
 <span><span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstantools/reference/prior_summary.html" class="external-link">prior_summary</a></span><span class="op">(</span><span class="va">rep_varying</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                 prior     class      coef   group resp dpar nlpar lb ub       source</span></span>
-<span><span class="co">#&gt;                (flat)         b                                              default</span></span>
-<span><span class="co">#&gt;                (flat)         b       ec1                               (vectorized)</span></span>
-<span><span class="co">#&gt;                (flat)         b       uc1                               (vectorized)</span></span>
-<span><span class="co">#&gt;                (flat)         b                         occ                  default</span></span>
-<span><span class="co">#&gt;                (flat)         b       uc1               occ             (vectorized)</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5) Intercept                                              default</span></span>
-<span><span class="co">#&gt;                (flat) Intercept                         occ                  default</span></span>
-<span><span class="co">#&gt;  lkj_corr_cholesky(1)         L                                              default</span></span>
-<span><span class="co">#&gt;  lkj_corr_cholesky(1)         L           species                       (vectorized)</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd                                    0         default</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd                         occ        0         default</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd           species                  0    (vectorized)</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       ec1 species                  0    (vectorized)</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd Intercept species                  0    (vectorized)</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       uc1 species                  0    (vectorized)</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd           species       occ        0    (vectorized)</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd Intercept species       occ        0    (vectorized)</span></span>
-<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       uc1 species       occ        0    (vectorized)</span></span></code></pre></div>
+<span><span class="co">#&gt;                 prior     class      coef   group resp dpar nlpar lb ub tag       source</span></span>
+<span><span class="co">#&gt;                (flat)         b                                                  default</span></span>
+<span><span class="co">#&gt;                (flat)         b       ec1                                   (vectorized)</span></span>
+<span><span class="co">#&gt;                (flat)         b       uc1                                   (vectorized)</span></span>
+<span><span class="co">#&gt;                (flat)         b                         occ                      default</span></span>
+<span><span class="co">#&gt;                (flat)         b       uc1               occ                 (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5) Intercept                                                  default</span></span>
+<span><span class="co">#&gt;                (flat) Intercept                         occ                      default</span></span>
+<span><span class="co">#&gt;  lkj_corr_cholesky(1)         L                                                  default</span></span>
+<span><span class="co">#&gt;  lkj_corr_cholesky(1)         L           species                           (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd                                    0             default</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd                         occ        0             default</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd           species                  0        (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       ec1 species                  0        (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd Intercept species                  0        (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       uc1 species                  0        (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd           species       occ        0        (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd Intercept species       occ        0        (vectorized)</span></span>
+<span><span class="co">#&gt;  student_t(3, 0, 2.5)        sd       uc1 species       occ        0        (vectorized)</span></span></code></pre></div>
 <p>Note that in examples like the above, with covariates shared between
 both the occupancy and detection model formulas (<code>uc1</code> in
 this example), then the prior table will contain two entries associated
@@ -720,13 +722,13 @@ on the coefficients:</p>
 <span>  refresh <span class="op">=</span> <span class="fl">0</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstantools/reference/prior_summary.html" class="external-link">prior_summary</a></span><span class="op">(</span><span class="va">rep_varying_prior1</span><span class="op">)</span></span>
-<span><span class="co">#&gt;          prior     class coef group resp dpar nlpar lb ub       source</span></span>
-<span><span class="co">#&gt;    normal(0,2)         b                                          user</span></span>
-<span><span class="co">#&gt;    normal(0,2)         b  ec1                             (vectorized)</span></span>
-<span><span class="co">#&gt;    normal(0,2)         b                  occ                     user</span></span>
-<span><span class="co">#&gt;    normal(0,2)         b  uc1             occ             (vectorized)</span></span>
-<span><span class="co">#&gt;  logistic(0,1) Intercept                                          user</span></span>
-<span><span class="co">#&gt;  logistic(0,1) Intercept                  occ                     user</span></span></code></pre></div>
+<span><span class="co">#&gt;          prior     class coef group resp dpar nlpar lb ub tag       source</span></span>
+<span><span class="co">#&gt;    normal(0,2)         b                                              user</span></span>
+<span><span class="co">#&gt;    normal(0,2)         b  ec1                                 (vectorized)</span></span>
+<span><span class="co">#&gt;    normal(0,2)         b                  occ                         user</span></span>
+<span><span class="co">#&gt;    normal(0,2)         b  uc1             occ                 (vectorized)</span></span>
+<span><span class="co">#&gt;  logistic(0,1) Intercept                                              user</span></span>
+<span><span class="co">#&gt;  logistic(0,1) Intercept                  occ                         user</span></span></code></pre></div>
 <p>Here is an example where we set informative priors on the intercepts
 when all covariates are fixed to zero and the same moderately
 regularizing prior on the coefficients:</p>
@@ -745,13 +747,13 @@ regularizing prior on the coefficients:</p>
 <span>  refresh <span class="op">=</span> <span class="fl">0</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="fu">brms</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstantools/reference/prior_summary.html" class="external-link">prior_summary</a></span><span class="op">(</span><span class="va">rep_varying_prior2</span><span class="op">)</span></span>
-<span><span class="co">#&gt;          prior class      coef group resp dpar nlpar lb ub       source</span></span>
-<span><span class="co">#&gt;    normal(0,2)     b                                               user</span></span>
-<span><span class="co">#&gt;    normal(0,2)     b       ec1                             (vectorized)</span></span>
-<span><span class="co">#&gt;   normal(1, 1)     b Intercept                                     user</span></span>
-<span><span class="co">#&gt;    normal(0,2)     b                       occ                     user</span></span>
-<span><span class="co">#&gt;  normal(-1, 1)     b Intercept             occ                     user</span></span>
-<span><span class="co">#&gt;    normal(0,2)     b       uc1             occ             (vectorized)</span></span></code></pre></div>
+<span><span class="co">#&gt;          prior class      coef group resp dpar nlpar lb ub tag       source</span></span>
+<span><span class="co">#&gt;    normal(0,2)     b                                                   user</span></span>
+<span><span class="co">#&gt;    normal(0,2)     b       ec1                                 (vectorized)</span></span>
+<span><span class="co">#&gt;   normal(1, 1)     b Intercept                                         user</span></span>
+<span><span class="co">#&gt;    normal(0,2)     b                       occ                         user</span></span>
+<span><span class="co">#&gt;  normal(-1, 1)     b Intercept             occ                         user</span></span>
+<span><span class="co">#&gt;    normal(0,2)     b       uc1             occ                 (vectorized)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="model-formulas">Model formulas<a class="anchor" aria-label="anchor" href="#model-formulas"></a>
@@ -897,7 +899,7 @@ and applying it instead to closure-units arranged along a
 one-dimensional spatial transect, yielding a one-dimensional analog of a
 spatial autologistic occupancy model.</p>
 <p>A second caution is to remind users that in multi-species models,
-users will likely want to fit separate spatial terms by species (<a href="https://besjournals.onlinelibrary.wiley.com/doi/10.1111/2041-210X.13897" class="external-link">Doser
+users will likely want to fit separate spatial terms by species (<a href="https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.13897" class="external-link">Doser
 et al 2022</a>). For Gaussian processes, this can be achieved via the
 <code>by</code> argument to <code><a href="https://paulbuerkner.com/brms/reference/gp.html" class="external-link">brms::gp()</a></code>. For some
 conditional autoregressive structures (those that allow disconnected

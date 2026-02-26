@@ -50,7 +50,13 @@ with correlated effects on all terms."><!-- mathjax --><script src="https://cdnj
       <a href="../articles/nonlinear_models.html">Nonlinear models in flocker</a>
     </li>
     <li>
-      <a href="../articles/sbc.html">SBC for flocker models</a>
+      <a href="../articles/sbc_aug.html">SBC for data-augmented flocker models</a>
+    </li>
+    <li>
+      <a href="../articles/sbc_multi.html">SBC for multi-season flocker models</a>
+    </li>
+    <li>
+      <a href="../articles/sbc.html">SBC for single-season flocker models</a>
     </li>
   </ul></li>
 <li>
@@ -153,17 +159,58 @@ or data that includes event covariates (FALSE)</p></dd>
 
 
 <dt id="arg-params">params<a class="anchor" aria-label="anchor" href="#arg-params"></a></dt>
-<dd><p>a named list containing of parameter values to use in simulation.
-Any required parameters whose names are not in this list will be assigned their
-default values. To see the parameter names and structures required, run with
-`params = NULL` (the default) and examine the `$params` element of the output.</p></dd>
+<dd><p>A named list controlling the coefficients used to generate the
+  latent occupancy state and detections. Supported names are:</p><ul><li><p><code>coefs</code>: A numeric data.frame of per-species coefficient
+      values. Must have <code>n_sp</code> rows and
+      one column for each coefficient required by the requested model type.
+      Column names must match the required set (order does not matter).
+      If supplied, <code>coef_means</code> and <code>Sigma</code> must not be supplied.</p></li>
+<li><p><code>coef_means</code>: Numeric vector of length <code>n_coef</code> giving the
+      mean of the multivariate normal distribution used to simulate per-species
+      coefficients when <code>coefs</code> is not supplied.</p></li>
+<li><p><code>Sigma</code>: Numeric <code>n_coef x n_coef</code> symmetric covariance
+      matrix for the multivariate normal distribution used to simulate per-species
+      coefficients when <code>coefs</code> is not supplied.</p></li>
+</ul><p>If <code>params = NULL</code> (the default), coefficients are simulated from a
+  multivariate normal prior with <code>coef_means = rep(0, n_coef)</code> and a
+  default <code>Sigma</code>. The dimension <code>n_coef</code> and the required coefficient
+  names depend on the requested model type:</p><dl><dt>Always</dt>
+<dd><p><code>det_intercept</code>, <code>det_slope_unit</code></p></dd>
+
+    <dt>If <code>rep_constant = FALSE</code></dt>
+<dd><p><code>det_slope_visit</code></p></dd>
+
+    <dt>If <code>n_season == 1</code> or <code>multi_init == "explicit"</code></dt>
+<dd><p><code>occ_intercept</code></p></dd>
+
+    <dt>If <code>n_season == 1</code> or <code>multi_init == "explicit"</code>, and <code>augmented = FALSE</code></dt>
+<dd><p><code>occ_slope_unit</code></p></dd>
+
+    <dt>If <code>n_season &gt; 1</code></dt>
+<dd><p><code>col_intercept</code>, <code>col_slope_unit</code></p></dd>
+
+    <dt>If <code>multiseason == "colex"</code></dt>
+<dd><p><code>ex_intercept</code>, <code>ex_slope_unit</code></p></dd>
+
+    <dt>If <code>multiseason == "autologistic"</code></dt>
+<dd><p><code>auto_intercept</code>, <code>auto_slope_unit</code></p></dd>
+
+
+</dl><p>Notes:</p><ul><li><p>When <code>augmented = TRUE</code>, <code>occ_slope_unit</code> is not used and
+      occupancy is simulated with no covariate effect.</p></li>
+<li><p>Any names in <code>params</code> other than <code>coefs</code>, <code>coef_means</code>,
+      and <code>Sigma</code> are rejected with an error.</p></li>
+</ul></dd>
 
 
 <dt id="arg-covariates">covariates<a class="anchor" aria-label="anchor" href="#arg-covariates"></a></dt>
-<dd><p>a dataframe of covariate values to use in simulation, or
-NULL to simulate values. To see the covariate names and structures required,
-run with `covariates = NULL` (the default) and examine the `$covariates` element
-of the output.</p></dd>
+<dd><p>A named list of realized covariate values to use in the
+simulation. Supported names are:</p><ul><li><p><code>uc1</code>: numeric vector of length <code>n_pt</code> giving the unit-level covariate.</p></li>
+<li><p><code>ec1</code>: numeric vector of length <code>n_pt * n_season * n_rep</code>
+    giving the event-level covariate (ignored if <code>rep_constant = TRUE</code>).</p></li>
+</ul><p>If <code>NULL</code> (the default), covariates are simulated internally from
+standard normal distributions.
+<code>ec1</code> is assumed not to vary by species.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
