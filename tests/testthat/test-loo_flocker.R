@@ -43,8 +43,16 @@ test_that("loo_compare_flocker works correctly", {
   # check model naming
   suppressWarnings(test_compare <- loo_compare_flocker(list(example_flocker_model_single2, example_flocker_model_single2), 
                                       model_names = c("m1", "m2"), thin = 2))
-  expect_identical(row.names(test_compare), c("m1", "m2"))
+  if ("model" %in% colnames(test_compare)) {
+    expect_identical(test_compare$model, c("m1", "m2"))
+  } else {
+    expect_identical(row.names(test_compare), c("m1", "m2"))
+  }
   
   # check test output identical
-  expect_true(all(apply(test_compare, 2, diff) == 0))
+  if ("model" %in% colnames(test_compare)) {
+    expect_true(all(apply(test_compare[,c(2,3)], 2, diff) == 0))
+  } else {
+    expect_true(all(apply(test_compare, 2, diff) == 0))
+  }
 })
