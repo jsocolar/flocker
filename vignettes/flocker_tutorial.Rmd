@@ -471,18 +471,11 @@ model.
 loo_compare_flocker(
   list(rep_constant, rep_varying)
 )
-#> Warning messages:
-#> 1: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.
-
-#> 2: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.
-
-#>   model elpd_diff se_diff p_worse diag_diff      diag_elpd
-#>  model2       0.0     0.0      NA           2 k_psis > 0.7
-#>  model1    -169.5    17.2    1.00           1 k_psis > 0.7
-
-#> Diagnostic flags present.
-#> See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
-#> or https://mc-stan.org/loo/reference/loo-glossary.html.
+#> Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.
+#> Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.
+#>        elpd_diff se_diff
+#> model2    0.0       0.0 
+#> model1 -121.0      16.1
 ```
 
 Likewise, we can compare the four flavors of multi-season model that we fit 
@@ -496,11 +489,11 @@ performs best:
 loo_compare_flocker(
   list(multi_colex, multi_colex_eq, multi_auto, multi_auto_eq)
 )
-#>   model elpd_diff se_diff p_worse diag_diff diag_elpd
-#>  model1       0.0     0.0      NA
-#>  model3      -8.0     4.1    0.98
-#>  model2     -27.1     7.2    1.00
-#>  model4     -32.9     7.8    1.00
+#>        elpd_diff se_diff
+#> model1   0.0       0.0  
+#> model2 -16.5       6.2  
+#> model3 -41.7       9.5  
+#> model4 -57.5      10.8
 ```
 
 Flocker also provides the function `loo_flocker()` to return a table of 
