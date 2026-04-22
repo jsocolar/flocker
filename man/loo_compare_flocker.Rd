@@ -15,7 +15,7 @@ loo_compare_flocker(model_list, model_names = NULL, thin = NULL)
 thinning, 2 retains every other value, 3 every third, etc.}
 }
 \value{
-a `compare.loo` matrix
+a `compare.loo` object
 }
 \description{
 LOO comparisons for flocker models.

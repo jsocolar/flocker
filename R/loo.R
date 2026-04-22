@@ -63,7 +63,7 @@ loo_flocker_onefit <- function(x, thin = NULL) {
 #' @param thin specify the amount of thinning required. 1 or NULL results in no 
 #'    thinning, 2 retains every other value, 3 every third, etc.
 #' @param model_names An optional vector of names for the models.
-#' @return a `compare.loo` matrix
+#' @return a `compare.loo` object
 #' @export
 #' @examples
 #' \dontrun{
