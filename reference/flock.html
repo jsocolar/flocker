@@ -206,8 +206,8 @@ with single-season rep-constant models, and must be set to NULL otherwise.</p></
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 1).</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Gradient evaluation took 0.003299 seconds</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 32.99 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Gradient evaluation took 0.003472 seconds</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 34.72 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Adjust your expectations accordingly!</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
@@ -218,14 +218,14 @@ with single-season rep-constant models, and must be set to NULL otherwise.</p></
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Iteration: 155 / 200 [ 77%]  (Sampling)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Iteration: 200 / 200 [100%]  (Sampling)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:  Elapsed Time: 0.138 seconds (Warm-up)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:                7.121 seconds (Sampling)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:                7.259 seconds (Total)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:  Elapsed Time: 0.125 seconds (Warm-up)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:                8.685 seconds (Sampling)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:                8.81 seconds (Total)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>There were 195 transitions after warmup that exceeded the maximum treedepth. Increase max_treedepth above 5. See</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> https://mc-stan.org/misc/warnings.html#maximum-treedepth-exceeded</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Examine the pairs() plot to diagnose sampling problems</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>The largest R-hat is 1.15, indicating chains have not mixed.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>The largest R-hat is 1.09, indicating chains have not mixed.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> Running the chains for more iterations may help. See</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> https://mc-stan.org/misc/warnings.html#r-hat</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.</span>
@@ -234,7 +234,6 @@ with single-season rep-constant models, and must be set to NULL otherwise.</p></
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> Running the chains for more iterations may help. See</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> https://mc-stan.org/misc/warnings.html#tail-ess</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Parts of the model have not converged (some Rhats are &gt; 1.05). Be careful when analysing the results! We recommend running more iterations and/or setting stronger priors.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  Family: occupancy_single </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Links: mu = identity; occ = identity </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Formula: ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ff_rep_index1, ff_rep_index2, ff_rep_index3, ff_rep_index4) ~ uc1 + ec1 + (1 | species) </span>
@@ -245,21 +244,21 @@ with single-season rep-constant models, and must be set to NULL otherwise.</p></
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Smoothing Spline Hyperparameters:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                 Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sds(occ_suc1_1)     0.42      0.38     0.04     1.46 1.03       27       98</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sds(occ_suc1_1)     0.36      0.34     0.01     1.32 1.00       39       79</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Multilevel Hyperparameters:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ~species (Number of levels: 30) </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                   Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sd(Intercept)         0.83      0.14     0.60     1.11 1.07       17      142</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sd(occ_Intercept)     1.05      0.18     0.77     1.46 1.07       26      128</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sd(Intercept)         0.92      0.14     0.68     1.25 1.01       68      108</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sd(occ_Intercept)     0.87      0.16     0.61     1.19 1.05       32       23</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Regression Coefficients:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept         0.08      0.16    -0.21     0.42 1.01       43       59</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> occ_Intercept     0.04      0.20    -0.38     0.40 1.00       86      130</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> uc1               0.36      0.06     0.22     0.46 1.02      207       92</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ec1               0.16      0.04     0.08     0.24 1.01      187      150</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> occ_suc1_1        0.37      0.93    -1.51     2.34 1.01       23       35</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Intercept         0.13      0.17    -0.19     0.43 1.04       43       86</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> occ_Intercept     0.10      0.22    -0.31     0.51 1.00       33       77</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> uc1               0.25      0.06     0.11     0.38 1.00      178      139</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ec1               0.19      0.04     0.11     0.27 1.00      157       78</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> occ_suc1_1        0.39      0.72    -1.09     1.74 1.01       47       83</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> and Tail_ESS are effective sample size measures, and Rhat is the potential</span>
