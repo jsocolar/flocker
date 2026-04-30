@@ -4,6 +4,9 @@
 * dramatically improved efficiency in certain post-processing functions for multiseason models
 * CI runs properly
 * backend hygiene improvements
+* updated compatibility with upcoming changes to `loo_compare()` output
+  structure in the `loo` package (> 2.9.0), which now returns a data frame
+  instead of a matrix and includes additional diagnostic columns.
 
 # flocker 1.0-1
 * fixed a bug that was throwing an uninformative error when making predictions in multiseason models where history_condition is TRUE
