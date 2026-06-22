@@ -805,8 +805,7 @@ intercepts and the slopes in either sub-model:</p>
 <span>  f_det <span class="op">=</span> <span class="op">~</span> <span class="va">ec1</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span> <span class="op">|</span><span class="va">g1</span><span class="op">|</span> <span class="va">species</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">0</span> <span class="op">+</span> <span class="va">ec1</span> <span class="op">|</span><span class="va">g2</span><span class="op">|</span> <span class="va">species</span><span class="op">)</span>, </span>
 <span>  flocker_data <span class="op">=</span> <span class="va">fd_rep_varying</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p>For more on <code>brms</code> syntax for random effects syntax, see
-the <a href="https://journal.r-project.org/archive/2018/RJ-2018-017/index.html" class="external-link">documentation
+<p>For more on <code>brms</code> syntax for random effects, see the <a href="https://journal.r-project.org/articles/RJ-2018-017/index.html" class="external-link">documentation
 here</a>.</p>
 </div>
 <div class="section level3">
@@ -817,7 +816,7 @@ processes of arbitrary dimensionality (<code><a href="https://paulbuerkner.com/b
 as <code>mgcv</code> syntax for thin-plate regression splines
 (<code><a href="https://paulbuerkner.com/brms/reference/s.html" class="external-link">brms::s()</a></code>) and tensor product smooths
 (<code><a href="https://paulbuerkner.com/brms/reference/s.html" class="external-link">brms::t2()</a></code>), and <code>brms</code> syntax for monotonic
-effects of ordinal factors via <code><a href="https://paulbuerkner.com/brms/reference/mo.html" class="external-link">brms::mo()</a></code> (<a href="https://paul-buerkner.github.io/brms/articles/brms_monotonic.html" class="external-link">see
+effects of ordinal factors via <code><a href="https://paulbuerkner.com/brms/reference/mo.html" class="external-link">brms::mo()</a></code> (<a href="https://paulbuerkner.com/brms/articles/brms_monotonic.html" class="external-link">see
 here</a>). For example:</p>
 <div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mod5</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flock.html">flock</a></span><span class="op">(</span></span>
@@ -868,7 +867,7 @@ multiple phylogenetic effects within a single occupancy model (see <a href="http
 <span>  flocker_data <span class="op">=</span> <span class="va">fd_rep_varying</span>, </span>
 <span>  data2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>A <span class="op">=</span> <span class="va">A</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><a href="https://paul-buerkner.github.io/brms/articles/brms_phylogenetics.html" class="external-link">See
+<p><a href="https://paulbuerkner.com/brms/articles/brms_phylogenetics.html" class="external-link">See
 here</a> for further details about specifying phylogenetic effects in
 <code>brms</code>.</p>
 </div>
@@ -878,8 +877,8 @@ here</a> for further details about specifying phylogenetic effects in
 <p>In addition to spatial Gaussian processes, <code>brms</code> provides
 a variety of autoregressive structures, both one-dimensional (see
 <code>brms::ar()</code>, <code><a href="https://paulbuerkner.com/brms/reference/arma.html" class="external-link">brms::arma()</a></code>) and two-dimensional
-(see <code><a href="https://paulbuerkner.com/brms/reference/car.html" class="external-link">brms::car()</a></code>, <code><a href="https://paulbuerkner.com/brms/reference/sar.html" class="external-link">brms::sar()</a></code>. <a href="https://paul-buerkner.github.io/brms/reference/car.html" class="external-link">See
-here</a> for details about conditional autoregressive (CAR) models in
+(see <code><a href="https://paulbuerkner.com/brms/reference/car.html" class="external-link">brms::car()</a></code>, <code><a href="https://paulbuerkner.com/brms/reference/sar.html" class="external-link">brms::sar()</a></code>. <a href="https://paulbuerkner.com/brms/reference/car.html" class="external-link">See here</a> for
+details about conditional autoregressive (CAR) models in
 <code>brms</code>, and note that <code><a href="../reference/flock.html">flock()</a></code> accepts a
 <code>data2</code> argument that it can pass to <code>brms</code> as
 necessary.</p>
@@ -914,7 +913,7 @@ models vignette</a>.</p>
 <div class="section level3">
 <h3 id="measurement-error-in-covariates">Measurement error in covariates<a class="anchor" aria-label="anchor" href="#measurement-error-in-covariates"></a>
 </h3>
-<p><a href="http://paul-buerkner.github.io/brms/reference/me.html" class="external-link">See
+<p><a href="https://paulbuerkner.com/brms/reference/me.html" class="external-link">See
 here</a> for relevant <code>brms</code> documentation.</p>
 </div>
 </div>
