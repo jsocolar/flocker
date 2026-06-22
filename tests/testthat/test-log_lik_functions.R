@@ -18,6 +18,8 @@ test_that("check log_lik functions work correctly", {
   expect_false(any(is.infinite(ll_test)))
   expect_false(any(is.na(ll_test)))
   
+  testthat::skip_on_cran()
+  
   # augmented (20 species total, 8 draws)
   ll_test <- log_lik_flocker(example_flocker_model_aug)
   expect_equal(dim(ll_test)[1], 16)
@@ -108,6 +110,8 @@ test_that("log_lik_flocker new_data argument works correctly", {
   )
   expect_equal(dim(ll_newdata), dim(ll_default))
   expect_equal(ll_newdata, ll_default, tolerance = 1e-10)
+  
+  testthat::skip_on_cran()
   
   # multiseason colex explicit (uses mfd_multi_colex_ex from setup.R)
   ll_default <- log_lik_flocker(example_flocker_model_multi_colex_ex)

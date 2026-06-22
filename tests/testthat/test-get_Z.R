@@ -9,6 +9,8 @@ test_that("get_Z gives valid returns", {
   expect_true(all(Z_single_C <= 1))
   expect_true(any(Z_single_C == 1))
   
+  testthat::skip_on_cran()
+  
   Z_augmented <- get_Z(example_flocker_model_aug)
   expect_true(all(Z_augmented >= 0))
   expect_true(all(Z_augmented <= 1))
@@ -80,6 +82,8 @@ test_that("get_Z with sampling gives valid returns", {
   
   Z_single_C <- get_Z(example_flocker_model_single_C, sample = TRUE)
   expect_true(all(Z_single_C %in% c(0, 1, NA)))
+  
+  testthat::skip_on_cran()
   
   Z_augmented <- get_Z(example_flocker_model_aug, sample = TRUE)
   expect_true(all(Z_augmented %in% c(0, 1, NA)))

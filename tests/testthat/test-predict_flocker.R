@@ -5,6 +5,14 @@ test_that("predict flocker works as expected", {
   p_single_C <- predict_flocker(example_flocker_model_single_C)
   expect_true(all(p_single_C %in% c(0,1)))
   
+  p_single_hist <- predict_flocker(example_flocker_model_single2, history_condition = TRUE)
+  expect_true(all(p_single_hist %in% c(0,1)))
+  
+  p_single_C_hist <- predict_flocker(example_flocker_model_single_C, history_condition = TRUE)
+  expect_true(all(p_single_C_hist %in% c(0,1)))
+  
+  testthat::skip_on_cran()
+  
   p_augmented <- predict_flocker(example_flocker_model_aug)
   expect_true(all(p_augmented %in% c(0,1)))
   
@@ -19,12 +27,6 @@ test_that("predict flocker works as expected", {
 
   p_multi_auto_eq <- predict_flocker(example_flocker_model_multi_auto_eq)
   expect_true(all(p_multi_auto_eq %in% c(0,1,NA)))
-  
-  p_single_hist <- predict_flocker(example_flocker_model_single2, history_condition = TRUE)
-  expect_true(all(p_single_hist %in% c(0,1)))
-  
-  p_single_C_hist <- predict_flocker(example_flocker_model_single_C, history_condition = TRUE)
-  expect_true(all(p_single_C_hist %in% c(0,1)))
   
   p_augmented_hist <- predict_flocker(example_flocker_model_aug, history_condition = TRUE)
   expect_true(all(p_augmented_hist %in% c(0,1)))
@@ -48,6 +50,8 @@ test_that("new_data works as expected", {
   mfd1 <- make_flocker_data(fd1$obs, fd1$unit_covs, fd1$event_covs, quiet = TRUE)
   expect_silent(predict_flocker(example_flocker_model_single2, new_data = mfd1))
   expect_error(predict_flocker(example_flocker_model_single2, history_condition = FALSE, new_data = fd1$unit_covs))
+  
+  testthat::skip_on_cran()
   
   fd2 <- simulate_flocker_data(n_sp = 5, n_pt = 5, n_season = 3, multiseason = "colex", multi_init = "explicit")
   mfd2 <- make_flocker_data(fd2$obs, fd2$unit_covs, fd2$event_covs, type = "multi", quiet = TRUE)
