@@ -602,13 +602,13 @@ mod4 <- flock(
   flocker_data = fd_rep_varying
   )
 ```
-For more on `brms` syntax for random effects syntax, see the [documentation here](https://journal.r-project.org/archive/2018/RJ-2018-017/index.html).
+For more on `brms` syntax for random effects, see the [documentation here](https://journal.r-project.org/articles/RJ-2018-017/index.html).
 
 ### Nonlinear models
 Via `brms`, `flocker` supports Gaussian processes of arbitrary dimensionality
 (`brms::gp()`) as well as `mgcv` syntax for thin-plate regression splines 
 (`brms::s()`) and tensor product smooths (`brms::t2()`), and `brms` syntax for
-monotonic effects of ordinal factors via `brms::mo()` ([see here](https://paul-buerkner.github.io/brms/articles/brms_monotonic.html)). For 
+monotonic effects of ordinal factors via `brms::mo()` ([see here](https://paulbuerkner.com/brms/articles/brms_monotonic.html)). For 
 example:
 ```{r spline-gp, eval=FALSE}
 mod5 <- flock(
@@ -660,12 +660,12 @@ mod9 <- flock(
   )
 ```
 
-[See here](https://paul-buerkner.github.io/brms/articles/brms_phylogenetics.html) for further details about specifying phylogenetic effects in `brms`.
+[See here](https://paulbuerkner.com/brms/articles/brms_phylogenetics.html) for further details about specifying phylogenetic effects in `brms`.
 
 ### Spatial and autoregressive structures
 In addition to spatial Gaussian processes, `brms` provides a variety of 
 autoregressive structures, both one-dimensional (see `brms::ar()`, 
-`brms::arma()`) and two-dimensional (see `brms::car()`, `brms::sar()`. [See here](https://paul-buerkner.github.io/brms/reference/car.html) for details about conditional autoregressive (CAR) models in `brms`, and note that `flock()` 
+`brms::arma()`) and two-dimensional (see `brms::car()`, `brms::sar()`. [See here](https://paulbuerkner.com/brms/reference/car.html) for details about conditional autoregressive (CAR) models in `brms`, and note that `flock()` 
 accepts a `data2` argument that it can pass to `brms` as necessary.
 
 Our principle caution for users is that these autoregressive structures might 
@@ -694,7 +694,7 @@ readily achieved via the nonlinear formula syntax of `brms`, though they may req
 details and an example, see the [nonlinear models vignette](https://jsocolar.github.io/flocker/articles/nonlinear_models.html).
 
 ### Measurement error in covariates
-[See here](http://paul-buerkner.github.io/brms/reference/me.html) for relevant 
+[See here](https://paulbuerkner.com/brms/reference/me.html) for relevant 
 `brms` documentation.
 
 ## Additional fitting arguments
