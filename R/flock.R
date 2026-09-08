@@ -31,6 +31,8 @@
 #' @param f_auto Relevant only for autologistic models. A brms-type model 
 #'   formula for the autologistic offset parameter (theta). If provided, must 
 #'   begin with "~".
+#' @param f_meta Relevant only for two-level models. A brms-type model formula
+#'   for top-level, or meta-occupancy. If provided, must begin with "~".
 #' @param augmented Logical. Must be TRUE if data are formatted for a 
 #'  data-augmented multi-species model, and FALSE otherwise.
 #' @param threads NULL or positive integer. If integer, the number of threads
@@ -59,13 +61,13 @@
 flock <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL, 
                   multiseason = NULL, f_col = NULL, f_ex = NULL, 
                   multi_init = NULL, f_auto = NULL,
-                  augmented = FALSE, threads = NULL,
+                  augmented = FALSE, threads = NULL, f_meta = NULL,
                   ...) {
   flock_(output = "model", f_occ = f_occ, f_det = f_det, 
-         flocker_data = flocker_data, data2 = data2, 
+         flocker_data = flocker_data, data2 = data2,
          multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
          multi_init = multi_init, f_auto = f_auto,
-         augmented = augmented, threads = threads, ...)
+         augmented = augmented, threads = threads, f_meta = f_meta, ...)
 }
 
 #' Generate stan code for an occupancy model
@@ -89,13 +91,13 @@ flock <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL,
 #'   )
 flocker_stancode <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL, 
                   multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
-                  augmented = FALSE, threads = NULL,
+                  augmented = FALSE, threads = NULL, f_meta = NULL,
                   ...) {
   flock_(output = "code", f_occ = f_occ, f_det = f_det, 
-         flocker_data = flocker_data, data2 = data2, 
+         flocker_data = flocker_data, data2 = data2,
          multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
          multi_init = multi_init, f_auto = f_auto,
-         augmented = augmented, threads = threads, ...)
+         augmented = augmented, threads = threads, f_meta = f_meta, ...)
 }
 
 #' Generate stan data for an occupancy model
@@ -119,13 +121,13 @@ flocker_stancode <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL,
 #'   )
 flocker_standata <- function(f_occ=NULL, f_det, flocker_data, data2 = NULL, 
                              multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
-                             augmented = FALSE, threads = NULL,
+                             augmented = FALSE, threads = NULL, f_meta = NULL,
                              ...) {
   flock_(output = "data", f_occ = f_occ, f_det = f_det, 
-         flocker_data = flocker_data, data2 = data2, 
+         flocker_data = flocker_data, data2 = data2,
          multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
          multi_init = multi_init, f_auto = f_auto,
-         augmented = augmented, threads = threads, ...)
+         augmented = augmented, threads = threads, f_meta = f_meta, ...)
 }
 
 #' Get prior for occupancy model
@@ -148,13 +150,13 @@ flocker_standata <- function(f_occ=NULL, f_det, flocker_data, data2 = NULL,
 #' )
 get_flocker_prior <- function(f_occ=NULL, f_det, flocker_data, data2 = NULL, 
                              multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
-                             augmented = FALSE, threads = NULL,
+                             augmented = FALSE, threads = NULL, f_meta = NULL,
                              ...) {
   flock_(output = "prior", f_occ = f_occ, f_det = f_det, 
-         flocker_data = flocker_data, data2 = data2, 
+         flocker_data = flocker_data, data2 = data2,
          multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
          multi_init = multi_init, f_auto = f_auto,
-         augmented = augmented, threads = threads, ...)
+         augmented = augmented, threads = threads, f_meta = f_meta, ...)
 }
 
 #' Fit an occupancy model, or generate Stan code/data for a model, or get the prior
@@ -195,11 +197,14 @@ get_flocker_prior <- function(f_occ=NULL, f_det, flocker_data, data2 = NULL,
 #' @noRd
 flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL, 
                   multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
-                  augmented = FALSE, threads = NULL,
+                  augmented = FALSE, threads = NULL, f_meta = NULL,
                   ...) {
   ### validate parameters
+  if (isTRUE(augmented) & is.null(f_meta)) {
+    f_meta <- ~ 1
+  }
   validate_flock_params(f_occ, f_det, flocker_data, multiseason, f_col, 
-                        f_ex, multi_init, f_auto, augmented, threads)
+                        f_ex, multi_init, f_auto, augmented, threads, f_meta)
   ### create final formulas
   if (!is.null(f_occ)) {
     f_occ_txt <- paste0(deparse(f_occ), collapse = "")
@@ -216,6 +221,10 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
   if (!is.null(f_auto)) {
     f_auto_txt <- paste0(deparse(f_auto), collapse = "")
     f_auto_use <- stats::as.formula(paste0("autologistic ", f_auto_txt))
+  }
+  if (!is.null(f_meta)) {
+    f_meta_txt <- paste0(deparse(f_meta), collapse = "")
+    f_meta_use <- stats::as.formula(paste0("Omega ", f_meta_txt))
   }
   
   if(brms::is.brmsformula(f_det)){
@@ -322,30 +331,47 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  stanvars = stanvars,
                                  threads = threads,
                                  ...)
-  } else if (augmented) {
+  } else if (flocker_data$type %in% c("twolevel_single", "augmented")) {
     max_rep <- flocker_data$n_rep
+    max_unit_group <- flocker_data$max_unit_group
+    if (flocker_data$type == "augmented") {
+      occupancy_family <- occupancy_augmented(max_rep, max_unit_group)
+      occupancy_lpmf <- make_occupancy_augmented_lpmf(
+        max_rep = max_rep,
+        max_unit_group = max_unit_group
+      )
+    } else {
+      occupancy_family <- occupancy_twolevel_single(max_rep, max_unit_group)
+      occupancy_lpmf <- make_occupancy_twolevel_single_lpmf(
+        max_rep = max_rep,
+        max_unit_group = max_unit_group
+      )
+    }
+    group_index_text <- paste0("ff_group_index", seq_len(max_unit_group),
+                               collapse = ", ")
     vint_text <- paste0("ff_rep_index", 1:max_rep, 
                         collapse = ", ")
     f_det_use <- stats::as.formula(
-      paste0("ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ff_n_sp, ff_superQ, ff_species, ",
+      paste0("ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ff_n_group, ",
+             "ff_group_known_present, ff_n_unit_group, ",
+             group_index_text, ", ",
              vint_text, ") ", f_det_txt))
     
     if(brms::is.brmsformula(f_det)){
       f_use <- f_det
       f_use$formula <- f_det_use
     } else {
-      f_Omega_use <- stats::as.formula("Omega ~ 1")
-      f_use <- brms::bf(f_det_use, f_occ_use, f_Omega_use)
+      f_use <- brms::bf(f_det_use, f_occ_use, f_meta_use)
     }
     stanvars <- brms::stanvar(
-      scode = make_occupancy_augmented_lpmf(max_rep = max_rep), 
+      scode = occupancy_lpmf, 
       block = "functions"
     )
     out <- flocker_fit_code_util(output, 
                                  f_use, 
                                  data = flocker_data$data,
                                  data2 = data2,
-                                 family = occupancy_augmented(max_rep), 
+                                 family = occupancy_family, 
                                  stanvars = stanvars,
                                  ...)
   } else if (isTRUE(multiseason == "colex") & isTRUE(multi_init == "explicit")) {
@@ -525,6 +551,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     attr(out, "data_type") <- flocker_data$type
     attr(out, "multiseason") <- multiseason
     attr(out, "multi_init") <- multi_init
+    attr(out, "flocker_data") <- flocker_data
   }
   out
 }

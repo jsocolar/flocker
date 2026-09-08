@@ -39,17 +39,35 @@ occupancy_single_C <- function() {
     loop = TRUE)
 }
 
-#' Define the rep-varying augmented occupancy family
+#' Define the two-level single-season occupancy family
 #' @param max_rep the maximum number of repeat sampling events at a unit
+#' @param max_unit_group the maximum number of closure-units in a top-level group
 #' @return a "customfamily" "brmsfamily" object from brms
 #' @noRd
-occupancy_augmented <- function(max_rep) {
+occupancy_twolevel_single <- function(max_rep, max_unit_group) {
+  brms::custom_family(
+    "occupancy_twolevel_single", dpars = c("mu", "occ", "Omega"),
+    links = c("identity", "identity", "identity"),
+    type = "int", 
+    # Integer aterms for n_unit, n_rep, Q, n_group, group_known_present,
+    # n_unit_group, group_index1..., rep_index1...
+    vars = c(paste0("vint", seq(6 + max_unit_group + max_rep))),
+    loop = FALSE)
+}
+
+#' Define the rep-varying augmented occupancy family
+#' @param max_rep the maximum number of repeat sampling events at a unit
+#' @param max_unit_group the maximum number of closure-units in a top-level group
+#' @return a "customfamily" "brmsfamily" object from brms
+#' @noRd
+occupancy_augmented <- function(max_rep, max_unit_group = 1) {
   brms::custom_family(
     "occupancy_augmented", dpars = c("mu", "occ", "Omega"),
     links = c("identity", "identity", "identity"),
     type = "int", 
-    # Integer aterms (vint) for n_unit, n_rep, Q, ... rep_index1...
-    vars = c(paste0("vint", seq(6 + max_rep))),
+    # Integer aterms for n_unit, n_rep, Q, n_group, group_known_present,
+    # n_unit_group, group_index1..., rep_index1...
+    vars = c(paste0("vint", seq(6 + max_unit_group + max_rep))),
     loop = FALSE)
 }
 

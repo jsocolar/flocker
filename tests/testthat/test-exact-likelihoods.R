@@ -236,7 +236,9 @@ test_that("augmented likelihood matches exact marginal likelihood", {
     quiet = TRUE
   )
   gp <- get_positions(fd)
-  psi <- psi_by_site_species[as.matrix(gp[, 1, ])]
+  gp_unit <- get_positions(fd, unit_level = TRUE)
+  psi <- rep(NA_real_, nrow(fd$data))
+  psi[as.vector(gp_unit)] <- as.vector(psi_by_site_species)
 
   observed_species_lik <-
     ((1 - psi_by_site_species[1, 1]) +
