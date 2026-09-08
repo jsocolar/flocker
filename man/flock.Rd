@@ -16,6 +16,7 @@ flock(
   f_auto = NULL,
   augmented = FALSE,
   threads = NULL,
+  f_meta = NULL,
   ...
 )
 }
@@ -67,6 +68,9 @@ data-augmented multi-species model, and FALSE otherwise.}
 \item{threads}{NULL or positive integer. If integer, the number of threads
 to use per chain in within chain parallelization. Currently available only
 with single-season rep-constant models, and must be set to NULL otherwise.}
+
+\item{f_meta}{Relevant only for two-level models. A brms-type model formula
+for top-level, or meta-occupancy. If provided, must begin with "~".}
 
 \item{...}{additional arguments passed to \code{brms::brm()}}
 }

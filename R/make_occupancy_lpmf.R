@@ -77,86 +77,123 @@ make_occupancy_single_C_lpmf <- function () {
 }"
 }
 
-##### augmented #####
+##### twolevel_single #####
 
-#' Create Stan code for likelihood function occupancy_augmented_lpmf for 
-#' rep-varying model. 
+#' Create Stan code for likelihood function occupancy_twolevel_single_lpmf for 
+#' a rep-varying two-level single-season model. 
 #' @param max_rep Literal integer maximum number of repeated sampling events at 
 #'    any unit.
-#' @return Character string of Stan code corresponding to occupancy_augmented_lpmf
+#' @param max_unit_group Literal integer maximum number of closure-units in any
+#'    top-level group.
+#' @return Character string of Stan code corresponding to 
+#'    occupancy_twolevel_single_lpmf
 #' @noRd
-make_occupancy_augmented_lpmf <- function (max_rep) {
+make_occupancy_twolevel_single_lpmf <- function (max_rep, max_unit_group) {
+  make_occupancy_twolevel_single_lpmf_(max_rep, max_unit_group,
+                                       "occupancy_twolevel_single_lpmf")
+}
+
+make_occupancy_twolevel_single_lpmf_ <- function(max_rep, max_unit_group,
+                                                 lpmf_name) {
   assertthat::assert_that(
     is_one_pos_int(max_rep, m = 1),
     msg = "max_rep must be an integer greater than 1"
   )
-  
-  sf_text1 <- "  real occupancy_augmented_lpmf(
+  assertthat::assert_that(
+    is_one_pos_int(max_unit_group, m = 0),
+    msg = "max_unit_group must be a positive integer"
+  )
+  sf_text1 <- paste0("  real ", lpmf_name, "(
     array[] int y, // detection data
     vector mu, // lin pred for detection
     vector occ, // lin pred for occupancy. Elements after vint1[1] irrelevant.
-    vector Omega, // lin pred for availability.  Elements after 1 irrelevant.
+    vector Omega, // lin pred for group-level occupancy. Elements after vint4[1] irrelevant.
     array[] int vint1, // n units (n_unit). Elements after 1 irrelevant.
     array[] int vint2, // n sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
     array[] int vint3, // Indicator for > 0 detections (Q). Elements after vint1[1] irrelevant.
     
-    array[] int vint4, // n species (observed + augmented). Elements after 1 irrelevant.
-    array[] int vint5, // Indicator for species was observed.  Elements after vint4[1] irrelevant
+    array[] int vint4, // n top-level groups. Elements after 1 irrelevant.
+    array[] int vint5, // Indicator for group known present. Elements after vint4[1] irrelevant.
     
-    array[] int vint6, // species
+    array[] int vint6, // n closure-units per top-level group. Elements after vint4[1] irrelevant.
   
-  // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):"
+  // indices for jth closure-unit within each top-level group (elements after vint4[1] irrelevant):")
   
-  sf_text2 <- paste0("    array[] int vint", 6 + (1:max_rep), collapse = ",\n")
+  sf_text2.1 <- paste0("    array[] int vint", 6 + (1:max_unit_group), collapse = ",\n")
+  sf_text2.2 <- ",\n"
+  sf_text2 <- paste0(sf_text2.1, sf_text2.2)
   
-  sf_text3 <- paste0(") {
+  sf_text3 <- "// indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):"
+  
+  sf_text4 <- paste0("    array[] int vint", 6 + max_unit_group + (1:max_rep), collapse = ",\n")
+  
+  sf_text5 <- paste0(") {
+  // Create array of the unit indices that correspond to each top-level group.
+    array[vint4[1], ", max_unit_group, "] int unit_index_array;")
+  
+  sf_text6.1 <- "      unit_index_array[,"
+  sf_text6.2 <- 1:max_unit_group
+  sf_text6.3 <- "] = vint"
+  sf_text6.4 <- 6 + (1:max_unit_group)
+  sf_text6.5 <- "[1:vint4[1]];\n"
+  sf_text6 <- paste0(sf_text6.1, sf_text6.2, sf_text6.3, sf_text6.4, sf_text6.5, collapse = "")
+  
+  sf_text7 <- paste0("
   // Create array of the rep indices that correspond to each unit.
     array[vint1[1], ", max_rep, "] int index_array;")
   
-  sf_text4.1 <- "      index_array[,"
-  sf_text4.2 <- 1:max_rep
-  sf_text4.3 <- "] = vint"
-  sf_text4.4 <- 6 + (1:max_rep)
-  sf_text4.5 <- "[1:vint1[1]];\n"
-  sf_text4 <- paste0(sf_text4.1, sf_text4.2, sf_text4.3, sf_text4.4, sf_text4.5, collapse = "")
+  sf_text8.1 <- "      index_array[,"
+  sf_text8.2 <- 1:max_rep
+  sf_text8.3 <- "] = vint"
+  sf_text8.4 <- 6 + max_unit_group + (1:max_rep)
+  sf_text8.5 <- "[1:vint1[1]];\n"
+  sf_text8 <- paste0(sf_text8.1, sf_text8.2, sf_text8.3, sf_text8.4, sf_text8.5, collapse = "")
   
-  sf_text5 <- "  // Initialize and compute log-likelihood
+  sf_text9 <- "  // Initialize and compute log-likelihood
     real lp = 0;
     
-    for (sp in 1:vint4[1]) {
-      real lp_s = 0;
-      if (vint5[sp] == 1) {
-        for (i in 1:vint1[1]) {
-          if (vint6[i] == sp) {
-            array[vint2[i]] int indices = index_array[i, 1:vint2[i]];
-            if (vint3[i] == 1) {
-              lp_s += bernoulli_logit_lpmf(1 | occ[i]);
-              lp_s += bernoulli_logit_lpmf(y[indices] | mu[indices]);
-            }
-            if (vint3[i] == 0) {
-              lp_s += log_sum_exp(bernoulli_logit_lpmf(1 | occ[i]) + 
-                                    sum(log1m_inv_logit(mu[indices])), bernoulli_logit_lpmf(0 | occ[i]));
-            }
-          }
+    for (g in 1:vint4[1]) {
+      real lp_g = 0;
+      for (j in 1:vint6[g]) {
+        int i = unit_index_array[g, j];
+        array[vint2[i]] int indices = index_array[i, 1:vint2[i]];
+        if (vint3[i] == 1) {
+          lp_g += bernoulli_logit_lpmf(1 | occ[i]);
+          lp_g += bernoulli_logit_lpmf(y[indices] | mu[indices]);
         }
-        lp += log_inv_logit(Omega[1]) + lp_s;
+        if (vint3[i] == 0) {
+          lp_g += log_sum_exp(bernoulli_logit_lpmf(1 | occ[i]) + 
+                                sum(log1m_inv_logit(mu[indices])), bernoulli_logit_lpmf(0 | occ[i]));
+        }
+      }
+      if (vint5[g] == 1) {
+        lp += log_inv_logit(Omega[g]) + lp_g;
       } else {
-        for (i in 1:vint1[1]) {
-          if (vint6[i] == sp) {
-            array[vint2[i]] int indices = index_array[i, 1:vint2[i]];
-            lp_s += log_sum_exp(bernoulli_logit_lpmf(1 | occ[i]) + 
-                                  sum(log1m_inv_logit(mu[indices])), bernoulli_logit_lpmf(0 | occ[i]));
-          }
-        }
-        lp += log_sum_exp(log1m_inv_logit(Omega[1]), log_inv_logit(Omega[1]) + lp_s);  
+        lp += log_sum_exp(log1m_inv_logit(Omega[g]), log_inv_logit(Omega[g]) + lp_g);
       }
     }
     return(lp);
   }
 "
   
-  out <- paste(sf_text1, sf_text2, sf_text3, sf_text4, sf_text5, sep = "\n")
+  out <- paste(sf_text1, sf_text2, sf_text3, sf_text4, sf_text5, sf_text6,
+               sf_text7, sf_text8, sf_text9, sep = "\n")
   return(out)
+}
+
+##### augmented #####
+
+#' Create Stan code for likelihood function occupancy_augmented_lpmf for 
+#' rep-varying model. 
+#' @param max_rep Literal integer maximum number of repeated sampling events at 
+#'    any unit.
+#' @param max_unit_group Literal integer maximum number of closure-units in any
+#'    top-level group.
+#' @return Character string of Stan code corresponding to occupancy_augmented_lpmf
+#' @noRd
+make_occupancy_augmented_lpmf <- function (max_rep, max_unit_group = 1) {
+  make_occupancy_twolevel_single_lpmf_(max_rep, max_unit_group,
+                                       "occupancy_augmented_lpmf")
 }
 
 
@@ -809,7 +846,4 @@ make_occupancy_single_partial_sum <- function (max_rep) {
   out <- paste(sf_text1, sf_text2, sf_text3, sf_text4, sf_text5, sep = "\n")
   return(out)
 }
-
-
-
 

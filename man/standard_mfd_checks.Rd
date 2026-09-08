@@ -11,7 +11,10 @@ standard_mfd_checks(
   type,
   n_aug,
   quiet,
-  newdata_checks
+  newdata_checks,
+  group_covs = NULL,
+  top_level = NULL,
+  known_present = NULL
 )
 }
 \arguments{
@@ -60,6 +63,18 @@ data-augmentation for never-observed pseudospecies.}
 \item{newdata_checks}{If TRUE, turn off checks that must pass in order
 to use the data for model fitting, but not in other contexts (e.g. making
 predictions or assessing log-likelihoods over new data).}
+
+\item{group_covs}{A dataframe of covariates for each top-level group. Only
+applicable if \code{type = "twolevel_single"}.}
+
+\item{top_level}{The name of a factor column in both \code{unit_covs} and
+\code{group_covs} identifying the top-level group. Only applicable if
+\code{type = "twolevel_single"}.}
+
+\item{known_present}{Optional name of a logical column in \code{group_covs}
+indicating groups known a priori to be present. Groups with detections
+are always treated as known present regardless of this column. Only
+applicable if \code{type = "twolevel_single"}.}
 }
 \description{
 input checking for make_flocker_data

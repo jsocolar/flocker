@@ -141,9 +141,10 @@ new_array <- function(m, data = NA){
 flocker_col_names <- function(n_rep = NULL, n_year = NULL) {
   out <- c("ff_y", 
     "ff_n_suc", "ff_n_trial", 
-    "ff_Q", "ff_n_unit", "ff_n_rep", "ff_unit",
+    "ff_Q", "ff_n_unit", "ff_n_rep", "ff_unit", "ff_orig_unit",
     "ff_n_series", "ff_n_year", "ff_series", "ff_year", "ff_series_year",
-    "ff_n_sp", "ff_species", "ff_superQ")
+    "ff_n_group", "ff_group", "ff_group_known_present", "ff_n_unit_group",
+    "ff_n_sp", "ff_species", "ff_superQ", "ff_site")
   if(!is.null(n_rep)) {
     out <- c(out, paste0("ff_rep_index", 1:n_rep))
   }
@@ -166,6 +167,7 @@ flocker_reserved <- function() {
 flocker_model_types <- function() {
   c("single", # single-season garden-variety model
     "single_C", # single without rep-varying covariates
+    "twolevel_single", # single-season two-level occupancy model
     "augmented", # single-season data-augmented multispecies model
     "multi_colex", # multi-season model with explicit colonization/extinction
     "multi_colex_eq", # multi_colex with equilibrium starting probabiltiies
@@ -181,6 +183,7 @@ flocker_data_input_types <- function() {
   c("single",    # covers all model types prefixed with "single"
                  # (rep-constant versus varying is inferred from
                  # existence of event_covs)
+    "twolevel_single", # single-season two-level occupancy model
     "augmented", # the data-augmented multispecies model
     "multi"      # covers all model types prefixed with "multi"
     )
@@ -192,6 +195,7 @@ flocker_data_input_types <- function() {
 flocker_data_output_types <- function() {
   c("single",
     "single_C",
+    "twolevel_single",
     "augmented", 
     "multi"
     )
@@ -205,10 +209,12 @@ fdtl <- function(){
   data.frame(
     model_type = flocker_model_types(),
     data_output_type = c(
-      "single", "single_C", "augmented", "multi", "multi", "multi", "multi"
+      "single", "single_C", "twolevel_single", "augmented",
+      "multi", "multi", "multi", "multi"
     ),
     data_input_type = c(
-      "single", "single", "augmented", "multi", "multi", "multi", "multi"
+      "single", "single", "twolevel_single", "augmented",
+      "multi", "multi", "multi", "multi"
     )
   )
 }
@@ -284,6 +290,7 @@ type_flocker_fit <- function(x) {
 params_by_type <- list(
   single = c("occ", "det"),
   single_C = c("occ", "det"),
+  twolevel_single = c("occ", "det", "Omega"),
   augmented = c("occ", "det", "Omega"),
   multi_colex = c("occ", "colo", "ex", "det"),
   multi_colex_eq = c("colo", "ex", "det"),
@@ -318,10 +325,15 @@ get_positions <- function(data_object, unit_level = FALSE) {
     isTRUE(is_flocker_fit(data_object)) | isTRUE(is_flocker_data(data_object)),
     msg = "the data object must either be a flocker_fit or a flocker_data object"
   )
-  the_data <- data_object$data
   if(is_flocker_fit(data_object)) {
+    if ("flocker_data" %in% names(attributes(data_object))) {
+      the_data <- attributes(data_object)$flocker_data$data
+    } else {
+      the_data <- data_object$data
+    }
     data_type <- attributes(data_object)$data_type
   } else {
+    the_data <- data_object$data
     data_type <- data_object$type
   }
   
@@ -348,23 +360,39 @@ get_positions <- function(data_object, unit_level = FALSE) {
     } else {
       return(index_matrix[, 1])
     }
+  } else if(data_type == "twolevel_single") {
+    n_unit <- the_data$ff_n_unit[1]
+    n_rep <- max(the_data$ff_n_rep[seq_len(n_unit)], na.rm = TRUE)
+    
+    index_matrix_internal <- as.matrix(
+      the_data[seq_len(n_unit), grepl("^ff_rep_index", names(the_data))]
+    )
+    assertthat::assert_that(ncol(index_matrix_internal) == n_rep)
+    index_matrix <- matrix(NA, nrow = n_unit, ncol = n_rep)
+    orig_unit <- the_data$ff_orig_unit[seq_len(n_unit)]
+    index_matrix[orig_unit, ] <- index_matrix_internal
+    index_matrix[index_matrix == -99] <- NA
+    if(!unit_level) {
+      return(index_matrix)
+    } else {
+      return(index_matrix[, 1])
+    }
   } else if(data_type == "augmented") {
-    n_species <- the_data$ff_n_sp[1]
+    n_species <- the_data$ff_n_group[1]
     n_site <- the_data$ff_n_unit[1] / n_species
     max_visit <- max(the_data$ff_n_rep)
     index_array <- array(dim = c(n_site, max_visit, n_species))
     rep_index_frame <- the_data[paste0("ff_rep_index", seq_len(max_visit))]
-    for(r in seq_len(nrow(the_data))){
-      rep_pos <- which(rep_index_frame == r, arr.ind = TRUE)
-      unit_id <- rep_pos[1]
-      visit_id <- rep_pos[2]
-      sp_id <- the_data$ff_species[r]
-      site_id <- unit_id %% n_site
-      if(site_id == 0){
-        site_id <- n_site
+    rep_index_matrix <- as.matrix(rep_index_frame)
+    for(r in seq_len(the_data$ff_n_unit[1])){
+      visit_ids <- which(rep_index_matrix[r, ] != -99)
+      if(length(visit_ids) > 0) {
+        sp_id <- the_data$ff_group[r]
+        site_id <- the_data$ff_site[r]
+        index_array[site_id, visit_ids, sp_id] <- rep_index_matrix[r, visit_ids]
       }
-      index_array[site_id, visit_id, sp_id] <- r
     }
+    index_array[index_array == -99] <- NA
     if(!unit_level) {
       return(index_array)
     } else {
@@ -480,12 +508,15 @@ Z_from_emission <- function(el0, el1, psi_unconditional){
 #' @noRd
 validate_flock_params <- function(f_occ, f_det, flocker_data,
                                   multiseason, f_col, f_ex, multi_init, f_auto,
-                                  augmented, threads) {
+                                  augmented, threads, f_meta = NULL) {
+  if (flocker_data$type == "augmented" && isTRUE(augmented) && is.null(f_meta)) {
+    f_meta <- ~ 1
+  }
   
   # Check that inputs are valid individually
   validate_params_individually(f_occ, f_det, flocker_data,
                                multiseason, f_col, f_ex, multi_init, f_auto,
-                               augmented, threads)
+                               augmented, threads, f_meta)
   
   # Check that parameters are valid in combination
   if (flocker_data$type == "single") {
@@ -496,10 +527,14 @@ validate_flock_params <- function(f_occ, f_det, flocker_data,
     validate_param_combos_single_C(f_occ, f_det, flocker_data, 
                                    multiseason, f_col, f_ex, multi_init, f_auto,
                                    augmented)
+  } else if (flocker_data$type == "twolevel_single") {
+    validate_param_combos_twolevel_single(f_occ, f_det, flocker_data,
+                                   multiseason, f_col, f_ex, multi_init, f_auto,
+                                   augmented, threads, f_meta)
   } else if (flocker_data$type == "augmented") {
     validate_param_combos_augmented(f_occ, f_det, flocker_data, 
                                    multiseason, f_col, f_ex, multi_init, f_auto,
-                                   augmented, threads)
+                                   augmented, threads, f_meta)
   } else {
     assertthat::assert_that(flocker_data$type == "multi") 
     # above line is redundant but included for clarity
@@ -508,6 +543,7 @@ validate_flock_params <- function(f_occ, f_det, flocker_data,
                                 augmented, threads)
   }
   validate_unit_formula_variables(f_occ, f_col, f_ex, f_auto, flocker_data)
+  validate_meta_formula_variables(f_meta, flocker_data)
 }
 
 #' Check individual validity of params passed to `flock`
@@ -516,7 +552,7 @@ validate_flock_params <- function(f_occ, f_det, flocker_data,
 #' @noRd
 validate_params_individually <- function(f_occ, f_det, flocker_data,
                                          multiseason, f_col, f_ex, multi_init, f_auto,
-                                         augmented, threads) {
+                                         augmented, threads, f_meta) {
   # Check that formulas are valid and produce informative errors otherwise
   assertthat::assert_that(
     is_formula(f_det) | brms::is.brmsformula(f_det) | brms::is.mvbrmsformula(f_det),
@@ -525,6 +561,10 @@ validate_params_individually <- function(f_occ, f_det, flocker_data,
   assertthat::assert_that(
     is.null(f_occ) | is_formula(f_occ),
     msg = formula_error("occupancy")
+  )
+  assertthat::assert_that(
+    is.null(f_meta) | is_formula(f_meta),
+    msg = formula_error("meta-occupancy")
   )
   assertthat::assert_that(
     is.null(f_col) | is_formula(f_col),
@@ -590,6 +630,27 @@ validate_unit_formula_variables <- function(f_occ, f_col, f_ex, f_auto, flocker_
                  "across visits at any unit, this doesn't make sense. If they ",
                  "are constant across visits within every unit, pass these ",
                  "covariates as unit covariates rather than event covariates.")
+  )
+}
+
+#' Check that meta-occupancy formulas use group-level covariates only
+#' @inheritParams validate_flock_params
+#' @return silent if parameters are valid
+#' @noRd
+validate_meta_formula_variables <- function(f_meta, flocker_data) {
+  if (is.null(f_meta)) {
+    return(invisible(NULL))
+  }
+  assertthat::assert_that(
+    "group_covs" %in% names(flocker_data),
+    msg = "f_meta is only allowed for two-level models."
+  )
+  meta_vars <- all.vars(f_meta)
+  meta_vars <- setdiff(meta_vars, flocker_reserved())
+  assertthat::assert_that(
+    all(meta_vars %in% flocker_data$group_covs),
+    msg = paste0("All variables in f_meta must be group-level covariates ",
+                 "passed in group_covs.")
   )
 }
 
@@ -667,16 +728,63 @@ validate_param_combos_single_C <- function(f_occ, f_det, flocker_data,
   )
 }
 
+#' Check validity of params passed to `flock` if `type` is `twolevel_single`
+#' @inheritParams validate_flock_params
+#' @return silent if parameters are valid
+#' @noRd
+validate_param_combos_twolevel_single <- function(f_occ, f_det, flocker_data,
+                                         multiseason, f_col, f_ex, multi_init, f_auto,
+                                         augmented, threads, f_meta) {
+  if(!(brms::is.brmsformula(f_det) | brms::is.mvbrmsformula(f_det))){
+    assertthat::assert_that(
+      is_flocker_formula(f_occ), msg = formula_error("occupancy")
+    )
+    assertthat::assert_that(
+      is_flocker_formula(f_meta), msg = formula_error("meta-occupancy")
+    )
+  }
+  assertthat::assert_that(
+    is.null(f_col) & is.null(f_ex) & is.null(f_auto),
+    msg = "colonization/extinction/autologistic formulas not allowed in single-season model"
+  )
+  assertthat::assert_that(
+    is.null(multiseason),
+    msg = "flocker_data formatted for single season but `multiseason` is not NULL."
+  )
+  assertthat::assert_that(
+    is.null(multi_init),
+    msg = "flocker_data formatted for single season but `multi_init` is not NULL."
+  )
+  assertthat::assert_that(
+    isFALSE(augmented),
+    msg = paste0("flocker_data not formatted for augmented model, but ",
+                 "`augmented` is not FALSE."
+    )
+  )
+  assertthat::assert_that(
+    all(is.numeric(flocker_data$data$ff_y)) &
+      all(flocker_data$data$ff_y %in% c(0, 1)), 
+    msg = "All response elements must be 0, 1, or NA"
+  )
+  assertthat::assert_that(
+    is.null(threads),
+    msg = "multithreading not supported in two-level single-season models; set threads to NULL"
+  )
+}
+
 #' Check validity of params passed to `flock` if `type` is `augmented`
 #' @inheritParams validate_flock_params
 #' @return silent if parameters are valid
 #' @noRd
 validate_param_combos_augmented <- function(f_occ, f_det, flocker_data, 
                                          multiseason, f_col, f_ex, multi_init, f_auto,
-                                         augmented, threads) {
+                                         augmented, threads, f_meta) {
   if(!(brms::is.brmsformula(f_det) | brms::is.mvbrmsformula(f_det))){
     assertthat::assert_that(
       is_flocker_formula(f_occ), msg = formula_error("occupancy")
+    )
+    assertthat::assert_that(
+      is_flocker_formula(f_meta), msg = formula_error("meta-occupancy")
     )
   }
   assertthat::assert_that(

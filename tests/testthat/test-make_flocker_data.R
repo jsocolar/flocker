@@ -59,3 +59,61 @@ test_that("make_flocker_data works correctly", {
 
   # Still need to add checks for the rest of the error messages, and for proper error messages using rep-constant data
 })
+
+test_that("make_flocker_data handles two-level single-season data", {
+  obs <- matrix(c(
+    1, 0, 0,
+    0, 0, NA,
+    0, 1, 0,
+    0, 0, 0
+  ), nrow = 4, byrow = TRUE)
+  unit_covs <- data.frame(
+    group = factor(c("b", "a", "b", "a"), levels = c("a", "b")),
+    unit_x = 1:4
+  )
+  event_covs <- list(event_x = matrix(seq_len(12), nrow = 4))
+  group_covs <- data.frame(
+    group = factor(c("b", "a"), levels = c("a", "b")),
+    group_x = c(20, 10),
+    known = c(FALSE, FALSE)
+  )
+  
+  fd <- make_flocker_data(
+    obs, unit_covs, event_covs, type = "twolevel_single",
+    group_covs = group_covs, top_level = "group",
+    known_present = "known", quiet = TRUE
+  )
+  
+  expect_equal(fd$type, "twolevel_single")
+  expect_equal(fd$top_level, "group")
+  expect_equal(fd$max_unit_group, 2)
+  expect_equal(fd$group_covs, names(group_covs))
+  expect_equal(fd$data$group[seq_len(fd$data$ff_n_group[1])], factor(c("a", "b"), levels = c("a", "b")))
+  expect_equal(fd$data$group_x[seq_len(fd$data$ff_n_group[1])], c(10, 20))
+  expect_equal(fd$data$ff_group_known_present[seq_len(fd$data$ff_n_group[1])], c(0, 1))
+  expect_equal(fd$data$ff_n_unit_group[seq_len(fd$data$ff_n_group[1])], c(2, 2))
+  expect_true(all(c("ff_group_index1", "ff_group_index2") %in% names(fd$data)))
+  expect_equal(
+    fd$data$ff_orig_unit[seq_len(fd$data$ff_n_unit[1])],
+    c(2, 1, 3, 4)
+  )
+  
+  unit_covs_bad <- unit_covs
+  unit_covs_bad$group <- as.character(unit_covs_bad$group)
+  expect_error(
+    make_flocker_data(
+      obs, unit_covs_bad, event_covs, type = "twolevel_single",
+      group_covs = group_covs, top_level = "group", quiet = TRUE
+    ),
+    "top_level must identify a factor column"
+  )
+  
+  group_covs_bad <- transform(group_covs, unit_x = c(1, 2))
+  expect_error(
+    make_flocker_data(
+      obs, unit_covs, event_covs, type = "twolevel_single",
+      group_covs = group_covs_bad, top_level = "group", quiet = TRUE
+    ),
+    "may only share the top_level column"
+  )
+})

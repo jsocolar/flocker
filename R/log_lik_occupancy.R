@@ -53,6 +53,11 @@ log_lik_flocker <- function(
   }
   
   lik_type <- type_flocker_fit(flocker_fit)
+  if (is.null(new_data) && "flocker_data" %in% names(attributes(flocker_fit))) {
+    original_data <- attributes(flocker_fit)$flocker_data$data
+  } else {
+    original_data <- flocker_fit$data
+  }
   
   if (lik_type %in% c("single")) {
     lps <- fitted_flocker(
@@ -66,7 +71,7 @@ log_lik_flocker <- function(
     theta_all <- lps$linpred_det
     if (is.null(new_data)) {
       gp <- get_positions(flocker_fit)
-      the_data <- flocker_fit$data
+      the_data <- original_data
     } else {
       gp <- get_positions(new_data)
       the_data <- new_data$data
@@ -91,13 +96,15 @@ log_lik_flocker <- function(
       flocker_fit, newdata = new_data$data, draw_ids = draw_ids, #note that if new_data is NULL, new_data$data is also NULL
       allow_new_levels = allow_new_levels,
       sample_new_levels = sample_new_levels)
-  } else if (lik_type == "augmented") {
+  } else if (lik_type %in% c("twolevel_single", "augmented")) {
     if(is.null(new_data)){
       gp <- get_positions(flocker_fit)
-      obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+      obs <- new_array(gp, original_data$ff_y[gp])
+      the_data <- original_data
     } else {
       gp <- get_positions(new_data)
       obs <- new_array(gp, new_data$data$ff_y[gp])
+      the_data <- new_data$data
     }
 
     lps <- fitted_flocker(
@@ -106,23 +113,39 @@ log_lik_flocker <- function(
       sample_new_levels = sample_new_levels, 
       response = TRUE, unit_level = FALSE
     )
-    psi_all <- lps$linpred_occ[ , 1, , ] # first index is point, second is visit, third is species, fourth is draw
-    Omega <- lps$linpred_Omega[1,1,,]
-    theta_all <- lps$linpred_det
-
-    # get emission likelihoods
-    el_0 <- el_1 <- new_array(psi_all)
-    for(j in seq_len(ncol(psi_all))){
-      for(i in seq_len(nslice(psi_all))){
-        el_0[ , j, i] <- emission_likelihood(0, obs[,,j], theta_all[,,j,i])
-        el_1[ , j, i] <- emission_likelihood(1, obs[,,j], theta_all[,,j,i])
+    if(lik_type == "augmented") {
+      n_point <- dim(obs)[1]
+      n_visit <- dim(obs)[2]
+      n_species <- dim(obs)[3]
+      n_unit <- the_data$ff_n_unit[1]
+      unit_rows <- seq_len(n_unit)
+      site_id <- the_data$ff_site[unit_rows]
+      species_id <- the_data$ff_group[unit_rows]
+      psi_all_array <- lps$linpred_occ[ , 1, , ]
+      psi_all <- matrix(NA_real_, nrow = n_unit, ncol = ndraws)
+      theta_all <- array(NA_real_, dim = c(n_unit, n_visit, ndraws))
+      obs_use <- matrix(NA_real_, nrow = n_unit, ncol = n_visit)
+      for(i in unit_rows) {
+        psi_all[i, ] <- psi_all_array[site_id[i], species_id[i], ]
+        obs_use[i, ] <- obs[site_id[i], , species_id[i]]
+        theta_all[i, , ] <- lps$linpred_det[site_id[i], , species_id[i], ]
       }
+    } else {
+      n_unit <- the_data$ff_n_unit[1]
+      unit_rows <- seq_len(n_unit)
+      orig_unit <- the_data$ff_orig_unit[unit_rows]
+      psi_all <- lps$linpred_occ[ , 1, ][orig_unit, , drop = FALSE]
+      theta_all <- lps$linpred_det[orig_unit, , , drop = FALSE]
+      obs_use <- obs[orig_unit, , drop = FALSE]
     }
-    
-    elw1 <- apply(log(el_0*(1 - psi_all) + el_1*psi_all), c(2, 3), function(x){exp(sum(x))})
-    elw0 <- replicate(ndraws, apply(obs, 3, function(x){prod(1 - x)}))
-    
-    ll <- log(elw1 * Omega + elw0 * (1 - Omega)) |>
+    Omega <- lps$linpred_Omega
+    group_id <- the_data$ff_group[seq_len(the_data$ff_n_unit[1])]
+    group_known_present <- the_data$ff_group_known_present[
+      seq_len(the_data$ff_n_group[1])
+    ]
+    ll <- log_lik_twolevel_single_from_components(
+      psi_all, theta_all, Omega, group_id, group_known_present, obs_use
+    ) |>
       t()
   } else if (lik_type %in% c("multi_colex")) {
     if(is.null(new_data)){
@@ -242,6 +265,37 @@ log_lik_flocker <- function(
       t()
   }
   ll
+}
+
+#' Compute grouped log-likelihoods for two-level single-season models
+#' @noRd
+log_lik_twolevel_single_from_components <- function(
+    psi_all, theta_all, Omega, group_id, group_known_present, obs
+    ) {
+  n_unit <- nrow(psi_all)
+  n_draw <- ncol(psi_all)
+  n_group <- nrow(Omega)
+  el_0 <- el_1 <- matrix(NA, nrow = n_unit, ncol = n_draw)
+  
+  for(i in seq_len(n_draw)){
+    el_0[ , i] <- emission_likelihood(0, obs, theta_all[,,i])
+    el_1[ , i] <- emission_likelihood(1, obs, theta_all[,,i])
+  }
+  
+  unit_lik_available <- (1 - psi_all) * el_0 + psi_all * el_1
+  out <- matrix(NA, nrow = n_group, ncol = n_draw)
+  
+  for(g in seq_len(n_group)) {
+    rows <- group_id == g
+    p_y_available <- apply(unit_lik_available[rows, , drop = FALSE], 2, prod)
+    p_y_unavailable <- as.numeric(group_known_present[g] == 0)
+    out[g, ] <- log(
+      Omega[g, ] * p_y_available +
+        (1 - Omega[g, ]) * p_y_unavailable
+    )
+  }
+  
+  out
 }
 
 #' A log-likelihood function for the rep-constant occupancy model, sufficient for
@@ -366,4 +420,3 @@ log_lik_dynamic <- function(init, colo, ex, obs, det){
   assertthat::assert_that(!(NA %in% out))
   out
 }
-
