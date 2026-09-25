@@ -9,9 +9,8 @@ make_flocker_data_twolevel_single(
   obs,
   unit_covs,
   event_covs = NULL,
-  group_covs,
-  top_level,
-  known_present = NULL,
+  level2_covs = NULL,
+  level2_group,
   quiet = FALSE,
   newdata_checks = FALSE
 )
@@ -36,7 +35,9 @@ dataframes must have identical column names and types, and all
 dataframes must have I rows.
   If \code{type = "augmented"}, a dataframe of covariates for each site that
 are constant across repeated sampling events within sites (no dependence on
-species is allowed).}
+species is allowed).
+  If \code{type = "twolevel_single"}, a dataframe with one row per closure
+unit, including the factor column named by \code{level2_group}.}
 
 \item{event_covs}{If \code{type = "single"}, a named list of I x J matrices, 
 each one corresponding to a covariate that varies across repeated sampling 
@@ -48,14 +49,14 @@ within closure-units.
 corresponding to a covariate that varies across repeated sampling events
 within sites (no dependence on species is allowed).}
 
-\item{group_covs}{A dataframe of covariates for each top-level group.}
+\item{level2_covs}{An optional dataframe with one row per level-two group
+and no unused levels in its grouping factor. Row order is arbitrary;
+factor-level order determines the internal group order. If omitted, a
+minimal table is constructed from the groups represented in
+\code{unit_covs}.}
 
-\item{top_level}{The name of a factor column in both \code{unit_covs} and
-\code{group_covs} identifying the top-level group.}
-
-\item{known_present}{Optional name of a logical column in \code{group_covs}
-indicating groups known a priori to be present. Groups with detections are
-always treated as known present regardless of this column.}
+\item{level2_group}{The name of a factor column in \code{unit_covs} and, if
+supplied, \code{level2_covs}, identifying the level-two group.}
 
 \item{quiet}{Hide progress bars and informational messages?}
 

@@ -79,15 +79,16 @@ augmented_lpmf_from_flocker_data <- function(fd, psi, theta, Omega) {
     unit_rows <- which(d$ff_species[seq_len(n_unit)] == sp)
 
     for (i in unit_rows) {
+      data_row <- d$ff_unit_row[i]
       indices <- as.integer(d[i, rep_cols])
       indices <- indices[indices != -99]
       y_i <- d$ff_y[indices]
       theta_i <- theta[indices]
 
       if (d$ff_Q[i] == 1) {
-        p_i <- psi[i] * prod(theta_i^y_i * (1 - theta_i)^(1 - y_i))
+        p_i <- psi[data_row] * prod(theta_i^y_i * (1 - theta_i)^(1 - y_i))
       } else {
-        p_i <- (1 - psi[i]) + psi[i] * prod(1 - theta_i)
+        p_i <- (1 - psi[data_row]) + psi[data_row] * prod(1 - theta_i)
       }
 
       p_y_given_available <- p_y_given_available * p_i

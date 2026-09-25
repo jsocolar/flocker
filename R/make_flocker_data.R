@@ -26,6 +26,8 @@
 #'   If \code{type = "augmented"}, a dataframe of covariates for each site that
 #' are constant across repeated sampling events within sites (no dependence on
 #' species is allowed).
+#'   If \code{type = "twolevel_single"}, a dataframe with one row per closure
+#' unit, including the factor column named by \code{level2_group}.
 #' @param event_covs If \code{type = "single"}, a named list of I x J matrices, 
 #' each one corresponding to a covariate that varies across repeated sampling 
 #' events within closure-units.
@@ -39,22 +41,33 @@
 #'    \code{"single"} for a single_season model,
 #'    \code{"multi"} for a multi-season (dynamic) model, or
 #'    \code{"augmented"} for a single-season multi-species model with 
-#'    data-augmentation for never-observed pseudospecies.
+#'    data-augmentation for never-observed pseudospecies, or
+#'    \code{"twolevel_single"} for a two-level single-season model.
 #' @param n_aug Number of pseudo-species to augment. Only applicable if 
 #'    \code{type = "augmented"}.
-#' @param group_covs A dataframe of covariates for each top-level group. Only
-#'    applicable if \code{type = "twolevel_single"}.
-#' @param top_level The name of a factor column in both \code{unit_covs} and
-#'    \code{group_covs} identifying the top-level group. Only applicable if
-#'    \code{type = "twolevel_single"}.
-#' @param known_present Optional name of a logical column in \code{group_covs}
-#'    indicating groups known a priori to be present. Groups with detections
-#'    are always treated as known present regardless of this column. Only
+#' @param level2_covs An optional dataframe with one row per level-two group
+#'    and no unused levels in its grouping factor. Row order is arbitrary;
+#'    factor-level order determines the internal group order. Only applicable
+#'    if \code{type = "twolevel_single"}.
+#' @param level2_group The name of a factor column in \code{unit_covs} and, if
+#'    supplied, \code{level2_covs}, identifying the level-two group. Only
 #'    applicable if \code{type = "twolevel_single"}.
 #' @param quiet Hide progress bars and informational messages?
 #' @param newdata_checks If TRUE, turn off checks that must pass in order
 #' to use the data for model fitting, but not in other contexts (e.g. making
 #' predictions or assessing log-likelihoods over new data).
+#' @details For \code{type = "twolevel_single"}, \code{level2_covs} may be
+#' omitted when the meta-occupancy formula is intercept-only. In that case,
+#' groups are inferred from the represented values of the factor column named
+#' by \code{level2_group}; unused levels of that factor are dropped. Supply
+#' \code{level2_covs} when the meta-occupancy formula uses level-two covariates
+#' or when groups with no corresponding units must be represented. Such
+#' unit-empty groups trigger a warning and contribute no unit-level likelihood.
+#'
+#' Level-two covariates are also made available to unit-level occupancy and
+#' event-level detection formulas. The grouping column itself may be used in
+#' those lower-level formulas, but it may not be used in the meta-occupancy
+#' formula because it has only one latent state per level.
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 #' @examples
@@ -66,11 +79,10 @@
 #' )
 make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
                               type = "single", n_aug = NULL,
-                              group_covs = NULL, top_level = NULL,
-                              known_present = NULL,
-                              quiet = FALSE, newdata_checks = FALSE) {
+                              quiet = FALSE, newdata_checks = FALSE,
+                              level2_covs = NULL, level2_group = NULL) {
   standard_mfd_checks(obs, unit_covs, event_covs, type, n_aug, quiet, newdata_checks,
-                      group_covs, top_level, known_present)
+                      level2_covs, level2_group)
 
   if (!quiet) {
     if (type == "single") {
@@ -116,11 +128,10 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
     out$event_covs <- names(event_covs)
   } else if (type == "twolevel_single") {
     out <- make_flocker_data_twolevel_single(
-      obs, unit_covs, event_covs, group_covs, top_level, known_present,
+      obs, unit_covs, event_covs, level2_covs, level2_group,
       quiet, newdata_checks)
     out$unit_covs <- names(unit_covs)
     out$event_covs <- names(event_covs)
-    out$group_covs <- names(group_covs)
   }
   
   out
@@ -406,6 +417,17 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
                                         event_covs = NULL, quiet = FALSE, 
                                         newdata_checks = FALSE) {
   standard_mfd_checks(obs, site_covs, event_covs, "augmented", n_aug, quiet, newdata_checks)
+  detected_species <- apply(obs == 1, 3, any, na.rm = TRUE)
+  if (any(!detected_species)) {
+    warning(
+      paste0(
+        "The original obs array contains species with no detections. These ",
+        "species are treated as present under the augmented model and their ",
+        "all-zero detection histories contribute to the detection likelihood."
+      ),
+      call. = FALSE
+    )
+  }
   obs1 <- obs[,,1]
   n_rep <- ncol(obs1)
   n_sp_obs <- dim(obs)[3]
@@ -423,9 +445,8 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
   if (!is.null(site_covs)) {
     unit_covs <- cbind(unit_covs, stack_matrix(site_covs, n_sp))
   }
-  group_covs <- data.frame(
-    species = factor(seq_len(n_sp), levels = seq_len(n_sp)),
-    known_present = c(rep(TRUE, n_sp_obs), rep(FALSE, n_aug))
+  level2_covs <- data.frame(
+    species = factor(seq_len(n_sp), levels = seq_len(n_sp))
   )
   event_covs2 <- NULL
   if (!is.null(event_covs)) {
@@ -436,17 +457,22 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
     obs = obs,
     unit_covs = unit_covs,
     event_covs = event_covs2,
-    group_covs = group_covs,
-    top_level = "species",
-    known_present = "known_present",
+    level2_covs = level2_covs,
+    level2_group = "species",
     quiet = quiet,
     newdata_checks = newdata_checks
   )
+  out$data$ff_group_known_present[seq_len(n_sp)] <- c(
+    rep(1L, n_sp_obs), rep(0L, n_aug)
+  )
   out$type <- "augmented"
   out$n_sp <- n_sp
-  out$group_covs <- names(group_covs)
+  out$level2_covs <- character(0)
   out$data$ff_species <- out$data$ff_group
-  out$data$ff_site <- out$data$site_id
+  out$data$ff_site <- c(
+    unit_covs$site_id,
+    rep(-99L, nrow(out$data) - nrow(unit_covs))
+  )
   
   class(out) <- c("list", "flocker_data")
   out
@@ -457,116 +483,145 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
 #' Format data for two-level single-season occupancy model, to be passed to
 #' \code{flock()}.
 #' @inheritParams make_flocker_data
-#' @param group_covs A dataframe of covariates for each top-level group.
-#' @param top_level The name of a factor column in both \code{unit_covs} and
-#'   \code{group_covs} identifying the top-level group.
-#' @param known_present Optional name of a logical column in \code{group_covs}
-#'   indicating groups known a priori to be present. Groups with detections are
-#'   always treated as known present regardless of this column.
+#' @param level2_covs An optional dataframe with one row per level-two group
+#'   and no unused levels in its grouping factor. Row order is arbitrary;
+#'   factor-level order determines the internal group order. If omitted, a
+#'   minimal table is constructed from the groups represented in
+#'   \code{unit_covs}.
+#' @param level2_group The name of a factor column in \code{unit_covs} and, if
+#'   supplied, \code{level2_covs}, identifying the level-two group.
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 make_flocker_data_twolevel_single <- function(
-    obs, unit_covs, event_covs = NULL, group_covs, top_level,
-    known_present = NULL, quiet = FALSE, newdata_checks = FALSE
+    obs, unit_covs, event_covs = NULL, level2_covs = NULL, level2_group,
+    quiet = FALSE, newdata_checks = FALSE
     ) {
   standard_mfd_checks(obs, unit_covs, event_covs, "twolevel_single", NULL,
-                      quiet, newdata_checks, group_covs, top_level,
-                      known_present)
-  group_levels <- levels(unit_covs[[top_level]])
-  n_group <- length(group_levels)
-  group_covs <- group_covs[match(group_levels, as.character(group_covs[[top_level]])), , drop = FALSE]
-  group_id_raw <- as.integer(unit_covs[[top_level]])
-  representative_units <- match(seq_len(n_group), group_id_raw)
-  remaining_units <- setdiff(seq_len(nrow(obs)), representative_units)
-  unit_order <- c(representative_units, remaining_units)
-  obs <- obs[unit_order, , drop = FALSE]
-  unit_covs <- unit_covs[unit_order, , drop = FALSE]
-  if (!is.null(event_covs)) {
-    event_covs <- lapply(event_covs, function(x) x[unit_order, , drop = FALSE])
+                      quiet, newdata_checks, level2_covs, level2_group)
+
+  if (is.null(level2_covs)) {
+    represented <- levels(droplevels(unit_covs[[level2_group]]))
+    level2_factor <- factor(
+      represented,
+      levels = represented,
+      ordered = is.ordered(unit_covs[[level2_group]])
+    )
+    level2_covs <- stats::setNames(data.frame(level2_factor), level2_group)
   }
-  
-  n_unit <- nrow(obs)
-  n_rep <- ncol(obs)
-  group_id <- as.integer(unit_covs[[top_level]])
+
+  group_levels <- levels(level2_covs[[level2_group]])
+  n_group <- length(group_levels)
+  level2_covs <- level2_covs[
+    match(group_levels, as.character(level2_covs[[level2_group]])),
+    ,
+    drop = FALSE
+  ]
+  group_id <- match(as.character(unit_covs[[level2_group]]), group_levels)
   unit_group_counts <- tabulate(group_id, nbins = n_group)
-  max_unit_group <- max(unit_group_counts)
-  unit_known_present <- as.integer(matrixStats::rowSums2(obs, na.rm = TRUE) > 0)
-  group_known_present <- as.integer(
-    tapply(unit_known_present, group_id, function(x) any(x == 1))
-  )
-  if (!is.null(known_present)) {
-    group_known_present <- as.integer(
-      as.logical(group_covs[[known_present]]) | as.logical(group_known_present)
+  empty_groups <- group_levels[unit_group_counts == 0]
+  if (length(empty_groups) > 0) {
+    warning(
+      paste0(
+        "level2_covs contains groups with no corresponding units: ",
+        paste(empty_groups, collapse = ", "),
+        ". These groups contribute no unit-level likelihood."
+      ),
+      call. = FALSE
     )
   }
-  
-  flocker_data <- data.frame(ff_y = expand_matrix(obs))
-  if (!is.null(unit_covs)) {
-    unit_covs_stacked <- 
-      do.call(rbind, replicate(n_rep, unit_covs, simplify=FALSE))
-    flocker_data <- cbind(flocker_data, unit_covs_stacked)
+
+  n_unit <- nrow(obs)
+  n_rep <- ncol(obs)
+  max_unit_group <- max(unit_group_counts)
+  unit_known_present <- as.integer(matrixStats::rowSums2(obs, na.rm = TRUE) > 0)
+  group_known_present <- integer(n_group)
+  for (g in seq_len(n_group)) {
+    group_known_present[g] <- as.integer(any(unit_known_present[group_id == g] == 1))
   }
+
+  level2_unit_rows <- level2_covs[
+    match(as.character(unit_covs[[level2_group]]), group_levels),
+    setdiff(names(level2_covs), level2_group),
+    drop = FALSE
+  ]
+  unit_covs_all <- cbind(unit_covs, level2_unit_rows)
+
+  flocker_data <- data.frame(ff_y = expand_matrix(obs))
+  unit_covs_stacked <- do.call(
+    rbind,
+    replicate(n_rep, unit_covs_all, simplify = FALSE)
+  )
+  flocker_data <- cbind(flocker_data, unit_covs_stacked)
   if (!is.null(event_covs)) {
     event_covs <- as.data.frame(lapply(event_covs, expand_matrix))
     flocker_data <- cbind(flocker_data, event_covs)
   }
-  
-  group_covs_fill <- group_covs[rep(1, nrow(flocker_data)), , drop = FALSE]
-  group_covs_fill[seq_len(n_group), ] <- group_covs
-  group_covs_fill <- group_covs_fill[,
-    setdiff(names(group_covs_fill), names(flocker_data)),
-    drop = FALSE
-  ]
-  flocker_data <- cbind(flocker_data, group_covs_fill)
-  
-  flocker_data$ff_n_unit <- c(n_unit, rep(-99, nrow(flocker_data) - 1))
-  flocker_data$ff_n_rep <- c(matrixStats::rowSums2(!is.na(obs)), 
-                             rep(-99, nrow(flocker_data) - n_unit))
-  flocker_data$ff_Q <- c(unit_known_present,
-                         rep(-99, nrow(flocker_data) - n_unit))
-  flocker_data$ff_n_group <- c(n_group, rep(-99, nrow(flocker_data) - 1))
+
+  # Prepare to add rep indices, and trim flocker_data to existing observations
+  is_not_na <- !is.na(flocker_data$ff_y)
+  rep_index_vec <- rep(-99L, length(is_not_na))
+  rep_index_vec[is_not_na] <- n_group + seq_len(sum(is_not_na))
+  rep_index_matrix <- matrix(rep_index_vec, nrow = n_unit)
+  flocker_data <- flocker_data[is_not_na, ]
+
+  group_rows <- flocker_data[rep(1, n_group), , drop = FALSE]
+  group_rows$ff_y <- 0L
+  group_rows[, names(level2_covs)] <- level2_covs
+  flocker_data <- rbind(group_rows, flocker_data)
+
+  n_data <- nrow(flocker_data)
+  unit_rows <- n_group + seq_len(n_unit)
+  flocker_data$ff_n_unit <- c(n_unit, rep(-99L, n_data - 1))
+  flocker_data$ff_n_rep <- c(
+    matrixStats::rowSums2(!is.na(obs)),
+    rep(-99L, n_data - n_unit)
+  )
+  flocker_data$ff_Q <- c(unit_known_present, rep(-99L, n_data - n_unit))
+  flocker_data$ff_n_group <- c(n_group, rep(-99L, n_data - 1))
   flocker_data$ff_group_known_present <- c(
     group_known_present,
-    rep(-99, nrow(flocker_data) - n_group)
+    rep(-99L, n_data - n_group)
   )
-  flocker_data$ff_group <- c(group_id, rep(-99, nrow(flocker_data) - n_unit))
+  flocker_data$ff_group <- c(group_id, rep(-99L, n_data - n_unit))
   flocker_data$ff_n_unit_group <- c(
     unit_group_counts,
-    rep(-99, nrow(flocker_data) - n_group)
+    rep(-99L, n_data - n_group)
   )
-  
+  flocker_data$ff_unit_row <- c(unit_rows, rep(-99L, n_data - n_unit))
+
   # Backward-compatible aliases for the data-augmented model.
   flocker_data$ff_n_sp <- flocker_data$ff_n_group
   flocker_data$ff_species <- flocker_data$ff_group
   flocker_data$ff_superQ <- flocker_data$ff_group_known_present
-  
-  flocker_data$ff_unit <- 1:nrow(obs)
-  flocker_data$ff_orig_unit <- c(unit_order, rep(-99, nrow(flocker_data) - n_unit))
-  
-  group_indices <- as.data.frame(matrix(data = -99, nrow = nrow(flocker_data),
-                                        ncol = max_unit_group))
+
+  flocker_data$ff_unit <- c(seq_len(n_unit), rep(-99L, n_data - n_unit))
+  flocker_data$ff_orig_unit <- c(seq_len(n_unit), rep(-99L, n_data - n_unit))
+
+  group_indices <- as.data.frame(matrix(
+    data = -99L,
+    nrow = n_data,
+    ncol = max_unit_group
+  ))
   names(group_indices) <- paste0("ff_group_index", seq_len(max_unit_group))
   for (g in seq_len(n_group)) {
-    group_indices[g, seq_len(unit_group_counts[g])] <- which(group_id == g)
+    if (unit_group_counts[g] > 0) {
+      group_indices[g, seq_len(unit_group_counts[g])] <- which(group_id == g)
+    }
   }
-  
-  # Prepare to add rep indices, and trim flocker_data to existing observations
-  is_not_na <- !is.na(flocker_data$ff_y)
-  rep_indices <- as.data.frame(matrix(data = -99, nrow = nrow(flocker_data),
-                                      ncol = n_rep))
+
+  rep_indices <- as.data.frame(matrix(
+    data = -99L,
+    nrow = n_data,
+    ncol = n_rep
+  ))
   names(rep_indices) <- paste0("ff_rep_index", seq_len(n_rep))
-  rep_index_vec <- rep(-99, n_rep*nrow(obs))
-  rep_index_vec[is_not_na] <- cumsum(is_not_na)[is_not_na]
-  rep_indices[seq_len(nrow(obs)),] <- rep_index_vec
-  
-  flocker_data <- flocker_data[is_not_na, ]
-  rep_indices <- rep_indices[is_not_na, ]
-  group_indices <- group_indices[is_not_na, ]
+  rep_indices[seq_len(n_unit), ] <- rep_index_matrix
   flocker_data <- cbind(flocker_data, group_indices, rep_indices)
-  
+
   out <- list(data = flocker_data, n_rep = n_rep,
               max_unit_group = max_unit_group,
-              top_level = top_level,
+              level2_group = level2_group,
+              level2_covs = setdiff(names(level2_covs), level2_group),
               type = "twolevel_single")
   class(out) <- c("list", "flocker_data")
   out
@@ -578,7 +633,7 @@ make_flocker_data_twolevel_single <- function(
 #' @inheritParams make_flocker_data
 standard_mfd_checks <- function(
     obs, unit_covs, event_covs, type, n_aug, quiet, newdata_checks,
-    group_covs = NULL, top_level = NULL, known_present = NULL
+    level2_covs = NULL, level2_group = NULL
 ) {
   
   unique_y <- unique(obs)
@@ -879,66 +934,85 @@ standard_mfd_checks <- function(
       msg = "unit_covs must be supplied for two-level single-season models"
     )
     assertthat::assert_that(
-      !is.null(group_covs),
-      msg = "group_covs must be supplied for two-level single-season models"
-    )
-    assertthat::assert_that(
       is.data.frame(unit_covs),
       msg = "unit_covs must be a dataframe"
     )
     assertthat::assert_that(
-      is.data.frame(group_covs),
-      msg = "group_covs must be a dataframe"
+      is.null(level2_covs) | is.data.frame(level2_covs),
+      msg = "level2_covs must be NULL or a dataframe"
     )
     assertthat::assert_that(
-      is.character(top_level) & length(top_level) == 1,
-      msg = "top_level must be a single column name"
+      is.character(level2_group) & length(level2_group) == 1,
+      msg = "level2_group must be a single column name"
     )
     assertthat::assert_that(
-      top_level %in% names(unit_covs) & top_level %in% names(group_covs),
-      msg = "top_level must name a column in both unit_covs and group_covs"
+      level2_group %in% names(unit_covs),
+      msg = "level2_group must name a column in unit_covs"
     )
     assertthat::assert_that(
-      is.factor(unit_covs[[top_level]]) & is.factor(group_covs[[top_level]]),
-      msg = "top_level must identify a factor column in both unit_covs and group_covs"
+      is.factor(unit_covs[[level2_group]]),
+      msg = "level2_group must identify a factor column in unit_covs"
     )
-    assertthat::assert_that(
-      identical(levels(unit_covs[[top_level]]), levels(group_covs[[top_level]])),
-      msg = "top_level columns must have identical factor levels in unit_covs and group_covs"
-    )
-    duplicate_group_covs <- setdiff(intersect(names(unit_covs), names(group_covs)), top_level)
-    assertthat::assert_that(
-      length(duplicate_group_covs) == 0,
-      msg = paste0(
-        "group_covs and unit_covs may only share the top_level column. ",
-        "Duplicate column name(s): ",
-        paste(duplicate_group_covs, collapse = ", ")
-      )
-    )
-    assertthat::assert_that(
-      !anyDuplicated(group_covs[[top_level]]),
-      msg = "group_covs must contain no duplicate top_level values"
-    )
-    assertthat::assert_that(
-      setequal(as.character(group_covs[[top_level]]), levels(group_covs[[top_level]])),
-      msg = "group_covs must contain exactly one row for each top_level factor level"
-    )
-    assertthat::assert_that(
-      all(as.character(unit_covs[[top_level]]) %in% as.character(group_covs[[top_level]])),
-      msg = "all top_level values in unit_covs must appear in group_covs"
-    )
-    if (!is.null(known_present)) {
+    if (!is.null(level2_covs)) {
       assertthat::assert_that(
-        is.character(known_present) & length(known_present) == 1,
-        msg = "known_present must be NULL or a single column name in group_covs"
+        level2_group %in% names(level2_covs),
+        msg = "level2_group must name a column in level2_covs"
       )
       assertthat::assert_that(
-        known_present %in% names(group_covs),
-        msg = "known_present must name a column in group_covs"
+        is.factor(level2_covs[[level2_group]]),
+        msg = paste0(
+          "level2_group must identify a factor column in level2_covs"
+        )
+      )
+      duplicate_level2_covs <- setdiff(
+        intersect(names(unit_covs), names(level2_covs)),
+        level2_group
       )
       assertthat::assert_that(
-        is.logical(group_covs[[known_present]]) & !any(is.na(group_covs[[known_present]])),
-        msg = "known_present must identify a logical column in group_covs with no missing values"
+        length(duplicate_level2_covs) == 0,
+        msg = paste0(
+          "level2_covs and unit_covs may only share the level2_group column. ",
+          "Duplicate column name(s): ",
+          paste(duplicate_level2_covs, collapse = ", ")
+        )
+      )
+      assertthat::assert_that(
+        !any(names(level2_covs) %in% names(event_covs)),
+        msg = "overlapping names detected between level2_covs and event_covs"
+      )
+      for (reserved in flocker_reserved()) {
+        assertthat::assert_that(
+          !any(grepl(reserved, names(level2_covs))),
+          msg = paste0(
+            "names of level2_covs include a reserved string matching ",
+            "the following regular expression: ", reserved
+          )
+        )
+      }
+      assertthat::assert_that(
+        !anyDuplicated(level2_covs[[level2_group]]),
+        msg = "level2_covs must contain no duplicate level2_group values"
+      )
+      assertthat::assert_that(
+        setequal(
+          as.character(level2_covs[[level2_group]]),
+          levels(level2_covs[[level2_group]])
+        ),
+        msg = paste0(
+          "level2_covs must contain exactly one row for each level2_group ",
+          "factor level"
+        )
+      )
+      assertthat::assert_that(
+        all(
+          as.character(unit_covs[[level2_group]]) %in%
+            as.character(level2_covs[[level2_group]])
+        ),
+        msg = "all level2_group values in unit_covs must appear in level2_covs"
+      )
+      assertthat::assert_that(
+        !any(is.na(level2_covs)),
+        msg = "A level-two covariate contains missing values."
       )
     }
     assertthat::assert_that(
@@ -948,11 +1022,6 @@ standard_mfd_checks <- function(
     assertthat::assert_that(
       !any(is.na(unit_covs)),
       msg = "A unit covariate contains missing values."
-    )
-    group_covs_check <- group_covs[setdiff(names(group_covs), known_present)]
-    assertthat::assert_that(
-      !any(is.na(group_covs_check)),
-      msg = "A group covariate contains missing values."
     )
     assertthat::assert_that(
       !any(is.na(obs[ , 1])), 

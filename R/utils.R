@@ -144,6 +144,7 @@ flocker_col_names <- function(n_rep = NULL, n_year = NULL) {
     "ff_Q", "ff_n_unit", "ff_n_rep", "ff_unit", "ff_orig_unit",
     "ff_n_series", "ff_n_year", "ff_series", "ff_year", "ff_series_year",
     "ff_n_group", "ff_group", "ff_group_known_present", "ff_n_unit_group",
+    "ff_unit_row",
     "ff_n_sp", "ff_species", "ff_superQ", "ff_site")
   if(!is.null(n_rep)) {
     out <- c(out, paste0("ff_rep_index", 1:n_rep))
@@ -633,7 +634,7 @@ validate_unit_formula_variables <- function(f_occ, f_col, f_ex, f_auto, flocker_
   )
 }
 
-#' Check that meta-occupancy formulas use group-level covariates only
+#' Check that meta-occupancy formulas use level-two covariates only
 #' @inheritParams validate_flock_params
 #' @return silent if parameters are valid
 #' @noRd
@@ -642,15 +643,22 @@ validate_meta_formula_variables <- function(f_meta, flocker_data) {
     return(invisible(NULL))
   }
   assertthat::assert_that(
-    "group_covs" %in% names(flocker_data),
+    "level2_covs" %in% names(flocker_data),
     msg = "f_meta is only allowed for two-level models."
   )
   meta_vars <- all.vars(f_meta)
   meta_vars <- setdiff(meta_vars, flocker_reserved())
   assertthat::assert_that(
-    all(meta_vars %in% flocker_data$group_covs),
-    msg = paste0("All variables in f_meta must be group-level covariates ",
-                 "passed in group_covs.")
+    !(flocker_data$level2_group %in% meta_vars),
+    msg = paste0(
+      "The level-two grouping column (`", flocker_data$level2_group,
+      "`) cannot be used in f_meta because it has only one latent state per level."
+    )
+  )
+  assertthat::assert_that(
+    all(meta_vars %in% flocker_data$level2_covs),
+    msg = paste0("All variables in f_meta must be level-two covariates ",
+                 "passed in level2_covs.")
   )
 }
 

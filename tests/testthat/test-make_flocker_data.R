@@ -68,34 +68,57 @@ test_that("make_flocker_data handles two-level single-season data", {
     0, 0, 0
   ), nrow = 4, byrow = TRUE)
   unit_covs <- data.frame(
-    group = factor(c("b", "a", "b", "a"), levels = c("a", "b")),
+    group = factor(
+      c("b", "a", "b", "a"),
+      levels = c("a", "b", "unused")
+    ),
     unit_x = 1:4
   )
   event_covs <- list(event_x = matrix(seq_len(12), nrow = 4))
-  group_covs <- data.frame(
-    group = factor(c("b", "a"), levels = c("a", "b")),
-    group_x = c(20, 10),
-    known = c(FALSE, FALSE)
+  level2_covs <- data.frame(
+    group = ordered(c("b", "a"), levels = c("a", "b")),
+    group_x = c(20, 10)
   )
   
   fd <- make_flocker_data(
     obs, unit_covs, event_covs, type = "twolevel_single",
-    group_covs = group_covs, top_level = "group",
-    known_present = "known", quiet = TRUE
+    level2_covs = level2_covs, level2_group = "group", quiet = TRUE
   )
   
   expect_equal(fd$type, "twolevel_single")
-  expect_equal(fd$top_level, "group")
+  expect_equal(fd$level2_group, "group")
   expect_equal(fd$max_unit_group, 2)
-  expect_equal(fd$group_covs, names(group_covs))
-  expect_equal(fd$data$group[seq_len(fd$data$ff_n_group[1])], factor(c("a", "b"), levels = c("a", "b")))
+  expect_equal(fd$level2_covs, "group_x")
+  expect_equal(
+    as.character(fd$data$group[seq_len(fd$data$ff_n_group[1])]),
+    c("a", "b")
+  )
   expect_equal(fd$data$group_x[seq_len(fd$data$ff_n_group[1])], c(10, 20))
   expect_equal(fd$data$ff_group_known_present[seq_len(fd$data$ff_n_group[1])], c(0, 1))
   expect_equal(fd$data$ff_n_unit_group[seq_len(fd$data$ff_n_group[1])], c(2, 2))
   expect_true(all(c("ff_group_index1", "ff_group_index2") %in% names(fd$data)))
   expect_equal(
     fd$data$ff_orig_unit[seq_len(fd$data$ff_n_unit[1])],
-    c(2, 1, 3, 4)
+    1:4
+  )
+  expect_equal(
+    fd$data$group_x[fd$data$ff_unit_row[seq_len(fd$data$ff_n_unit[1])]],
+    c(20, 10, 20, 10)
+  )
+  expect_equal(
+    fd$data$ff_unit_row[seq_len(fd$data$ff_n_unit[1])],
+    2 + 1:4
+  )
+
+  fd_minimal <- make_flocker_data(
+    obs, unit_covs, event_covs, type = "twolevel_single",
+    level2_group = "group", quiet = TRUE
+  )
+  expect_equal(fd_minimal$data$ff_n_group[1], 2)
+  expect_equal(fd_minimal$level2_covs, character(0))
+  expect_equal(
+    as.character(fd_minimal$data$group[seq_len(fd_minimal$data$ff_n_group[1])]),
+    c("a", "b")
   )
   
   unit_covs_bad <- unit_covs
@@ -103,17 +126,43 @@ test_that("make_flocker_data handles two-level single-season data", {
   expect_error(
     make_flocker_data(
       obs, unit_covs_bad, event_covs, type = "twolevel_single",
-      group_covs = group_covs, top_level = "group", quiet = TRUE
+      level2_covs = level2_covs, level2_group = "group", quiet = TRUE
     ),
-    "top_level must identify a factor column"
+    "level2_group must identify a factor column"
   )
   
-  group_covs_bad <- transform(group_covs, unit_x = c(1, 2))
+  level2_covs_bad <- transform(level2_covs, unit_x = c(1, 2))
   expect_error(
     make_flocker_data(
       obs, unit_covs, event_covs, type = "twolevel_single",
-      group_covs = group_covs_bad, top_level = "group", quiet = TRUE
+      level2_covs = level2_covs_bad, level2_group = "group", quiet = TRUE
     ),
-    "may only share the top_level column"
+    "may only share the level2_group column"
+  )
+
+  level2_covs_empty <- data.frame(
+    group = factor(c("c", "b", "a"), levels = c("a", "b", "c")),
+    group_x = c(30, 20, 10)
+  )
+  expect_warning(
+    fd_empty <- make_flocker_data(
+      obs, unit_covs, event_covs, type = "twolevel_single",
+      level2_covs = level2_covs_empty, level2_group = "group", quiet = TRUE
+    ),
+    "groups with no corresponding units: c"
+  )
+  expect_equal(fd_empty$data$ff_n_group[1], 3)
+  expect_equal(fd_empty$data$ff_n_unit_group[1:3], c(2, 2, 0))
+  expect_equal(fd_empty$data$group_x[1:3], c(10, 20, 30))
+})
+
+test_that("augmented data warn about original species without detections", {
+  obs <- array(0, dim = c(2, 2, 2))
+  obs[1, 1, 2] <- 1
+  expect_warning(
+    make_flocker_data(
+      obs, type = "augmented", n_aug = 1, quiet = TRUE
+    ),
+    "original obs array contains species with no detections"
   )
 })
