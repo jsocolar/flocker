@@ -100,8 +100,8 @@ make_occupancy_twolevel_single_lpmf_ <- function(max_rep, max_unit_group,
     msg = "max_rep must be an integer greater than 1"
   )
   assertthat::assert_that(
-    is_one_pos_int(max_unit_group, m = 0),
-    msg = "max_unit_group must be a positive integer"
+    is_one_pos_int(max_unit_group, m = 1),
+    msg = "max_unit_group must be an integer greater than 1"
   )
   sf_text1 <- paste0("  real ", lpmf_name, "(
     array[] int y, // detection data
@@ -193,7 +193,7 @@ make_occupancy_twolevel_single_lpmf_ <- function(max_rep, max_unit_group,
 #'    top-level group.
 #' @return Character string of Stan code corresponding to occupancy_augmented_lpmf
 #' @noRd
-make_occupancy_augmented_lpmf <- function (max_rep, max_unit_group = 1) {
+make_occupancy_augmented_lpmf <- function (max_rep, max_unit_group) {
   make_occupancy_twolevel_single_lpmf_(max_rep, max_unit_group,
                                        "occupancy_augmented_lpmf")
 }

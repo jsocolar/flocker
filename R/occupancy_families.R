@@ -60,7 +60,7 @@ occupancy_twolevel_single <- function(max_rep, max_unit_group) {
 #' @param max_unit_group the maximum number of closure-units in a top-level group
 #' @return a "customfamily" "brmsfamily" object from brms
 #' @noRd
-occupancy_augmented <- function(max_rep, max_unit_group = 1) {
+occupancy_augmented <- function(max_rep, max_unit_group) {
   brms::custom_family(
     "occupancy_augmented", dpars = c("mu", "occ", "Omega"),
     links = c("identity", "identity", "identity"),
