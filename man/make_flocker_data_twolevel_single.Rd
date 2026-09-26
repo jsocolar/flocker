@@ -9,8 +9,8 @@ make_flocker_data_twolevel_single(
   obs,
   unit_covs,
   event_covs = NULL,
-  level2_covs = NULL,
   level2_group,
+  level2_covs = NULL,
   quiet = FALSE,
   newdata_checks = FALSE
 )
@@ -49,14 +49,14 @@ within closure-units.
 corresponding to a covariate that varies across repeated sampling events
 within sites (no dependence on species is allowed).}
 
+\item{level2_group}{The name of a factor column in \code{unit_covs} and, if
+supplied, \code{level2_covs}, identifying the level-two group.}
+
 \item{level2_covs}{An optional dataframe with one row per level-two group
 and no unused levels in its grouping factor. Row order is arbitrary;
 factor-level order determines the internal group order. If omitted, a
 minimal table is constructed from the groups represented in
 \code{unit_covs}.}
-
-\item{level2_group}{The name of a factor column in \code{unit_covs} and, if
-supplied, \code{level2_covs}, identifying the level-two group.}
 
 \item{quiet}{Hide progress bars and informational messages?}
 

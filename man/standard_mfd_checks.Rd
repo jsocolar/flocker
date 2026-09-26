@@ -12,8 +12,8 @@ standard_mfd_checks(
   n_aug,
   quiet,
   newdata_checks,
-  level2_covs = NULL,
-  level2_group = NULL
+  level2_group = NULL,
+  level2_covs = NULL
 )
 }
 \arguments{
@@ -66,14 +66,14 @@ data-augmentation for never-observed pseudospecies, or
 to use the data for model fitting, but not in other contexts (e.g. making
 predictions or assessing log-likelihoods over new data).}
 
+\item{level2_group}{The name of a factor column in \code{unit_covs} and, if
+supplied, \code{level2_covs}, identifying the level-two group. Only
+applicable if \code{type = "twolevel_single"}.}
+
 \item{level2_covs}{An optional dataframe with one row per level-two group
 and no unused levels in its grouping factor. Row order is arbitrary;
 factor-level order determines the internal group order. Only applicable
 if \code{type = "twolevel_single"}.}
-
-\item{level2_group}{The name of a factor column in \code{unit_covs} and, if
-supplied, \code{level2_covs}, identifying the level-two group. Only
-applicable if \code{type = "twolevel_single"}.}
 }
 \description{
 input checking for make_flocker_data

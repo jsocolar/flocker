@@ -45,13 +45,13 @@
 #'    \code{"twolevel_single"} for a two-level single-season model.
 #' @param n_aug Number of pseudo-species to augment. Only applicable if 
 #'    \code{type = "augmented"}.
+#' @param level2_group The name of a factor column in \code{unit_covs} and, if
+#'    supplied, \code{level2_covs}, identifying the level-two group. Only
+#'    applicable if \code{type = "twolevel_single"}.
 #' @param level2_covs An optional dataframe with one row per level-two group
 #'    and no unused levels in its grouping factor. Row order is arbitrary;
 #'    factor-level order determines the internal group order. Only applicable
 #'    if \code{type = "twolevel_single"}.
-#' @param level2_group The name of a factor column in \code{unit_covs} and, if
-#'    supplied, \code{level2_covs}, identifying the level-two group. Only
-#'    applicable if \code{type = "twolevel_single"}.
 #' @param quiet Hide progress bars and informational messages?
 #' @param newdata_checks If TRUE, turn off checks that must pass in order
 #' to use the data for model fitting, but not in other contexts (e.g. making
@@ -80,9 +80,9 @@
 make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
                               type = "single", n_aug = NULL,
                               quiet = FALSE, newdata_checks = FALSE,
-                              level2_covs = NULL, level2_group = NULL) {
+                              level2_group = NULL, level2_covs = NULL) {
   standard_mfd_checks(obs, unit_covs, event_covs, type, n_aug, quiet, newdata_checks,
-                      level2_covs, level2_group)
+                      level2_group, level2_covs)
 
   if (!quiet) {
     if (type == "single") {
@@ -128,7 +128,7 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
     out$event_covs <- names(event_covs)
   } else if (type == "twolevel_single") {
     out <- make_flocker_data_twolevel_single(
-      obs, unit_covs, event_covs, level2_covs, level2_group,
+      obs, unit_covs, event_covs, level2_group, level2_covs,
       quiet, newdata_checks)
     out$unit_covs <- names(unit_covs)
     out$event_covs <- names(event_covs)
@@ -483,21 +483,21 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
 #' Format data for two-level single-season occupancy model, to be passed to
 #' \code{flock()}.
 #' @inheritParams make_flocker_data
+#' @param level2_group The name of a factor column in \code{unit_covs} and, if
+#'   supplied, \code{level2_covs}, identifying the level-two group.
 #' @param level2_covs An optional dataframe with one row per level-two group
 #'   and no unused levels in its grouping factor. Row order is arbitrary;
 #'   factor-level order determines the internal group order. If omitted, a
 #'   minimal table is constructed from the groups represented in
 #'   \code{unit_covs}.
-#' @param level2_group The name of a factor column in \code{unit_covs} and, if
-#'   supplied, \code{level2_covs}, identifying the level-two group.
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 make_flocker_data_twolevel_single <- function(
-    obs, unit_covs, event_covs = NULL, level2_covs = NULL, level2_group,
+    obs, unit_covs, event_covs = NULL, level2_group, level2_covs = NULL,
     quiet = FALSE, newdata_checks = FALSE
     ) {
   standard_mfd_checks(obs, unit_covs, event_covs, "twolevel_single", NULL,
-                      quiet, newdata_checks, level2_covs, level2_group)
+                      quiet, newdata_checks, level2_group, level2_covs)
 
   if (is.null(level2_covs)) {
     represented <- levels(droplevels(unit_covs[[level2_group]]))
@@ -633,7 +633,7 @@ make_flocker_data_twolevel_single <- function(
 #' @inheritParams make_flocker_data
 standard_mfd_checks <- function(
     obs, unit_covs, event_covs, type, n_aug, quiet, newdata_checks,
-    level2_covs = NULL, level2_group = NULL
+    level2_group = NULL, level2_covs = NULL
 ) {
   
   unique_y <- unique(obs)
