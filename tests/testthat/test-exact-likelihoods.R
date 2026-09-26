@@ -76,7 +76,7 @@ augmented_lpmf_from_flocker_data <- function(fd, psi, theta, Omega) {
 
   for (sp in seq_len(n_sp)) {
     p_y_given_available <- 1
-    unit_rows <- which(d$ff_species[seq_len(n_unit)] == sp)
+    unit_rows <- which(d$ff_group[seq_len(n_unit)] == sp)
 
     for (i in unit_rows) {
       data_row <- d$ff_unit_row[i]

@@ -440,27 +440,26 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
     obs <- abind::abind(obs, aug_slice, along = 3)
   }
   obs <- expand_array_3D(obs)
-  species <- factor(rep(seq_len(n_sp), each = n_site), levels = seq_len(n_sp))
-  unit_covs <- data.frame(species = species, site_id = rep(seq_len(n_site), n_sp))
+  ff_species <- factor(rep(seq_len(n_sp), each = n_site), levels = seq_len(n_sp))
+  ff_site <- rep(seq_len(n_site), n_sp)
+  unit_covs <- data.frame(ff_species = ff_species)
   if (!is.null(site_covs)) {
     unit_covs <- cbind(unit_covs, stack_matrix(site_covs, n_sp))
   }
   level2_covs <- data.frame(
-    species = factor(seq_len(n_sp), levels = seq_len(n_sp))
+    ff_species = factor(seq_len(n_sp), levels = seq_len(n_sp))
   )
   event_covs2 <- NULL
   if (!is.null(event_covs)) {
     event_covs2 <- lapply(event_covs, function(x){stack_matrix(x, n_sp)})
   }
   
-  out <- make_flocker_data_twolevel_single(
+  out <- make_flocker_data_twolevel_single_(
     obs = obs,
     unit_covs = unit_covs,
     event_covs = event_covs2,
     level2_covs = level2_covs,
-    level2_group = "species",
-    quiet = quiet,
-    newdata_checks = newdata_checks
+    level2_group = "ff_species"
   )
   out$data$ff_group_known_present[seq_len(n_sp)] <- c(
     rep(1L, n_sp_obs), rep(0L, n_aug)
@@ -468,10 +467,11 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
   out$type <- "augmented"
   out$n_sp <- n_sp
   out$level2_covs <- character(0)
-  out$data$ff_species <- out$data$ff_group
+  out$data$ff_n_sp <- out$data$ff_n_group
+  out$data$ff_superQ <- out$data$ff_group_known_present
   out$data$ff_site <- c(
-    unit_covs$site_id,
-    rep(-99L, nrow(out$data) - nrow(unit_covs))
+    ff_site,
+    rep(-99L, nrow(out$data) - length(ff_site))
   )
   
   class(out) <- c("list", "flocker_data")
@@ -498,6 +498,15 @@ make_flocker_data_twolevel_single <- function(
     ) {
   standard_mfd_checks(obs, unit_covs, event_covs, "twolevel_single", NULL,
                       quiet, newdata_checks, level2_group, level2_covs)
+
+  make_flocker_data_twolevel_single_(
+    obs, unit_covs, event_covs, level2_group, level2_covs
+  )
+}
+
+make_flocker_data_twolevel_single_ <- function(
+    obs, unit_covs, event_covs, level2_group, level2_covs
+    ) {
 
   if (is.null(level2_covs)) {
     represented <- levels(droplevels(unit_covs[[level2_group]]))
@@ -588,11 +597,6 @@ make_flocker_data_twolevel_single <- function(
     rep(-99L, n_data - n_group)
   )
   flocker_data$ff_unit_row <- c(unit_rows, rep(-99L, n_data - n_unit))
-
-  # Backward-compatible aliases for the data-augmented model.
-  flocker_data$ff_n_sp <- flocker_data$ff_n_group
-  flocker_data$ff_species <- flocker_data$ff_group
-  flocker_data$ff_superQ <- flocker_data$ff_group_known_present
 
   flocker_data$ff_unit <- c(seq_len(n_unit), rep(-99L, n_data - n_unit))
   flocker_data$ff_orig_unit <- c(seq_len(n_unit), rep(-99L, n_data - n_unit))

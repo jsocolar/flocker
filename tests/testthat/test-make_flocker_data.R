@@ -166,3 +166,71 @@ test_that("augmented data warn about original species without detections", {
     "original obs array contains species with no detections"
   )
 })
+
+test_that("augmented internal identifiers use reserved ff_ names", {
+  obs <- array(0, dim = c(2, 2, 2))
+  obs[1, 1, 1] <- 1
+  obs[2, 1, 2] <- 1
+  site_covs <- data.frame(species = c(10, 20), site_id = c(100, 200))
+
+  fd <- make_flocker_data(
+    obs,
+    unit_covs = site_covs,
+    type = "augmented",
+    n_aug = 1,
+    quiet = TRUE
+  )
+  gp <- get_positions(fd)
+  expect_true(all(c("species", "site_id", "ff_species", "ff_site") %in% names(fd$data)))
+  for (sp in seq_len(dim(gp)[3])) {
+    expect_equal(
+      matrix(as.integer(fd$data$ff_species[gp[, , sp]]), nrow = 2),
+      matrix(sp, nrow = 2, ncol = 2)
+    )
+    expect_equal(
+      matrix(as.numeric(fd$data$species[gp[, , sp]]), nrow = 2),
+      matrix(site_covs$species, nrow = 2, ncol = 2)
+    )
+  }
+  expect_equal(
+    fd$data$ff_site[seq_len(fd$data$ff_n_unit[1])],
+    rep(1:2, 3)
+  )
+
+  event_species <- matrix(seq_len(4), nrow = 2)
+  fd_event <- make_flocker_data(
+    obs,
+    event_covs = list(species = event_species),
+    type = "augmented",
+    n_aug = 1,
+    quiet = TRUE
+  )
+  gp_event <- get_positions(fd_event)
+  for (sp in seq_len(dim(gp_event)[3])) {
+    expect_equal(
+      matrix(as.numeric(fd_event$data$species[gp_event[, , sp]]), nrow = 2),
+      event_species
+    )
+  }
+
+  expect_error(
+    make_flocker_data(
+      obs,
+      unit_covs = data.frame(ff_species = 1:2),
+      type = "augmented",
+      n_aug = 1,
+      quiet = TRUE
+    ),
+    "reserved string"
+  )
+  expect_error(
+    make_flocker_data(
+      obs,
+      event_covs = list(ff_site = matrix(seq_len(4), nrow = 2)),
+      type = "augmented",
+      n_aug = 1,
+      quiet = TRUE
+    ),
+    "reserved string"
+  )
+})
