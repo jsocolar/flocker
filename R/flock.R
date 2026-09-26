@@ -354,7 +354,6 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     f_det_use <- stats::as.formula(
       paste0("ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ff_n_group, ",
              "ff_group_known_present, ff_n_unit_group, ",
-             "ff_unit_row, ",
              group_index_text, ", ",
              vint_text, ") ", f_det_txt))
     

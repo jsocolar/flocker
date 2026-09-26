@@ -469,8 +469,9 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
   out$level2_covs <- character(0)
   out$data$ff_n_sp <- out$data$ff_n_group
   out$data$ff_superQ <- out$data$ff_group_known_present
+  internal_unit_order <- out$data$ff_orig_unit[seq_len(out$data$ff_n_unit[1])]
   out$data$ff_site <- c(
-    ff_site,
+    ff_site[internal_unit_order],
     rep(-99L, nrow(out$data) - length(ff_site))
   )
   
@@ -487,9 +488,9 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
 #'   supplied, \code{level2_covs}, identifying the level-two group.
 #' @param level2_covs An optional dataframe with one row per level-two group
 #'   and no unused levels in its grouping factor. Row order is arbitrary;
-#'   factor-level order determines the internal group order. If omitted, a
-#'   minimal table is constructed from the groups represented in
-#'   \code{unit_covs}.
+#'   factor-level order determines the internal group order, and every group
+#'   must be represented in \code{unit_covs}. If omitted, a minimal table is
+#'   constructed from the groups represented in \code{unit_covs}.
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 make_flocker_data_twolevel_single <- function(
@@ -529,11 +530,10 @@ make_flocker_data_twolevel_single_ <- function(
   unit_group_counts <- tabulate(group_id, nbins = n_group)
   empty_groups <- group_levels[unit_group_counts == 0]
   if (length(empty_groups) > 0) {
-    warning(
+    stop(
       paste0(
         "level2_covs contains groups with no corresponding units: ",
-        paste(empty_groups, collapse = ", "),
-        ". These groups contribute no unit-level likelihood."
+        paste(empty_groups, collapse = ", ")
       ),
       call. = FALSE
     )
@@ -542,6 +542,23 @@ make_flocker_data_twolevel_single_ <- function(
   n_unit <- nrow(obs)
   n_rep <- ncol(obs)
   max_unit_group <- max(unit_group_counts)
+
+  # Put one real unit from each group first so those rows can also supply the
+  # group-level predictors without adding synthetic covariate observations.
+  representative_units <- match(seq_len(n_group), group_id)
+  unit_order <- c(
+    representative_units,
+    setdiff(seq_len(n_unit), representative_units)
+  )
+  obs <- obs[unit_order, , drop = FALSE]
+  unit_covs <- unit_covs[unit_order, , drop = FALSE]
+  if (!is.null(event_covs)) {
+    event_covs <- lapply(event_covs, function(x) {
+      x[unit_order, , drop = FALSE]
+    })
+  }
+  group_id <- group_id[unit_order]
+
   unit_known_present <- as.integer(matrixStats::rowSums2(obs, na.rm = TRUE) > 0)
   group_known_present <- integer(n_group)
   for (g in seq_len(n_group)) {
@@ -569,17 +586,11 @@ make_flocker_data_twolevel_single_ <- function(
   # Prepare to add rep indices, and trim flocker_data to existing observations
   is_not_na <- !is.na(flocker_data$ff_y)
   rep_index_vec <- rep(-99L, length(is_not_na))
-  rep_index_vec[is_not_na] <- n_group + seq_len(sum(is_not_na))
+  rep_index_vec[is_not_na] <- seq_len(sum(is_not_na))
   rep_index_matrix <- matrix(rep_index_vec, nrow = n_unit)
   flocker_data <- flocker_data[is_not_na, ]
 
-  group_rows <- flocker_data[rep(1, n_group), , drop = FALSE]
-  group_rows$ff_y <- 0L
-  group_rows[, names(level2_covs)] <- level2_covs
-  flocker_data <- rbind(group_rows, flocker_data)
-
   n_data <- nrow(flocker_data)
-  unit_rows <- n_group + seq_len(n_unit)
   flocker_data$ff_n_unit <- c(n_unit, rep(-99L, n_data - 1))
   flocker_data$ff_n_rep <- c(
     matrixStats::rowSums2(!is.na(obs)),
@@ -596,10 +607,8 @@ make_flocker_data_twolevel_single_ <- function(
     unit_group_counts,
     rep(-99L, n_data - n_group)
   )
-  flocker_data$ff_unit_row <- c(unit_rows, rep(-99L, n_data - n_unit))
-
   flocker_data$ff_unit <- c(seq_len(n_unit), rep(-99L, n_data - n_unit))
-  flocker_data$ff_orig_unit <- c(seq_len(n_unit), rep(-99L, n_data - n_unit))
+  flocker_data$ff_orig_unit <- c(unit_order, rep(-99L, n_data - n_unit))
 
   group_indices <- as.data.frame(matrix(
     data = -99L,

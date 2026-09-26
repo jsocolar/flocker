@@ -144,7 +144,6 @@ flocker_col_names <- function(n_rep = NULL, n_year = NULL) {
     "ff_Q", "ff_n_unit", "ff_n_rep", "ff_unit", "ff_orig_unit",
     "ff_n_series", "ff_n_year", "ff_series", "ff_year", "ff_series_year",
     "ff_n_group", "ff_group", "ff_group_known_present", "ff_n_unit_group",
-    "ff_unit_row",
     "ff_n_sp", "ff_species", "ff_superQ", "ff_site")
   if(!is.null(n_rep)) {
     out <- c(out, paste0("ff_rep_index", 1:n_rep))

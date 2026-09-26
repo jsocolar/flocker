@@ -50,8 +50,8 @@ occupancy_twolevel_single <- function(max_rep, max_unit_group) {
     links = c("identity", "identity", "identity"),
     type = "int", 
     # Integer aterms for n_unit, n_rep, Q, n_group, group_known_present,
-    # n_unit_group, unit_row, group_index1..., rep_index1...
-    vars = c(paste0("vint", seq(7 + max_unit_group + max_rep))),
+    # n_unit_group, group_index1..., rep_index1...
+    vars = c(paste0("vint", seq(6 + max_unit_group + max_rep))),
     loop = FALSE)
 }
 
@@ -66,8 +66,8 @@ occupancy_augmented <- function(max_rep, max_unit_group) {
     links = c("identity", "identity", "identity"),
     type = "int", 
     # Integer aterms for n_unit, n_rep, Q, n_group, group_known_present,
-    # n_unit_group, unit_row, group_index1..., rep_index1...
-    vars = c(paste0("vint", seq(7 + max_unit_group + max_rep))),
+    # n_unit_group, group_index1..., rep_index1...
+    vars = c(paste0("vint", seq(6 + max_unit_group + max_rep))),
     loop = FALSE)
 }
 

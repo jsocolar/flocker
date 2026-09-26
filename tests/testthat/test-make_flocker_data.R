@@ -99,15 +99,11 @@ test_that("make_flocker_data handles two-level single-season data", {
   expect_true(all(c("ff_group_index1", "ff_group_index2") %in% names(fd$data)))
   expect_equal(
     fd$data$ff_orig_unit[seq_len(fd$data$ff_n_unit[1])],
-    1:4
+    c(2, 1, 3, 4)
   )
   expect_equal(
-    fd$data$group_x[fd$data$ff_unit_row[seq_len(fd$data$ff_n_unit[1])]],
-    c(20, 10, 20, 10)
-  )
-  expect_equal(
-    fd$data$ff_unit_row[seq_len(fd$data$ff_n_unit[1])],
-    2 + 1:4
+    fd$data$group_x[seq_len(fd$data$ff_n_unit[1])],
+    c(10, 20, 20, 10)
   )
 
   fd_minimal <- make_flocker_data(
@@ -144,16 +140,13 @@ test_that("make_flocker_data handles two-level single-season data", {
     group = factor(c("c", "b", "a"), levels = c("a", "b", "c")),
     group_x = c(30, 20, 10)
   )
-  expect_warning(
-    fd_empty <- make_flocker_data(
+  expect_error(
+    make_flocker_data(
       obs, unit_covs, event_covs, type = "twolevel_single",
       level2_covs = level2_covs_empty, level2_group = "group", quiet = TRUE
     ),
     "groups with no corresponding units: c"
   )
-  expect_equal(fd_empty$data$ff_n_group[1], 3)
-  expect_equal(fd_empty$data$ff_n_unit_group[1:3], c(2, 2, 0))
-  expect_equal(fd_empty$data$group_x[1:3], c(10, 20, 30))
 })
 
 test_that("augmented data warn about original species without detections", {
@@ -192,9 +185,12 @@ test_that("augmented internal identifiers use reserved ff_ names", {
       matrix(site_covs$species, nrow = 2, ncol = 2)
     )
   }
+  unit_rows <- seq_len(fd$data$ff_n_unit[1])
+  orig_unit <- fd$data$ff_orig_unit[unit_rows]
+  expect_equal(fd$data$ff_site[unit_rows], rep(1:2, 3)[orig_unit])
   expect_equal(
-    fd$data$ff_site[seq_len(fd$data$ff_n_unit[1])],
-    rep(1:2, 3)
+    as.integer(fd$data$ff_species[unit_rows]),
+    rep(1:3, each = 2)[orig_unit]
   )
 
   event_species <- matrix(seq_len(4), nrow = 2)

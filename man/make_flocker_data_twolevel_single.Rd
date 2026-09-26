@@ -54,9 +54,9 @@ supplied, \code{level2_covs}, identifying the level-two group.}
 
 \item{level2_covs}{An optional dataframe with one row per level-two group
 and no unused levels in its grouping factor. Row order is arbitrary;
-factor-level order determines the internal group order. If omitted, a
-minimal table is constructed from the groups represented in
-\code{unit_covs}.}
+factor-level order determines the internal group order, and every group
+must be represented in \code{unit_covs}. If omitted, a minimal table is
+constructed from the groups represented in \code{unit_covs}.}
 
 \item{quiet}{Hide progress bars and informational messages?}
 
