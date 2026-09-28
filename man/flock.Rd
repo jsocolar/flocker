@@ -69,8 +69,9 @@ data-augmented multi-species model, and FALSE otherwise.}
 to use per chain in within chain parallelization. Currently available only
 with single-season rep-constant models, and must be set to NULL otherwise.}
 
-\item{f_meta}{Relevant only for two-level models. A brms-type model formula
-for top-level, or meta-occupancy. If provided, must begin with "~".}
+\item{f_meta}{A brms-type model formula for level-two, or meta-occupancy.
+Required for \code{twolevel_single} models and internally fixed to
+\code{~ 1} for augmented models. Must begin with "~".}
 
 \item{...}{additional arguments passed to \code{brms::brm()}}
 }

@@ -59,12 +59,17 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
   # rename all random effect levels so they show up as new levels
   if (mixed) {
     if (is.null(new_data)) {
+      new_data_metadata <- attr(flocker_fit, "flocker_metadata")
+      if (is.null(new_data_metadata)) {
+        new_data_metadata <- list(type = attr(flocker_fit, "data_type"))
+      }
       new_data <- flocker_fit$data
     } else {
       assertthat::assert_that(
         identical(new_data$type, attributes(flocker_fit)$data_type),
         msg = "the new_data data type does not match the flocker_fit data type"
       )
+      new_data_metadata <- get_flocker_metadata(new_data)
       new_data <- new_data$data
     }
     
@@ -86,7 +91,7 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
         new_data[, random_effects[i]] <- paste0(new_data[, random_effects[i]], 
                                               "_resampled")
       }
-      new_data <- list(data = new_data, type = attributes(flocker_fit)$data_type)
+      new_data <- c(list(data = new_data), new_data_metadata)
       class(new_data) <- "flocker_data"
     }
     assertthat::assert_that(

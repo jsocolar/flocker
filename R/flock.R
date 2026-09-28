@@ -31,8 +31,9 @@
 #' @param f_auto Relevant only for autologistic models. A brms-type model 
 #'   formula for the autologistic offset parameter (theta). If provided, must 
 #'   begin with "~".
-#' @param f_meta Relevant only for two-level models. A brms-type model formula
-#'   for top-level, or meta-occupancy. If provided, must begin with "~".
+#' @param f_meta A brms-type model formula for level-two, or meta-occupancy.
+#'   Required for \code{twolevel_single} models and internally fixed to
+#'   \code{~ 1} for augmented models. Must begin with "~".
 #' @param augmented Logical. Must be TRUE if data are formatted for a 
 #'  data-augmented multi-species model, and FALSE otherwise.
 #' @param threads NULL or positive integer. If integer, the number of threads
@@ -551,7 +552,8 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     attr(out, "data_type") <- flocker_data$type
     attr(out, "multiseason") <- multiseason
     attr(out, "multi_init") <- multi_init
-    attr(out, "flocker_data") <- flocker_data
+    attr(out, "flocker_metadata") <-
+      flocker_data[setdiff(names(flocker_data), "data")]
   }
   out
 }

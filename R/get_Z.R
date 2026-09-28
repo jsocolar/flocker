@@ -100,13 +100,11 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     Z <- get_Z_single_C(lps, sample, history_condition, obs)
   } else if (lik_type == "twolevel_single") {
     if(is.null(new_data)){
-      if ("flocker_data" %in% names(attributes(flocker_fit))) {
-        the_data <- attributes(flocker_fit)$flocker_data$data
-      } else {
-        the_data <- flocker_fit$data
-      }
+      the_data <- flocker_fit$data
+      metadata <- get_flocker_metadata(flocker_fit)
     } else {
       the_data <- new_data$data
+      metadata <- get_flocker_metadata(new_data)
     }
     lps <- fitted_flocker(
       flocker_fit,
@@ -114,16 +112,16 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
       draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
       sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
     )
-    Z <- get_Z_twolevel_single(lps, sample, history_condition, obs, the_data)
+    Z <- get_Z_twolevel_single(
+      lps, sample, history_condition, obs, the_data, metadata
+    )
   } else if (lik_type == "augmented") {
     if(is.null(new_data)){
-      if ("flocker_data" %in% names(attributes(flocker_fit))) {
-        the_data <- attributes(flocker_fit)$flocker_data$data
-      } else {
-        the_data <- flocker_fit$data
-      }
+      the_data <- flocker_fit$data
+      metadata <- get_flocker_metadata(flocker_fit)
     } else {
       the_data <- new_data$data
+      metadata <- get_flocker_metadata(new_data)
     }
     lps <- fitted_flocker(
       flocker_fit,
@@ -131,7 +129,9 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
       draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
       sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
     )
-    Z <- get_Z_augmented(lps, sample, history_condition, obs, the_data)
+    Z <- get_Z_augmented(
+      lps, sample, history_condition, obs, the_data, metadata
+    )
   } else if (lik_type %in% c("multi_colex")) {
     lps2 <- fitted_flocker(
       flocker_fit, components = c("occ", "colo", "ex"),
@@ -320,14 +320,15 @@ get_Z_single_C <- function(lps, sample, history_condition, obs = NULL){
 #' get Z matrix for two-level single-season model
 #' @inheritParams get_Z_augmented
 #' @param flocker_data_data the data element of a flocker_data or flocker_fit
+#' @param flocker_metadata non-data metadata from a flocker_data or flocker_fit
 #' @return a matrix of fitted Z probabilities or sampled Z values. Rows are
 #'   units and columns are posterior iterations.
 #' @noRd
 get_Z_twolevel_single <- function(lps, sample, history_condition, obs = NULL,
-                                  flocker_data_data){
+                                  flocker_data_data, flocker_metadata){
   n_unit <- flocker_data_data$ff_n_unit[1]
   unit_rows <- seq_len(n_unit)
-  orig_unit <- flocker_data_data$ff_orig_unit[unit_rows]
+  orig_unit <- flocker_metadata$unit_order
   lpo <- lps$linpred_occ[ , 1, ]
   psi_all <- boot::inv.logit(lpo)[orig_unit, , drop = FALSE]
   if(history_condition) {
@@ -337,7 +338,7 @@ get_Z_twolevel_single <- function(lps, sample, history_condition, obs = NULL,
     theta_all <- NULL
   }
   Omega <- boot::inv.logit(lps$linpred_Omega)
-  group_id <- flocker_data_data$ff_group[unit_rows]
+  group_id <- flocker_metadata$unit_group
   group_known_present <- flocker_data_data$ff_group_known_present[
     seq_len(flocker_data_data$ff_n_group[1])
   ]
@@ -360,7 +361,7 @@ get_Z_twolevel_single <- function(lps, sample, history_condition, obs = NULL,
 #'   units and columns are posterior iterations.
 #' @noRd
 get_Z_augmented <- function(lps, sample, history_condition, obs = NULL,
-                            flocker_data_data, quiet = TRUE){
+                            flocker_data_data, flocker_metadata, quiet = TRUE){
   lpo <- lps$linpred_occ[ , 1, , ] # first index is point, second is visit, third is species, fourth is draw
   n_point <- nrow(lpo)
   n_species <- ncol(lpo)
@@ -368,14 +369,14 @@ get_Z_augmented <- function(lps, sample, history_condition, obs = NULL,
   n_draw <- dim(psi_all_array)[3]
   n_unit <- flocker_data_data$ff_n_unit[1]
   unit_rows <- seq_len(n_unit)
-  site_id <- flocker_data_data$ff_site[unit_rows]
-  species_id <- flocker_data_data$ff_group[unit_rows]
+  site_id <- flocker_metadata$unit_site
+  species_id <- flocker_metadata$unit_group
   psi_all <- matrix(NA_real_, nrow = n_unit, ncol = n_draw)
   for (i in unit_rows) {
     psi_all[i, ] <- psi_all_array[site_id[i], species_id[i], ]
   }
   Omega <- boot::inv.logit(lps$linpred_Omega)
-  group_id <- flocker_data_data$ff_group[seq_len(flocker_data_data$ff_n_unit[1])]
+  group_id <- flocker_metadata$unit_group
   group_known_present <- flocker_data_data$ff_group_known_present[
     seq_len(flocker_data_data$ff_n_group[1])
   ]

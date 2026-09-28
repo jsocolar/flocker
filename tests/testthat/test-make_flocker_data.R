@@ -97,10 +97,9 @@ test_that("make_flocker_data handles two-level single-season data", {
   expect_equal(fd$data$ff_group_known_present[seq_len(fd$data$ff_n_group[1])], c(0, 1))
   expect_equal(fd$data$ff_n_unit_group[seq_len(fd$data$ff_n_group[1])], c(2, 2))
   expect_true(all(c("ff_group_index1", "ff_group_index2") %in% names(fd$data)))
-  expect_equal(
-    fd$data$ff_orig_unit[seq_len(fd$data$ff_n_unit[1])],
-    c(2, 1, 3, 4)
-  )
+  expect_equal(fd$unit_order, c(2, 1, 3, 4))
+  expect_equal(fd$unit_group, c(1, 2, 2, 1))
+  expect_false(any(c("ff_orig_unit", "ff_group") %in% names(fd$data)))
   expect_equal(
     fd$data$group_x[seq_len(fd$data$ff_n_unit[1])],
     c(10, 20, 20, 10)
@@ -174,7 +173,9 @@ test_that("augmented internal identifiers use reserved ff_ names", {
     quiet = TRUE
   )
   gp <- get_positions(fd)
-  expect_true(all(c("species", "site_id", "ff_species", "ff_site") %in% names(fd$data)))
+  expect_true(all(c("species", "site_id", "ff_species") %in% names(fd$data)))
+  expect_false(any(c("ff_orig_unit", "ff_group", "ff_site") %in% names(fd$data)))
+  expect_false(any(c("ff_n_sp", "ff_superQ") %in% names(fd$data)))
   for (sp in seq_len(dim(gp)[3])) {
     expect_equal(
       matrix(as.integer(fd$data$ff_species[gp[, , sp]]), nrow = 2),
@@ -186,8 +187,9 @@ test_that("augmented internal identifiers use reserved ff_ names", {
     )
   }
   unit_rows <- seq_len(fd$data$ff_n_unit[1])
-  orig_unit <- fd$data$ff_orig_unit[unit_rows]
-  expect_equal(fd$data$ff_site[unit_rows], rep(1:2, 3)[orig_unit])
+  orig_unit <- fd$unit_order
+  expect_equal(fd$unit_site, rep(1:2, 3)[orig_unit])
+  expect_equal(fd$unit_group, rep(1:3, each = 2)[orig_unit])
   expect_equal(
     as.integer(fd$data$ff_species[unit_rows]),
     rep(1:3, each = 2)[orig_unit]

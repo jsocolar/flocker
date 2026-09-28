@@ -16,8 +16,9 @@ make_flocker_data_twolevel_single(
 )
 }
 \arguments{
-\item{obs}{If \code{type = "single"}, an I x J matrix-like object where 
-closure is assumed across rows and columns are repeated sampling events. 
+\item{obs}{If \code{type = "single"} or \code{type = "twolevel_single"},
+an I x J matrix-like object where closure is assumed across rows and columns
+are repeated sampling events.
   If \code{type = "multi"}, an I x J x K array where rows are sites or 
 species-sites, columns are repeated sampling events, and slices along the 
 third dimension are seasons. Allowable values are 1 (detection), 0 (no 
@@ -39,9 +40,10 @@ species is allowed).
   If \code{type = "twolevel_single"}, a dataframe with one row per closure
 unit, including the factor column named by \code{level2_group}.}
 
-\item{event_covs}{If \code{type = "single"}, a named list of I x J matrices, 
-each one corresponding to a covariate that varies across repeated sampling 
-events within closure-units.
+\item{event_covs}{If \code{type = "single"} or
+  \code{type = "twolevel_single"}, a named list of I x J matrices, each one
+  corresponding to a covariate that varies across repeated sampling events
+  within closure-units.
   If \code{type = "multi"}, a named list of I x J x K arrays, each one 
 corresponding to a covariate that varies across repeated sampling events 
 within closure-units.

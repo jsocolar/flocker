@@ -7,8 +7,9 @@
 
 ##### make_flocker_data ####
 #' Format data for occupancy model with \code{flock()}.
-#' @param obs If \code{type = "single"}, an I x J matrix-like object where 
-#'  closure is assumed across rows and columns are repeated sampling events. 
+#' @param obs If \code{type = "single"} or \code{type = "twolevel_single"},
+#'  an I x J matrix-like object where closure is assumed across rows and columns
+#'  are repeated sampling events.
 #'    If \code{type = "multi"}, an I x J x K array where rows are sites or 
 #'  species-sites, columns are repeated sampling events, and slices along the 
 #'  third dimension are seasons. Allowable values are 1 (detection), 0 (no 
@@ -28,9 +29,10 @@
 #' species is allowed).
 #'   If \code{type = "twolevel_single"}, a dataframe with one row per closure
 #' unit, including the factor column named by \code{level2_group}.
-#' @param event_covs If \code{type = "single"}, a named list of I x J matrices, 
-#' each one corresponding to a covariate that varies across repeated sampling 
-#' events within closure-units.
+#' @param event_covs If \code{type = "single"} or
+#'   \code{type = "twolevel_single"}, a named list of I x J matrices, each one
+#'   corresponding to a covariate that varies across repeated sampling events
+#'   within closure-units.
 #'   If \code{type = "multi"}, a named list of I x J x K arrays, each one 
 #' corresponding to a covariate that varies across repeated sampling events 
 #' within closure-units.
@@ -50,24 +52,13 @@
 #'    applicable if \code{type = "twolevel_single"}.
 #' @param level2_covs An optional dataframe with one row per level-two group
 #'    and no unused levels in its grouping factor. Row order is arbitrary;
-#'    factor-level order determines the internal group order. Only applicable
-#'    if \code{type = "twolevel_single"}.
+#'    factor-level order determines the internal group order, and every group
+#'    must be represented in \code{unit_covs}. Only applicable if
+#'    \code{type = "twolevel_single"}.
 #' @param quiet Hide progress bars and informational messages?
 #' @param newdata_checks If TRUE, turn off checks that must pass in order
 #' to use the data for model fitting, but not in other contexts (e.g. making
 #' predictions or assessing log-likelihoods over new data).
-#' @details For \code{type = "twolevel_single"}, \code{level2_covs} may be
-#' omitted when the meta-occupancy formula is intercept-only. In that case,
-#' groups are inferred from the represented values of the factor column named
-#' by \code{level2_group}; unused levels of that factor are dropped. Supply
-#' \code{level2_covs} when the meta-occupancy formula uses level-two covariates
-#' or when groups with no corresponding units must be represented. Such
-#' unit-empty groups trigger a warning and contribute no unit-level likelihood.
-#'
-#' Level-two covariates are also made available to unit-level occupancy and
-#' event-level detection formulas. The grouping column itself may be used in
-#' those lower-level formulas, but it may not be used in the meta-occupancy
-#' formula because it has only one latent state per level.
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @export
 #' @examples
@@ -422,8 +413,9 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
     warning(
       paste0(
         "The original obs array contains species with no detections. These ",
-        "species are treated as present under the augmented model and their ",
-        "all-zero detection histories contribute to the detection likelihood."
+        "species are treated as present at the group level, while their ",
+        "site-level occupancy states remain latent and their all-zero ",
+        "detection histories contribute to the model likelihood."
       ),
       call. = FALSE
     )
@@ -467,13 +459,7 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
   out$type <- "augmented"
   out$n_sp <- n_sp
   out$level2_covs <- character(0)
-  out$data$ff_n_sp <- out$data$ff_n_group
-  out$data$ff_superQ <- out$data$ff_group_known_present
-  internal_unit_order <- out$data$ff_orig_unit[seq_len(out$data$ff_n_unit[1])]
-  out$data$ff_site <- c(
-    ff_site[internal_unit_order],
-    rep(-99L, nrow(out$data) - length(ff_site))
-  )
+  out$unit_site <- ff_site[out$unit_order]
   
   class(out) <- c("list", "flocker_data")
   out
@@ -602,13 +588,11 @@ make_flocker_data_twolevel_single_ <- function(
     group_known_present,
     rep(-99L, n_data - n_group)
   )
-  flocker_data$ff_group <- c(group_id, rep(-99L, n_data - n_unit))
   flocker_data$ff_n_unit_group <- c(
     unit_group_counts,
     rep(-99L, n_data - n_group)
   )
   flocker_data$ff_unit <- c(seq_len(n_unit), rep(-99L, n_data - n_unit))
-  flocker_data$ff_orig_unit <- c(unit_order, rep(-99L, n_data - n_unit))
 
   group_indices <- as.data.frame(matrix(
     data = -99L,
@@ -633,6 +617,8 @@ make_flocker_data_twolevel_single_ <- function(
 
   out <- list(data = flocker_data, n_rep = n_rep,
               max_unit_group = max_unit_group,
+              unit_order = unit_order,
+              unit_group = group_id,
               level2_group = level2_group,
               level2_covs = setdiff(names(level2_covs), level2_group),
               type = "twolevel_single")

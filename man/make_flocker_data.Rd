@@ -17,8 +17,9 @@ make_flocker_data(
 )
 }
 \arguments{
-\item{obs}{If \code{type = "single"}, an I x J matrix-like object where 
-closure is assumed across rows and columns are repeated sampling events. 
+\item{obs}{If \code{type = "single"} or \code{type = "twolevel_single"},
+an I x J matrix-like object where closure is assumed across rows and columns
+are repeated sampling events.
   If \code{type = "multi"}, an I x J x K array where rows are sites or 
 species-sites, columns are repeated sampling events, and slices along the 
 third dimension are seasons. Allowable values are 1 (detection), 0 (no 
@@ -40,9 +41,10 @@ species is allowed).
   If \code{type = "twolevel_single"}, a dataframe with one row per closure
 unit, including the factor column named by \code{level2_group}.}
 
-\item{event_covs}{If \code{type = "single"}, a named list of I x J matrices, 
-each one corresponding to a covariate that varies across repeated sampling 
-events within closure-units.
+\item{event_covs}{If \code{type = "single"} or
+  \code{type = "twolevel_single"}, a named list of I x J matrices, each one
+  corresponding to a covariate that varies across repeated sampling events
+  within closure-units.
   If \code{type = "multi"}, a named list of I x J x K arrays, each one 
 corresponding to a covariate that varies across repeated sampling events 
 within closure-units.
@@ -72,28 +74,15 @@ applicable if \code{type = "twolevel_single"}.}
 
 \item{level2_covs}{An optional dataframe with one row per level-two group
 and no unused levels in its grouping factor. Row order is arbitrary;
-factor-level order determines the internal group order. Only applicable
-if \code{type = "twolevel_single"}.}
+factor-level order determines the internal group order, and every group
+must be represented in \code{unit_covs}. Only applicable if
+\code{type = "twolevel_single"}.}
 }
 \value{
 A flocker_data list that can be passed as data to \code{flock()}.
 }
 \description{
 Format data for occupancy model with \code{flock()}.
-}
-\details{
-For \code{type = "twolevel_single"}, \code{level2_covs} may be
-omitted when the meta-occupancy formula is intercept-only. In that case,
-groups are inferred from the represented values of the factor column named
-by \code{level2_group}; unused levels of that factor are dropped. Supply
-\code{level2_covs} when the meta-occupancy formula uses level-two covariates
-or when groups with no corresponding units must be represented. Such
-unit-empty groups trigger a warning and contribute no unit-level likelihood.
-
-Level-two covariates are also made available to unit-level occupancy and
-event-level detection formulas. The grouping column itself may be used in
-those lower-level formulas, but it may not be used in the meta-occupancy
-formula because it has only one latent state per level.
 }
 \examples{
 sfd <- simulate_flocker_data()

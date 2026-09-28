@@ -632,7 +632,8 @@ test_that("validate_flock_params works as expected", {
   augmented <- TRUE
   
   expect_silent(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
-                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
+                                      f_col, f_ex, multi_init, f_auto, augmented,
+                                      threads, f_meta = ~ 1))
   
   
   flocker_data <- fd_multi

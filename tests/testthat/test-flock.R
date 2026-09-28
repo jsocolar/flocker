@@ -6,6 +6,24 @@ sd <- simulate_flocker_data(augmented = TRUE)
 fd_augmented <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs, type = "augmented", n_aug = 10,
                                   quiet = TRUE)
 
+obs_twolevel <- matrix(c(1, 0, 0, 0, 0, 0, 0, 1), nrow = 4, byrow = TRUE)
+unit_covs_twolevel <- data.frame(
+  group = factor(c("a", "a", "b", "b")),
+  unit_x = 1:4
+)
+level2_covs <- data.frame(
+  group = factor(c("a", "b")),
+  group_x = c(0, 1)
+)
+fd_twolevel <- make_flocker_data(
+  obs_twolevel,
+  unit_covs_twolevel,
+  type = "twolevel_single",
+  level2_group = "group",
+  level2_covs = level2_covs,
+  quiet = TRUE
+)
+
 sd <- simulate_flocker_data(n_season = 3, multiseason = "colex", multi_init = "explicit")
 fd_multi <- make_flocker_data(sd$obs, sd$unit_covs, sd$event_covs, type = "multi",
                               quiet = TRUE)
@@ -30,6 +48,16 @@ test_that("flocker_stancode works as expected", {
   expect_type(flocker_stancode(f_occ, f_det, flocker_data, data2, multiseason, 
                   f_col, f_ex, multi_init, f_auto, augmented, threads),
               "character")
+
+  expect_type(
+    flocker_stancode(
+      f_occ = ~ unit_x + group_x,
+      f_det = ~ unit_x + group_x,
+      flocker_data = fd_twolevel,
+      f_meta = ~ group_x
+    ),
+    "character"
+  )
   
   
   f_occ <- ~ uc1 + ec1
@@ -97,3 +125,13 @@ test_that("flocker_stancode works as expected", {
 
 })
 
+test_that("flocker fits retain non-data metadata without duplicating data", {
+  metadata <- attr(example_flocker_model_single2, "flocker_metadata")
+
+  expect_identical(
+    metadata,
+    mfd_single[setdiff(names(mfd_single), "data")]
+  )
+  expect_false("data" %in% names(metadata))
+  expect_null(attr(example_flocker_model_single2, "flocker_data"))
+})

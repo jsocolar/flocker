@@ -141,10 +141,10 @@ new_array <- function(m, data = NA){
 flocker_col_names <- function(n_rep = NULL, n_year = NULL) {
   out <- c("ff_y", 
     "ff_n_suc", "ff_n_trial", 
-    "ff_Q", "ff_n_unit", "ff_n_rep", "ff_unit", "ff_orig_unit",
+    "ff_Q", "ff_n_unit", "ff_n_rep", "ff_unit",
     "ff_n_series", "ff_n_year", "ff_series", "ff_year", "ff_series_year",
-    "ff_n_group", "ff_group", "ff_group_known_present", "ff_n_unit_group",
-    "ff_n_sp", "ff_species", "ff_superQ", "ff_site")
+    "ff_n_group", "ff_group_known_present", "ff_n_unit_group",
+    "ff_species")
   if(!is.null(n_rep)) {
     out <- c(out, paste0("ff_rep_index", 1:n_rep))
   }
@@ -254,6 +254,29 @@ is_flocker_fit <- function(x) {
   inherits(x, "flocker_fit")
 }
 
+#' Extract non-data metadata from a flocker data or fit object
+#' @param x a flocker_data or flocker_fit object
+#' @return a list of metadata
+#' @noRd
+get_flocker_metadata <- function(x) {
+  if (is_flocker_data(x)) {
+    return(x[setdiff(names(x), "data")])
+  }
+  assertthat::assert_that(
+    is_flocker_fit(x),
+    msg = "x must be a flocker_data or flocker_fit object"
+  )
+  metadata <- attr(x, "flocker_metadata")
+  assertthat::assert_that(
+    is.list(metadata),
+    msg = paste0(
+      "the flocker_fit object does not contain the metadata required for ",
+      "this operation"
+    )
+  )
+  metadata
+}
+
 #' Extract lik_type from object of class flocker_fit
 #' @param x flocker_fit object
 #' @return string giving model type
@@ -326,11 +349,7 @@ get_positions <- function(data_object, unit_level = FALSE) {
     msg = "the data object must either be a flocker_fit or a flocker_data object"
   )
   if(is_flocker_fit(data_object)) {
-    if ("flocker_data" %in% names(attributes(data_object))) {
-      the_data <- attributes(data_object)$flocker_data$data
-    } else {
-      the_data <- data_object$data
-    }
+    the_data <- data_object$data
     data_type <- attributes(data_object)$data_type
   } else {
     the_data <- data_object$data
@@ -369,7 +388,7 @@ get_positions <- function(data_object, unit_level = FALSE) {
     )
     assertthat::assert_that(ncol(index_matrix_internal) == n_rep)
     index_matrix <- matrix(NA, nrow = n_unit, ncol = n_rep)
-    orig_unit <- the_data$ff_orig_unit[seq_len(n_unit)]
+    orig_unit <- get_flocker_metadata(data_object)$unit_order
     index_matrix[orig_unit, ] <- index_matrix_internal
     index_matrix[index_matrix == -99] <- NA
     if(!unit_level) {
@@ -384,11 +403,14 @@ get_positions <- function(data_object, unit_level = FALSE) {
     index_array <- array(dim = c(n_site, max_visit, n_species))
     rep_index_frame <- the_data[paste0("ff_rep_index", seq_len(max_visit))]
     rep_index_matrix <- as.matrix(rep_index_frame)
+    metadata <- get_flocker_metadata(data_object)
+    unit_site <- metadata$unit_site
+    unit_group <- metadata$unit_group
     for(r in seq_len(the_data$ff_n_unit[1])){
       visit_ids <- which(rep_index_matrix[r, ] != -99)
       if(length(visit_ids) > 0) {
-        sp_id <- the_data$ff_group[r]
-        site_id <- the_data$ff_site[r]
+        sp_id <- unit_group[r]
+        site_id <- unit_site[r]
         index_array[site_id, visit_ids, sp_id] <- rep_index_matrix[r, visit_ids]
       }
     }
@@ -509,10 +531,6 @@ Z_from_emission <- function(el0, el1, psi_unconditional){
 validate_flock_params <- function(f_occ, f_det, flocker_data,
                                   multiseason, f_col, f_ex, multi_init, f_auto,
                                   augmented, threads, f_meta = NULL) {
-  if (flocker_data$type == "augmented" && isTRUE(augmented) && is.null(f_meta)) {
-    f_meta <- ~ 1
-  }
-  
   # Check that inputs are valid individually
   validate_params_individually(f_occ, f_det, flocker_data,
                                multiseason, f_col, f_ex, multi_init, f_auto,

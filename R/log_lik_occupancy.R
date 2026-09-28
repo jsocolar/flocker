@@ -53,11 +53,6 @@ log_lik_flocker <- function(
   }
   
   lik_type <- type_flocker_fit(flocker_fit)
-  if (is.null(new_data) && "flocker_data" %in% names(attributes(flocker_fit))) {
-    original_data <- attributes(flocker_fit)$flocker_data$data
-  } else {
-    original_data <- flocker_fit$data
-  }
   
   if (lik_type %in% c("single")) {
     lps <- fitted_flocker(
@@ -71,7 +66,7 @@ log_lik_flocker <- function(
     theta_all <- lps$linpred_det
     if (is.null(new_data)) {
       gp <- get_positions(flocker_fit)
-      the_data <- original_data
+      the_data <- flocker_fit$data
     } else {
       gp <- get_positions(new_data)
       the_data <- new_data$data
@@ -99,12 +94,14 @@ log_lik_flocker <- function(
   } else if (lik_type %in% c("twolevel_single", "augmented")) {
     if(is.null(new_data)){
       gp <- get_positions(flocker_fit)
-      obs <- new_array(gp, original_data$ff_y[gp])
-      the_data <- original_data
+      obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+      the_data <- flocker_fit$data
+      metadata <- get_flocker_metadata(flocker_fit)
     } else {
       gp <- get_positions(new_data)
       obs <- new_array(gp, new_data$data$ff_y[gp])
       the_data <- new_data$data
+      metadata <- get_flocker_metadata(new_data)
     }
 
     lps <- fitted_flocker(
@@ -119,8 +116,8 @@ log_lik_flocker <- function(
       n_species <- dim(obs)[3]
       n_unit <- the_data$ff_n_unit[1]
       unit_rows <- seq_len(n_unit)
-      site_id <- the_data$ff_site[unit_rows]
-      species_id <- the_data$ff_group[unit_rows]
+      site_id <- metadata$unit_site
+      species_id <- metadata$unit_group
       psi_all_array <- lps$linpred_occ[ , 1, , ]
       psi_all <- matrix(NA_real_, nrow = n_unit, ncol = ndraws)
       theta_all <- array(NA_real_, dim = c(n_unit, n_visit, ndraws))
@@ -133,13 +130,13 @@ log_lik_flocker <- function(
     } else {
       n_unit <- the_data$ff_n_unit[1]
       unit_rows <- seq_len(n_unit)
-      orig_unit <- the_data$ff_orig_unit[unit_rows]
+      orig_unit <- metadata$unit_order
       psi_all <- lps$linpred_occ[ , 1, ][orig_unit, , drop = FALSE]
       theta_all <- lps$linpred_det[orig_unit, , , drop = FALSE]
       obs_use <- obs[orig_unit, , drop = FALSE]
     }
     Omega <- lps$linpred_Omega
-    group_id <- the_data$ff_group[seq_len(the_data$ff_n_unit[1])]
+    group_id <- metadata$unit_group
     group_known_present <- the_data$ff_group_known_present[
       seq_len(the_data$ff_n_group[1])
     ]
