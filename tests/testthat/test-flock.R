@@ -58,6 +58,14 @@ test_that("flocker_stancode works as expected", {
     ),
     "character"
   )
+
+  expect_error(
+    flocker_stancode(
+      f_det = brms::mvbf(det ~ 1, auxiliary ~ 1),
+      flocker_data = fd_single
+    ),
+    "mvbrmsformula objects are not supported"
+  )
   
   
   f_occ <- ~ uc1 + ec1
