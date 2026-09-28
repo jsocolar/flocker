@@ -24,7 +24,9 @@ species-sites, columns are repeated sampling events, and slices along the
 third dimension are seasons. Allowable values are 1 (detection), 0 (no 
 detection), and NA (no sampling event).
    If \code{type = "augmented"}, an L x J x K array where rows L are sites, 
-columns J are repeat sampling events, and slices K are species. 
+columns J are repeat sampling events, and slices K are species. Every
+supplied species must have at least one detection; never-observed
+pseudospecies are added through \code{n_aug}.
    The data must be packed so that, for a given unit (site, site-species, 
 site-timestep, site-species-timestep) all realized visits come before any 
 missing visits (NAs are trailing within their rows).}

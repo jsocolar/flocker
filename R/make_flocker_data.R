@@ -15,7 +15,9 @@
 #'  third dimension are seasons. Allowable values are 1 (detection), 0 (no 
 #'  detection), and NA (no sampling event).
 #'     If \code{type = "augmented"}, an L x J x K array where rows L are sites, 
-#'  columns J are repeat sampling events, and slices K are species. 
+#'  columns J are repeat sampling events, and slices K are species. Every
+#'  supplied species must have at least one detection; never-observed
+#'  pseudospecies are added through \code{n_aug}.
 #'     The data must be packed so that, for a given unit (site, site-species, 
 #'  site-timestep, site-species-timestep) all realized visits come before any 
 #'  missing visits (NAs are trailing within their rows).
@@ -391,7 +393,9 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
 #'  \code{flock()}.
 #' @param obs An I x J x K array where rows I are sites, columns J are 
 #'  repeat sampling events, and slices K are species. Allowable values are 1 
-#'  (detection), 0 (no detection), and NA (no sampling event).
+#'  (detection), 0 (no detection), and NA (no sampling event). Every supplied
+#'  species must have at least one detection; never-observed pseudospecies are
+#'  added through \code{n_aug}.
 #'   The data must be formatted so that all NAs are trailing within their rows.
 #' @param n_aug Number of pseudospecies to augment
 #' @param site_covs A dataframe of covariates for each site that are constant 
@@ -410,20 +414,18 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
   standard_mfd_checks(obs, site_covs, event_covs, "augmented", n_aug, quiet, newdata_checks)
   detected_species <- apply(obs == 1, 3, any, na.rm = TRUE)
   if (any(!detected_species)) {
-    warning(
+    stop(
       paste0(
-        "The original obs array contains species with no detections. These ",
-        "species are treated as present at the group level, while their ",
-        "site-level occupancy states remain latent and their all-zero ",
-        "detection histories contribute to the model likelihood."
+        "The original obs array for an augmented model must contain only ",
+        "species with at least one detection. Add never-observed ",
+        "pseudospecies through n_aug."
       ),
       call. = FALSE
     )
   }
   obs1 <- obs[,,1]
   n_rep <- ncol(obs1)
-  n_sp_obs <- dim(obs)[3]
-  n_sp <- n_sp_obs + n_aug
+  n_sp <- dim(obs)[3] + n_aug
   n_site <- dim(obs)[1]
   aug_slice <- obs1
   aug_slice[!is.na(aug_slice)] <- 0
@@ -452,9 +454,6 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
     event_covs = event_covs2,
     level2_covs = level2_covs,
     level2_group = "ff_species"
-  )
-  out$data$ff_group_known_present[seq_len(n_sp)] <- c(
-    rep(1L, n_sp_obs), rep(0L, n_aug)
   )
   out$type <- "augmented"
   out$n_sp <- n_sp

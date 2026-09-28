@@ -148,14 +148,14 @@ test_that("make_flocker_data handles two-level single-season data", {
   )
 })
 
-test_that("augmented data warn about original species without detections", {
+test_that("augmented data reject original species without detections", {
   obs <- array(0, dim = c(2, 2, 2))
   obs[1, 1, 2] <- 1
-  expect_warning(
+  expect_error(
     make_flocker_data(
       obs, type = "augmented", n_aug = 1, quiet = TRUE
     ),
-    "original obs array contains species with no detections"
+    "must contain only species with at least one detection"
   )
 })
 
@@ -175,7 +175,11 @@ test_that("augmented internal identifiers use reserved ff_ names", {
   gp <- get_positions(fd)
   expect_true(all(c("species", "site_id", "ff_species") %in% names(fd$data)))
   expect_false(any(c("ff_orig_unit", "ff_group", "ff_site") %in% names(fd$data)))
-  expect_false(any(c("ff_n_sp", "ff_superQ") %in% names(fd$data)))
+  expect_false(any(c("ff_n_sp", "ff_superQ", "ff_known_present") %in% names(fd$data)))
+  expect_equal(
+    fd$data$ff_group_known_present[seq_len(fd$data$ff_n_group[1])],
+    c(1, 1, 0)
+  )
   for (sp in seq_len(dim(gp)[3])) {
     expect_equal(
       matrix(as.integer(fd$data$ff_species[gp[, , sp]]), nrow = 2),
