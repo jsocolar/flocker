@@ -412,17 +412,6 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
                                         event_covs = NULL, quiet = FALSE, 
                                         newdata_checks = FALSE) {
   standard_mfd_checks(obs, site_covs, event_covs, "augmented", n_aug, quiet, newdata_checks)
-  detected_species <- apply(obs == 1, 3, any, na.rm = TRUE)
-  if (any(!detected_species)) {
-    stop(
-      paste0(
-        "The original obs array for an augmented model must contain only ",
-        "species with at least one detection. Add never-observed ",
-        "pseudospecies through n_aug."
-      ),
-      call. = FALSE
-    )
-  }
   obs1 <- obs[,,1]
   n_rep <- ncol(obs1)
   n_sp <- dim(obs)[3] + n_aug
@@ -513,16 +502,6 @@ make_flocker_data_twolevel_single_ <- function(
   ]
   group_id <- match(as.character(unit_covs[[level2_group]]), group_levels)
   unit_group_counts <- tabulate(group_id, nbins = n_group)
-  empty_groups <- group_levels[unit_group_counts == 0]
-  if (length(empty_groups) > 0) {
-    stop(
-      paste0(
-        "level2_covs contains groups with no corresponding units: ",
-        paste(empty_groups, collapse = ", ")
-      ),
-      call. = FALSE
-    )
-  }
 
   n_unit <- nrow(obs)
   n_rep <- ncol(obs)
@@ -1008,6 +987,19 @@ standard_mfd_checks <- function(
         ),
         msg = "all level2_group values in unit_covs must appear in level2_covs"
       )
+      empty_groups <- setdiff(
+        levels(level2_covs[[level2_group]]),
+        as.character(unit_covs[[level2_group]])
+      )
+      if (length(empty_groups) > 0) {
+        stop(
+          paste0(
+            "level2_covs contains groups with no corresponding units: ",
+            paste(empty_groups, collapse = ", ")
+          ),
+          call. = FALSE
+        )
+      }
       assertthat::assert_that(
         !any(is.na(level2_covs)),
         msg = "A level-two covariate contains missing values."
@@ -1089,6 +1081,17 @@ standard_mfd_checks <- function(
       is_one_pos_int(n_aug),
       msg = "n_aug must be a positive integer"
     )
+    detected_species <- apply(obs == 1, 3, any, na.rm = TRUE)
+    if (any(!detected_species)) {
+      stop(
+        paste0(
+          "The original obs array for an augmented model must contain only ",
+          "species with at least one detection. Add never-observed ",
+          "pseudospecies through n_aug."
+        ),
+        call. = FALSE
+      )
+    }
     
     for (i in 2:dim(obs)[3]) {
       na_obs_i <- which(is.na(obs[,,i]))
