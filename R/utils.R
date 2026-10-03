@@ -370,13 +370,12 @@ get_positions <- function(data_object, unit_level = FALSE) {
     isTRUE(is_flocker_fit(data_object)) | isTRUE(is_flocker_data(data_object)),
     msg = "the data object must either be a flocker_fit or a flocker_data object"
   )
+  the_data <- data_object$data
   if(is_flocker_fit(data_object)) {
-    the_data <- data_object$data
     # Older fits predate flocker_metadata but still carry data_type, which is
     # sufficient here for model types that need no additional metadata.
     data_type <- attributes(data_object)$data_type
   } else {
-    the_data <- data_object$data
     data_type <- data_object$type
   }
   
