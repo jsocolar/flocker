@@ -92,6 +92,32 @@ test_that("flocker_stancode works as expected", {
   expect_type(flocker_stancode(f_occ, f_det, flocker_data, data2, multiseason, 
                                       f_col, f_ex, multi_init, f_auto, augmented, threads),
               "character")
+  expect_type(
+    flocker_stancode(
+      f_det = brms::bf(det ~ uc1 + ec1, occ ~ uc1),
+      flocker_data = flocker_data,
+      augmented = TRUE
+    ),
+    "character"
+  )
+  expect_error(
+    flocker_stancode(
+      f_occ = f_occ,
+      f_det = f_det,
+      flocker_data = flocker_data,
+      augmented = TRUE,
+      f_meta = ~ 1
+    ),
+    "f_meta must be NULL for augmented models"
+  )
+  expect_error(
+    flocker_stancode(
+      f_det = brms::bf(det ~ uc1 + ec1, occ ~ uc1, Omega ~ 1),
+      flocker_data = flocker_data,
+      augmented = TRUE
+    ),
+    "Do not include an Omega formula"
+  )
   
   
   flocker_data <- fd_multi

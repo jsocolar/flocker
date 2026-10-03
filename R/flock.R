@@ -32,8 +32,8 @@
 #'   formula for the autologistic offset parameter (theta). If provided, must 
 #'   begin with "~".
 #' @param f_meta A brms-type model formula for level-two, or meta-occupancy.
-#'   Required for \code{twolevel_single} models and internally fixed to
-#'   \code{~ 1} for augmented models. Must begin with "~".
+#'   Required for \code{twolevel_single} models and must be \code{NULL} for all
+#'   other model types. Must begin with "~".
 #' @param augmented Logical. Must be TRUE if data are formatted for a 
 #'  data-augmented multi-species model, and FALSE otherwise.
 #' @param threads NULL or positive integer. If integer, the number of threads
@@ -201,11 +201,11 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                   augmented = FALSE, threads = NULL, f_meta = NULL,
                   ...) {
   ### validate parameters
-  if (isTRUE(augmented) & is.null(f_meta)) {
-    f_meta <- ~ 1
-  }
   validate_flock_params(f_occ, f_det, flocker_data, multiseason, f_col, 
                         f_ex, multi_init, f_auto, augmented, threads, f_meta)
+  if (isTRUE(augmented)) {
+    f_meta <- ~ 1
+  }
   ### create final formulas
   if (!is.null(f_occ)) {
     f_occ_txt <- paste0(deparse(f_occ), collapse = "")
@@ -343,6 +343,9 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     if(brms::is.brmsformula(f_det)){
       f_use <- f_det
       f_use$formula <- f_det_use
+      if (flocker_data$type == "augmented") {
+        f_use <- f_use + brms::lf(Omega ~ 1)
+      }
     } else {
       f_use <- brms::bf(f_det_use, f_occ_use, f_meta_use)
     }

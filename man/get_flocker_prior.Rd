@@ -70,8 +70,8 @@ to use per chain in within chain parallelization. Currently available only
 with single-season rep-constant models, and must be set to NULL otherwise.}
 
 \item{f_meta}{A brms-type model formula for level-two, or meta-occupancy.
-Required for \code{twolevel_single} models and internally fixed to
-\code{~ 1} for augmented models. Must begin with "~".}
+Required for \code{twolevel_single} models and must be \code{NULL} for all
+other model types. Must begin with "~".}
 
 \item{...}{additional arguments passed to \code{brms::brm()}}
 }

@@ -834,10 +834,18 @@ validate_param_combos_augmented <- function(f_occ, f_det, flocker_data,
     assertthat::assert_that(
       is_flocker_formula(f_occ), msg = formula_error("occupancy")
     )
-    assertthat::assert_that(
-      is_flocker_formula(f_meta), msg = formula_error("meta-occupancy")
-    )
   }
+  assertthat::assert_that(
+    is.null(f_meta),
+    msg = "f_meta must be NULL for augmented models."
+  )
+  assertthat::assert_that(
+    !brms::is.brmsformula(f_det) || !("Omega" %in% names(f_det$pforms)),
+    msg = paste0(
+      "Do not include an Omega formula in f_det for augmented models; ",
+      "meta-occupancy is internally fixed to ~ 1."
+    )
+  )
   assertthat::assert_that(
     is.null(f_col) & is.null(f_ex) & is.null(f_auto),
     msg = "colonization/extinction/autologistic formulas not allowed in single-season model"

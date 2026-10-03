@@ -633,7 +633,27 @@ test_that("validate_flock_params works as expected", {
   
   expect_silent(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
                                       f_col, f_ex, multi_init, f_auto, augmented,
-                                      threads, f_meta = ~ 1))
+                                      threads))
+  expect_error(
+    validate_flock_params(
+      f_occ, f_det, flocker_data, multiseason, f_col, f_ex, multi_init,
+      f_auto, augmented, threads, f_meta = ~ 1
+    ),
+    "f_meta must be NULL for augmented models"
+  )
+  expect_silent(
+    validate_flock_params(
+      NULL, brms::bf(det ~ 1, occ ~ 1), flocker_data, multiseason, f_col,
+      f_ex, multi_init, f_auto, augmented, threads
+    )
+  )
+  expect_error(
+    validate_flock_params(
+      NULL, brms::bf(det ~ 1, occ ~ 1, Omega ~ 1), flocker_data, multiseason,
+      f_col, f_ex, multi_init, f_auto, augmented, threads
+    ),
+    "Do not include an Omega formula"
+  )
   
   
   flocker_data <- fd_multi
