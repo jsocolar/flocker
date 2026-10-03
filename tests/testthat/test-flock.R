@@ -167,5 +167,10 @@ test_that("flocker fits retain non-data metadata without duplicating data", {
     mfd_single[setdiff(names(mfd_single), "data")]
   )
   expect_false("data" %in% names(metadata))
+  expect_identical(metadata$flocker_version, mfd_single$flocker_version)
+  expect_identical(
+    attr(example_flocker_model_single2, "flocker_version"),
+    flocker_version()
+  )
   expect_null(attr(example_flocker_model_single2, "flocker_data"))
 })

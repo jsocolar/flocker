@@ -132,6 +132,13 @@ new_array <- function(m, data = NA){
 }
 
 ##### Bookkeeping #####
+#' Return the version of the loaded flocker namespace
+#' @return character package version
+#' @noRd
+flocker_version <- function() {
+  as.character(unname(getNamespaceVersion("flocker")))
+}
+
 #' reconstruct the unit-to-group mapping from packed flocker data
 #' @param data packed data frame from a two-level flocker model
 #' @return integer vector assigning each unit to a level-two group
@@ -365,6 +372,8 @@ get_positions <- function(data_object, unit_level = FALSE) {
   )
   if(is_flocker_fit(data_object)) {
     the_data <- data_object$data
+    # Older fits predate flocker_metadata but still carry data_type, which is
+    # sufficient here for model types that need no additional metadata.
     data_type <- attributes(data_object)$data_type
   } else {
     the_data <- data_object$data

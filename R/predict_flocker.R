@@ -59,6 +59,8 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
   # rename all random effect levels so they show up as new levels
   if (mixed) {
     if (is.null(new_data)) {
+      # Read the attribute directly so older fits without flocker_metadata can
+      # retain the data-type-only fallback used for mixed prediction.
       new_data_metadata <- attr(flocker_fit, "flocker_metadata")
       if (is.null(new_data_metadata)) {
         new_data_metadata <- list(type = attr(flocker_fit, "data_type"))

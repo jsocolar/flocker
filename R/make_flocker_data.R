@@ -208,6 +208,7 @@ make_flocker_data_static <- function(
     out <- list(data = flocker_data, n_rep = n_rep,
                 type = "single")
   }
+  out$flocker_version <- flocker_version()
   class(out) <- c("list", "flocker_data")
   out
 }
@@ -383,6 +384,7 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
   
   out <- list(data = flocker_data, n_rep = n_rep, n_year = n_year,
               type = "multi")
+  out$flocker_version <- flocker_version()
   class(out) <- c("list", "flocker_data")
   out
 }
@@ -595,6 +597,7 @@ make_flocker_data_twolevel_single_ <- function(
               level2_group = level2_group,
               level2_covs = setdiff(names(level2_covs), level2_group),
               type = "twolevel_single")
+  out$flocker_version <- flocker_version()
   class(out) <- c("list", "flocker_data")
   out
 }

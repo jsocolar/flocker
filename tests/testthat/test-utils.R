@@ -1,3 +1,10 @@
+test_that("flocker_version reports the loaded namespace version", {
+  expect_identical(
+    flocker_version(),
+    as.character(unname(getNamespaceVersion("flocker")))
+  )
+})
+
 test_that("log_inv_logit handles scalar input", {
   expect_equal(log_inv_logit(0), log(0.5))
   expect_equal(log_inv_logit(10), log(1 / (1 + exp(-10))))

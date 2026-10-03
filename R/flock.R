@@ -528,8 +528,8 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     attr(out, "data_type") <- flocker_data$type
     attr(out, "multiseason") <- multiseason
     attr(out, "multi_init") <- multi_init
-    attr(out, "flocker_metadata") <-
-      flocker_data[setdiff(names(flocker_data), "data")]
+    attr(out, "flocker_version") <- flocker_version()
+    attr(out, "flocker_metadata") <- get_flocker_metadata(flocker_data)
   }
   out
 }

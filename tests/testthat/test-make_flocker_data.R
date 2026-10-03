@@ -7,7 +7,11 @@ test_that("make_flocker_data works correctly", {
   fd <- make_flocker_data(obs, unit_covs, event_covs, quiet = TRUE)
   expect_equal(fd$type, "single")
   expect_equal(class(fd), c("list", "flocker_data"))
-  expect_equal(names(fd), c("data", "n_rep", "type", "unit_covs", "event_covs"))
+  expect_equal(
+    names(fd),
+    c("data", "n_rep", "type", "flocker_version", "unit_covs", "event_covs")
+  )
+  expect_identical(fd$flocker_version, flocker_version())
   expect_true(
     all(fd$data[1:1500, c("ff_rep_index1", "ff_rep_index2", 
                           "ff_rep_index3", "ff_rep_index4")] == 
