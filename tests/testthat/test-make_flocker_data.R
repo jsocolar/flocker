@@ -87,7 +87,7 @@ test_that("make_flocker_data handles two-level single-season data", {
   
   expect_equal(fd$type, "twolevel_single")
   expect_equal(fd$level2_group, "group")
-  expect_equal(fd$max_unit_group, 2)
+  expect_false("max_unit_group" %in% names(fd))
   expect_equal(fd$level2_covs, "group_x")
   expect_equal(
     as.character(fd$data$group[seq_len(fd$data$ff_n_group[1])]),
@@ -96,7 +96,10 @@ test_that("make_flocker_data handles two-level single-season data", {
   expect_equal(fd$data$group_x[seq_len(fd$data$ff_n_group[1])], c(10, 20))
   expect_equal(fd$data$ff_group_known_present[seq_len(fd$data$ff_n_group[1])], c(0, 1))
   expect_equal(fd$data$ff_n_unit_group[seq_len(fd$data$ff_n_group[1])], c(2, 2))
-  expect_true(all(c("ff_group_index1", "ff_group_index2") %in% names(fd$data)))
+  expect_equal(
+    fd$data$ff_group_index[seq_len(fd$data$ff_n_unit[1])],
+    c(1, 4, 2, 3)
+  )
   expect_equal(fd$unit_order, c(2, 1, 3, 4))
   expect_equal(get_unit_group(fd$data), c(1, 2, 2, 1))
   expect_false("unit_group" %in% names(fd))
@@ -125,6 +128,24 @@ test_that("make_flocker_data handles two-level single-season data", {
       level2_covs = level2_covs, level2_group = "group", quiet = TRUE
     ),
     "level2_group must identify a factor column"
+  )
+
+  unit_covs_singletons <- transform(
+    unit_covs,
+    group = factor(seq_len(nrow(unit_covs)))
+  )
+  expect_error(
+    make_flocker_data(
+      obs, unit_covs_singletons, event_covs, type = "twolevel_single",
+      level2_group = "group", quiet = TRUE
+    ),
+    "At least one level-two group must contain more than one unit"
+  )
+  expect_silent(
+    make_flocker_data(
+      obs, unit_covs_singletons, event_covs, type = "twolevel_single",
+      level2_group = "group", quiet = TRUE, newdata_checks = TRUE
+    )
   )
   
   level2_covs_bad <- transform(level2_covs, unit_x = c(1, 2))
@@ -157,6 +178,16 @@ test_that("augmented data reject original species without detections", {
       obs, type = "augmented", n_aug = 1, quiet = TRUE
     ),
     "must contain only species with at least one detection"
+  )
+})
+
+test_that("augmented data require more than one site", {
+  obs <- array(c(1, 0), dim = c(1, 2, 1))
+  expect_error(
+    make_flocker_data(
+      obs, type = "augmented", n_aug = 1, quiet = TRUE
+    ),
+    "Augmented models require more than one site"
   )
 })
 

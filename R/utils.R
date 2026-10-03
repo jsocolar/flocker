@@ -141,12 +141,8 @@ get_unit_group <- function(data) {
   n_unit <- data$ff_n_unit[1]
   n_unit_group <- data$ff_n_unit_group[seq_len(n_group)]
   unit_group <- integer(n_unit)
-
-  for (g in seq_len(n_group)) {
-    index_cols <- paste0("ff_group_index", seq_len(n_unit_group[g]))
-    unit_indices <- as.integer(unlist(data[g, index_cols], use.names = FALSE))
-    unit_group[unit_indices] <- g
-  }
+  unit_indices <- data$ff_group_index[seq_len(n_unit)]
+  unit_group[unit_indices] <- rep(seq_len(n_group), n_unit_group)
 
   unit_group
 }

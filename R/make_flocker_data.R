@@ -505,7 +505,6 @@ make_flocker_data_twolevel_single_ <- function(
 
   n_unit <- nrow(obs)
   n_rep <- ncol(obs)
-  max_unit_group <- max(unit_group_counts)
 
   # Put one real unit from each group first so those rows can also supply the
   # group-level predictors without adding synthetic covariate observations.
@@ -573,15 +572,14 @@ make_flocker_data_twolevel_single_ <- function(
   )
   flocker_data$ff_unit <- c(seq_len(n_unit), rep(-99L, n_data - n_unit))
 
-  group_indices <- as.data.frame(matrix(
-    data = -99L,
-    nrow = n_data,
-    ncol = max_unit_group
-  ))
-  names(group_indices) <- paste0("ff_group_index", seq_len(max_unit_group))
-  for (g in seq_len(n_group)) {
-    group_indices[g, seq_len(unit_group_counts[g])] <- which(group_id == g)
-  }
+  group_indices <- unlist(
+    lapply(seq_len(n_group), function(g) which(group_id == g)),
+    use.names = FALSE
+  )
+  flocker_data$ff_group_index <- c(
+    group_indices,
+    rep(-99L, n_data - n_unit)
+  )
 
   rep_indices <- as.data.frame(matrix(
     data = -99L,
@@ -590,10 +588,9 @@ make_flocker_data_twolevel_single_ <- function(
   ))
   names(rep_indices) <- paste0("ff_rep_index", seq_len(n_rep))
   rep_indices[seq_len(n_unit), ] <- rep_index_matrix
-  flocker_data <- cbind(flocker_data, group_indices, rep_indices)
+  flocker_data <- cbind(flocker_data, rep_indices)
 
   out <- list(data = flocker_data, n_rep = n_rep,
-              max_unit_group = max_unit_group,
               unit_order = unit_order,
               level2_group = level2_group,
               level2_covs = setdiff(names(level2_covs), level2_group),
@@ -928,6 +925,10 @@ standard_mfd_checks <- function(
       is.factor(unit_covs[[level2_group]]),
       msg = "level2_group must identify a factor column in unit_covs"
     )
+    assertthat::assert_that(
+      newdata_checks | anyDuplicated(unit_covs[[level2_group]]) > 0,
+      msg = "At least one level-two group must contain more than one unit."
+    )
     if (!is.null(level2_covs)) {
       assertthat::assert_that(
         level2_group %in% names(level2_covs),
@@ -1074,6 +1075,10 @@ standard_mfd_checks <- function(
     assertthat::assert_that(
       length(dim(obs)) == 3,
       msg = "obs must have exactly three dimensions."
+    )
+    assertthat::assert_that(
+      dim(obs)[1] > 1,
+      msg = "Augmented models require more than one site."
     )
     assertthat::assert_that(
       is_one_pos_int(n_aug),

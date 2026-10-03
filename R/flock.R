@@ -316,28 +316,19 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  ...)
   } else if (flocker_data$type %in% c("twolevel_single", "augmented")) {
     max_rep <- flocker_data$n_rep
-    max_unit_group <- flocker_data$max_unit_group
     if (flocker_data$type == "augmented") {
-      occupancy_family <- occupancy_augmented(max_rep, max_unit_group)
-      occupancy_lpmf <- make_occupancy_augmented_lpmf(
-        max_rep = max_rep,
-        max_unit_group = max_unit_group
-      )
+      occupancy_family <- occupancy_augmented(max_rep)
+      occupancy_lpmf <- make_occupancy_augmented_lpmf(max_rep)
     } else {
-      occupancy_family <- occupancy_twolevel_single(max_rep, max_unit_group)
-      occupancy_lpmf <- make_occupancy_twolevel_single_lpmf(
-        max_rep = max_rep,
-        max_unit_group = max_unit_group
-      )
+      occupancy_family <- occupancy_twolevel_single(max_rep)
+      occupancy_lpmf <- make_occupancy_twolevel_single_lpmf(max_rep)
     }
-    group_index_text <- paste0("ff_group_index", seq_len(max_unit_group),
-                               collapse = ", ")
     vint_text <- paste0("ff_rep_index", 1:max_rep, 
                         collapse = ", ")
     f_det_use <- stats::as.formula(
       paste0("ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ff_n_group, ",
              "ff_group_known_present, ff_n_unit_group, ",
-             group_index_text, ", ",
+             "ff_group_index, ",
              vint_text, ") ", f_det_txt))
     
     if(brms::is.brmsformula(f_det)){

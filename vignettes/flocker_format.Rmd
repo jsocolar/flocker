@@ -49,7 +49,7 @@ In addition to the functions to generate this custom `Stan` code, the main workh
 As noted, the `flocker` approach to fitting in `brms` contains one substantial redundancy, which is that the linear predictor for occupancy gets computed redundantly several-fold too many times, since it need be computed only once per closure-unit, whereas `flocker` computes it once per visit. In addition, it is not possible to use `Stan`'s `reduce_sum` functionality for within-chain parallelization of the computation of the linear predictors, since chunking up the data destroys the validity of the indexing (and requires a level of control that `reduce_sum` does not provide to ensure that no closure-units end up split across multiple chunks). Despite these disadvantages, we find that occupancy modeling with `flocker` is remarkably performant, in many cases outperforming our previous hand-coded `Stan` implementations of models for large datasets and comparing favorably to other contemporary packages for occupancy modeling. 
 
 ## Even fancier families
-Flocker provides a set of families that are more involved still. The first are the multi-season families, which group closure-units into series within which the occupancy state changes via modeled colonization and extinction dynamics. The second are data-augmented multi-species models, in which closure-units are grouped within species whose presence in the community (and thus availability for detection) is modeled explicitly.
+Flocker provides a set of families that are more involved still. The first are the multi-season families, which group closure-units into series within which the occupancy state changes via modeled colonization and extinction dynamics. The second are two-level single-season models, in which closure-units are grouped into larger units whose presence, and thus availability for detection, is modeled explicitly. Data-augmented multi-species models are a special case: species are the level-two groups, and species-site combinations are the closure-units.
 
 ### The multi-season format
 We fit multi-season models via a hidden Markov model (HMM) approach to the likelihood. This vignette does not cover the implementation of that likelihood in detail--just the necessary data that we need to send to the unlooped likelihood function. Suppose the data contain $S$ distinct series (i.e. distinct hidden Markov sequences), $U$ closure-units (i.e. the sum over series of the number of timesteps per series). The data are ordered so that the first $S$ rows correspond to the first repeat visit to the first timestep of all series (or to a ghost row if a given series has no visits in the first timestep), and the first $U$ rows correspond to the first repeat visit to each closure-unit (i.e. timestep, or a ghost row if a given timestep contains no visits).
@@ -71,22 +71,26 @@ cat(flocker:::make_occupancy_multi_colex_lpmf(4, 5))
 
 ```
 
-### The data augmented format
-For the data augmented model, suppose that the dataset contains $I$ sites, up to $J$ visits per site, and $K$ species (including the data-augmented pseudospecies). Species are the level-two groups and species-site combinations are the closure-units. The first $K$ rows contain one representative closure-unit from each species, and the first $I \times K$ rows each represent the first visit to a closure-unit. Then we pass auxiliary terms including:
+### The two-level format
+For a two-level single-season model, suppose that the dataset contains $G$ level-two groups, $U$ closure-units distributed among those groups, and up to $M$ visits per closure-unit. We arrange the data so that the first $G$ rows contain the first visits to one representative closure-unit from each group. This allows the likelihood to use the first $G$ elements of the group-level linear predictor, each computed from a real covariate row. The first $U$ rows contain the first visits to all closure-units, just as in the ordinary single-season format.
 
-* A `vint` term giving the total number of closure-units $I \times K$. Elements after the first are irrelevant.
-* A `vint` term giving the number of sampling events per closure-unit. Elements after $I \times K$ are irrelevant.
-* A `vint` term giving the binary indicator $Q$ for whether there is at least one detection. Elements after $I \times K$ are irrelevant.
-* A `vint` term giving the number of species $K$. Elements after the first are irrelevant.
-* A `vint` term giving a binary indicator for whether each species is known present. Elements after $K$ are irrelevant.
-* A `vint` term giving the number of closure-units belonging to each species. Elements after $K$ are irrelevant.
-* Multiple `vint` terms, one for each closure-unit up to the maximum number belonging to any species, giving the row index corresponding to that unit. Elements after $K$ are irrelevant.
-* Multiple `vint` terms, one for each sampling event up to the maximum number of sampling events at any site, giving the row index corresponding to that visit. Elements after $I \times K$ are irrelevant.
+The data-augmented model uses this same representation. In that case, the $G$ groups are observed and augmented species, while the $U$ closure-units are species-site combinations.
 
-Thus, we pass a number of `vint` terms equal to six plus the maximum number of closure-units in a species plus the maximum number of visits at any site. Here's `Stan` code to decode this format and compute the likelihood for a dataset with 3 sites and a maximum of 4 repeat visits.
+We pass the following auxiliary terms:
 
-```{r augmented-stancode-example}
-cat(flocker:::make_occupancy_augmented_lpmf(4, 3))
+* A `vint` term giving the total number of closure-units $U$. Elements after the first are irrelevant.
+* A `vint` term giving the number of sampling events per closure-unit. Elements after $U$ are irrelevant.
+* A `vint` term giving the binary indicator $Q$ for whether there is at least one detection at each closure-unit. Elements after $U$ are irrelevant.
+* A `vint` term giving the number of level-two groups $G$. Elements after the first are irrelevant.
+* A `vint` term giving a binary indicator for whether each group is known present. In the current format, this indicator is 1 for groups with at least one detection and 0 otherwise. Elements after $G$ are irrelevant.
+* A `vint` term giving the number of closure-units belonging to each group. Elements after $G$ are irrelevant.
+* One `vint` term containing the closure-unit indices concatenated group by group. Its first $U$ elements form a permutation of the integers from 1 through $U$. The preceding `vint` term gives the segment lengths that identify which indices belong to each group; elements after $U$ are irrelevant.
+* Multiple `vint` terms, one for each sampling event up to $M$, giving the row index corresponding to that visit. Elements after $U$ are irrelevant.
+
+Thus, we pass seven plus $M$ `vint` terms, regardless of the number of groups or the number of closure-units within each group. Here's `Stan` code to decode this format and compute the likelihood for a two-level model with a maximum of four repeat visits:
+
+```{r twolevel-stancode-example}
+cat(flocker:::make_occupancy_twolevel_single_lpmf(4))
 
 ```
 

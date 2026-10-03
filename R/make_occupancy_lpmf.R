@@ -83,25 +83,20 @@ make_occupancy_single_C_lpmf <- function () {
 #' a rep-varying two-level single-season model. 
 #' @param max_rep Literal integer maximum number of repeated sampling events at 
 #'    any unit.
-#' @param max_unit_group Literal integer maximum number of closure-units in any
-#'    top-level group.
 #' @return Character string of Stan code corresponding to 
 #'    occupancy_twolevel_single_lpmf
 #' @noRd
-make_occupancy_twolevel_single_lpmf <- function (max_rep, max_unit_group) {
-  make_occupancy_twolevel_single_lpmf_(max_rep, max_unit_group,
-                                       "occupancy_twolevel_single_lpmf")
+make_occupancy_twolevel_single_lpmf <- function (max_rep) {
+  make_occupancy_twolevel_single_lpmf_(
+    max_rep,
+    "occupancy_twolevel_single_lpmf"
+  )
 }
 
-make_occupancy_twolevel_single_lpmf_ <- function(max_rep, max_unit_group,
-                                                 lpmf_name) {
+make_occupancy_twolevel_single_lpmf_ <- function(max_rep, lpmf_name) {
   assertthat::assert_that(
     is_one_pos_int(max_rep, m = 1),
     msg = "max_rep must be an integer greater than 1"
-  )
-  assertthat::assert_that(
-    is_one_pos_int(max_unit_group, m = 1),
-    msg = "max_unit_group must be an integer greater than 1"
   )
   sf_text1 <- paste0("  real ", lpmf_name, "(
     array[] int y, // detection data
@@ -116,46 +111,31 @@ make_occupancy_twolevel_single_lpmf_ <- function(max_rep, max_unit_group,
     array[] int vint5, // Indicator for group known present. Elements after vint4[1] irrelevant.
     
     array[] int vint6, // n closure-units per top-level group. Elements after vint4[1] irrelevant.
+    array[] int vint7, // unit indices concatenated by top-level group. Elements after vint1[1] irrelevant.
   
-  // indices for jth closure-unit within each top-level group (elements after vint4[1] irrelevant):")
-  
-  sf_text2.1 <- paste0("    array[] int vint", 6 + (1:max_unit_group), collapse = ",\n")
-  sf_text2.2 <- ",\n"
-  sf_text2 <- paste0(sf_text2.1, sf_text2.2)
-  
-  sf_text3 <- "// indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):"
-  
-  sf_text4 <- paste0("    array[] int vint", 6 + max_unit_group + (1:max_rep), collapse = ",\n")
-  
-  sf_text5 <- paste0(") {
-  // Create array of the unit indices that correspond to each top-level group.
-    array[vint4[1], ", max_unit_group, "] int unit_index_array;")
-  
-  sf_text6.1 <- "      unit_index_array[,"
-  sf_text6.2 <- 1:max_unit_group
-  sf_text6.3 <- "] = vint"
-  sf_text6.4 <- 6 + (1:max_unit_group)
-  sf_text6.5 <- "[1:vint4[1]];\n"
-  sf_text6 <- paste0(sf_text6.1, sf_text6.2, sf_text6.3, sf_text6.4, sf_text6.5, collapse = "")
-  
-  sf_text7 <- paste0("
+  // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):")
+
+  sf_text2 <- paste0("    array[] int vint", 7 + (1:max_rep), collapse = ",\n")
+
+  sf_text3 <- paste0(") {
   // Create array of the rep indices that correspond to each unit.
     array[vint1[1], ", max_rep, "] int index_array;")
   
-  sf_text8.1 <- "      index_array[,"
-  sf_text8.2 <- 1:max_rep
-  sf_text8.3 <- "] = vint"
-  sf_text8.4 <- 6 + max_unit_group + (1:max_rep)
-  sf_text8.5 <- "[1:vint1[1]];\n"
-  sf_text8 <- paste0(sf_text8.1, sf_text8.2, sf_text8.3, sf_text8.4, sf_text8.5, collapse = "")
+  sf_text4.1 <- "      index_array[,"
+  sf_text4.2 <- 1:max_rep
+  sf_text4.3 <- "] = vint"
+  sf_text4.4 <- 7 + (1:max_rep)
+  sf_text4.5 <- "[1:vint1[1]];\n"
+  sf_text4 <- paste0(sf_text4.1, sf_text4.2, sf_text4.3, sf_text4.4, sf_text4.5, collapse = "")
   
-  sf_text9 <- "  // Initialize and compute log-likelihood
+  sf_text5 <- "  // Initialize and compute log-likelihood
     real lp = 0;
+    int unit_offset = 0;
     
     for (g in 1:vint4[1]) {
       real lp_g = 0;
       for (j in 1:vint6[g]) {
-        int i = unit_index_array[g, j];
+        int i = vint7[unit_offset + j];
         array[vint2[i]] int indices = index_array[i, 1:vint2[i]];
         if (vint3[i] == 1) {
           lp_g += bernoulli_logit_lpmf(1 | occ[i]);
@@ -166,6 +146,7 @@ make_occupancy_twolevel_single_lpmf_ <- function(max_rep, max_unit_group,
                                 sum(log1m_inv_logit(mu[indices])), bernoulli_logit_lpmf(0 | occ[i]));
         }
       }
+      unit_offset += vint6[g];
       if (vint5[g] == 1) {
         lp += log_inv_logit(Omega[g]) + lp_g;
       } else {
@@ -176,8 +157,7 @@ make_occupancy_twolevel_single_lpmf_ <- function(max_rep, max_unit_group,
   }
 "
   
-  out <- paste(sf_text1, sf_text2, sf_text3, sf_text4, sf_text5, sf_text6,
-               sf_text7, sf_text8, sf_text9, sep = "\n")
+  out <- paste(sf_text1, sf_text2, sf_text3, sf_text4, sf_text5, sep = "\n")
   return(out)
 }
 
@@ -187,13 +167,10 @@ make_occupancy_twolevel_single_lpmf_ <- function(max_rep, max_unit_group,
 #' rep-varying model. 
 #' @param max_rep Literal integer maximum number of repeated sampling events at 
 #'    any unit.
-#' @param max_unit_group Literal integer maximum number of closure-units in any
-#'    top-level group.
 #' @return Character string of Stan code corresponding to occupancy_augmented_lpmf
 #' @noRd
-make_occupancy_augmented_lpmf <- function (max_rep, max_unit_group) {
-  make_occupancy_twolevel_single_lpmf_(max_rep, max_unit_group,
-                                       "occupancy_augmented_lpmf")
+make_occupancy_augmented_lpmf <- function (max_rep) {
+  make_occupancy_twolevel_single_lpmf_(max_rep, "occupancy_augmented_lpmf")
 }
 
 
