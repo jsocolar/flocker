@@ -1,3 +1,10 @@
+test_that("flocker_version reports the loaded namespace version", {
+  expect_identical(
+    flocker_version(),
+    as.character(unname(getNamespaceVersion("flocker")))
+  )
+})
+
 test_that("log_inv_logit handles scalar input", {
   expect_equal(log_inv_logit(0), log(0.5))
   expect_equal(log_inv_logit(10), log(1 / (1 + exp(-10))))
@@ -125,7 +132,7 @@ test_that("bookkeeping works properly", {
   expect_true(all(grepl(flocker_reserved()[2], paste0(".", c(".", "foo", 1:2)))))
   
   # flocker_model_types
-  expect_true(all(grepl("^single|^augmented|^multi", flocker_model_types())))
+  expect_true(all(grepl("^single|^twolevel|^augmented|^multi", flocker_model_types())))
   
   # flocker_data_input_types
   expect_true(
@@ -152,7 +159,7 @@ test_that("bookkeeping works properly", {
   }
   
   # flocker_data_output_types
-  expect_true(all(grepl("^single|^augmented|^multi", flocker_data_output_types())))
+  expect_true(all(grepl("^single|^twolevel|^augmented|^multi", flocker_data_output_types())))
 })
 
 test_that("fdtl function returns expected dataframe", {
@@ -165,8 +172,8 @@ test_that("fdtl function returns expected dataframe", {
   # Check if the result has the correct column names
   expect_named(result, c("model_type", "data_output_type", "data_input_type"))
   
-  # Check if the result has the correct number of rows (assuming 10 model types)
-  expect_equal(nrow(result), 7)
+  # Check if the result has the correct number of rows
+  expect_equal(nrow(result), 8)
   
   # Check if the result has the correct number of columns
   expect_equal(ncol(result), 3)
@@ -176,11 +183,13 @@ test_that("fdtl function returns expected dataframe", {
   
   # Check if the data_output_type and data_input_type columns contain the expected values
   expected_data_input_types <- c(
-    "single", "single", "augmented", "multi", "multi", "multi", "multi"
+    "single", "single", "twolevel_single", "augmented",
+    "multi", "multi", "multi", "multi"
   )
   
   expected_data_output_types <- c(
-    "single", "single_C", "augmented", "multi", "multi", "multi", "multi"
+    "single", "single_C", "twolevel_single", "augmented",
+    "multi", "multi", "multi", "multi"
   )
   
   
@@ -630,7 +639,28 @@ test_that("validate_flock_params works as expected", {
   augmented <- TRUE
   
   expect_silent(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
-                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
+                                      f_col, f_ex, multi_init, f_auto, augmented,
+                                      threads))
+  expect_error(
+    validate_flock_params(
+      f_occ, f_det, flocker_data, multiseason, f_col, f_ex, multi_init,
+      f_auto, augmented, threads, f_meta = ~ 1
+    ),
+    "f_meta must be NULL for augmented models"
+  )
+  expect_silent(
+    validate_flock_params(
+      NULL, brms::bf(det ~ 1, occ ~ 1), flocker_data, multiseason, f_col,
+      f_ex, multi_init, f_auto, augmented, threads
+    )
+  )
+  expect_error(
+    validate_flock_params(
+      NULL, brms::bf(det ~ 1, occ ~ 1, Omega ~ 1), flocker_data, multiseason,
+      f_col, f_ex, multi_init, f_auto, augmented, threads
+    ),
+    "Do not include an Omega formula"
+  )
   
   
   flocker_data <- fd_multi
@@ -667,6 +697,40 @@ test_that("validate_flock_params works as expected", {
   f_auto <- ~ uc1
   expect_silent(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
+})
+
+test_that("two-level formula variables respect their data level", {
+  obs <- matrix(c(1, 0, 0, 0, 0, 0), nrow = 3, byrow = TRUE)
+  unit_covs <- data.frame(
+    species = factor(c("a", "a", "b")),
+    unit_x = 1:3
+  )
+  level2_covs <- data.frame(
+    species = factor(c("b", "a"), levels = c("a", "b")),
+    group_x = c(2, 1)
+  )
+  fd <- make_flocker_data(
+    obs,
+    unit_covs,
+    type = "twolevel_single",
+    level2_covs = level2_covs,
+    level2_group = "species",
+    quiet = TRUE
+  )
+
+  expect_silent(validate_meta_formula_variables(~ 1, fd))
+  expect_silent(validate_meta_formula_variables(~ group_x, fd))
+  expect_error(
+    validate_meta_formula_variables(~ species, fd),
+    "cannot be used in f_meta"
+  )
+  expect_error(
+    validate_meta_formula_variables(~ unit_x, fd),
+    "must be level-two covariates"
+  )
+  expect_silent(
+    validate_unit_formula_variables(~ species + group_x, NULL, NULL, NULL, fd)
+  )
 })
 
 test_that("formula_error works", {

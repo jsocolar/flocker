@@ -42,3 +42,6 @@ vignettes/*.pdf
 .Renviron
 /Meta/
 /doc/
+
+# Local Codex scratch notes
+.codex/

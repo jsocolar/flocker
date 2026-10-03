@@ -11,18 +11,23 @@ standard_mfd_checks(
   type,
   n_aug,
   quiet,
-  newdata_checks
+  newdata_checks,
+  level2_group = NULL,
+  level2_covs = NULL
 )
 }
 \arguments{
-\item{obs}{If \code{type = "single"}, an I x J matrix-like object where 
-closure is assumed across rows and columns are repeated sampling events. 
+\item{obs}{If \code{type = "single"} or \code{type = "twolevel_single"},
+an I x J matrix-like object where closure is assumed across rows and columns
+are repeated sampling events.
   If \code{type = "multi"}, an I x J x K array where rows are sites or 
 species-sites, columns are repeated sampling events, and slices along the 
 third dimension are seasons. Allowable values are 1 (detection), 0 (no 
 detection), and NA (no sampling event).
    If \code{type = "augmented"}, an L x J x K array where rows L are sites, 
-columns J are repeat sampling events, and slices K are species. 
+columns J are repeat sampling events, and slices K are species. Every
+supplied species must have at least one detection; never-observed
+pseudospecies are added through \code{n_aug}.
    The data must be packed so that, for a given unit (site, site-species, 
 site-timestep, site-species-timestep) all realized visits come before any 
 missing visits (NAs are trailing within their rows).}
@@ -34,11 +39,14 @@ dataframes must have identical column names and types, and all
 dataframes must have I rows.
   If \code{type = "augmented"}, a dataframe of covariates for each site that
 are constant across repeated sampling events within sites (no dependence on
-species is allowed).}
+species is allowed).
+  If \code{type = "twolevel_single"}, a dataframe with one row per closure
+unit, including the factor column named by \code{level2_group}.}
 
-\item{event_covs}{If \code{type = "single"}, a named list of I x J matrices, 
-each one corresponding to a covariate that varies across repeated sampling 
-events within closure-units.
+\item{event_covs}{If \code{type = "single"} or
+  \code{type = "twolevel_single"}, a named list of I x J matrices, each one
+  corresponding to a covariate that varies across repeated sampling events
+  within closure-units.
   If \code{type = "multi"}, a named list of I x J x K arrays, each one 
 corresponding to a covariate that varies across repeated sampling events 
 within closure-units.
@@ -50,7 +58,8 @@ within sites (no dependence on species is allowed).}
 \code{"single"} for a single_season model,
 \code{"multi"} for a multi-season (dynamic) model, or
 \code{"augmented"} for a single-season multi-species model with 
-data-augmentation for never-observed pseudospecies.}
+data-augmentation for never-observed pseudospecies, or
+\code{"twolevel_single"} for a two-level single-season model.}
 
 \item{n_aug}{Number of pseudo-species to augment. Only applicable if 
 \code{type = "augmented"}.}
@@ -60,6 +69,16 @@ data-augmentation for never-observed pseudospecies.}
 \item{newdata_checks}{If TRUE, turn off checks that must pass in order
 to use the data for model fitting, but not in other contexts (e.g. making
 predictions or assessing log-likelihoods over new data).}
+
+\item{level2_group}{The name of a factor column in \code{unit_covs} and, if
+supplied, \code{level2_covs}, identifying the level-two group. Only
+applicable if \code{type = "twolevel_single"}.}
+
+\item{level2_covs}{An optional dataframe with one row per level-two group
+and no unused levels in its grouping factor. Row order is arbitrary;
+factor-level order determines the internal group order, and every group
+must be represented in \code{unit_covs}. Only applicable if
+\code{type = "twolevel_single"}.}
 }
 \description{
 input checking for make_flocker_data

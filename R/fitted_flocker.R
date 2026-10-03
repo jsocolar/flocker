@@ -113,6 +113,7 @@ fitted_flocker <- function(
   }
   
   model_type <- type_flocker_fit(flocker_fit)
+  dt <- attributes(flocker_fit)$data_type
   relevant_components <- params_by_type[[model_type]]
   if("col" %in% components){components[components == "col"] <- "colo"}
   
@@ -232,6 +233,12 @@ fitted_flocker <- function(
     if(response){
       linpred_Omega <- boot::inv.logit(linpred_Omega)
     }
+    if(dt %in% c("twolevel_single", "augmented") && !is.data.frame(new_data)) {
+      linpred_Omega <- linpred_Omega[
+        seq_len(new_data_fmtd$ff_n_group[1]), ,
+        drop = FALSE
+      ]
+    }
     component_list$linpred_Omega <- linpred_Omega
   }
   
@@ -243,15 +250,27 @@ fitted_flocker <- function(
   
   if(is.null(new_data)) {
     gp <- get_positions(flocker_fit, unit_level = unit_level)
-    out <- lapply(cl2, reshape_fun, gp = gp)
+    out <- lapply(names(cl2), function(nm) {
+      if(nm == "linpred_Omega" && dt %in% c("twolevel_single", "augmented")) {
+        cl2[[nm]]
+      } else {
+        reshape_fun(cl2[[nm]], gp = gp)
+      }
+    })
+    names(out) <- names(cl2)
   } else if (is_flocker_data(new_data)) {
     gp <- get_positions(new_data, unit_level = unit_level)
-    out <- lapply(cl2, reshape_fun, gp = gp)
+    out <- lapply(names(cl2), function(nm) {
+      if(nm == "linpred_Omega" && dt %in% c("twolevel_single", "augmented")) {
+        cl2[[nm]]
+      } else {
+        reshape_fun(cl2[[nm]], gp = gp)
+      }
+    })
+    names(out) <- names(cl2)
   } else {
     out <- cl2
   }
-  
-  dt <- attributes(flocker_fit)$data_type
   
   if(is.null(new_data) | is_flocker_data(new_data)) {
     dn <- list(
@@ -282,7 +301,17 @@ fitted_flocker <- function(
   }
   
   for(i in seq_along(out)){
-    dimnames(out[[i]]) <- dn
+    if(names(out)[i] == "linpred_Omega" && dt %in% c("twolevel_single", "augmented")) {
+      omega_dn <- list(paste0("group_", seq_len(nrow(out[[i]]))))
+      if(summarise){
+        omega_dn <- append(omega_dn, list(c("mean", paste0("Q", c(min(CI)*100, paste0(max(CI)*100))))))
+      } else {
+        omega_dn <- append(omega_dn, list(paste0("draw_", draw_ids)))
+      }
+      dimnames(out[[i]]) <- omega_dn
+    } else {
+      dimnames(out[[i]]) <- dn
+    }
   }
   out
 }
