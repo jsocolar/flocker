@@ -580,9 +580,7 @@ make_flocker_data_twolevel_single_ <- function(
   ))
   names(group_indices) <- paste0("ff_group_index", seq_len(max_unit_group))
   for (g in seq_len(n_group)) {
-    if (unit_group_counts[g] > 0) {
-      group_indices[g, seq_len(unit_group_counts[g])] <- which(group_id == g)
-    }
+    group_indices[g, seq_len(unit_group_counts[g])] <- which(group_id == g)
   }
 
   rep_indices <- as.data.frame(matrix(
