@@ -529,6 +529,7 @@ make_flocker_data_twolevel_single_ <- function(
     group_known_present[g] <- as.integer(any(unit_known_present[group_id == g] == 1))
   }
 
+  # join level2 covariates onto the unit covariates
   level2_unit_rows <- level2_covs[
     match(as.character(unit_covs[[level2_group]]), group_levels),
     setdiff(names(level2_covs), level2_group),
