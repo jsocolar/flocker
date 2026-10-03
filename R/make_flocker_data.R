@@ -595,7 +595,6 @@ make_flocker_data_twolevel_single_ <- function(
   out <- list(data = flocker_data, n_rep = n_rep,
               max_unit_group = max_unit_group,
               unit_order = unit_order,
-              unit_group = group_id,
               level2_group = level2_group,
               level2_covs = setdiff(names(level2_covs), level2_group),
               type = "twolevel_single")

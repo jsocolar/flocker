@@ -338,7 +338,7 @@ get_Z_twolevel_single <- function(lps, sample, history_condition, obs = NULL,
     theta_all <- NULL
   }
   Omega <- boot::inv.logit(lps$linpred_Omega)
-  group_id <- flocker_metadata$unit_group
+  group_id <- get_unit_group(flocker_data_data)
   group_known_present <- flocker_data_data$ff_group_known_present[
     seq_len(flocker_data_data$ff_n_group[1])
   ]
@@ -370,13 +370,13 @@ get_Z_augmented <- function(lps, sample, history_condition, obs = NULL,
   n_unit <- flocker_data_data$ff_n_unit[1]
   unit_rows <- seq_len(n_unit)
   site_id <- flocker_metadata$unit_site
-  species_id <- flocker_metadata$unit_group
+  species_id <- get_unit_group(flocker_data_data)
   psi_all <- matrix(NA_real_, nrow = n_unit, ncol = n_draw)
   for (i in unit_rows) {
     psi_all[i, ] <- psi_all_array[site_id[i], species_id[i], ]
   }
   Omega <- boot::inv.logit(lps$linpred_Omega)
-  group_id <- flocker_metadata$unit_group
+  group_id <- species_id
   group_known_present <- flocker_data_data$ff_group_known_present[
     seq_len(flocker_data_data$ff_n_group[1])
   ]

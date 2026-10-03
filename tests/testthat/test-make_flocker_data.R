@@ -98,7 +98,8 @@ test_that("make_flocker_data handles two-level single-season data", {
   expect_equal(fd$data$ff_n_unit_group[seq_len(fd$data$ff_n_group[1])], c(2, 2))
   expect_true(all(c("ff_group_index1", "ff_group_index2") %in% names(fd$data)))
   expect_equal(fd$unit_order, c(2, 1, 3, 4))
-  expect_equal(fd$unit_group, c(1, 2, 2, 1))
+  expect_equal(get_unit_group(fd$data), c(1, 2, 2, 1))
+  expect_false("unit_group" %in% names(fd))
   expect_false(any(c("ff_orig_unit", "ff_group") %in% names(fd$data)))
   expect_equal(
     fd$data$group_x[seq_len(fd$data$ff_n_unit[1])],
@@ -193,7 +194,7 @@ test_that("augmented internal identifiers use reserved ff_ names", {
   unit_rows <- seq_len(fd$data$ff_n_unit[1])
   orig_unit <- fd$unit_order
   expect_equal(fd$unit_site, rep(1:2, 3)[orig_unit])
-  expect_equal(fd$unit_group, rep(1:3, each = 2)[orig_unit])
+  expect_equal(get_unit_group(fd$data), rep(1:3, each = 2)[orig_unit])
   expect_equal(
     as.integer(fd$data$ff_species[unit_rows]),
     rep(1:3, each = 2)[orig_unit]

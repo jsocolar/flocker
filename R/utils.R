@@ -132,6 +132,25 @@ new_array <- function(m, data = NA){
 }
 
 ##### Bookkeeping #####
+#' reconstruct the unit-to-group mapping from packed flocker data
+#' @param data packed data frame from a two-level flocker model
+#' @return integer vector assigning each unit to a level-two group
+#' @noRd
+get_unit_group <- function(data) {
+  n_group <- data$ff_n_group[1]
+  n_unit <- data$ff_n_unit[1]
+  n_unit_group <- data$ff_n_unit_group[seq_len(n_group)]
+  unit_group <- integer(n_unit)
+
+  for (g in seq_len(n_group)) {
+    index_cols <- paste0("ff_group_index", seq_len(n_unit_group[g]))
+    unit_indices <- as.integer(unlist(data[g, index_cols], use.names = FALSE))
+    unit_group[unit_indices] <- g
+  }
+
+  unit_group
+}
+
 #' column names created in flocker
 #' @param n_rep max number of repeat visits
 #' @param n_year max length of hmm series in dynamic models
@@ -405,7 +424,7 @@ get_positions <- function(data_object, unit_level = FALSE) {
     rep_index_matrix <- as.matrix(rep_index_frame)
     metadata <- get_flocker_metadata(data_object)
     unit_site <- metadata$unit_site
-    unit_group <- metadata$unit_group
+    unit_group <- get_unit_group(the_data)
     for(r in seq_len(the_data$ff_n_unit[1])){
       visit_ids <- which(rep_index_matrix[r, ] != -99)
       if(length(visit_ids) > 0) {

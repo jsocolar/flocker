@@ -72,11 +72,12 @@ twolevel_lpmf_from_flocker_data <- function(fd, psi, theta, Omega) {
   n_unit <- d$ff_n_unit[1]
   n_group <- d$ff_n_group[1]
   rep_cols <- grep("^ff_rep_index", names(d), value = TRUE)
+  unit_group <- get_unit_group(d)
   ll <- 0
 
   for (g in seq_len(n_group)) {
     p_y_given_available <- 1
-    unit_rows <- which(fd$unit_group == g)
+    unit_rows <- which(unit_group == g)
 
     for (i in unit_rows) {
       indices <- as.integer(d[i, rep_cols])

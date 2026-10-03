@@ -117,7 +117,7 @@ log_lik_flocker <- function(
       n_unit <- the_data$ff_n_unit[1]
       unit_rows <- seq_len(n_unit)
       site_id <- metadata$unit_site
-      species_id <- metadata$unit_group
+      species_id <- get_unit_group(the_data)
       psi_all_array <- lps$linpred_occ[ , 1, , ]
       psi_all <- matrix(NA_real_, nrow = n_unit, ncol = ndraws)
       theta_all <- array(NA_real_, dim = c(n_unit, n_visit, ndraws))
@@ -136,7 +136,7 @@ log_lik_flocker <- function(
       obs_use <- obs[orig_unit, , drop = FALSE]
     }
     Omega <- lps$linpred_Omega
-    group_id <- metadata$unit_group
+    group_id <- get_unit_group(the_data)
     group_known_present <- the_data$ff_group_known_present[
       seq_len(the_data$ff_n_group[1])
     ]
