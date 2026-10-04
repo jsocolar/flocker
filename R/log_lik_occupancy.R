@@ -1,4 +1,4 @@
-#' Compute unit-wise or series-wise log-likelihood matrix for a flocker_fit object
+#' Compute pointwise log-likelihood matrix for a flocker_fit object
 #' @param flocker_fit A flocker_fit object
 #' @param new_data optional new data at which to compute log likelihood
 #' @param allow_new_levels allow new levels for random effect terms in 
@@ -9,13 +9,15 @@
 #'    handled? See '?brms::prepare_predictions' for options.
 #' @param draw_ids the draw ids to compute log-likelihoods for. Defaults to 
 #'    using the full posterior. 
-#' @return A posterior log-likelihood matrix, where iterations are rows and 
-#'    units, series, or species are columns.
-#' @details In single-season models, rows are units (e.g. points or 
-#'   species-points; suitable for leave-one-unit-out CV). In multiseason models, 
-#'   rows are series (i.e. points or species-points, suitable for 
-#'   leave-one-series-out CV). In augmented models, rows are species (suitable
-#'   for leave-one-species-out CV).
+#' @return A posterior log-likelihood matrix, where iterations are rows and
+#'   likelihood units are columns. For two-level models, columns are named with
+#'   the level-two group names.
+#' @details In one-level single-season models, columns are closure units (e.g.
+#'   points or species-points; suitable for leave-one-unit-out CV). In
+#'   multiseason models, columns are series (i.e. points or species-points;
+#'   suitable for leave-one-series-out CV). In `twolevel_single` models,
+#'   columns are level-two groups. In augmented models, columns are species
+#'   (suitable for leave-one-species-out CV).
 #' @export
 #' @examples 
 #' \dontrun{
@@ -157,6 +159,7 @@ log_lik_flocker <- function(
       psi_all, theta_all, Omega, group_id, group_known_present, obs_use
     ) |>
       t()
+    colnames(ll) <- get_level2_group_names(the_data, metadata, lik_type)
   } else if (lik_type %in% c("multi_colex")) {
     if(is.null(new_data)){
       gp <- get_positions(flocker_fit)

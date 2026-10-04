@@ -308,6 +308,32 @@ get_flocker_metadata <- function(x) {
   metadata
 }
 
+#' Get level-two group names in internal group order
+#' @param flocker_data_data the data element of a flocker_data or flocker_fit
+#' @param flocker_metadata non-data metadata from a flocker_data or flocker_fit
+#' @param data_type flocker data output type
+#' @return character vector of level-two group names
+#' @noRd
+get_level2_group_names <- function(flocker_data_data, flocker_metadata,
+                                   data_type) {
+  group_names <- flocker_metadata$level2_group_names
+  n_group <- flocker_data_data$ff_n_group[1]
+
+  if (is.null(group_names)) {
+    if (data_type == "twolevel_single") {
+      group_names <- as.character(
+        flocker_data_data[[flocker_metadata$level2_group]][seq_len(n_group)]
+      )
+    } else {
+      assertthat::assert_that(data_type == "augmented")
+      group_names <- paste0("species", seq_len(n_group))
+    }
+  }
+
+  assertthat::assert_that(length(group_names) == n_group)
+  as.character(group_names)
+}
+
 #' Recover one Omega value per level-two group from fitted_flocker output
 #' @param fitted_output output from fitted_flocker containing linpred_Omega
 #' @param data_type flocker data output type

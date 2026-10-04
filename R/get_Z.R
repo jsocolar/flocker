@@ -19,9 +19,14 @@
 #' @param sample_new_levels If `new_data` is provided and contains random effect
 #'     levels not present in the original data, how should predictions be
 #'     handled? Passed directly to `brms::prepare_predictions`, which see. 
-#' @return The posterior Z matrix in the shape of the first visit in `obs` as
-#'     passed to make_flocker_data, with posterior iterations stacked along the
-#'     final dimension
+#' @return For one-level and multiseason models, the posterior Z matrix in the
+#'     shape of the first visit in `obs` as passed to make_flocker_data, with
+#'     posterior iterations stacked along the final dimension. For
+#'     `twolevel_single` and `augmented` models, a list with elements `unit` and
+#'     `level2`. The `unit` element has that same unit-level shape, and the
+#'     `level2` element is a matrix with one row per level-two group and
+#'     posterior iterations in columns. Group dimensions are named using the
+#'     level-two grouping factor, or species names for augmented models.
 #' @export
 #' @examples
 #' \dontrun{
@@ -102,7 +107,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     Z <- get_twolevel_states(
       flocker_fit, lik_type, draw_ids, history_condition, sample, obs,
       new_data, allow_new_levels, sample_new_levels
-    )$unit
+    )
   } else if (lik_type %in% c("multi_colex")) {
     lps2 <- fitted_flocker(
       flocker_fit, components = c("occ", "colo", "ex"),
@@ -192,78 +197,6 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
   Z
 }
 
-#' Get posterior distribution of the level-two occupancy state
-#'
-#' For two-level single-season models, obtain posterior probabilities or
-#' Bernoulli samples for the latent occupancy state of each level-two group.
-#'
-#' @param flocker_fit A flocker_fit object for a \code{twolevel_single} or
-#'   \code{augmented} model.
-#' @param draw_ids Vector of indices of the posterior draws to be used. If
-#'   \code{NULL} (the default), all draws are used in their native order.
-#' @param history_condition Should the posterior distribution for the level-two
-#'   state directly condition on the observed detection histories? If
-#'   \code{FALSE}, the return is controlled by the posterior distribution of
-#'   Omega without additionally conditioning on the histories.
-#' @param sample Should the return contain posterior probabilities
-#'   (\code{FALSE}) or Bernoulli samples from those probabilities (\code{TRUE})?
-#' @param new_data Optional new data at which to predict the level-two state.
-#'   Must be a \code{flocker_data} object produced by \code{make_flocker_data}.
-#' @param allow_new_levels Allow new levels for random-effect terms in
-#'   \code{new_data}? Passed to \code{brms::posterior_linpred}.
-#' @param sample_new_levels If \code{new_data} contains random-effect levels not
-#'   present in the original data, how should predictions be handled? Passed to
-#'   \code{brms::prepare_predictions}.
-#' @return A matrix with one row per level-two group and posterior iterations
-#'   in columns. Groups are returned in the level order established by
-#'   \code{make_flocker_data}; for augmented models, groups are species.
-#' @export
-#' @examples
-#' \dontrun{
-#' get_level2_Z(fit)
-#' }
-get_level2_Z <- function(flocker_fit, draw_ids = NULL,
-                         history_condition = TRUE, sample = FALSE,
-                         new_data = NULL, allow_new_levels = FALSE,
-                         sample_new_levels = "uncertainty") {
-  assertthat::assert_that(
-    is_one_logical(history_condition),
-    msg = "history_condition must be a single logical value"
-  )
-  assertthat::assert_that(
-    is_one_logical(sample),
-    msg = "sample must be a single logical value"
-  )
-  assertthat::assert_that(
-    is.null(new_data) | is_flocker_data(new_data),
-    msg = "new_data must be a flocker_data object"
-  )
-
-  lik_type <- type_flocker_fit(flocker_fit)
-  assertthat::assert_that(
-    lik_type %in% c("twolevel_single", "augmented"),
-    msg = paste0(
-      "get_level2_Z is available only for twolevel_single and augmented ",
-      "models"
-    )
-  )
-
-  if(history_condition) {
-    data_object <- if(is.null(new_data)) flocker_fit else new_data
-    gp <- get_positions(data_object)
-    obs <- new_array(gp, data_object$data$ff_y[gp])
-  } else {
-    obs <- NULL
-  }
-
-  level2_Z <- get_twolevel_states(
-    flocker_fit, lik_type, draw_ids, history_condition, sample, obs,
-    new_data, allow_new_levels, sample_new_levels
-  )$level2
-  class(level2_Z) <- c("postZ", class(level2_Z))
-  level2_Z
-}
-
 #' Get unit- and level-two occupancy states for a two-level model
 #' @noRd
 get_twolevel_states <- function(
@@ -288,7 +221,7 @@ get_twolevel_states <- function(
     unit_level = TRUE
   )
 
-  if(lik_type == "twolevel_single") {
+  states <- if(lik_type == "twolevel_single") {
     get_twolevel_states_twolevel_single(
       lps, Omega_lps, sample, history_condition, obs, the_data, metadata
     )
@@ -298,6 +231,18 @@ get_twolevel_states <- function(
       lps, Omega_lps, sample, history_condition, obs, the_data, metadata
     )
   }
+
+  group_names <- get_level2_group_names(the_data, metadata, lik_type)
+  rownames(states$level2) <- group_names
+  if(lik_type == "augmented") {
+    unit_dimnames <- dimnames(states$unit)
+    if(is.null(unit_dimnames)) {
+      unit_dimnames <- vector("list", length(dim(states$unit)))
+    }
+    unit_dimnames[[2]] <- group_names
+    dimnames(states$unit) <- unit_dimnames
+  }
+  states
 }
 
 #' get Z matrix for single-season model

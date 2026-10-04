@@ -43,9 +43,14 @@ levels not present in the original data, how should predictions be
 handled? Passed directly to `brms::prepare_predictions`, which see.}
 }
 \value{
-The posterior Z matrix in the shape of the first visit in `obs` as
-    passed to make_flocker_data, with posterior iterations stacked along the
-    final dimension
+For one-level and multiseason models, the posterior Z matrix in the
+    shape of the first visit in `obs` as passed to make_flocker_data, with
+    posterior iterations stacked along the final dimension. For
+    `twolevel_single` and `augmented` models, a list with elements `unit` and
+    `level2`. The `unit` element has that same unit-level shape, and the
+    `level2` element is a matrix with one row per level-two group and
+    posterior iterations in columns. Group dimensions are named using the
+    level-two grouping factor, or species names for augmented models.
 }
 \description{
 Get posterior distribution of the Z matrix

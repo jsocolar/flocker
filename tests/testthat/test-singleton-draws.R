@@ -29,18 +29,31 @@ test_that("two-level post-processing supports one draw", {
   testthat::skip_on_cran()
 
   expect_singleton_fitted_output(example_flocker_model_twolevel)
-  expect_singleton_draw_dimension(
-    get_Z(example_flocker_model_twolevel, draw_ids = 1)
+  Z <- get_Z(example_flocker_model_twolevel, draw_ids = 1)
+  expect_named(Z, c("unit", "level2"))
+  expect_singleton_draw_dimension(Z$unit)
+  expect_singleton_draw_dimension(Z$level2)
+  expect_equal(rownames(Z$level2), letters[1:3])
+  sampled_Z <- get_Z(
+    example_flocker_model_twolevel, draw_ids = 1, sample = TRUE
   )
-  expect_singleton_draw_dimension(
-    get_level2_Z(example_flocker_model_twolevel, draw_ids = 1)
-  )
+  packed_group <- get_unit_group(example_flocker_model_twolevel$data)
+  unit_order <- get_flocker_metadata(example_flocker_model_twolevel)$unit_order
+  original_group <- integer(length(packed_group))
+  original_group[unit_order] <- packed_group
+  expect_true(all(
+    sampled_Z$unit <= sampled_Z$level2[original_group, , drop = FALSE]
+  ))
   expect_singleton_draw_dimension(
     predict_flocker(example_flocker_model_twolevel, draw_ids = 1)
   )
   expect_identical(
     nrow(log_lik_flocker(example_flocker_model_twolevel, draw_ids = 1)),
     1L
+  )
+  expect_equal(
+    colnames(log_lik_flocker(example_flocker_model_twolevel, draw_ids = 1)),
+    letters[1:3]
   )
 })
 

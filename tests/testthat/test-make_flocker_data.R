@@ -103,6 +103,7 @@ test_that("make_flocker_data handles two-level single-season data", {
   
   expect_equal(fd$type, "twolevel_single")
   expect_equal(fd$level2_group, "group")
+  expect_equal(fd$level2_group_names, c("a", "b"))
   expect_false("max_unit_group" %in% names(fd))
   expect_equal(fd$level2_covs, "group_x")
   expect_equal(
@@ -194,6 +195,39 @@ test_that("augmented data reject original species without detections", {
       obs, type = "augmented", n_aug = 1, quiet = TRUE
     ),
     "must contain only species with at least one detection"
+  )
+})
+
+test_that("augmented data preserve and validate species names", {
+  obs <- array(0, dim = c(2, 2, 2))
+  obs[1, 1, 1] <- 1
+  obs[2, 1, 2] <- 1
+
+  named_obs <- obs
+  dimnames(named_obs)[[3]] <- c("warbler", "thrush")
+  named_fd <- make_flocker_data(
+    named_obs, type = "augmented", n_aug = 2, quiet = TRUE
+  )
+  expect_equal(
+    named_fd$level2_group_names,
+    c("warbler", "thrush", "pseudospecies1", "pseudospecies2")
+  )
+
+  unnamed_fd <- make_flocker_data(
+    obs, type = "augmented", n_aug = 2, quiet = TRUE
+  )
+  expect_equal(
+    unnamed_fd$level2_group_names,
+    c("species1", "species2", "pseudospecies1", "pseudospecies2")
+  )
+
+  reserved_obs <- obs
+  dimnames(reserved_obs)[[3]] <- c("warbler", "pseudospecies12")
+  expect_error(
+    make_flocker_data(
+      reserved_obs, type = "augmented", n_aug = 2, quiet = TRUE
+    ),
+    "reserved for augmented pseudospecies"
   )
 })
 

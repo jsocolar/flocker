@@ -27,7 +27,10 @@ detection), and NA (no sampling event).
    If \code{type = "augmented"}, an L x J x K array where rows L are sites, 
 columns J are repeat sampling events, and slices K are species. Every
 supplied species must have at least one detection; never-observed
-pseudospecies are added through \code{n_aug}.
+pseudospecies are added through \code{n_aug}. Species names may be supplied
+as names on the third dimension. If omitted, observed species are named
+`species1`, `species2`, and so on. Names matching
+`pseudospecies[digits]` are reserved for augmented pseudospecies.
    The data must be packed so that, for a given unit (site, site-species, 
 site-timestep, site-species-timestep) all realized visits come before any 
 missing visits (NAs are trailing within their rows).}

@@ -82,6 +82,7 @@ if (file.exists(setup_cache_path)) {
     #### data augmented model ####
     fd <- simulate_flocker_data(augmented = TRUE,
                                 n_sp = 10, n_pt = 20)
+    dimnames(fd$obs)[[3]] <- paste0("observed_species", seq_len(10))
     mfd_aug <- make_flocker_data(
       fd$obs, 
       fd$unit_covs, 

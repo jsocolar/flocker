@@ -17,7 +17,10 @@
 #'     If \code{type = "augmented"}, an L x J x K array where rows L are sites, 
 #'  columns J are repeat sampling events, and slices K are species. Every
 #'  supplied species must have at least one detection; never-observed
-#'  pseudospecies are added through \code{n_aug}.
+#'  pseudospecies are added through \code{n_aug}. Species names may be supplied
+#'  as names on the third dimension. If omitted, observed species are named
+#'  `species1`, `species2`, and so on. Names matching
+#'  `pseudospecies[digits]` are reserved for augmented pseudospecies.
 #'     The data must be packed so that, for a given unit (site, site-species, 
 #'  site-timestep, site-species-timestep) all realized visits come before any 
 #'  missing visits (NAs are trailing within their rows).
@@ -397,7 +400,10 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
 #'  repeat sampling events, and slices K are species. Allowable values are 1 
 #'  (detection), 0 (no detection), and NA (no sampling event). Every supplied
 #'  species must have at least one detection; never-observed pseudospecies are
-#'  added through \code{n_aug}.
+#'  added through \code{n_aug}. Species names may be supplied as names on the
+#'  third dimension. If omitted, observed species are named `species1`,
+#'  `species2`, and so on. Names matching `pseudospecies[digits]` are
+#'  reserved for augmented pseudospecies.
 #'   The data must be formatted so that all NAs are trailing within their rows.
 #' @param n_aug Number of pseudospecies to augment
 #' @param site_covs A dataframe of covariates for each site that are constant 
@@ -414,6 +420,15 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
                                         event_covs = NULL, quiet = FALSE, 
                                         newdata_checks = FALSE) {
   standard_mfd_checks(obs, site_covs, event_covs, "augmented", n_aug, quiet, newdata_checks)
+  n_observed_species <- dim(obs)[3]
+  observed_species_names <- dimnames(obs)[[3]]
+  if (is.null(observed_species_names)) {
+    observed_species_names <- paste0("species", seq_len(n_observed_species))
+  }
+  group_names <- c(
+    observed_species_names,
+    paste0("pseudospecies", seq_len(n_aug))
+  )
   obs1 <- obs[,,1]
   n_rep <- ncol(obs1)
   n_sp <- dim(obs)[3] + n_aug
@@ -448,6 +463,7 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
   )
   out$type <- "augmented"
   out$n_sp <- n_sp
+  out$level2_group_names <- group_names
   out$level2_covs <- character(0)
   out$unit_site <- ff_site[out$unit_order]
   
@@ -595,6 +611,7 @@ make_flocker_data_twolevel_single_ <- function(
   out <- list(data = flocker_data, n_rep = n_rep,
               unit_order = unit_order,
               level2_group = level2_group,
+              level2_group_names = group_levels,
               level2_covs = setdiff(names(level2_covs), level2_group),
               type = "twolevel_single")
   out$flocker_version <- flocker_version()
@@ -1086,6 +1103,15 @@ standard_mfd_checks <- function(
     assertthat::assert_that(
       is_one_pos_int(n_aug),
       msg = "n_aug must be a positive integer"
+    )
+    species_names <- dimnames(obs)[[3]]
+    assertthat::assert_that(
+      is.null(species_names) |
+        !any(grepl("^pseudospecies[0-9]+$", species_names)),
+      msg = paste0(
+        "Observed species names matching 'pseudospecies' followed by digits ",
+        "are reserved for augmented pseudospecies"
+      )
     )
     detected_species <- apply(obs == 1, 3, any, na.rm = TRUE)
     if (any(!detected_species)) {

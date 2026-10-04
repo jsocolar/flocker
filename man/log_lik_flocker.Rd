@@ -2,7 +2,7 @@
 % Please edit documentation in R/log_lik_occupancy.R
 \name{log_lik_flocker}
 \alias{log_lik_flocker}
-\title{Compute unit-wise or series-wise log-likelihood matrix for a flocker_fit object}
+\title{Compute pointwise log-likelihood matrix for a flocker_fit object}
 \usage{
 log_lik_flocker(
   flocker_fit,
@@ -29,18 +29,20 @@ handled? See '?brms::prepare_predictions' for options.}
 using the full posterior.}
 }
 \value{
-A posterior log-likelihood matrix, where iterations are rows and 
-   units, series, or species are columns.
+A posterior log-likelihood matrix, where iterations are rows and
+  likelihood units are columns. For two-level models, columns are named with
+  the level-two group names.
 }
 \description{
-Compute unit-wise or series-wise log-likelihood matrix for a flocker_fit object
+Compute pointwise log-likelihood matrix for a flocker_fit object
 }
 \details{
-In single-season models, rows are units (e.g. points or 
-  species-points; suitable for leave-one-unit-out CV). In multiseason models, 
-  rows are series (i.e. points or species-points, suitable for 
-  leave-one-series-out CV). In augmented models, rows are species (suitable
-  for leave-one-species-out CV).
+In one-level single-season models, columns are closure units (e.g.
+  points or species-points; suitable for leave-one-unit-out CV). In
+  multiseason models, columns are series (i.e. points or species-points;
+  suitable for leave-one-series-out CV). In `twolevel_single` models,
+  columns are level-two groups. In augmented models, columns are species
+  (suitable for leave-one-species-out CV).
 }
 \examples{
 \dontrun{

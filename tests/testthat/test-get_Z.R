@@ -12,9 +12,12 @@ test_that("get_Z gives valid returns", {
   testthat::skip_on_cran()
   
   Z_augmented <- get_Z(example_flocker_model_aug)
-  expect_true(all(Z_augmented >= 0))
-  expect_true(all(Z_augmented <= 1))
-  expect_true(any(Z_augmented == 1))
+  expect_named(Z_augmented, c("unit", "level2"))
+  expect_true(all(Z_augmented$unit >= 0))
+  expect_true(all(Z_augmented$unit <= 1))
+  expect_true(any(Z_augmented$unit == 1))
+  expect_true(all(Z_augmented$level2 >= 0))
+  expect_true(all(Z_augmented$level2 <= 1))
   
   Z_multi_colex_ex <- get_Z(example_flocker_model_multi_colex_ex)
   expect_true(all(Z_multi_colex_ex >= 0, na.rm = T))
@@ -49,9 +52,11 @@ test_that("get_Z gives valid returns", {
   expect_true(sum(Z_single_C == 1) > sum(Z_single_C_nohist == 1))
   
   Z_augmented_nohist <- get_Z(example_flocker_model_aug, history_condition = FALSE)
-  expect_true(all(Z_augmented_nohist >= 0))
-  expect_true(all(Z_augmented_nohist <= 1))
-  expect_true(sum(Z_augmented == 1) > sum(Z_augmented_nohist == 1))
+  expect_true(all(Z_augmented_nohist$unit >= 0))
+  expect_true(all(Z_augmented_nohist$unit <= 1))
+  expect_true(
+    sum(Z_augmented$unit == 1) > sum(Z_augmented_nohist$unit == 1)
+  )
   
   Z_multi_colex_ex_nohist <- get_Z(example_flocker_model_multi_colex_ex, history_condition = FALSE)
   expect_true(all(Z_multi_colex_ex_nohist >= 0, na.rm = T))
@@ -86,7 +91,17 @@ test_that("get_Z with sampling gives valid returns", {
   testthat::skip_on_cran()
   
   Z_augmented <- get_Z(example_flocker_model_aug, sample = TRUE)
-  expect_true(all(Z_augmented %in% c(0, 1, NA)))
+  expect_true(all(Z_augmented$unit %in% c(0, 1, NA)))
+  expect_true(all(Z_augmented$level2 %in% c(0, 1, NA)))
+  for(sp in seq_len(nrow(Z_augmented$level2))) {
+    group_Z <- matrix(
+      Z_augmented$level2[sp, ],
+      nrow = dim(Z_augmented$unit)[1],
+      ncol = dim(Z_augmented$unit)[3],
+      byrow = TRUE
+    )
+    expect_true(all(Z_augmented$unit[, sp, ] <= group_Z))
+  }
   
   Z_multi_colex_ex <- get_Z(example_flocker_model_multi_colex_ex, sample = TRUE)
   expect_true(all(Z_multi_colex_ex %in% c(0, 1, NA)))
@@ -199,7 +214,7 @@ test_that("generic two-level state shapes are converted correctly", {
   expect_equal(states$unit, psi * Omega_by_unit)
 })
 
-test_that("get_level2_Z handles augmented models", {
+test_that("get_Z returns both levels for augmented models", {
   testthat::skip_on_cran()
 
   n_group <- example_flocker_model_aug$data$ff_n_group[1]
@@ -207,14 +222,21 @@ test_that("get_level2_Z handles augmented models", {
     seq_len(n_group)
   ]
 
-  conditioned <- get_level2_Z(
+  conditioned <- get_Z(
     example_flocker_model_aug, draw_ids = 1:2
   )
-  expect_equal(dim(conditioned), c(n_group, 2L))
-  expect_true(all(conditioned >= 0 & conditioned <= 1))
-  expect_true(all(conditioned[known_present == 1, ] == 1))
+  expected_names <- c(
+    paste0("observed_species", seq_len(10)),
+    paste0("pseudospecies", seq_len(10))
+  )
+  expect_named(conditioned, c("unit", "level2"))
+  expect_equal(dim(conditioned$level2), c(n_group, 2L))
+  expect_equal(rownames(conditioned$level2), expected_names)
+  expect_equal(dimnames(conditioned$unit)[[2]], expected_names)
+  expect_true(all(conditioned$level2 >= 0 & conditioned$level2 <= 1))
+  expect_true(all(conditioned$level2[known_present == 1, ] == 1))
 
-  unconditioned <- get_level2_Z(
+  unconditioned <- get_Z(
     example_flocker_model_aug, draw_ids = 1:2,
     history_condition = FALSE
   )
@@ -226,22 +248,18 @@ test_that("get_level2_Z handles augmented models", {
     Omega, "augmented", example_flocker_model_aug$data,
     get_flocker_metadata(example_flocker_model_aug)
   )
-  expect_equal(as.vector(unconditioned), as.vector(expected))
+  expect_equal(as.vector(unconditioned$level2), as.vector(expected))
 
-  one_draw <- get_level2_Z(
+  one_draw <- get_Z(
     example_flocker_model_aug, draw_ids = 1
   )
-  expect_equal(dim(one_draw), c(n_group, 1L))
+  expect_equal(dim(one_draw$level2), c(n_group, 1L))
 
-  sampled <- get_level2_Z(
+  sampled <- get_Z(
     example_flocker_model_aug, draw_ids = 1:2, sample = TRUE
   )
-  expect_true(all(sampled %in% 0:1))
-
-  expect_error(
-    get_level2_Z(example_flocker_model_single2),
-    "available only for twolevel_single and augmented"
-  )
+  expect_true(all(sampled$unit %in% 0:1))
+  expect_true(all(sampled$level2 %in% 0:1))
 })
 
 test_that("new_data works as expected", {

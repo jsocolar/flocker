@@ -19,7 +19,10 @@ make_flocker_data_augmented(
 repeat sampling events, and slices K are species. Allowable values are 1 
 (detection), 0 (no detection), and NA (no sampling event). Every supplied
 species must have at least one detection; never-observed pseudospecies are
-added through \code{n_aug}.
+added through \code{n_aug}. Species names may be supplied as names on the
+third dimension. If omitted, observed species are named `species1`,
+`species2`, and so on. Names matching `pseudospecies[digits]` are
+reserved for augmented pseudospecies.
  The data must be formatted so that all NAs are trailing within their rows.}
 
 \item{n_aug}{Number of pseudospecies to augment}

@@ -110,6 +110,9 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
   Z_samp <- get_Z(flocker_fit, draw_ids = draw_ids, history_condition = history_condition, 
                   sample = TRUE, new_data = new_data, 
                   allow_new_levels = allow_new_levels, sample_new_levels = sample_new_levels)
+  if(is.list(Z_samp)) {
+    Z_samp <- Z_samp$unit
+  }
   
   lps <- fitted_flocker(
     flocker_fit, 
