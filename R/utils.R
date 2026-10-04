@@ -432,10 +432,13 @@ get_positions <- function(data_object, unit_level = FALSE) {
     }
   } else if(data_type == "multi") {
     n_series <- the_data$ff_n_series[1]
-    n_year <- the_data$ff_n_year[seq_len(n_series)]
-    max_year <- max(n_year)
-    
-    unit_index_frame <- the_data[paste0("ff_unit_index", seq_len(max_year))][seq_len(n_series), ]
+    unit_index_frame <- the_data[
+      seq_len(n_series),
+      grepl("^ff_unit_index", names(the_data)),
+      drop = FALSE
+    ]
+    max_year <- ncol(unit_index_frame)
+
     if(!unit_level){
       index_array <- array(dim = c(n_series, n_rep, max_year))
       rep_index_frame <- the_data[paste0("ff_rep_index", seq_len(n_rep))][seq_len(n_unit), ]

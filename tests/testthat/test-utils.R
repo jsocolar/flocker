@@ -483,6 +483,110 @@ test_that("get_positions works properly", {
 })
 
 
+test_that("get_positions exactly reverses deterministic ragged formatting", {
+  recover <- function(flocker_data, variable, unit_level = FALSE) {
+    positions <- get_positions(flocker_data, unit_level = unit_level)
+    array(flocker_data$data[[variable]][positions], dim = dim(positions))
+  }
+
+  obs_single <- rbind(
+    c(1, 0, 1, 0),
+    c(0, 1, 0, NA),
+    c(1, 0, NA, NA),
+    c(0, NA, NA, NA)
+  )
+  event_single <- matrix(seq_along(obs_single), nrow = nrow(obs_single))
+  event_single[is.na(obs_single)] <- NA
+
+  fd_single <- make_flocker_data(
+    obs_single,
+    event_covs = list(event_id = event_single),
+    type = "single",
+    quiet = TRUE
+  )
+  expect_equal(recover(fd_single, "ff_y"), obs_single)
+  expect_equal(recover(fd_single, "event_id"), event_single)
+
+  unit_covs <- data.frame(
+    group = factor(c("b", "a", "b", "c"), levels = c("a", "b", "c"))
+  )
+  fd_twolevel <- make_flocker_data(
+    obs_single,
+    unit_covs = unit_covs,
+    event_covs = list(event_id = event_single),
+    type = "twolevel_single",
+    level2_group = "group",
+    quiet = TRUE
+  )
+  expect_equal(recover(fd_twolevel, "ff_y"), obs_single)
+  expect_equal(recover(fd_twolevel, "event_id"), event_single)
+
+  obs_augmented <- array(NA_real_, dim = c(4, 4, 2))
+  obs_augmented[, , 1] <- obs_single
+  obs_augmented[, , 2] <- rbind(
+    c(0, 1, 0, 1),
+    c(1, 0, 0, NA),
+    c(0, 0, NA, NA),
+    c(1, NA, NA, NA)
+  )
+  fd_augmented <- make_flocker_data(
+    obs_augmented,
+    event_covs = list(event_id = event_single),
+    type = "augmented",
+    n_aug = 2,
+    quiet = TRUE
+  )
+  expected_augmented_obs <- array(NA_real_, dim = c(4, 4, 4))
+  expected_augmented_obs[, , 1:2] <- obs_augmented
+  augmented_slice <- obs_single
+  augmented_slice[!is.na(augmented_slice)] <- 0
+  expected_augmented_obs[, , 3] <- augmented_slice
+  expected_augmented_obs[, , 4] <- augmented_slice
+  expected_augmented_event <- array(rep(event_single, 4), dim = c(4, 4, 4))
+  expect_equal(recover(fd_augmented, "ff_y"), expected_augmented_obs)
+  expect_equal(recover(fd_augmented, "event_id"), expected_augmented_event)
+
+  multi <- make_ragged_multi_fixture()
+  fd_multi <- suppressWarnings(make_flocker_data(
+    multi$obs,
+    unit_covs = multi$unit_covs,
+    event_covs = list(ec1 = multi$event),
+    type = "multi",
+    quiet = TRUE
+  ))
+  expect_equal(recover(fd_multi, "ff_y"), multi$obs)
+  expect_equal(recover(fd_multi, "ec1"), multi$event)
+  expect_equal(
+    recover(fd_multi, "uc1", unit_level = TRUE),
+    multi$expected_unit
+  )
+})
+
+
+test_that("get_positions retains a globally trailing multiseason dimension", {
+  recover <- function(flocker_data, variable, unit_level = FALSE) {
+    positions <- get_positions(flocker_data, unit_level = unit_level)
+    array(flocker_data$data[[variable]][positions], dim = dim(positions))
+  }
+
+  multi <- make_ragged_multi_fixture(global_trailing_season = TRUE)
+  fd_multi <- suppressWarnings(make_flocker_data(
+    multi$obs,
+    unit_covs = multi$unit_covs,
+    event_covs = list(ec1 = multi$event),
+    type = "multi",
+    quiet = TRUE
+  ))
+
+  expect_equal(recover(fd_multi, "ff_y"), multi$obs)
+  expect_equal(recover(fd_multi, "ec1"), multi$event)
+  expect_equal(
+    recover(fd_multi, "uc1", unit_level = TRUE),
+    multi$expected_unit
+  )
+})
+
+
 test_that("emission_likelihood function returns expected output", {
   # Test cases for state 0
   obs1 <- matrix(c(0, 0, 0, 0, NA), nrow = 1)
