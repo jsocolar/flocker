@@ -43,7 +43,7 @@ extended_binomial_rng <- function(p, s) {
   assertthat::assert_that(is.numeric(p) & length(p) == 1)
   assertthat::assert_that(is_one_pos_int(s))
   assertthat::assert_that(p > 0 & p <= 1)
-  
+
   r <- stats::runif(length(p))
   c <- 0
   y <- s - 1
@@ -378,15 +378,24 @@ get_positions <- function(data_object, unit_level = FALSE) {
   } else {
     data_type <- data_object$type
   }
-  
-  if(data_type == "single") {
+
+  if(data_type == "single_C") {
+    n_unit <- nrow(the_data)
+    n_rep <- max(the_data$ff_n_trial)
+  } else {
     n_unit <- the_data$ff_n_unit[1]
     n_rep <- max(the_data$ff_n_rep[seq_len(n_unit)], na.rm = TRUE)
-    
+  }
+
+  if(data_type %in% c("single", "twolevel_single")) {
     index_matrix <- as.matrix(
       the_data[seq_len(n_unit), grepl("^ff_rep_index", names(the_data))]
-      )
+    )
     assertthat::assert_that(ncol(index_matrix) == n_rep)
+    if(data_type == "twolevel_single") {
+      unit_order <- get_flocker_metadata(data_object)$unit_order
+      index_matrix <- index_matrix[order(unit_order), , drop = FALSE]
+    }
     index_matrix[index_matrix == -99] <- NA
     if(!unit_level) {
       return(index_matrix)
@@ -394,26 +403,7 @@ get_positions <- function(data_object, unit_level = FALSE) {
       return(index_matrix[, 1])
     }
   } else if(data_type == "single_C") {
-    n_rows <- nrow(the_data)
-    n_cols <- max(the_data$ff_n_trial)
-    index_matrix <- matrix(rep(seq_len(n_rows), n_cols), ncol = n_cols)
-    if(!unit_level) {
-      return(index_matrix)
-    } else {
-      return(index_matrix[, 1])
-    }
-  } else if(data_type == "twolevel_single") {
-    n_unit <- the_data$ff_n_unit[1]
-    n_rep <- max(the_data$ff_n_rep[seq_len(n_unit)], na.rm = TRUE)
-    
-    index_matrix_internal <- as.matrix(
-      the_data[seq_len(n_unit), grepl("^ff_rep_index", names(the_data))]
-    )
-    assertthat::assert_that(ncol(index_matrix_internal) == n_rep)
-    index_matrix <- matrix(NA, nrow = n_unit, ncol = n_rep)
-    orig_unit <- get_flocker_metadata(data_object)$unit_order
-    index_matrix[orig_unit, ] <- index_matrix_internal
-    index_matrix[index_matrix == -99] <- NA
+    index_matrix <- matrix(rep(seq_len(n_unit), n_rep), ncol = n_rep)
     if(!unit_level) {
       return(index_matrix)
     } else {
@@ -421,15 +411,14 @@ get_positions <- function(data_object, unit_level = FALSE) {
     }
   } else if(data_type == "augmented") {
     n_species <- the_data$ff_n_group[1]
-    n_site <- the_data$ff_n_unit[1] / n_species
-    max_visit <- max(the_data$ff_n_rep)
-    index_array <- array(dim = c(n_site, max_visit, n_species))
-    rep_index_frame <- the_data[paste0("ff_rep_index", seq_len(max_visit))]
+    n_site <- n_unit / n_species
+    index_array <- array(dim = c(n_site, n_rep, n_species))
+    rep_index_frame <- the_data[paste0("ff_rep_index", seq_len(n_rep))]
     rep_index_matrix <- as.matrix(rep_index_frame)
     metadata <- get_flocker_metadata(data_object)
     unit_site <- metadata$unit_site
     unit_group <- get_unit_group(the_data)
-    for(r in seq_len(the_data$ff_n_unit[1])){
+    for(r in seq_len(n_unit)){
       visit_ids <- which(rep_index_matrix[r, ] != -99)
       if(length(visit_ids) > 0) {
         sp_id <- unit_group[r]
@@ -445,16 +434,13 @@ get_positions <- function(data_object, unit_level = FALSE) {
     }
   } else if(data_type == "multi") {
     n_series <- the_data$ff_n_series[1]
-    n_unit <- the_data$ff_n_unit[1]
     n_year <- the_data$ff_n_year[seq_len(n_series)]
-    n_visit <- the_data$ff_n_rep[seq_len(n_unit)]
     max_year <- max(n_year)
-    max_visit <- max(n_visit)
     
     unit_index_frame <- the_data[paste0("ff_unit_index", seq_len(max_year))][seq_len(n_series), ]
     if(!unit_level){
-      index_array <- array(dim = c(n_series, max_visit, max_year))
-      rep_index_frame <- the_data[paste0("ff_rep_index", seq_len(max_visit))][seq_len(n_unit), ]
+      index_array <- array(dim = c(n_series, n_rep, max_year))
+      rep_index_frame <- the_data[paste0("ff_rep_index", seq_len(n_rep))][seq_len(n_unit), ]
       rep_mat  <- as.matrix(rep_index_frame)
       unit_mat <- as.matrix(unit_index_frame)
       
