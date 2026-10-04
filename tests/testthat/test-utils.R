@@ -164,6 +164,91 @@ test_that("bookkeeping works properly", {
   expect_true(all(grepl("^single|^twolevel|^augmented|^multi", flocker_data_output_types())))
 })
 
+test_that("group_level_Omega recovers canonical group values", {
+  fitted_Omega <- function(Omega, unit_level) {
+    structure(list(linpred_Omega = Omega), unit_level = unit_level)
+  }
+
+  twolevel_Omega <- array(NA_real_, dim = c(4, 2, 2))
+  twolevel_Omega[, , 1] <- cbind(
+    c(0.8, 0.8, 0.3, 0.3),
+    c(0.8, 0.8, 0.3, 0.3)
+  )
+  twolevel_Omega[, , 2] <- cbind(
+    c(0.9, 0.9, 0.4, 0.4),
+    c(0.9, 0.9, 0.4, 0.4)
+  )
+  twolevel_data <- data.frame(
+    ff_n_group = c(2, -99, -99, -99),
+    ff_n_unit = c(4, -99, -99, -99)
+  )
+  twolevel_metadata <- list(unit_order = c(3, 1, 4, 2))
+  expect_equal(
+    group_level_Omega(
+      fitted_Omega(twolevel_Omega, FALSE), "twolevel_single", twolevel_data,
+      twolevel_metadata
+    ),
+    rbind(c(0.3, 0.4), c(0.8, 0.9))
+  )
+  expect_equal(
+    group_level_Omega(
+      fitted_Omega(twolevel_Omega[, , 1], FALSE), "twolevel_single", twolevel_data,
+      twolevel_metadata
+    ),
+    matrix(c(0.3, 0.8), ncol = 1)
+  )
+  expect_equal(
+    group_level_Omega(
+      fitted_Omega(twolevel_Omega[, 1, ], TRUE), "twolevel_single",
+      twolevel_data, twolevel_metadata
+    ),
+    rbind(c(0.3, 0.4), c(0.8, 0.9))
+  )
+  expect_equal(
+    group_level_Omega(
+      fitted_Omega(twolevel_Omega[, 1, 1], TRUE), "twolevel_single",
+      twolevel_data, twolevel_metadata
+    ),
+    matrix(c(0.3, 0.8), ncol = 1)
+  )
+
+  augmented_Omega <- array(NA_real_, dim = c(2, 2, 3, 2))
+  augmented_Omega[, , , 1] <- array(
+    rep(c(0.2, 0.5, 0.7), each = 4), dim = c(2, 2, 3)
+  )
+  augmented_Omega[, , , 2] <- array(
+    rep(c(0.3, 0.6, 0.8), each = 4), dim = c(2, 2, 3)
+  )
+  augmented_data <- data.frame(ff_n_group = c(3, rep(-99, 11)))
+  expect_equal(
+    group_level_Omega(
+      fitted_Omega(augmented_Omega, FALSE), "augmented", augmented_data, list()
+    ),
+    rbind(c(0.2, 0.3), c(0.5, 0.6), c(0.7, 0.8))
+  )
+  expect_equal(
+    group_level_Omega(
+      fitted_Omega(augmented_Omega[, , , 1], FALSE), "augmented",
+      augmented_data, list()
+    ),
+    matrix(c(0.2, 0.5, 0.7), ncol = 1)
+  )
+  expect_equal(
+    group_level_Omega(
+      fitted_Omega(augmented_Omega[, 1, , ], TRUE), "augmented",
+      augmented_data, list()
+    ),
+    rbind(c(0.2, 0.3), c(0.5, 0.6), c(0.7, 0.8))
+  )
+  expect_equal(
+    group_level_Omega(
+      fitted_Omega(augmented_Omega[, 1, , 1], TRUE), "augmented",
+      augmented_data, list()
+    ),
+    matrix(c(0.2, 0.5, 0.7), ncol = 1)
+  )
+})
+
 test_that("fdtl function returns expected dataframe", {
   # Call the fdtl function
   result <- fdtl()

@@ -105,10 +105,18 @@ log_lik_flocker <- function(
     }
 
     lps <- fitted_flocker(
-      flocker_fit, draw_ids = draw_ids, new_data = new_data, 
+      flocker_fit, components = c("occ", "det"),
+      draw_ids = draw_ids, new_data = new_data,
       allow_new_levels = allow_new_levels, 
       sample_new_levels = sample_new_levels, 
       response = TRUE, unit_level = FALSE
+    )
+    Omega_lps <- fitted_flocker(
+      flocker_fit, components = "Omega",
+      draw_ids = draw_ids, new_data = new_data,
+      allow_new_levels = allow_new_levels,
+      sample_new_levels = sample_new_levels,
+      response = TRUE, unit_level = TRUE
     )
     if(lik_type == "augmented") {
       n_point <- dim(obs)[1]
@@ -135,7 +143,7 @@ log_lik_flocker <- function(
       theta_all <- lps$linpred_det[orig_unit, , , drop = FALSE]
       obs_use <- obs[orig_unit, , drop = FALSE]
     }
-    Omega <- lps$linpred_Omega
+    Omega <- group_level_Omega(Omega_lps, lik_type, the_data, metadata)
     group_id <- get_unit_group(the_data)
     group_known_present <- the_data$ff_group_known_present[
       seq_len(the_data$ff_n_group[1])

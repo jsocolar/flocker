@@ -108,12 +108,18 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     }
     lps <- fitted_flocker(
       flocker_fit,
-      components = use_components, 
+      components = setdiff(use_components, "Omega"),
       draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
       sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
     )
+    Omega_lps <- fitted_flocker(
+      flocker_fit,
+      components = "Omega",
+      draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels,
+      sample_new_levels = sample_new_levels, response = FALSE, unit_level = TRUE
+    )
     Z <- get_Z_twolevel_single(
-      lps, sample, history_condition, obs, the_data, metadata
+      lps, Omega_lps, sample, history_condition, obs, the_data, metadata
     )
   } else if (lik_type == "augmented") {
     if(is.null(new_data)){
@@ -125,12 +131,18 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     }
     lps <- fitted_flocker(
       flocker_fit,
-      components = use_components, 
+      components = setdiff(use_components, "Omega"),
       draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
       sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
     )
+    Omega_lps <- fitted_flocker(
+      flocker_fit,
+      components = "Omega",
+      draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels,
+      sample_new_levels = sample_new_levels, response = FALSE, unit_level = TRUE
+    )
     Z <- get_Z_augmented(
-      lps, sample, history_condition, obs, the_data, metadata
+      lps, Omega_lps, sample, history_condition, obs, the_data, metadata
     )
   } else if (lik_type %in% c("multi_colex")) {
     lps2 <- fitted_flocker(
@@ -324,7 +336,8 @@ get_Z_single_C <- function(lps, sample, history_condition, obs = NULL){
 #' @return a matrix of fitted Z probabilities or sampled Z values. Rows are
 #'   units and columns are posterior iterations.
 #' @noRd
-get_Z_twolevel_single <- function(lps, sample, history_condition, obs = NULL,
+get_Z_twolevel_single <- function(lps, Omega_lps, sample, history_condition,
+                                  obs = NULL,
                                   flocker_data_data, flocker_metadata){
   n_unit <- flocker_data_data$ff_n_unit[1]
   unit_rows <- seq_len(n_unit)
@@ -337,7 +350,9 @@ get_Z_twolevel_single <- function(lps, sample, history_condition, obs = NULL,
   } else {
     theta_all <- NULL
   }
-  Omega <- boot::inv.logit(lps$linpred_Omega)
+  Omega <- boot::inv.logit(group_level_Omega(
+    Omega_lps, "twolevel_single", flocker_data_data, flocker_metadata
+  ))
   group_id <- get_unit_group(flocker_data_data)
   group_known_present <- flocker_data_data$ff_group_known_present[
     seq_len(flocker_data_data$ff_n_group[1])
@@ -353,6 +368,7 @@ get_Z_twolevel_single <- function(lps, sample, history_condition, obs = NULL,
 
 #' get Z matrix for data-augmented model
 #' @param lps the linear predictors from the model
+#' @param Omega_lps unit-level Omega linear predictors from the model
 #' @param sample logical: return fitted probabilities or bernoulli samples
 #' @param history_condition logical: condition on the observed history?
 #' @param obs if history_condition is true, the observed histories
@@ -360,7 +376,7 @@ get_Z_twolevel_single <- function(lps, sample, history_condition, obs = NULL,
 #' @return an array of fitted Z probabilities or sampled Z values. Rows are
 #'   units and columns are posterior iterations.
 #' @noRd
-get_Z_augmented <- function(lps, sample, history_condition, obs = NULL,
+get_Z_augmented <- function(lps, Omega_lps, sample, history_condition, obs = NULL,
                             flocker_data_data, flocker_metadata, quiet = TRUE){
   lpo <- lps$linpred_occ[ , 1, , ] # first index is point, second is visit, third is species, fourth is draw
   n_point <- nrow(lpo)
@@ -375,7 +391,9 @@ get_Z_augmented <- function(lps, sample, history_condition, obs = NULL,
   for (i in unit_rows) {
     psi_all[i, ] <- psi_all_array[site_id[i], species_id[i], ]
   }
-  Omega <- boot::inv.logit(lps$linpred_Omega)
+  Omega <- boot::inv.logit(group_level_Omega(
+    Omega_lps, "augmented", flocker_data_data, flocker_metadata
+  ))
   group_id <- species_id
   group_known_present <- flocker_data_data$ff_group_known_present[
     seq_len(flocker_data_data$ff_n_group[1])

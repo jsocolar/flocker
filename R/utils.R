@@ -299,6 +299,50 @@ get_flocker_metadata <- function(x) {
   metadata
 }
 
+#' Recover one Omega value per level-two group from fitted_flocker output
+#' @param fitted_output output from fitted_flocker containing linpred_Omega
+#' @param data_type flocker data output type
+#' @param flocker_data_data the data element of a flocker_data or flocker_fit
+#' @param flocker_metadata non-data metadata from a flocker_data or flocker_fit
+#' @return matrix with level-two groups in rows and posterior draws in columns
+#' @noRd
+group_level_Omega <- function(fitted_output, data_type, flocker_data_data,
+                              flocker_metadata) {
+  assertthat::assert_that("linpred_Omega" %in% names(fitted_output))
+  unit_level <- attr(fitted_output, "unit_level")
+  assertthat::assert_that(is_one_logical(unit_level))
+  Omega <- fitted_output$linpred_Omega
+  n_group <- flocker_data_data$ff_n_group[1]
+  if(data_type == "twolevel_single") {
+    n_unit <- flocker_data_data$ff_n_unit[1]
+    if(unit_level) {
+      unit_Omega <- matrix(Omega, nrow = n_unit)
+    } else if(length(dim(Omega)) == 2) {
+      unit_Omega <- matrix(Omega[, 1], ncol = 1)
+    } else {
+      unit_Omega <- matrix(Omega[, 1, , drop = FALSE], nrow = n_unit)
+    }
+    group_representatives <- flocker_metadata$unit_order[seq_len(n_group)]
+    out <- unit_Omega[group_representatives, , drop = FALSE]
+  } else {
+    assertthat::assert_that(data_type == "augmented")
+    if(unit_level) {
+      if(length(dim(Omega)) == 2) {
+        out <- matrix(Omega[1, ], ncol = 1)
+      } else {
+        out <- Omega[1, , , drop = FALSE]
+      }
+    } else {
+      if(length(dim(Omega)) == 3) {
+        out <- matrix(Omega[1, 1, ], ncol = 1)
+      } else {
+        out <- Omega[1, 1, , , drop = FALSE]
+      }
+    }
+  }
+  matrix(out, nrow = n_group)
+}
+
 #' Extract lik_type from object of class flocker_fit
 #' @param x flocker_fit object
 #' @return string giving model type
