@@ -308,14 +308,18 @@ summarise_fun <- function(x, CI) {
 #' @noRd
 reshape_fun <- function(x, gp) {
   assertthat::assert_that(is.matrix(x) | is.data.frame(x))
+  gp_dim <- dim(gp)
+  if(is.null(gp_dim)) {
+    gp_dim <- length(gp)
+  }
   ai <- list()
   for(i in seq_len(ncol(x))) {
-    ai[[i]] <- array(x[,i][gp], dim = dim(gp))
+    ai[[i]] <- array(x[,i][gp], dim = gp_dim)
   }
   if(ncol(x) > 1) {
     arr_dim <- length(dim(ai[[1]]))
     return(abind::abind(ai, along = arr_dim + 1))
   } else {
-    return(ai[[1]]) 
+    return(array(ai[[1]], dim = c(dim(ai[[1]]), 1)))
   }
 }

@@ -1,6 +1,6 @@
 ## code to prepare `example_flocker_model_xx` datasets
 
-setup_cache_path <- file.path(tempdir(), "flocker_test_cache.rds")
+setup_cache_path <- file.path(tempdir(), "flocker_test_cache_twolevel.rds")
 
 if (file.exists(setup_cache_path)) {
   cache <- readRDS(setup_cache_path)
@@ -22,6 +22,43 @@ if (file.exists(setup_cache_path)) {
       silent = 2
     )
   })
+
+  #### generic two-level single-season model ####
+  obs_twolevel <- matrix(
+    c(1, 0,
+      0, 0,
+      0, 0,
+      0, 0,
+      0, 1,
+      0, 0),
+    nrow = 6, byrow = TRUE
+  )
+  unit_covs_twolevel <- data.frame(
+    group = factor(rep(letters[1:3], each = 2))
+  )
+  mfd_twolevel <- make_flocker_data(
+    obs_twolevel, unit_covs_twolevel, type = "twolevel_single",
+    level2_group = "group", quiet = TRUE
+  )
+  if (!identical(Sys.getenv("NOT_CRAN"), "true")) {
+    example_flocker_model_twolevel <- NULL
+  } else {
+    suppressWarnings({
+      example_flocker_model_twolevel <- flock(
+        f_occ = ~ 1,
+        f_det = ~ 1,
+        f_meta = ~ 1,
+        flocker_data = mfd_twolevel,
+        cores = 2,
+        chains = 2,
+        iter = 8,
+        warmup = 6,
+        save_warmup = FALSE,
+        refresh = 0,
+        silent = 2
+      )
+    })
+  }
   
   #### single-season rep-constant model ####
   suppressWarnings({
@@ -191,6 +228,8 @@ if (file.exists(setup_cache_path)) {
   
   cache <- list(
     example_flocker_model_single2 = example_flocker_model_single2,
+    mfd_twolevel = mfd_twolevel,
+    example_flocker_model_twolevel = example_flocker_model_twolevel,
     mfd_single_C = mfd_single_C,
     example_flocker_model_single_C = example_flocker_model_single_C,
     mfd_aug = mfd_aug,

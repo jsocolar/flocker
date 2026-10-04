@@ -131,6 +131,15 @@ new_array <- function(m, data = NA){
   array(data, dim = dim(m))
 }
 
+#' Extract the first second-dimension slice while retaining the draw dimension
+#' @param x three-dimensional array with posterior draws in the final dimension
+#' @return matrix with first-dimension elements in rows and draws in columns
+#' @noRd
+first_slice_draw_matrix <- function(x) {
+  assertthat::assert_that(length(dim(x)) == 3)
+  matrix(x[, 1, , drop = FALSE], nrow = dim(x)[1])
+}
+
 ##### Bookkeeping #####
 #' Return the version of the loaded flocker namespace
 #' @return character package version

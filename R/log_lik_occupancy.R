@@ -62,7 +62,7 @@ log_lik_flocker <- function(
       response = TRUE, unit_level = FALSE
     )
     
-    psi_all <- lps$linpred_occ[ , 1, ] # first index is unit, second is visit, third is draw
+    psi_all <- first_slice_draw_matrix(lps$linpred_occ)
     theta_all <- lps$linpred_det
     if (is.null(new_data)) {
       gp <- get_positions(flocker_fit)
@@ -126,7 +126,10 @@ log_lik_flocker <- function(
       unit_rows <- seq_len(n_unit)
       site_id <- metadata$unit_site
       species_id <- get_unit_group(the_data)
-      psi_all_array <- lps$linpred_occ[ , 1, , ]
+      psi_all_array <- array(
+        lps$linpred_occ[, 1, , , drop = FALSE],
+        dim = c(n_point, n_species, ndraws)
+      )
       psi_all <- matrix(NA_real_, nrow = n_unit, ncol = ndraws)
       theta_all <- array(NA_real_, dim = c(n_unit, n_visit, ndraws))
       obs_use <- matrix(NA_real_, nrow = n_unit, ncol = n_visit)
@@ -139,7 +142,9 @@ log_lik_flocker <- function(
       n_unit <- the_data$ff_n_unit[1]
       unit_rows <- seq_len(n_unit)
       orig_unit <- metadata$unit_order
-      psi_all <- lps$linpred_occ[ , 1, ][orig_unit, , drop = FALSE]
+      psi_all <- first_slice_draw_matrix(lps$linpred_occ)[
+        orig_unit, , drop = FALSE
+      ]
       theta_all <- lps$linpred_det[orig_unit, , , drop = FALSE]
       obs_use <- obs[orig_unit, , drop = FALSE]
     }
@@ -175,7 +180,7 @@ log_lik_flocker <- function(
       sample_new_levels = sample_new_levels,
       draw_ids = draw_ids, unit_level = TRUE
     )
-    init <- lps2$linpred_occ[,1,]
+    init <- first_slice_draw_matrix(lps2$linpred_occ)
     colo <- lps2$linpred_col
     ex <- lps2$linpred_ex
     det <- lps1$linpred_det
@@ -206,7 +211,9 @@ log_lik_flocker <- function(
     )
     colo <- lps2$linpred_col
     ex <- lps2$linpred_ex
-    init <- colo[,1,] / (colo[,1,] + ex[,1,])
+    init_colo <- first_slice_draw_matrix(colo)
+    init_ex <- first_slice_draw_matrix(ex)
+    init <- init_colo / (init_colo + init_ex)
     det <- lps1$linpred_det
     ll <- log_lik_dynamic(init, colo, ex, obs, det) |>
       t()
@@ -233,7 +240,7 @@ log_lik_flocker <- function(
       sample_new_levels = sample_new_levels,
       draw_ids = draw_ids, unit_level = TRUE
     )
-    init <- lps2$linpred_occ[,1,]
+    init <- first_slice_draw_matrix(lps2$linpred_occ)
     colo <- lps2$linpred_col
     ex <- 1 - boot::inv.logit(boot::logit(colo) + lps2$linpred_auto)
     det <- lps1$linpred_det
@@ -264,7 +271,9 @@ log_lik_flocker <- function(
     )
     colo <- lps2$linpred_col
     ex <- 1 - boot::inv.logit(boot::logit(colo) + lps2$linpred_auto)
-    init <- colo[,1,] / (colo[,1,] + ex[,1,])
+    init_colo <- first_slice_draw_matrix(colo)
+    init_ex <- first_slice_draw_matrix(ex)
+    init <- init_colo / (init_colo + init_ex)
     det <- lps1$linpred_det
     ll <- log_lik_dynamic(init, colo, ex, obs, det) |>
       t()

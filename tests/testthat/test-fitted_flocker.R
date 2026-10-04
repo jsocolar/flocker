@@ -92,4 +92,14 @@ test_that("Omega follows the standard fitted_flocker return shape", {
     dim(unit_level$linpred_occ)
   )
   expect_identical(attr(unit_level, "unit_level"), TRUE)
+
+  one_draw <- fitted_flocker(
+    example_flocker_model_aug,
+    components = c("occ", "Omega"),
+    draw_ids = 1
+  )
+  expect_identical(
+    dim(one_draw$linpred_Omega),
+    dim(one_draw$linpred_occ)
+  )
 })

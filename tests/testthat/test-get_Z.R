@@ -102,6 +102,148 @@ test_that("get_Z with sampling gives valid returns", {
 
 })
 
+test_that("two-level state probabilities are calculated exactly", {
+  psi <- matrix(
+    c(0.2, 0.4,
+      0.5, 0.7,
+      0.3, 0.6,
+      0.8, 0.9),
+    nrow = 4, byrow = TRUE
+  )
+  theta <- array(0.5, dim = c(4, 2, 2))
+  Omega <- matrix(c(0.35, 0.55, 0.65, 0.75), nrow = 2)
+  group_id <- c(1L, 1L, 2L, 2L)
+  group_known_present <- c(1L, 0L)
+  obs <- matrix(
+    c(1, 0,
+      0, 0,
+      0, 0,
+      0, 0),
+    nrow = 4, byrow = TRUE
+  )
+
+  unconditioned <- get_twolevel_states_from_components(
+    psi, NULL, Omega, group_id, group_known_present,
+    sample = FALSE, history_condition = FALSE
+  )
+  expect_equal(unconditioned$level2, Omega)
+  expect_equal(unconditioned$unit, psi * Omega[group_id, , drop = FALSE])
+
+  conditioned <- get_twolevel_states_from_components(
+    psi, theta, Omega, group_id, group_known_present,
+    sample = FALSE, history_condition = TRUE, obs = obs
+  )
+  unit_lik_available <- 1 - 0.75 * psi
+  p_y_available <- apply(unit_lik_available[3:4, , drop = FALSE], 2, prod)
+  expected_level2 <- rbind(
+    c(1, 1),
+    Omega[2, ] * p_y_available /
+      ((1 - Omega[2, ]) + Omega[2, ] * p_y_available)
+  )
+  z_given_available <- psi * 0.25 / unit_lik_available
+  z_given_available[1, ] <- 1
+  expected_unit <- z_given_available *
+    expected_level2[group_id, , drop = FALSE]
+  expect_equal(conditioned$level2, expected_level2)
+  expect_equal(conditioned$unit, expected_unit)
+
+  set.seed(1)
+  sampled <- get_twolevel_states_from_components(
+    psi, theta, Omega, group_id, group_known_present,
+    sample = TRUE, history_condition = TRUE, obs = obs
+  )
+  expect_true(all(sampled$level2 %in% 0:1))
+  expect_true(all(sampled$unit %in% 0:1))
+  expect_true(all(sampled$unit <= sampled$level2[group_id, , drop = FALSE]))
+})
+
+test_that("generic two-level state shapes are converted correctly", {
+  unit_order <- c(3L, 1L, 4L, 2L)
+  original_group <- c(2L, 2L, 1L, 1L)
+  psi <- matrix(
+    c(0.2, 0.3,
+      0.4, 0.5,
+      0.6, 0.7,
+      0.8, 0.9),
+    nrow = 4, byrow = TRUE
+  )
+  Omega <- matrix(c(0.25, 0.35, 0.75, 0.85), nrow = 2)
+  lps <- list(
+    linpred_occ = array(
+      c(
+        rep(boot::logit(psi[, 1]), 2),
+        rep(boot::logit(psi[, 2]), 2)
+      ),
+      dim = c(4, 2, 2)
+    )
+  )
+  Omega_by_unit <- Omega[original_group, , drop = FALSE]
+  Omega_lps <- structure(
+    list(linpred_Omega = boot::logit(Omega_by_unit)),
+    unit_level = TRUE
+  )
+  packed_data <- data.frame(
+    ff_n_unit = c(4L, -99L, -99L, -99L),
+    ff_n_group = c(2L, -99L, -99L, -99L),
+    ff_n_unit_group = c(2L, 2L, -99L, -99L),
+    ff_group_index = c(1L, 3L, 2L, 4L),
+    ff_group_known_present = c(1L, 0L, -99L, -99L)
+  )
+  states <- get_twolevel_states_twolevel_single(
+    lps, Omega_lps, sample = FALSE, history_condition = FALSE,
+    flocker_data_data = packed_data,
+    flocker_metadata = list(unit_order = unit_order)
+  )
+
+  expect_equal(states$level2, Omega)
+  expect_equal(states$unit, psi * Omega_by_unit)
+})
+
+test_that("get_level2_Z handles augmented models", {
+  testthat::skip_on_cran()
+
+  n_group <- example_flocker_model_aug$data$ff_n_group[1]
+  known_present <- example_flocker_model_aug$data$ff_group_known_present[
+    seq_len(n_group)
+  ]
+
+  conditioned <- get_level2_Z(
+    example_flocker_model_aug, draw_ids = 1:2
+  )
+  expect_equal(dim(conditioned), c(n_group, 2L))
+  expect_true(all(conditioned >= 0 & conditioned <= 1))
+  expect_true(all(conditioned[known_present == 1, ] == 1))
+
+  unconditioned <- get_level2_Z(
+    example_flocker_model_aug, draw_ids = 1:2,
+    history_condition = FALSE
+  )
+  Omega <- fitted_flocker(
+    example_flocker_model_aug, components = "Omega", draw_ids = 1:2,
+    response = TRUE, unit_level = TRUE
+  )
+  expected <- group_level_Omega(
+    Omega, "augmented", example_flocker_model_aug$data,
+    get_flocker_metadata(example_flocker_model_aug)
+  )
+  expect_equal(as.vector(unconditioned), as.vector(expected))
+
+  one_draw <- get_level2_Z(
+    example_flocker_model_aug, draw_ids = 1
+  )
+  expect_equal(dim(one_draw), c(n_group, 1L))
+
+  sampled <- get_level2_Z(
+    example_flocker_model_aug, draw_ids = 1:2, sample = TRUE
+  )
+  expect_true(all(sampled %in% 0:1))
+
+  expect_error(
+    get_level2_Z(example_flocker_model_single2),
+    "available only for twolevel_single and augmented"
+  )
+})
+
 test_that("new_data works as expected", {
   fd1 <- simulate_flocker_data(n_sp = 5)
   mfd1 <- make_flocker_data(fd1$obs, fd1$unit_covs, fd1$event_covs, quiet = TRUE)
@@ -187,4 +329,3 @@ test_that("backward_algorithm returns correct results", {
   expect_type(result, "double")
   expect_equal(dim(result), c(length(el0), 2))
 })
-
