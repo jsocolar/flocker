@@ -420,11 +420,9 @@ get_positions <- function(data_object, unit_level = FALSE) {
     unit_group <- get_unit_group(the_data)
     for(r in seq_len(n_unit)){
       visit_ids <- which(rep_index_matrix[r, ] != -99)
-      if(length(visit_ids) > 0) {
-        sp_id <- unit_group[r]
-        site_id <- unit_site[r]
-        index_array[site_id, visit_ids, sp_id] <- rep_index_matrix[r, visit_ids]
-      }
+      sp_id <- unit_group[r]
+      site_id <- unit_site[r]
+      index_array[site_id, visit_ids, sp_id] <- rep_index_matrix[r, visit_ids]
     }
     index_array[index_array == -99] <- NA
     if(!unit_level) {
