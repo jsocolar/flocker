@@ -64,6 +64,18 @@ test_that("make_flocker_data works correctly", {
   # Still need to add checks for the rest of the error messages, and for proper error messages using rep-constant data
 })
 
+test_that("make_flocker_data reserves brms's synthetic Intercept name", {
+  obs <- matrix(c(1, 0, 0, 1), nrow = 2)
+  expect_error(
+    make_flocker_data(
+      obs,
+      unit_covs = data.frame(Intercept = c(1, 1)),
+      quiet = TRUE
+    ),
+    "reserved string"
+  )
+})
+
 test_that("make_flocker_data handles two-level single-season data", {
   obs <- matrix(c(
     1, 0, 0,

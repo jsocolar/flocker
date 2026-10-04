@@ -130,6 +130,8 @@ test_that("bookkeeping works properly", {
   # flocker_reserved
   expect_true(all(grepl(flocker_reserved()[1], flocker_col_names())))
   expect_true(all(grepl(flocker_reserved()[2], paste0(".", c(".", "foo", 1:2)))))
+  expect_true(grepl(flocker_reserved()[3], "Intercept"))
+  expect_false(grepl(flocker_reserved()[3], "Intercept_covariate"))
   
   # flocker_model_types
   expect_true(all(grepl("^single|^twolevel|^augmented|^multi", flocker_model_types())))

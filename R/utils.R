@@ -180,7 +180,7 @@ flocker_col_names <- function(n_rep = NULL, n_year = NULL) {
 #' @return character vector of regexes matching reserved variable names
 #' @noRd
 flocker_reserved <- function() {
-  c("^ff_", "^\\.", "^occ$", "^det$", "^colo$", "^ex$", "^autologistic$", "^Omega$")
+  c("^ff_", "^\\.", "^Intercept$", "^occ$", "^det$", "^colo$", "^ex$", "^autologistic$", "^Omega$")
 }
 
 #' Model types in flocker as outputted by `flock`
