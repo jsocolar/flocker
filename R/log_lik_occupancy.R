@@ -62,7 +62,7 @@ log_lik_flocker <- function(
       response = TRUE, unit_level = FALSE
     )
     
-    psi_all <- first_slice_draw_matrix(lps$linpred_occ)
+    psi_all <- first_column_draw_matrix(lps$linpred_occ)
     theta_all <- lps$linpred_det
     if (is.null(new_data)) {
       gp <- get_positions(flocker_fit)
@@ -142,7 +142,7 @@ log_lik_flocker <- function(
       n_unit <- the_data$ff_n_unit[1]
       unit_rows <- seq_len(n_unit)
       orig_unit <- metadata$unit_order
-      psi_all <- first_slice_draw_matrix(lps$linpred_occ)[
+      psi_all <- first_column_draw_matrix(lps$linpred_occ)[
         orig_unit, , drop = FALSE
       ]
       theta_all <- lps$linpred_det[orig_unit, , , drop = FALSE]
@@ -180,7 +180,7 @@ log_lik_flocker <- function(
       sample_new_levels = sample_new_levels,
       draw_ids = draw_ids, unit_level = TRUE
     )
-    init <- first_slice_draw_matrix(lps2$linpred_occ)
+    init <- first_column_draw_matrix(lps2$linpred_occ)
     colo <- lps2$linpred_col
     ex <- lps2$linpred_ex
     det <- lps1$linpred_det
@@ -211,8 +211,8 @@ log_lik_flocker <- function(
     )
     colo <- lps2$linpred_col
     ex <- lps2$linpred_ex
-    init_colo <- first_slice_draw_matrix(colo)
-    init_ex <- first_slice_draw_matrix(ex)
+    init_colo <- first_column_draw_matrix(colo)
+    init_ex <- first_column_draw_matrix(ex)
     init <- init_colo / (init_colo + init_ex)
     det <- lps1$linpred_det
     ll <- log_lik_dynamic(init, colo, ex, obs, det) |>
@@ -240,7 +240,7 @@ log_lik_flocker <- function(
       sample_new_levels = sample_new_levels,
       draw_ids = draw_ids, unit_level = TRUE
     )
-    init <- first_slice_draw_matrix(lps2$linpred_occ)
+    init <- first_column_draw_matrix(lps2$linpred_occ)
     colo <- lps2$linpred_col
     ex <- 1 - boot::inv.logit(boot::logit(colo) + lps2$linpred_auto)
     det <- lps1$linpred_det
@@ -271,8 +271,8 @@ log_lik_flocker <- function(
     )
     colo <- lps2$linpred_col
     ex <- 1 - boot::inv.logit(boot::logit(colo) + lps2$linpred_auto)
-    init_colo <- first_slice_draw_matrix(colo)
-    init_ex <- first_slice_draw_matrix(ex)
+    init_colo <- first_column_draw_matrix(colo)
+    init_ex <- first_column_draw_matrix(ex)
     init <- init_colo / (init_colo + init_ex)
     det <- lps1$linpred_det
     ll <- log_lik_dynamic(init, colo, ex, obs, det) |>

@@ -131,11 +131,11 @@ new_array <- function(m, data = NA){
   array(data, dim = dim(m))
 }
 
-#' Extract the first second-dimension slice while retaining the draw dimension
+#' Extract the first column while retaining the draw dimension
 #' @param x three-dimensional array with posterior draws in the final dimension
 #' @return matrix with first-dimension elements in rows and draws in columns
 #' @noRd
-first_slice_draw_matrix <- function(x) {
+first_column_draw_matrix <- function(x) {
   assertthat::assert_that(length(dim(x)) == 3)
   matrix(x[, 1, , drop = FALSE], nrow = dim(x)[1])
 }
@@ -401,8 +401,8 @@ params_by_type <- list(
 #' @param data_object a flocker_fit object or a flocker_data object
 #' @param unit_level logical. If `FALSE`, returns values associated with each visit
 #'   in the shape of obs, with NAs for visits that did not occur.
-#'   If `TRUE`, returns values associated with each unit in the shape of 
-#'   the slice of obs corresponding to the first visit. This is relevant in
+#'   If `TRUE`, returns values associated with each unit in the shape obtained
+#'   by selecting the first-visit column of obs. This is relevant in
 #'   multiseason models, where it is possible to have units (i.e. timesteps) 
 #'   that are part of the timeseries and have linear predictors for colonization 
 #'   etc, but that received no visits. These units are dropped from the 
@@ -515,14 +515,14 @@ get_positions <- function(data_object, unit_level = FALSE) {
       
       return(index_array)
     } else {
-      index_slice <- array(dim = c(n_series, max_year))
+      unit_index_matrix <- array(dim = c(n_series, max_year))
       unit_mat <- as.matrix(unit_index_frame)
       uc <- which(!is.na(unit_mat), arr.ind = TRUE)
-      index_slice[uc] <- unit_mat[uc]
+      unit_index_matrix[uc] <- unit_mat[uc]
       
-      index_slice[index_slice == -99] <- NA
+      unit_index_matrix[unit_index_matrix == -99] <- NA
       
-      return(index_slice)
+      return(unit_index_matrix)
     }
   }
 }

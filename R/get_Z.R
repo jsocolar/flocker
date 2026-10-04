@@ -109,7 +109,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
       draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
       sample_new_levels = sample_new_levels, response = TRUE, unit_level = TRUE
     )
-    init <- first_slice_draw_matrix(lps2$linpred_occ)
+    init <- first_column_draw_matrix(lps2$linpred_occ)
     colo <- lps2$linpred_col
     ex <- lps2$linpred_ex
     if(history_condition){
@@ -141,8 +141,8 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     )
     colo <- lps2$linpred_col
     ex <- lps2$linpred_ex
-    init_colo <- first_slice_draw_matrix(colo)
-    init_ex <- first_slice_draw_matrix(ex)
+    init_colo <- first_column_draw_matrix(colo)
+    init_ex <- first_column_draw_matrix(ex)
     init <- init_colo / (init_colo + init_ex)
     Z <- get_Z_dynamic(init, colo, ex, history_condition, sample, obs, det)
   } else if (lik_type == "multi_autologistic") {
@@ -161,7 +161,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
       draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
       sample_new_levels = sample_new_levels, response = TRUE, unit_level = TRUE
     )
-    init <- first_slice_draw_matrix(lps2$linpred_occ)
+    init <- first_column_draw_matrix(lps2$linpred_occ)
     colo <- lps2$linpred_col
     ex <- 1 - boot::inv.logit(boot::logit(colo) + lps2$linpred_auto)
     Z <- get_Z_dynamic(init, colo, ex, history_condition, sample, obs, lps1$linpred_det)
@@ -183,8 +183,8 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     )
     colo <- lps2$linpred_col
     ex <- 1 - boot::inv.logit(boot::logit(colo) + lps2$linpred_auto)
-    init_colo <- first_slice_draw_matrix(colo)
-    init_ex <- first_slice_draw_matrix(ex)
+    init_colo <- first_column_draw_matrix(colo)
+    init_ex <- first_column_draw_matrix(ex)
     init <- init_colo / (init_colo + init_ex)
     Z <- get_Z_dynamic(init, colo, ex, history_condition, sample, obs, lps1$linpred_det)
   }
@@ -310,7 +310,7 @@ get_twolevel_states <- function(
 #' @noRd
 get_Z_single <- function(lps, sample, history_condition, obs = NULL){
   if(length(dim(lps$linpred_occ)) == 3) { # from flockerdata
-    lpo <- first_slice_draw_matrix(lps$linpred_occ)
+    lpo <- first_column_draw_matrix(lps$linpred_occ)
   } else { # from data.frame
     assertthat::assert_that(length(dim(lps$linpred_occ)) == 2)
     lpo <- lps$linpred_occ
@@ -357,7 +357,7 @@ get_Z_single <- function(lps, sample, history_condition, obs = NULL){
 #' @noRd
 get_Z_single_C <- function(lps, sample, history_condition, obs = NULL){
   if(length(dim(lps$linpred_occ)) == 3) { # from flockerdata
-    lpo <- first_slice_draw_matrix(lps$linpred_occ)
+    lpo <- first_column_draw_matrix(lps$linpred_occ)
   } else { # from data.frame
     assertthat::assert_that(length(dim(lps$linpred_occ)) == 2)
     lpo <- lps$linpred_occ
@@ -373,7 +373,7 @@ get_Z_single_C <- function(lps, sample, history_condition, obs = NULL){
       Z <- psi_all
     }
   } else {
-    theta_all <- boot::inv.logit(first_slice_draw_matrix(lps$linpred_det))
+    theta_all <- boot::inv.logit(first_column_draw_matrix(lps$linpred_det))
     
     # get emission likelihoods
     el_0 <- el_1 <- new_matrix(psi_all)
