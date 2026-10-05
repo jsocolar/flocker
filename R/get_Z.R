@@ -206,29 +206,32 @@ get_twolevel_states <- function(
   data_object <- if(is.null(new_data)) flocker_fit else new_data
   the_data <- data_object$data
   metadata <- get_flocker_metadata(data_object)
-  components <- if(history_condition) c("occ", "det") else "occ"
 
-  lps <- fitted_flocker(
-    flocker_fit, components = components, draw_ids = draw_ids,
-    new_data = new_data, allow_new_levels = allow_new_levels,
-    sample_new_levels = sample_new_levels, response = FALSE,
-    unit_level = FALSE
-  )
-  Omega_lps <- fitted_flocker(
-    flocker_fit, components = "Omega", draw_ids = draw_ids,
+  unit_lps <- fitted_flocker(
+    flocker_fit, components = c("occ", "Omega"), draw_ids = draw_ids,
     new_data = new_data, allow_new_levels = allow_new_levels,
     sample_new_levels = sample_new_levels, response = FALSE,
     unit_level = TRUE
   )
+  det_lps <- if(history_condition) {
+    fitted_flocker(
+      flocker_fit, components = "det", draw_ids = draw_ids,
+      new_data = new_data, allow_new_levels = allow_new_levels,
+      sample_new_levels = sample_new_levels, response = FALSE,
+      unit_level = FALSE
+    )
+  } else {
+    NULL
+  }
 
   states <- if(lik_type == "twolevel_single") {
     get_twolevel_states_twolevel_single(
-      lps, Omega_lps, sample, history_condition, obs, the_data, metadata
+      unit_lps, det_lps, sample, history_condition, obs, the_data, metadata
     )
   } else {
     assertthat::assert_that(lik_type == "augmented")
     get_twolevel_states_augmented(
-      lps, Omega_lps, sample, history_condition, obs, the_data, metadata
+      unit_lps, det_lps, sample, history_condition, obs, the_data, metadata
     )
   }
 
@@ -346,8 +349,8 @@ get_Z_single_C <- function(lps, sample, history_condition, obs = NULL){
 }
 
 #' Get unit- and level-two Z matrices for a two-level single-season model
-#' @param lps fitted unit- and event-level linear predictors
-#' @param Omega_lps fitted level-two linear predictors
+#' @param unit_lps fitted unit-level occupancy and level-two linear predictors
+#' @param det_lps fitted event-level detection linear predictors, or NULL
 #' @param sample logical: return fitted probabilities or Bernoulli samples
 #' @param history_condition logical: condition on the observed histories?
 #' @param obs observed detection histories when history conditioning
@@ -356,24 +359,24 @@ get_Z_single_C <- function(lps, sample, history_condition, obs = NULL){
 #' @return a list containing unit- and level-two-state matrices.
 #' @noRd
 get_twolevel_states_twolevel_single <- function(
-    lps, Omega_lps, sample, history_condition, obs = NULL,
+    unit_lps, det_lps, sample, history_condition, obs = NULL,
     flocker_data_data, flocker_metadata
     ) {
   n_unit <- flocker_data_data$ff_n_unit[1]
   orig_unit <- flocker_metadata$unit_order
   Omega <- boot::inv.logit(group_level_Omega(
-    Omega_lps, "twolevel_single", flocker_data_data, flocker_metadata
+    unit_lps, "twolevel_single", flocker_data_data, flocker_metadata
   ))
   n_draw <- ncol(Omega)
   psi_all <- matrix(
-    boot::inv.logit(lps$linpred_occ[, 1, , drop = FALSE]),
+    boot::inv.logit(unit_lps$linpred_occ),
     nrow = n_unit
   )
   psi_all <- psi_all[orig_unit, , drop = FALSE]
   if(history_condition) {
     n_rep <- ncol(obs)
     theta_all <- array(
-      boot::inv.logit(lps$linpred_det), dim = c(n_unit, n_rep, n_draw)
+      boot::inv.logit(det_lps$linpred_det), dim = c(n_unit, n_rep, n_draw)
     )[orig_unit, , , drop = FALSE]
     obs <- obs[orig_unit, , drop = FALSE]
   } else {
@@ -394,15 +397,15 @@ get_twolevel_states_twolevel_single <- function(
 }
 
 #' Get unit- and level-two Z arrays for a data-augmented model
-#' @param lps the linear predictors from the model
-#' @param Omega_lps unit-level Omega linear predictors from the model
+#' @param unit_lps fitted unit-level occupancy and level-two linear predictors
+#' @param det_lps fitted event-level detection linear predictors, or NULL
 #' @param sample logical: return fitted probabilities or bernoulli samples
 #' @param history_condition logical: condition on the observed history?
 #' @param obs if history_condition is true, the observed histories
 #' @return a list containing unit- and level-two-state arrays.
 #' @noRd
 get_twolevel_states_augmented <- function(
-    lps, Omega_lps, sample, history_condition, obs = NULL,
+    unit_lps, det_lps, sample, history_condition, obs = NULL,
     flocker_data_data, flocker_metadata
     ) {
   n_unit <- flocker_data_data$ff_n_unit[1]
@@ -410,14 +413,13 @@ get_twolevel_states_augmented <- function(
   site_id <- flocker_metadata$unit_site
   species_id <- get_unit_group(flocker_data_data)
   Omega <- boot::inv.logit(group_level_Omega(
-    Omega_lps, "augmented", flocker_data_data, flocker_metadata
+    unit_lps, "augmented", flocker_data_data, flocker_metadata
   ))
   n_draw <- ncol(Omega)
   n_site <- max(site_id)
   n_species <- nrow(Omega)
-  lpo <- lps$linpred_occ[, 1, , , drop = FALSE]
   psi_all_array <- array(
-    boot::inv.logit(lpo),
+    boot::inv.logit(unit_lps$linpred_occ),
     dim = c(n_site, n_species, n_draw)
   )
   psi_all <- matrix(NA_real_, nrow = n_unit, ncol = n_draw)
@@ -432,7 +434,7 @@ get_twolevel_states_augmented <- function(
   if(history_condition) {
     n_visit <- dim(obs)[2]
     theta_all_array <- array(
-      boot::inv.logit(lps$linpred_det),
+      boot::inv.logit(det_lps$linpred_det),
       dim = c(n_site, n_visit, n_species, n_draw)
     )
     theta_all <- array(NA_real_, dim = c(n_unit, n_visit, n_draw))

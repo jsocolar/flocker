@@ -183,18 +183,12 @@ test_that("generic two-level state shapes are converted correctly", {
     nrow = 4, byrow = TRUE
   )
   Omega <- matrix(c(0.25, 0.35, 0.75, 0.85), nrow = 2)
-  lps <- list(
-    linpred_occ = array(
-      c(
-        rep(boot::logit(psi[, 1]), 2),
-        rep(boot::logit(psi[, 2]), 2)
-      ),
-      dim = c(4, 2, 2)
-    )
-  )
   Omega_by_unit <- Omega[original_group, , drop = FALSE]
-  Omega_lps <- structure(
-    list(linpred_Omega = boot::logit(Omega_by_unit)),
+  unit_lps <- structure(
+    list(
+      linpred_occ = boot::logit(psi),
+      linpred_Omega = boot::logit(Omega_by_unit)
+    ),
     unit_level = TRUE
   )
   packed_data <- data.frame(
@@ -205,7 +199,7 @@ test_that("generic two-level state shapes are converted correctly", {
     ff_group_known_present = c(1L, 0L, -99L, -99L)
   )
   states <- get_twolevel_states_twolevel_single(
-    lps, Omega_lps, sample = FALSE, history_condition = FALSE,
+    unit_lps, det_lps = NULL, sample = FALSE, history_condition = FALSE,
     flocker_data_data = packed_data,
     flocker_metadata = list(unit_order = unit_order)
   )
