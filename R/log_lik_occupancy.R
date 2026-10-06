@@ -96,29 +96,29 @@ log_lik_flocker <- function(
   } else if (lik_type %in% c("twolevel_single", "augmented")) {
     if(is.null(new_data)){
       gp <- get_positions(flocker_fit)
-      obs <- new_array(gp, flocker_fit$data$ff_y[gp])
       the_data <- flocker_fit$data
+      obs <- new_array(gp, the_data$ff_y[gp])
       metadata <- get_flocker_metadata(flocker_fit)
     } else {
       gp <- get_positions(new_data)
-      obs <- new_array(gp, new_data$data$ff_y[gp])
       the_data <- new_data$data
+      obs <- new_array(gp, the_data$ff_y[gp])
       metadata <- get_flocker_metadata(new_data)
     }
 
-    lps <- fitted_flocker(
-      flocker_fit, components = c("occ", "det"),
+    unit_lps <- fitted_flocker(
+      flocker_fit, components = c("occ", "Omega"),
       draw_ids = draw_ids, new_data = new_data,
       allow_new_levels = allow_new_levels, 
       sample_new_levels = sample_new_levels, 
-      response = TRUE, unit_level = FALSE
+      response = TRUE, unit_level = TRUE
     )
-    Omega_lps <- fitted_flocker(
-      flocker_fit, components = "Omega",
+    det_lps <- fitted_flocker(
+      flocker_fit, components = "det",
       draw_ids = draw_ids, new_data = new_data,
       allow_new_levels = allow_new_levels,
       sample_new_levels = sample_new_levels,
-      response = TRUE, unit_level = TRUE
+      response = TRUE, unit_level = FALSE
     )
     if(lik_type == "augmented") {
       n_point <- dim(obs)[1]
@@ -129,7 +129,7 @@ log_lik_flocker <- function(
       site_id <- metadata$unit_site
       species_id <- get_unit_group(the_data)
       psi_all_array <- array(
-        lps$linpred_occ[, 1, , , drop = FALSE],
+        unit_lps$linpred_occ,
         dim = c(n_point, n_species, ndraws)
       )
       psi_all <- matrix(NA_real_, nrow = n_unit, ncol = ndraws)
@@ -138,20 +138,20 @@ log_lik_flocker <- function(
       for(i in unit_rows) {
         psi_all[i, ] <- psi_all_array[site_id[i], species_id[i], ]
         obs_use[i, ] <- obs[site_id[i], , species_id[i]]
-        theta_all[i, , ] <- lps$linpred_det[site_id[i], , species_id[i], ]
+        theta_all[i, , ] <- det_lps$linpred_det[
+          site_id[i], , species_id[i], ]
       }
+      group_id <- species_id
     } else {
       n_unit <- the_data$ff_n_unit[1]
-      unit_rows <- seq_len(n_unit)
-      orig_unit <- metadata$unit_order
-      psi_all <- first_column_draw_matrix(lps$linpred_occ)[
-        orig_unit, , drop = FALSE
-      ]
-      theta_all <- lps$linpred_det[orig_unit, , , drop = FALSE]
-      obs_use <- obs[orig_unit, , drop = FALSE]
+      psi_all <- matrix(unit_lps$linpred_occ, nrow = n_unit)
+      theta_all <- det_lps$linpred_det
+      obs_use <- obs
+      packed_group_id <- get_unit_group(the_data)
+      group_id <- integer(n_unit)
+      group_id[metadata$unit_order] <- packed_group_id
     }
-    Omega <- group_level_Omega(Omega_lps, lik_type, the_data, metadata)
-    group_id <- get_unit_group(the_data)
+    Omega <- group_level_Omega(unit_lps, lik_type, the_data, metadata)
     group_known_present <- the_data$ff_group_known_present[
       seq_len(the_data$ff_n_group[1])
     ]

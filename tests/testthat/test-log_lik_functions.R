@@ -109,6 +109,24 @@ test_that("log_lik_flocker new_data argument works correctly", {
   expect_equal(ll_newdata, ll_default, tolerance = 1e-10)
   
   testthat::skip_on_cran()
+
+  # generic two-level single-season
+  ll_default <- log_lik_flocker(example_flocker_model_twolevel)
+  ll_newdata <- log_lik_flocker(
+    example_flocker_model_twolevel,
+    new_data = mfd_twolevel,
+    allow_new_levels = FALSE
+  )
+  expect_equal(ll_newdata, ll_default, tolerance = 1e-10)
+
+  # augmented
+  ll_default <- log_lik_flocker(example_flocker_model_aug)
+  ll_newdata <- log_lik_flocker(
+    example_flocker_model_aug,
+    new_data = mfd_aug,
+    allow_new_levels = FALSE
+  )
+  expect_equal(ll_newdata, ll_default, tolerance = 1e-10)
   
   # multiseason colex explicit (uses mfd_multi_colex_ex from setup.R)
   ll_default <- log_lik_flocker(example_flocker_model_multi_colex_ex)
