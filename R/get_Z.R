@@ -71,7 +71,9 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
   if(history_condition) {
     use_components <- c("occ", "det", "col", "ex", "auto", "Omega")
     
-    if(lik_type != "single_C"){
+    if(lik_type %in% c("twolevel_single", "augmented")) {
+      obs <- NULL
+    } else if(lik_type != "single_C"){
       if(is.null(new_data)){
         gp <- get_positions(flocker_fit)
         obs <- new_array(gp, flocker_fit$data$ff_y[gp])
@@ -105,7 +107,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     Z <- get_Z_single_C(lps, sample, history_condition, obs)
   } else if (lik_type %in% c("twolevel_single", "augmented")) {
     Z <- get_twolevel_states(
-      flocker_fit, lik_type, draw_ids, history_condition, sample, obs,
+      flocker_fit, lik_type, draw_ids, history_condition, sample,
       new_data, allow_new_levels, sample_new_levels
     )
   } else if (lik_type %in% c("multi_colex")) {
@@ -200,49 +202,40 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
 #' Get unit- and level-two occupancy states for a two-level model
 #' @noRd
 get_twolevel_states <- function(
-    flocker_fit, lik_type, draw_ids, history_condition, sample, obs,
+    flocker_fit, lik_type, draw_ids, history_condition, sample,
     new_data, allow_new_levels, sample_new_levels
     ) {
-  data_object <- if(is.null(new_data)) flocker_fit else new_data
-  the_data <- data_object$data
-  metadata <- get_flocker_metadata(data_object)
-
-  unit_lps <- fitted_flocker(
-    flocker_fit, components = c("occ", "Omega"), draw_ids = draw_ids,
-    new_data = new_data, allow_new_levels = allow_new_levels,
-    sample_new_levels = sample_new_levels, response = FALSE,
-    unit_level = TRUE
+  components <- prepare_twolevel_postprocessing(
+    flocker_fit, lik_type, draw_ids, new_data, allow_new_levels,
+    sample_new_levels, include_detection = history_condition
   )
-  det_lps <- if(history_condition) {
-    fitted_flocker(
-      flocker_fit, components = "det", draw_ids = draw_ids,
-      new_data = new_data, allow_new_levels = allow_new_levels,
-      sample_new_levels = sample_new_levels, response = FALSE,
-      unit_level = FALSE
+  states <- get_twolevel_states_from_components(
+    components$psi, components$theta, components$Omega,
+    components$group_id, components$group_known_present,
+    sample, history_condition, components$obs
+  )
+
+  if(lik_type == "augmented") {
+    n_draw <- ncol(components$Omega)
+    unit_rows <- seq_len(nrow(components$psi))
+    unit_states <- array(
+      NA_real_, dim = c(components$n_site, nrow(components$Omega), n_draw)
     )
-  } else {
-    NULL
+    for(i in unit_rows) {
+      unit_states[
+        components$unit_site[i], components$group_id[i],
+      ] <- states$unit[i, ]
+    }
+    states$unit <- unit_states
   }
 
-  states <- if(lik_type == "twolevel_single") {
-    get_twolevel_states_twolevel_single(
-      unit_lps, det_lps, sample, history_condition, obs, the_data, metadata
-    )
-  } else {
-    assertthat::assert_that(lik_type == "augmented")
-    get_twolevel_states_augmented(
-      unit_lps, det_lps, sample, history_condition, obs, the_data, metadata
-    )
-  }
-
-  group_names <- get_level2_group_names(the_data, metadata, lik_type)
-  rownames(states$level2) <- group_names
+  rownames(states$level2) <- components$group_names
   if(lik_type == "augmented") {
     unit_dimnames <- dimnames(states$unit)
     if(is.null(unit_dimnames)) {
       unit_dimnames <- vector("list", length(dim(states$unit)))
     }
-    unit_dimnames[[2]] <- group_names
+    unit_dimnames[[2]] <- components$group_names
     dimnames(states$unit) <- unit_dimnames
   }
   states
@@ -348,116 +341,6 @@ get_Z_single_C <- function(lps, sample, history_condition, obs = NULL){
   Z
 }
 
-#' Get unit- and level-two Z matrices for a two-level single-season model
-#' @param unit_lps fitted unit-level occupancy and level-two linear predictors
-#' @param det_lps fitted event-level detection linear predictors, or NULL
-#' @param sample logical: return fitted probabilities or Bernoulli samples
-#' @param history_condition logical: condition on the observed histories?
-#' @param obs observed detection histories when history conditioning
-#' @param flocker_data_data the data element of a flocker_data or flocker_fit
-#' @param flocker_metadata non-data metadata from a flocker_data or flocker_fit
-#' @return a list containing unit- and level-two-state matrices.
-#' @noRd
-get_twolevel_states_twolevel_single <- function(
-    unit_lps, det_lps, sample, history_condition, obs = NULL,
-    flocker_data_data, flocker_metadata
-    ) {
-  n_unit <- flocker_data_data$ff_n_unit[1]
-  unit_order <- flocker_metadata$unit_order
-  Omega <- boot::inv.logit(group_level_Omega(
-    unit_lps, "twolevel_single", flocker_data_data, flocker_metadata
-  ))
-  n_draw <- ncol(Omega)
-  psi_all <- matrix(
-    boot::inv.logit(unit_lps$linpred_occ),
-    nrow = n_unit
-  )
-  if(history_condition) {
-    n_rep <- ncol(obs)
-    theta_all <- array(
-      boot::inv.logit(det_lps$linpred_det), dim = c(n_unit, n_rep, n_draw)
-    )
-  } else {
-    theta_all <- NULL
-  }
-  # fitted_flocker and obs are in original unit order; the packed data are not.
-  packed_group_id <- get_unit_group(flocker_data_data)
-  group_id <- integer(n_unit)
-  group_id[unit_order] <- packed_group_id
-  group_known_present <- flocker_data_data$ff_group_known_present[
-    seq_len(flocker_data_data$ff_n_group[1])
-  ]
-  states <- get_twolevel_states_from_components(
-    psi_all, theta_all, Omega, group_id, group_known_present,
-    sample, history_condition, obs
-  )
-  states
-}
-
-#' Get unit- and level-two Z arrays for a data-augmented model
-#' @param unit_lps fitted unit-level occupancy and level-two linear predictors
-#' @param det_lps fitted event-level detection linear predictors, or NULL
-#' @param sample logical: return fitted probabilities or bernoulli samples
-#' @param history_condition logical: condition on the observed history?
-#' @param obs if history_condition is true, the observed histories
-#' @return a list containing unit- and level-two-state arrays.
-#' @noRd
-get_twolevel_states_augmented <- function(
-    unit_lps, det_lps, sample, history_condition, obs = NULL,
-    flocker_data_data, flocker_metadata
-    ) {
-  n_unit <- flocker_data_data$ff_n_unit[1]
-  unit_rows <- seq_len(n_unit)
-  site_id <- flocker_metadata$unit_site
-  species_id <- get_unit_group(flocker_data_data)
-  Omega <- boot::inv.logit(group_level_Omega(
-    unit_lps, "augmented", flocker_data_data, flocker_metadata
-  ))
-  n_draw <- ncol(Omega)
-  n_site <- max(site_id)
-  n_species <- nrow(Omega)
-  psi_all_array <- array(
-    boot::inv.logit(unit_lps$linpred_occ),
-    dim = c(n_site, n_species, n_draw)
-  )
-  psi_all <- matrix(NA_real_, nrow = n_unit, ncol = n_draw)
-  for (i in unit_rows) {
-    psi_all[i, ] <- psi_all_array[site_id[i], species_id[i], ]
-  }
-  group_id <- species_id
-  group_known_present <- flocker_data_data$ff_group_known_present[
-    seq_len(flocker_data_data$ff_n_group[1])
-  ]
-  
-  if(history_condition) {
-    n_visit <- dim(obs)[2]
-    theta_all_array <- array(
-      boot::inv.logit(det_lps$linpred_det),
-      dim = c(n_site, n_visit, n_species, n_draw)
-    )
-    theta_all <- array(NA_real_, dim = c(n_unit, n_visit, n_draw))
-    obs_matrix <- matrix(NA_real_, nrow = n_unit, ncol = n_visit)
-    for (i in unit_rows) {
-      obs_matrix[i, ] <- obs[site_id[i], , species_id[i]]
-      theta_all[i, , ] <- theta_all_array[site_id[i], , species_id[i], ]
-    }
-  } else {
-    theta_all <- NULL
-    obs_matrix <- NULL
-  }
-  
-  states <- get_twolevel_states_from_components(
-    psi_all, theta_all, Omega, group_id, group_known_present,
-    sample, history_condition, obs_matrix
-  )
-  Z <- array(NA_real_, dim = dim(psi_all_array))
-  for (i in unit_rows) {
-    Z[site_id[i], species_id[i], ] <- states$unit[i, ]
-  }
-  states$unit <- Z
-  states
-}
-
 #' Get unit- and level-two Z for two-level models from probability components
 #' @noRd
 get_twolevel_states_from_components <- function(
@@ -471,13 +354,10 @@ get_twolevel_states_from_components <- function(
     level2_prob <- Omega
     unit_given_level2_prob <- psi_all
   } else {
-    el_0 <- el_1 <- matrix(NA, nrow = n_unit, ncol = n_draw)
-    for(i in seq_len(n_draw)){
-      el_0[ , i] <- emission_likelihood(0, obs, theta_all[,,i])
-      el_1[ , i] <- emission_likelihood(1, obs, theta_all[,,i])
-    }
-    unit_lik_available <- (1 - psi_all) * el_0 + psi_all * el_1
-    unit_given_level2_prob <- Z_from_emission(el_0, el_1, psi_all)
+    emissions <- occupancy_emission_components(psi_all, theta_all, obs)
+    unit_given_level2_prob <- Z_from_emission(
+      emissions$unavailable, emissions$available, psi_all
+    )
     level2_prob <- matrix(NA_real_, nrow = n_group, ncol = n_draw)
 
     for(g in seq_len(n_group)) {
@@ -486,7 +366,7 @@ get_twolevel_states_from_components <- function(
       } else {
         rows <- which(group_id == g)
         p_y_available <- apply(
-          unit_lik_available[rows, , drop = FALSE], 2, prod
+          emissions$unit_lik_available[rows, , drop = FALSE], 2, prod
         )
         Omega[g, ] * p_y_available /
           ((1 - Omega[g, ]) + Omega[g, ] * p_y_available)

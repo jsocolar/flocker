@@ -186,8 +186,8 @@ test_that("generic two-level states remain in original unit order", {
   Omega_by_unit <- Omega[original_group, , drop = FALSE]
   unit_lps <- structure(
     list(
-      linpred_occ = boot::logit(psi),
-      linpred_Omega = boot::logit(Omega_by_unit)
+      linpred_occ = psi,
+      linpred_Omega = Omega_by_unit
     ),
     unit_level = TRUE
   )
@@ -198,10 +198,18 @@ test_that("generic two-level states remain in original unit order", {
     ff_group_index = c(1L, 3L, 2L, 4L),
     ff_group_known_present = c(1L, 0L, -99L, -99L)
   )
-  states <- get_twolevel_states_twolevel_single(
-    unit_lps, det_lps = NULL, sample = FALSE, history_condition = FALSE,
+  components <- format_twolevel_postprocessing(
+    unit_lps, det_lps = NULL, obs = NULL, lik_type = "twolevel_single",
     flocker_data_data = packed_data,
-    flocker_metadata = list(unit_order = unit_order)
+    flocker_metadata = list(
+      unit_order = unit_order,
+      level2_group_names = c("group1", "group2")
+    )
+  )
+  states <- get_twolevel_states_from_components(
+    components$psi, components$theta, components$Omega,
+    components$group_id, components$group_known_present,
+    sample = FALSE, history_condition = FALSE
   )
 
   expect_equal(states$level2, Omega)

@@ -94,72 +94,16 @@ log_lik_flocker <- function(
       allow_new_levels = allow_new_levels,
       sample_new_levels = sample_new_levels)
   } else if (lik_type %in% c("twolevel_single", "augmented")) {
-    if(is.null(new_data)){
-      gp <- get_positions(flocker_fit)
-      the_data <- flocker_fit$data
-      obs <- new_array(gp, the_data$ff_y[gp])
-      metadata <- get_flocker_metadata(flocker_fit)
-    } else {
-      gp <- get_positions(new_data)
-      the_data <- new_data$data
-      obs <- new_array(gp, the_data$ff_y[gp])
-      metadata <- get_flocker_metadata(new_data)
-    }
-
-    unit_lps <- fitted_flocker(
-      flocker_fit, components = c("occ", "Omega"),
-      draw_ids = draw_ids, new_data = new_data,
-      allow_new_levels = allow_new_levels, 
-      sample_new_levels = sample_new_levels, 
-      response = TRUE, unit_level = TRUE
+    components <- prepare_twolevel_postprocessing(
+      flocker_fit, lik_type, draw_ids, new_data, allow_new_levels,
+      sample_new_levels, include_detection = TRUE
     )
-    det_lps <- fitted_flocker(
-      flocker_fit, components = "det",
-      draw_ids = draw_ids, new_data = new_data,
-      allow_new_levels = allow_new_levels,
-      sample_new_levels = sample_new_levels,
-      response = TRUE, unit_level = FALSE
-    )
-    if(lik_type == "augmented") {
-      n_point <- dim(obs)[1]
-      n_visit <- dim(obs)[2]
-      n_species <- dim(obs)[3]
-      n_unit <- the_data$ff_n_unit[1]
-      unit_rows <- seq_len(n_unit)
-      site_id <- metadata$unit_site
-      species_id <- get_unit_group(the_data)
-      psi_all_array <- array(
-        unit_lps$linpred_occ,
-        dim = c(n_point, n_species, ndraws)
-      )
-      psi_all <- matrix(NA_real_, nrow = n_unit, ncol = ndraws)
-      theta_all <- array(NA_real_, dim = c(n_unit, n_visit, ndraws))
-      obs_use <- matrix(NA_real_, nrow = n_unit, ncol = n_visit)
-      for(i in unit_rows) {
-        psi_all[i, ] <- psi_all_array[site_id[i], species_id[i], ]
-        obs_use[i, ] <- obs[site_id[i], , species_id[i]]
-        theta_all[i, , ] <- det_lps$linpred_det[
-          site_id[i], , species_id[i], ]
-      }
-      group_id <- species_id
-    } else {
-      n_unit <- the_data$ff_n_unit[1]
-      psi_all <- matrix(unit_lps$linpred_occ, nrow = n_unit)
-      theta_all <- det_lps$linpred_det
-      obs_use <- obs
-      packed_group_id <- get_unit_group(the_data)
-      group_id <- integer(n_unit)
-      group_id[metadata$unit_order] <- packed_group_id
-    }
-    Omega <- group_level_Omega(unit_lps, lik_type, the_data, metadata)
-    group_known_present <- the_data$ff_group_known_present[
-      seq_len(the_data$ff_n_group[1])
-    ]
     ll <- log_lik_twolevel_single_from_components(
-      psi_all, theta_all, Omega, group_id, group_known_present, obs_use
+      components$psi, components$theta, components$Omega,
+      components$group_id, components$group_known_present, components$obs
     ) |>
       t()
-    colnames(ll) <- get_level2_group_names(the_data, metadata, lik_type)
+    colnames(ll) <- components$group_names
   } else if (lik_type %in% c("multi_colex")) {
     if(is.null(new_data)){
       gp <- get_positions(flocker_fit)
@@ -289,22 +233,16 @@ log_lik_flocker <- function(
 log_lik_twolevel_single_from_components <- function(
     psi_all, theta_all, Omega, group_id, group_known_present, obs
     ) {
-  n_unit <- nrow(psi_all)
   n_draw <- ncol(psi_all)
   n_group <- nrow(Omega)
-  el_0 <- el_1 <- matrix(NA, nrow = n_unit, ncol = n_draw)
-  
-  for(i in seq_len(n_draw)){
-    el_0[ , i] <- emission_likelihood(0, obs, theta_all[,,i])
-    el_1[ , i] <- emission_likelihood(1, obs, theta_all[,,i])
-  }
-  
-  unit_lik_available <- (1 - psi_all) * el_0 + psi_all * el_1
+  emissions <- occupancy_emission_components(psi_all, theta_all, obs)
   out <- matrix(NA, nrow = n_group, ncol = n_draw)
   
   for(g in seq_len(n_group)) {
     rows <- group_id == g
-    p_y_available <- apply(unit_lik_available[rows, , drop = FALSE], 2, prod)
+    p_y_available <- apply(
+      emissions$unit_lik_available[rows, , drop = FALSE], 2, prod
+    )
     p_y_unavailable <- as.numeric(group_known_present[g] == 0)
     out[g, ] <- log(
       Omega[g, ] * p_y_available +
