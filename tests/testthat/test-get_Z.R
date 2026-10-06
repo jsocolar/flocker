@@ -172,7 +172,7 @@ test_that("two-level state probabilities are calculated exactly", {
   expect_true(all(sampled$unit <= sampled$level2[group_id, , drop = FALSE]))
 })
 
-test_that("generic two-level state shapes are converted correctly", {
+test_that("generic two-level states remain in original unit order", {
   unit_order <- c(3L, 1L, 4L, 2L)
   original_group <- c(2L, 2L, 1L, 1L)
   psi <- matrix(

@@ -363,7 +363,7 @@ get_twolevel_states_twolevel_single <- function(
     flocker_data_data, flocker_metadata
     ) {
   n_unit <- flocker_data_data$ff_n_unit[1]
-  orig_unit <- flocker_metadata$unit_order
+  unit_order <- flocker_metadata$unit_order
   Omega <- boot::inv.logit(group_level_Omega(
     unit_lps, "twolevel_single", flocker_data_data, flocker_metadata
   ))
@@ -372,17 +372,18 @@ get_twolevel_states_twolevel_single <- function(
     boot::inv.logit(unit_lps$linpred_occ),
     nrow = n_unit
   )
-  psi_all <- psi_all[orig_unit, , drop = FALSE]
   if(history_condition) {
     n_rep <- ncol(obs)
     theta_all <- array(
       boot::inv.logit(det_lps$linpred_det), dim = c(n_unit, n_rep, n_draw)
-    )[orig_unit, , , drop = FALSE]
-    obs <- obs[orig_unit, , drop = FALSE]
+    )
   } else {
     theta_all <- NULL
   }
-  group_id <- get_unit_group(flocker_data_data)
+  # fitted_flocker and obs are in original unit order; the packed data are not.
+  packed_group_id <- get_unit_group(flocker_data_data)
+  group_id <- integer(n_unit)
+  group_id[unit_order] <- packed_group_id
   group_known_present <- flocker_data_data$ff_group_known_present[
     seq_len(flocker_data_data$ff_n_group[1])
   ]
@@ -390,9 +391,6 @@ get_twolevel_states_twolevel_single <- function(
     psi_all, theta_all, Omega, group_id, group_known_present,
     sample, history_condition, obs
   )
-  Z <- matrix(NA_real_, nrow = n_unit, ncol = ncol(states$unit))
-  Z[orig_unit, ] <- states$unit
-  states$unit <- Z
   states
 }
 
