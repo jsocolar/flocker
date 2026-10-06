@@ -13,12 +13,16 @@ make_ragged_multi_fixture <- function(global_trailing_season = FALSE) {
   obs[1, 1:3, 5] <- c(0, 1, 0)
   obs[3, 1, 5] <- 1
 
-  event <- array(seq_along(obs), dim = dim(obs))
+  event <- array(seq_along(obs) / 100 - 0.4, dim = dim(obs))
   event[is.na(obs)] <- NA
+  unit_values <- matrix(
+    seq_len(3 * n_year) / 20 - 0.5,
+    nrow = 3
+  )
   unit_covs <- lapply(seq_len(n_year), function(year) {
-    data.frame(uc1 = seq_len(3) + 3 * (year - 1))
+    data.frame(uc1 = unit_values[, year])
   })
-  expected_unit <- matrix(seq_len(3 * n_year), nrow = 3)
+  expected_unit <- unit_values
   expected_unit[2, 5] <- NA
   if(global_trailing_season) {
     expected_unit[, 6] <- NA
