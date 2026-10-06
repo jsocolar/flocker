@@ -1,9 +1,55 @@
 ## code to prepare `example_flocker_model_xx` datasets
 
-setup_cache_path <- file.path(tempdir(), "flocker_test_cache_twolevel.rds")
+# Set FLOCKER_TEST_CACHE_DIR to reuse fitted fixtures across R sessions. Bump
+# this version whenever fixture definitions or fit-producing code changes in a
+# way not captured by the package-version checks below.
+fixture_cache_version <- 1L
+fixture_cache_dir <- Sys.getenv("FLOCKER_TEST_CACHE_DIR", unset = "")
+if (!nzchar(fixture_cache_dir)) {
+  fixture_cache_dir <- tempdir()
+}
+if (
+  !dir.exists(fixture_cache_dir) &&
+  !dir.create(fixture_cache_dir, recursive = TRUE, showWarnings = FALSE)
+) {
+  stop("Unable to create the flocker test-fixture cache directory")
+}
 
-if (file.exists(setup_cache_path)) {
-  cache <- readRDS(setup_cache_path)
+full_fixture_cache <- identical(Sys.getenv("NOT_CRAN"), "true")
+fixture_cache_variant <- if(full_fixture_cache) "full" else "reduced"
+setup_cache_path <- file.path(
+  fixture_cache_dir,
+  paste0(
+    "flocker_test_fixtures_v", fixture_cache_version, "_",
+    fixture_cache_variant, ".rds"
+  )
+)
+fixture_cache_signature <- list(
+  fixture_cache_version = fixture_cache_version,
+  full_fixture_cache = full_fixture_cache,
+  R = paste(R.version$major, R.version$minor, sep = "."),
+  platform = R.version$platform,
+  brms = as.character(utils::packageVersion("brms")),
+  rstan = as.character(utils::packageVersion("rstan")),
+  StanHeaders = as.character(utils::packageVersion("StanHeaders"))
+)
+
+fixture_cache_record <- if(file.exists(setup_cache_path)) {
+  tryCatch(readRDS(setup_cache_path), error = function(e) NULL)
+} else {
+  NULL
+}
+cache <- if(
+  is.list(fixture_cache_record) &&
+  identical(fixture_cache_record$signature, fixture_cache_signature) &&
+  is.list(fixture_cache_record$fixtures)
+) {
+  fixture_cache_record$fixtures
+} else {
+  NULL
+}
+
+if (!is.null(cache)) {
   list2env(cache, envir = .GlobalEnv)
 } else {
   set.seed(1)
@@ -245,7 +291,28 @@ if (file.exists(setup_cache_path)) {
     example_flocker_model_multi_auto_eq = example_flocker_model_multi_auto_eq
   )
   
-  saveRDS(cache, setup_cache_path)
+  if (
+    !dir.exists(fixture_cache_dir) &&
+    !dir.create(fixture_cache_dir, recursive = TRUE, showWarnings = FALSE)
+  ) {
+    stop("Unable to create the flocker test-fixture cache directory")
+  }
+  fixture_cache_tmp <- tempfile(
+    pattern = "flocker_test_fixtures_",
+    tmpdir = fixture_cache_dir,
+    fileext = ".rds"
+  )
+  saveRDS(
+    list(signature = fixture_cache_signature, fixtures = cache),
+    fixture_cache_tmp
+  )
+  if (file.exists(setup_cache_path)) {
+    unlink(setup_cache_path)
+  }
+  if (!file.rename(fixture_cache_tmp, setup_cache_path)) {
+    unlink(fixture_cache_tmp)
+    stop("Unable to write the flocker test-fixture cache")
+  }
 }
 
 set.seed(1)
