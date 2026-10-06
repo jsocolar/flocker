@@ -209,17 +209,24 @@ get_twolevel_states <- function(
     flocker_fit, lik_type, draw_ids, new_data, allow_new_levels,
     sample_new_levels, include_detection = history_condition
   )
+  psi <- boot::inv.logit(components$occ_lp)
+  theta <- if(history_condition) {
+    boot::inv.logit(components$det_lp)
+  } else {
+    NULL
+  }
+  Omega <- boot::inv.logit(components$Omega_lp)
   states <- get_twolevel_states_from_components(
-    components$psi, components$theta, components$Omega,
+    psi, theta, Omega,
     components$group_id, components$group_known_present,
     sample, history_condition, components$obs
   )
 
   if(lik_type == "augmented") {
-    n_draw <- ncol(components$Omega)
-    unit_rows <- seq_len(nrow(components$psi))
+    n_draw <- ncol(Omega)
+    unit_rows <- seq_len(nrow(psi))
     unit_states <- array(
-      NA_real_, dim = c(components$n_site, nrow(components$Omega), n_draw)
+      NA_real_, dim = c(components$n_site, nrow(Omega), n_draw)
     )
     for(i in unit_rows) {
       unit_states[

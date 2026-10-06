@@ -99,7 +99,7 @@ log_lik_flocker <- function(
       sample_new_levels, include_detection = TRUE
     )
     ll <- log_lik_twolevel_single_from_components(
-      components$psi, components$theta, components$Omega,
+      components$occ_lp, components$det_lp, components$Omega_lp,
       components$group_id, components$group_known_present, components$obs
     ) |>
       t()
@@ -231,25 +231,66 @@ log_lik_flocker <- function(
 #' Compute grouped log-likelihoods for two-level single-season models
 #' @noRd
 log_lik_twolevel_single_from_components <- function(
-    psi_all, theta_all, Omega, group_id, group_known_present, obs
+    occ_lp, det_lp, Omega_lp, group_id, group_known_present, obs
     ) {
-  n_draw <- ncol(psi_all)
-  n_group <- nrow(Omega)
-  emissions <- occupancy_emission_components(psi_all, theta_all, obs)
-  out <- matrix(NA, nrow = n_group, ncol = n_draw)
-  
-  for(g in seq_len(n_group)) {
-    rows <- group_id == g
-    p_y_available <- apply(
-      emissions$unit_lik_available[rows, , drop = FALSE], 2, prod
+  assertthat::assert_that(inherits(obs, "matrix"))
+  assertthat::assert_that(
+    all(is.na(obs) | obs %in% 0:1)
+  )
+  assertthat::assert_that(is.matrix(occ_lp))
+  assertthat::assert_that(length(dim(det_lp)) == 3)
+  assertthat::assert_that(identical(dim(det_lp)[1:2], dim(obs)))
+  assertthat::assert_that(is.matrix(Omega_lp))
+
+  n_unit <- nrow(occ_lp)
+  n_visit <- ncol(obs)
+  n_draw <- ncol(occ_lp)
+  n_group <- nrow(Omega_lp)
+  assertthat::assert_that(dim(det_lp)[3] == n_draw)
+  assertthat::assert_that(identical(dim(Omega_lp), c(n_group, n_draw)))
+
+  log_el_0 <- matrixStats::rowSums2(log1p(-obs), na.rm = TRUE)
+  log_unit_lik_available <- matrix(
+    NA_real_, nrow = n_unit, ncol = n_draw
+  )
+  for(i in seq_len(n_draw)) {
+    det_lp_draw <- matrix(
+      det_lp[, , i, drop = FALSE], nrow = n_unit, ncol = n_visit
     )
-    p_y_unavailable <- as.numeric(group_known_present[g] == 0)
-    out[g, ] <- log(
-      Omega[g, ] * p_y_available +
-        (1 - Omega[g, ]) * p_y_unavailable
+    assertthat::assert_that(
+      all(which(is.na(det_lp_draw)) %in% which(is.na(obs)))
+    )
+    log_event_lik_1 <- ifelse(
+      obs == 1,
+      log_inv_logit(det_lp_draw),
+      log1m_inv_logit(det_lp_draw)
+    )
+    log_el_1 <- matrixStats::rowSums2(log_event_lik_1, na.rm = TRUE)
+    log_unit_lik_available[, i] <- matrixStats::rowLogSumExps(
+      cbind(
+        log1m_inv_logit(occ_lp[, i]) + log_el_0,
+        log_inv_logit(occ_lp[, i]) + log_el_1
+      )
     )
   }
-  
+
+  out <- matrix(NA_real_, nrow = n_group, ncol = n_draw)
+  for(g in seq_len(n_group)) {
+    rows <- group_id == g
+    log_p_y_available <- matrixStats::colSums2(
+      log_unit_lik_available[rows, , drop = FALSE]
+    )
+    log_p_group_available <-
+      log_inv_logit(Omega_lp[g, ]) + log_p_y_available
+    out[g, ] <- if(group_known_present[g] == 1) {
+      log_p_group_available
+    } else {
+      matrixStats::rowLogSumExps(
+        cbind(log1m_inv_logit(Omega_lp[g, ]), log_p_group_available)
+      )
+    }
+  }
+
   out
 }
 

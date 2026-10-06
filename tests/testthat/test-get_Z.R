@@ -186,8 +186,8 @@ test_that("generic two-level states remain in original unit order", {
   Omega_by_unit <- Omega[original_group, , drop = FALSE]
   unit_lps <- structure(
     list(
-      linpred_occ = psi,
-      linpred_Omega = Omega_by_unit
+      linpred_occ = boot::logit(psi),
+      linpred_Omega = boot::logit(Omega_by_unit)
     ),
     unit_level = TRUE
   )
@@ -207,7 +207,8 @@ test_that("generic two-level states remain in original unit order", {
     )
   )
   states <- get_twolevel_states_from_components(
-    components$psi, components$theta, components$Omega,
+    boot::inv.logit(components$occ_lp), NULL,
+    boot::inv.logit(components$Omega_lp),
     components$group_id, components$group_known_present,
     sample = FALSE, history_condition = FALSE
   )

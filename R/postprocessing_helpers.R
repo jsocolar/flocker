@@ -1,4 +1,4 @@
-#' Prepare probability components for two-level post-processing
+#' Prepare linear predictors for two-level post-processing
 #' @noRd
 prepare_twolevel_postprocessing <- function(
     flocker_fit, lik_type, draw_ids, new_data, allow_new_levels,
@@ -11,7 +11,7 @@ prepare_twolevel_postprocessing <- function(
   unit_lps <- fitted_flocker(
     flocker_fit, components = c("occ", "Omega"), draw_ids = draw_ids,
     new_data = new_data, allow_new_levels = allow_new_levels,
-    sample_new_levels = sample_new_levels, response = TRUE,
+    sample_new_levels = sample_new_levels, response = FALSE,
     unit_level = TRUE
   )
 
@@ -21,7 +21,7 @@ prepare_twolevel_postprocessing <- function(
     det_lps <- fitted_flocker(
       flocker_fit, components = "det", draw_ids = draw_ids,
       new_data = new_data, allow_new_levels = allow_new_levels,
-      sample_new_levels = sample_new_levels, response = TRUE,
+      sample_new_levels = sample_new_levels, response = FALSE,
       unit_level = FALSE
     )
   } else {
@@ -41,18 +41,18 @@ format_twolevel_postprocessing <- function(
     ) {
   n_unit <- flocker_data_data$ff_n_unit[1]
   unit_rows <- seq_len(n_unit)
-  Omega <- group_level_Omega(
+  Omega_lp <- group_level_Omega(
     unit_lps, lik_type, flocker_data_data, flocker_metadata
   )
-  n_group <- nrow(Omega)
-  n_draw <- ncol(Omega)
+  n_group <- nrow(Omega_lp)
+  n_draw <- ncol(Omega_lp)
   group_known_present <- flocker_data_data$ff_group_known_present[
     seq_len(n_group)
   ]
 
   if(lik_type == "twolevel_single") {
-    psi_all <- matrix(unit_lps$linpred_occ, nrow = n_unit)
-    theta_all <- if(is.null(det_lps)) NULL else det_lps$linpred_det
+    occ_lp <- matrix(unit_lps$linpred_occ, nrow = n_unit)
+    det_lp <- if(is.null(det_lps)) NULL else det_lps$linpred_det
     obs_use <- obs
     packed_group_id <- get_unit_group(flocker_data_data)
     group_id <- integer(n_unit)
@@ -64,35 +64,35 @@ format_twolevel_postprocessing <- function(
     unit_site <- flocker_metadata$unit_site
     group_id <- get_unit_group(flocker_data_data)
     n_site <- max(unit_site)
-    psi_array <- array(
+    occ_lp_array <- array(
       unit_lps$linpred_occ, dim = c(n_site, n_group, n_draw)
     )
-    psi_all <- matrix(NA_real_, nrow = n_unit, ncol = n_draw)
+    occ_lp <- matrix(NA_real_, nrow = n_unit, ncol = n_draw)
     for(i in unit_rows) {
-      psi_all[i, ] <- psi_array[unit_site[i], group_id[i], ]
+      occ_lp[i, ] <- occ_lp_array[unit_site[i], group_id[i], ]
     }
 
     if(is.null(det_lps)) {
-      theta_all <- NULL
+      det_lp <- NULL
       obs_use <- NULL
     } else {
       n_visit <- dim(obs)[2]
-      theta_array <- array(
+      det_lp_array <- array(
         det_lps$linpred_det, dim = c(n_site, n_visit, n_group, n_draw)
       )
-      theta_all <- array(NA_real_, dim = c(n_unit, n_visit, n_draw))
+      det_lp <- array(NA_real_, dim = c(n_unit, n_visit, n_draw))
       obs_use <- matrix(NA_real_, nrow = n_unit, ncol = n_visit)
       for(i in unit_rows) {
-        theta_all[i, , ] <- theta_array[unit_site[i], , group_id[i], ]
+        det_lp[i, , ] <- det_lp_array[unit_site[i], , group_id[i], ]
         obs_use[i, ] <- obs[unit_site[i], , group_id[i]]
       }
     }
   }
 
   list(
-    psi = psi_all,
-    theta = theta_all,
-    Omega = Omega,
+    occ_lp = occ_lp,
+    det_lp = det_lp,
+    Omega_lp = Omega_lp,
     group_id = group_id,
     group_known_present = group_known_present,
     obs = obs_use,

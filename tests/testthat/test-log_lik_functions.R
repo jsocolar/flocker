@@ -168,3 +168,30 @@ test_that("log_lik_flocker new_data argument works correctly", {
   expect_equal(dim(ll_newdata), dim(ll_default))
   expect_equal(ll_newdata, ll_default, tolerance = 1e-10)
 })
+
+test_that("two-level log likelihood remains finite for very small probabilities", {
+  n_unit <- 679L
+  occ_lp <- matrix(1000, nrow = n_unit, ncol = 1)
+  det_lp <- array(0, dim = c(n_unit, 2, 1))
+  obs <- matrix(0, nrow = n_unit, ncol = 2)
+
+  group_ll <- log_lik_twolevel_single_from_components(
+    occ_lp, det_lp, matrix(1000, nrow = 1),
+    rep(1L, n_unit), 1L, obs
+  )
+  expect_equal(group_ll[1, 1], n_unit * 2 * log(0.5))
+
+  n_visit <- 1500L
+  unit_obs <- matrix(0, nrow = 1, ncol = n_visit)
+  unit_obs[1, 1] <- 1
+  unit_obs[1, n_visit] <- NA
+  unit_det_lp <- array(0, dim = c(1, n_visit, 1))
+  unit_det_lp[1, n_visit, 1] <- NA
+  unit_ll <- log_lik_twolevel_single_from_components(
+    matrix(1000, nrow = 1),
+    unit_det_lp,
+    matrix(1000, nrow = 1), 1L, 1L,
+    unit_obs
+  )
+  expect_equal(unit_ll[1, 1], (n_visit - 1) * log(0.5))
+})
