@@ -910,6 +910,7 @@ test_that("two-level formula variables respect their data level", {
   )
 
   expect_silent(validate_meta_formula_variables(~ 1, fd))
+  expect_silent(validate_meta_formula_variables(~ 0 + Intercept + group_x, fd))
   expect_silent(validate_meta_formula_variables(~ group_x, fd))
   expect_error(
     validate_meta_formula_variables(~ species, fd),

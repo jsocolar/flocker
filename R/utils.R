@@ -689,8 +689,7 @@ validate_meta_formula_variables <- function(f_meta, flocker_data) {
     "level2_covs" %in% names(flocker_data),
     msg = "f_meta is only allowed for two-level models."
   )
-  meta_vars <- all.vars(f_meta)
-  meta_vars <- setdiff(meta_vars, flocker_reserved())
+  meta_vars <- setdiff(all.vars(f_meta), "Intercept")
   assertthat::assert_that(
     !(flocker_data$level2_group %in% meta_vars),
     msg = paste0(
