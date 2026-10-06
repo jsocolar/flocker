@@ -224,14 +224,17 @@ test_that("get_Z returns both levels for augmented models", {
   known_present <- example_flocker_model_aug$data$ff_group_known_present[
     seq_len(n_group)
   ]
+  n_observed <- sum(known_present)
+  n_aug <- n_group - n_observed
 
   conditioned <- get_Z(
     example_flocker_model_aug, draw_ids = 1:2
   )
   expected_names <- c(
-    paste0("observed_species", seq_len(10)),
-    paste0("pseudospecies", seq_len(10))
+    paste0("observed_species", seq_len(n_observed)),
+    paste0("pseudospecies", seq_len(n_aug))
   )
+  expect_equal(n_aug, 10)
   expect_named(conditioned, c("unit", "level2"))
   expect_equal(dim(conditioned$level2), c(n_group, 2L))
   expect_equal(rownames(conditioned$level2), expected_names)

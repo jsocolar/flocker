@@ -20,18 +20,25 @@ test_that("check log_lik functions work correctly", {
   
   testthat::skip_on_cran()
   
-  # augmented (20 species total, 8 draws)
+  # augmented (variable observed species plus 10 pseudospecies, 8 draws)
   ll_test <- log_lik_flocker(example_flocker_model_aug)
+  n_group <- example_flocker_model_aug$data$ff_n_group[1]
+  known_present <- example_flocker_model_aug$data$ff_group_known_present[
+    seq_len(n_group)
+  ]
+  n_observed <- sum(known_present)
+  n_aug <- n_group - n_observed
   expect_equal(dim(ll_test)[1], 16)
+  expect_equal(n_aug, 10)
   expect_equal(
     colnames(ll_test),
     c(
-      paste0("observed_species", seq_len(10)),
-      paste0("pseudospecies", seq_len(10))
+      paste0("observed_species", seq_len(n_observed)),
+      paste0("pseudospecies", seq_len(n_aug))
     )
   )
   
-  expect_equal(dim(ll_test)[2], 20)
+  expect_equal(dim(ll_test)[2], n_group)
   expect_equal(class(ll_test), c("matrix", "array"))
   expect_lte(max(ll_test), 0)
   expect_false(any(is.infinite(ll_test)))
