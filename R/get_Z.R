@@ -481,17 +481,15 @@ get_twolevel_states_from_components <- function(
     level2_prob <- matrix(NA_real_, nrow = n_group, ncol = n_draw)
 
     for(g in seq_len(n_group)) {
-      rows <- which(group_id == g)
-      p_y_available <- apply(
-        unit_lik_available[rows, , drop = FALSE], 2, prod
-      )
-      p_y_unavailable <- as.numeric(group_known_present[g] == 0)
       level2_prob[g, ] <- if(group_known_present[g] == 1) {
         rep(1, n_draw)
       } else {
+        rows <- which(group_id == g)
+        p_y_available <- apply(
+          unit_lik_available[rows, , drop = FALSE], 2, prod
+        )
         Omega[g, ] * p_y_available /
-          ((1 - Omega[g, ]) * p_y_unavailable +
-             Omega[g, ] * p_y_available)
+          ((1 - Omega[g, ]) + Omega[g, ] * p_y_available)
       }
     }
   }
