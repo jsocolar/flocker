@@ -35,13 +35,12 @@
 #'     levels not present in the original data, how should predictions be
 #'     handled? Passed directly to `brms::prepare_predictions`, which see.
 #' @param unit_level Logical; defaults to FALSE. Relevant only when `new_data`
-#'     is not a dataframe (i.e. it is `NULL` or a flocker_data object), and useful
-#'     only for multiseason models with missing seasons. If FALSE, returns in the 
-#'     shape of the observation matrix/array with NAs for missing visits. If
-#'     TRUE, returns in the shape of the first visit, and returns values for all
-#'     units that are not part of a trailing block of never-visited units,
-#'     including never-visited units that are part of series with subsequent 
-#'     visits.
+#'     is not a dataframe (i.e. it is `NULL` or a flocker_data object). If
+#'     FALSE, returns in the shape of the observation matrix/array with NAs for
+#'     missing visits. If TRUE, returns in the shape of the first visit, without
+#'     repeating unit-level values across visits. For multiseason models, this
+#'     also returns values for never-visited units that are not part of a
+#'     trailing block of never-visited units.
 #' @return A list of sets of expected values (one per component). If `new_data` 
 #'     is a dataframe, each element contains one row per row of `new_data`.
 #'     Otherwise, returns in the shape of the observation matrix/array used 

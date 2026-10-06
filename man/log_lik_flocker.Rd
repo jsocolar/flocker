@@ -15,7 +15,9 @@ log_lik_flocker(
 \arguments{
 \item{flocker_fit}{A flocker_fit object}
 
-\item{new_data}{optional new data at which to compute log likelihood}
+\item{new_data}{Optional new data at which to compute log likelihood. If
+supplied, it must be a flocker_data object produced by
+`make_flocker_data()`.}
 
 \item{allow_new_levels}{allow new levels for random effect terms in 
 'new_data'? Will error if set to 'FALSE' and new levels are provided in 

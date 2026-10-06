@@ -2,7 +2,8 @@
 # following (also contained in this file):
 # make_flocker_data_static for a single-season model,
 # make_flocker_data_dynamic for a multi-season model, or
-# make_flocker_data_augmented for a data-augmented model.
+# make_flocker_data_augmented for a data-augmented model, or
+# make_flocker_data_twolevel_single for a two-level single-season model.
 
 
 ##### make_flocker_data ####
@@ -24,16 +25,17 @@
 #'     The data must be packed so that, for a given unit (site, site-species, 
 #'  site-timestep, site-species-timestep) all realized visits come before any 
 #'  missing visits (NAs are trailing within their rows).
-#' @param unit_covs If \code{type = "single"} a dataframe of covariates for each 
-#' closure-unit that are constant across repeated sampling events within units.
+#' @param unit_covs If \code{type = "single"} or
+#'   \code{type = "twolevel_single"}, a dataframe of covariates for each
+#'   closure unit that are constant across repeated sampling events within
+#'   units. For \code{type = "twolevel_single"}, this must include the factor
+#'   column named by \code{level2_group}.
 #'   If \code{type = "multi"}, a list of such dataframes, one per timestep. All 
 #' dataframes must have identical column names and types, and all
 #' dataframes must have I rows.
 #'   If \code{type = "augmented"}, a dataframe of covariates for each site that
 #' are constant across repeated sampling events within sites (no dependence on
 #' species is allowed).
-#'   If \code{type = "twolevel_single"}, a dataframe with one row per closure
-#' unit, including the factor column named by \code{level2_group}.
 #' @param event_covs If \code{type = "single"} or
 #'   \code{type = "twolevel_single"}, a named list of I x J matrices, each one
 #'   corresponding to a covariate that varies across repeated sampling events
@@ -45,7 +47,7 @@
 #' corresponding to a covariate that varies across repeated sampling events
 #' within sites (no dependence on species is allowed).
 #' @param type The type of occupancy model desired. Options are:
-#'    \code{"single"} for a single_season model,
+#'    \code{"single"} for a single-season model,
 #'    \code{"multi"} for a multi-season (dynamic) model, or
 #'    \code{"augmented"} for a single-season multi-species model with 
 #'    data-augmentation for never-observed pseudospecies, or

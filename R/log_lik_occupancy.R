@@ -1,6 +1,8 @@
 #' Compute pointwise log-likelihood matrix for a flocker_fit object
 #' @param flocker_fit A flocker_fit object
-#' @param new_data optional new data at which to compute log likelihood
+#' @param new_data Optional new data at which to compute log likelihood. If
+#'   supplied, it must be a flocker_data object produced by
+#'   `make_flocker_data()`.
 #' @param allow_new_levels allow new levels for random effect terms in 
 #'    'new_data'? Will error if set to 'FALSE' and new levels are provided in 
 #'    'new_data'.

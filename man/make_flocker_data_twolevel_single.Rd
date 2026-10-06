@@ -34,16 +34,17 @@ as names on the third dimension. If omitted, observed species are named
 site-timestep, site-species-timestep) all realized visits come before any 
 missing visits (NAs are trailing within their rows).}
 
-\item{unit_covs}{If \code{type = "single"} a dataframe of covariates for each 
-closure-unit that are constant across repeated sampling events within units.
+\item{unit_covs}{If \code{type = "single"} or
+  \code{type = "twolevel_single"}, a dataframe of covariates for each
+  closure unit that are constant across repeated sampling events within
+  units. For \code{type = "twolevel_single"}, this must include the factor
+  column named by \code{level2_group}.
   If \code{type = "multi"}, a list of such dataframes, one per timestep. All 
 dataframes must have identical column names and types, and all
 dataframes must have I rows.
   If \code{type = "augmented"}, a dataframe of covariates for each site that
 are constant across repeated sampling events within sites (no dependence on
-species is allowed).
-  If \code{type = "twolevel_single"}, a dataframe with one row per closure
-unit, including the factor column named by \code{level2_group}.}
+species is allowed).}
 
 \item{event_covs}{If \code{type = "single"} or
   \code{type = "twolevel_single"}, a named list of I x J matrices, each one
