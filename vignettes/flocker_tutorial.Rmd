@@ -388,9 +388,9 @@ brms::conditional_effects(rep_constant)
 The following functions work on all model types available in `flocker`.
 
 ### Fitted values
-Fitted values for any of the distributional parameter (one or more of occupancy,
-detection, colonization, extinction, autologistic, and/or Omega, the fitted 
-probability that a given (pseudo)species occurs in the metacommunity) are
+Fitted values for any of the distributional parameters (one or more of occupancy,
+detection, colonization, extinction, autologistic, and/or Omega, the fitted
+level-two occupancy probability) are
 available via `fitted_flocker`. For example:
 
 
@@ -409,19 +409,26 @@ to `make_flocker_data()`, with posterior iterations stacked along its final
 dimension.
 
 ### The posterior occupancy state
-The function `get_Z()` returns the posterior distribution of occupancy probabilities across the closure-units. The shape of the output depends on the class of model, and is an array in the shape of the first visit in `obs` as passed to `make_flocker_data`, with posterior iterations stacked along the final dimension. Thus, for a single-season rep-varying model, the output is a matrix where rows are posterior iterations, columns are closure-units, and values are draws from the posterior distribution of occupancy probabilities:
+The function `get_Z()` returns the posterior distribution of occupancy probabilities across the closure-units. For one-level and multiseason models, the output is an array in the shape of the first visit in `obs` as passed to `make_flocker_data`, with posterior iterations stacked along the final dimension. Thus, for a single-season rep-varying model, the output is a matrix where rows are posterior iterations, columns are closure-units, and values are draws from the posterior distribution of occupancy probabilities:
 
 
 ``` r
 get_Z(rep_varying)
 ```
 
+For two-level models, `get_Z()` returns a list with elements `unit` and
+`level2`. The `unit` element has the unit-level shape described above, while
+`level2` is a matrix with one row per level-two group and posterior iterations
+in columns. When `sample = TRUE`, the two elements are sampled jointly, so a
+unit can never be occupied when its level-two group is absent.
+
 For all model types, `get_Z()` accepts an optional `new_data` argument. Leaving 
 the default `new_data = NULL` supplies the posterior for the true occupancy state 
 at the locations of the data used to fit the model. Otherwise, the posterior is 
-computed over the new data. For single-season models, `new_data` can be supplied 
-as a dataframe of unit covariate values or as a `flocker_data` object. For 
-multi-season models, only a `flocker_data` object is allowed. Note that if 
+computed over the new data. For one-level single-season models, `new_data` can
+be supplied as a dataframe of unit covariate values or as a `flocker_data`
+object. For two-level, augmented, and multiseason models, only a `flocker_data`
+object is allowed. Note that if
 predictions are desired at sites without observations, it is acceptable to pass 
 an array of dummy observations (e.g. all zeros) to `make_flocker_data()` and 
 then to set `history_condition = FALSE` in the call to `get_Z()`.

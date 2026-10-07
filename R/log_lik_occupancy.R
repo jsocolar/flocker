@@ -1,6 +1,8 @@
-#' Compute unit-wise or series-wise log-likelihood matrix for a flocker_fit object
+#' Compute pointwise log-likelihood matrix for a flocker_fit object
 #' @param flocker_fit A flocker_fit object
-#' @param new_data optional new data at which to compute log likelihood
+#' @param new_data Optional new data at which to compute log likelihood. If
+#'   supplied, it must be a flocker_data object produced by
+#'   `make_flocker_data()`.
 #' @param allow_new_levels allow new levels for random effect terms in 
 #'    'new_data'? Will error if set to 'FALSE' and new levels are provided in 
 #'    'new_data'.
@@ -9,13 +11,15 @@
 #'    handled? See '?brms::prepare_predictions' for options.
 #' @param draw_ids the draw ids to compute log-likelihoods for. Defaults to 
 #'    using the full posterior. 
-#' @return A posterior log-likelihood matrix, where iterations are rows and 
-#'    units, series, or species are columns.
-#' @details In single-season models, rows are units (e.g. points or 
-#'   species-points; suitable for leave-one-unit-out CV). In multiseason models, 
-#'   rows are series (i.e. points or species-points, suitable for 
-#'   leave-one-series-out CV). In augmented models, rows are species (suitable
-#'   for leave-one-species-out CV).
+#' @return A posterior log-likelihood matrix, where iterations are rows and
+#'   likelihood units are columns. For two-level models, columns are named with
+#'   the level-two group names.
+#' @details In one-level single-season models, columns are closure units (e.g.
+#'   points or species-points; suitable for leave-one-unit-out CV). In
+#'   multiseason models, columns are series (i.e. points or species-points;
+#'   suitable for leave-one-series-out CV). In `twolevel_single` models,
+#'   columns are level-two groups. In augmented models, columns are species
+#'   (suitable for leave-one-species-out CV).
 #' @export
 #' @examples 
 #' \dontrun{
@@ -62,7 +66,7 @@ log_lik_flocker <- function(
       response = TRUE, unit_level = FALSE
     )
     
-    psi_all <- lps$linpred_occ[ , 1, ] # first index is unit, second is visit, third is draw
+    psi_all <- first_column_draw_matrix(lps$linpred_occ)
     theta_all <- lps$linpred_det
     if (is.null(new_data)) {
       gp <- get_positions(flocker_fit)
@@ -91,39 +95,17 @@ log_lik_flocker <- function(
       flocker_fit, newdata = new_data$data, draw_ids = draw_ids, #note that if new_data is NULL, new_data$data is also NULL
       allow_new_levels = allow_new_levels,
       sample_new_levels = sample_new_levels)
-  } else if (lik_type == "augmented") {
-    if(is.null(new_data)){
-      gp <- get_positions(flocker_fit)
-      obs <- new_array(gp, flocker_fit$data$ff_y[gp])
-    } else {
-      gp <- get_positions(new_data)
-      obs <- new_array(gp, new_data$data$ff_y[gp])
-    }
-
-    lps <- fitted_flocker(
-      flocker_fit, draw_ids = draw_ids, new_data = new_data, 
-      allow_new_levels = allow_new_levels, 
-      sample_new_levels = sample_new_levels, 
-      response = TRUE, unit_level = FALSE
+  } else if (lik_type %in% c("twolevel_single", "augmented")) {
+    components <- prepare_twolevel_postprocessing(
+      flocker_fit, lik_type, draw_ids, new_data, allow_new_levels,
+      sample_new_levels, include_detection = TRUE
     )
-    psi_all <- lps$linpred_occ[ , 1, , ] # first index is point, second is visit, third is species, fourth is draw
-    Omega <- lps$linpred_Omega[1,1,,]
-    theta_all <- lps$linpred_det
-
-    # get emission likelihoods
-    el_0 <- el_1 <- new_array(psi_all)
-    for(j in seq_len(ncol(psi_all))){
-      for(i in seq_len(nslice(psi_all))){
-        el_0[ , j, i] <- emission_likelihood(0, obs[,,j], theta_all[,,j,i])
-        el_1[ , j, i] <- emission_likelihood(1, obs[,,j], theta_all[,,j,i])
-      }
-    }
-    
-    elw1 <- apply(log(el_0*(1 - psi_all) + el_1*psi_all), c(2, 3), function(x){exp(sum(x))})
-    elw0 <- replicate(ndraws, apply(obs, 3, function(x){prod(1 - x)}))
-    
-    ll <- log(elw1 * Omega + elw0 * (1 - Omega)) |>
+    ll <- log_lik_twolevel_single_from_components(
+      components$occ_lp, components$det_lp, components$Omega_lp,
+      components$group_id, components$group_known_present, components$obs
+    ) |>
       t()
+    colnames(ll) <- components$group_names
   } else if (lik_type %in% c("multi_colex")) {
     if(is.null(new_data)){
       gp <- get_positions(flocker_fit)
@@ -147,7 +129,7 @@ log_lik_flocker <- function(
       sample_new_levels = sample_new_levels,
       draw_ids = draw_ids, unit_level = TRUE
     )
-    init <- lps2$linpred_occ[,1,]
+    init <- first_column_draw_matrix(lps2$linpred_occ)
     colo <- lps2$linpred_col
     ex <- lps2$linpred_ex
     det <- lps1$linpred_det
@@ -178,7 +160,9 @@ log_lik_flocker <- function(
     )
     colo <- lps2$linpred_col
     ex <- lps2$linpred_ex
-    init <- colo[,1,] / (colo[,1,] + ex[,1,])
+    init_colo <- first_column_draw_matrix(colo)
+    init_ex <- first_column_draw_matrix(ex)
+    init <- init_colo / (init_colo + init_ex)
     det <- lps1$linpred_det
     ll <- log_lik_dynamic(init, colo, ex, obs, det) |>
       t()
@@ -205,7 +189,7 @@ log_lik_flocker <- function(
       sample_new_levels = sample_new_levels,
       draw_ids = draw_ids, unit_level = TRUE
     )
-    init <- lps2$linpred_occ[,1,]
+    init <- first_column_draw_matrix(lps2$linpred_occ)
     colo <- lps2$linpred_col
     ex <- 1 - boot::inv.logit(boot::logit(colo) + lps2$linpred_auto)
     det <- lps1$linpred_det
@@ -236,12 +220,80 @@ log_lik_flocker <- function(
     )
     colo <- lps2$linpred_col
     ex <- 1 - boot::inv.logit(boot::logit(colo) + lps2$linpred_auto)
-    init <- colo[,1,] / (colo[,1,] + ex[,1,])
+    init_colo <- first_column_draw_matrix(colo)
+    init_ex <- first_column_draw_matrix(ex)
+    init <- init_colo / (init_colo + init_ex)
     det <- lps1$linpred_det
     ll <- log_lik_dynamic(init, colo, ex, obs, det) |>
       t()
   }
   ll
+}
+
+#' Compute grouped log-likelihoods for two-level single-season models
+#' @noRd
+log_lik_twolevel_single_from_components <- function(
+    occ_lp, det_lp, Omega_lp, group_id, group_known_present, obs
+    ) {
+  assertthat::assert_that(inherits(obs, "matrix"))
+  assertthat::assert_that(
+    all(is.na(obs) | obs %in% 0:1)
+  )
+  assertthat::assert_that(is.matrix(occ_lp))
+  assertthat::assert_that(length(dim(det_lp)) == 3)
+  assertthat::assert_that(identical(dim(det_lp)[1:2], dim(obs)))
+  assertthat::assert_that(is.matrix(Omega_lp))
+
+  n_unit <- nrow(occ_lp)
+  n_visit <- ncol(obs)
+  n_draw <- ncol(occ_lp)
+  n_group <- nrow(Omega_lp)
+  assertthat::assert_that(dim(det_lp)[3] == n_draw)
+  assertthat::assert_that(identical(dim(Omega_lp), c(n_group, n_draw)))
+
+  log_el_0 <- matrixStats::rowSums2(log1p(-obs), na.rm = TRUE)
+  log_unit_lik_available <- matrix(
+    NA_real_, nrow = n_unit, ncol = n_draw
+  )
+  for(i in seq_len(n_draw)) {
+    det_lp_draw <- matrix(
+      det_lp[, , i, drop = FALSE], nrow = n_unit, ncol = n_visit
+    )
+    assertthat::assert_that(
+      all(which(is.na(det_lp_draw)) %in% which(is.na(obs)))
+    )
+    log_event_lik_1 <- ifelse(
+      obs == 1,
+      log_inv_logit(det_lp_draw),
+      log1m_inv_logit(det_lp_draw)
+    )
+    log_el_1 <- matrixStats::rowSums2(log_event_lik_1, na.rm = TRUE)
+    log_unit_lik_available[, i] <- matrixStats::rowLogSumExps(
+      cbind(
+        log1m_inv_logit(occ_lp[, i]) + log_el_0,
+        log_inv_logit(occ_lp[, i]) + log_el_1
+      )
+    )
+  }
+
+  out <- matrix(NA_real_, nrow = n_group, ncol = n_draw)
+  for(g in seq_len(n_group)) {
+    rows <- group_id == g
+    log_p_y_available <- matrixStats::colSums2(
+      log_unit_lik_available[rows, , drop = FALSE]
+    )
+    log_p_group_available <-
+      log_inv_logit(Omega_lp[g, ]) + log_p_y_available
+    out[g, ] <- if(group_known_present[g] == 1) {
+      log_p_group_available
+    } else {
+      matrixStats::rowLogSumExps(
+        cbind(log1m_inv_logit(Omega_lp[g, ]), log_p_group_available)
+      )
+    }
+  }
+
+  out
 }
 
 #' A log-likelihood function for the rep-constant occupancy model, sufficient for
@@ -366,4 +418,3 @@ log_lik_dynamic <- function(init, colo, ex, obs, det){
   assertthat::assert_that(!(NA %in% out))
   out
 }
-

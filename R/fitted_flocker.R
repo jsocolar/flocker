@@ -35,13 +35,12 @@
 #'     levels not present in the original data, how should predictions be
 #'     handled? Passed directly to `brms::prepare_predictions`, which see.
 #' @param unit_level Logical; defaults to FALSE. Relevant only when `new_data`
-#'     is not a dataframe (i.e. it is `NULL` or a flocker_data object), and useful
-#'     only for multiseason models with missing seasons. If FALSE, returns in the 
-#'     shape of the observation matrix/array with NAs for missing visits. If
-#'     TRUE, returns in the shape of the first visit, and returns values for all
-#'     units that are not part of a trailing block of never-visited units,
-#'     including never-visited units that are part of series with subsequent 
-#'     visits.
+#'     is not a dataframe (i.e. it is `NULL` or a flocker_data object). If
+#'     FALSE, returns in the shape of the observation matrix/array with NAs for
+#'     missing visits. If TRUE, returns in the shape of the first visit, without
+#'     repeating unit-level values across visits. For multiseason models, this
+#'     also returns values for never-visited units that are not part of a
+#'     trailing block of never-visited units.
 #' @return A list of sets of expected values (one per component). If `new_data` 
 #'     is a dataframe, each element contains one row per row of `new_data`.
 #'     Otherwise, returns in the shape of the observation matrix/array used 
@@ -113,6 +112,7 @@ fitted_flocker <- function(
   }
   
   model_type <- type_flocker_fit(flocker_fit)
+  dt <- attributes(flocker_fit)$data_type
   relevant_components <- params_by_type[[model_type]]
   if("col" %in% components){components[components == "col"] <- "colo"}
   
@@ -244,14 +244,14 @@ fitted_flocker <- function(
   if(is.null(new_data)) {
     gp <- get_positions(flocker_fit, unit_level = unit_level)
     out <- lapply(cl2, reshape_fun, gp = gp)
+    names(out) <- names(cl2)
   } else if (is_flocker_data(new_data)) {
     gp <- get_positions(new_data, unit_level = unit_level)
     out <- lapply(cl2, reshape_fun, gp = gp)
+    names(out) <- names(cl2)
   } else {
     out <- cl2
   }
-  
-  dt <- attributes(flocker_fit)$data_type
   
   if(is.null(new_data) | is_flocker_data(new_data)) {
     dn <- list(
@@ -284,6 +284,7 @@ fitted_flocker <- function(
   for(i in seq_along(out)){
     dimnames(out[[i]]) <- dn
   }
+  attr(out, "unit_level") <- unit_level
   out
 }
 
@@ -306,14 +307,18 @@ summarise_fun <- function(x, CI) {
 #' @noRd
 reshape_fun <- function(x, gp) {
   assertthat::assert_that(is.matrix(x) | is.data.frame(x))
+  gp_dim <- dim(gp)
+  if(is.null(gp_dim)) {
+    gp_dim <- length(gp)
+  }
   ai <- list()
   for(i in seq_len(ncol(x))) {
-    ai[[i]] <- array(x[,i][gp], dim = dim(gp))
+    ai[[i]] <- array(x[,i][gp], dim = gp_dim)
   }
   if(ncol(x) > 1) {
     arr_dim <- length(dim(ai[[1]]))
     return(abind::abind(ai, along = arr_dim + 1))
   } else {
-    return(ai[[1]]) 
+    return(array(ai[[1]], dim = c(dim(ai[[1]]), 1)))
   }
 }

@@ -10,3 +10,4 @@
 ^cran-comments\.md$
 ^vignettes/articles$
 ^CRAN-SUBMISSION$
+^\.codex$

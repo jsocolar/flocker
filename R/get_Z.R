@@ -13,15 +13,21 @@
 #' @param new_data Optional new data at which to predict the Z matrix. Can be 
 #'     the output of `make_flocker_data` or the `unit_covs` input to 
 #'     `make_flocker_data` provided that `history_condition` is `FALSE` and the 
-#'     occupancy model is a single-season, non-augmented model.
+#'     occupancy model is a one-level single-season model. Two-level,
+#'     augmented, and multiseason models require a `flocker_data` object.
 #' @param allow_new_levels allow new levels for random effect terms in `new_data`?
 #'     Will error if set to `FALSE` and new levels are provided in `new_data`.
 #' @param sample_new_levels If `new_data` is provided and contains random effect
 #'     levels not present in the original data, how should predictions be
 #'     handled? Passed directly to `brms::prepare_predictions`, which see. 
-#' @return The posterior Z matrix in the shape of the first visit in `obs` as
-#'     passed to make_flocker_data, with posterior iterations stacked along the
-#'     final dimension
+#' @return For one-level and multiseason models, the posterior Z matrix in the
+#'     shape of the first visit in `obs` as passed to make_flocker_data, with
+#'     posterior iterations stacked along the final dimension. For
+#'     `twolevel_single` and `augmented` models, a list with elements `unit` and
+#'     `level2`. The `unit` element has that same unit-level shape, and the
+#'     `level2` element is a matrix with one row per level-two group and
+#'     posterior iterations in columns. Group dimensions are named using the
+#'     level-two grouping factor, or species names for augmented models.
 #' @export
 #' @examples
 #' \dontrun{
@@ -43,6 +49,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
   lik_type <- type_flocker_fit(flocker_fit)
   is_multi <- fdtl()$data_output_type[fdtl()$model_type == lik_type] == "multi"
   is_aug <- fdtl()$data_output_type[fdtl()$model_type == lik_type] == "augmented"
+  is_twolevel <- fdtl()$data_output_type[fdtl()$model_type == lik_type] == "twolevel_single"
   assertthat::assert_that(
     !is_multi | is_flocker_data(new_data) | is.null(new_data),
     msg = "using the `new_data` argument for a multiseason model requires passing a `flocker_data` object, not a dataframe"
@@ -50,6 +57,10 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
   assertthat::assert_that(
     !is_aug | is_flocker_data(new_data) | is.null(new_data),
     msg = "using the `new_data` argument for a data-augmented model requires passing a `flocker_data` object, not a dataframe"
+  )
+  assertthat::assert_that(
+    !is_twolevel | is_flocker_data(new_data) | is.null(new_data),
+    msg = "using the `new_data` argument for a two-level model requires passing a `flocker_data` object, not a dataframe"
   )
   
   if (is.null(draw_ids)) {
@@ -61,13 +72,15 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
   if(history_condition) {
     use_components <- c("occ", "det", "col", "ex", "auto", "Omega")
     
-    if(lik_type != "single_C"){
+    if(lik_type %in% c("twolevel_single", "augmented")) {
+      obs <- NULL
+    } else if(lik_type != "single_C"){
       if(is.null(new_data)){
         gp <- get_positions(flocker_fit)
         obs <- new_array(gp, flocker_fit$data$ff_y[gp])
       } else {
         gp <- get_positions(new_data)
-        obs <- new_array(gp, flocker_fit$data$ff_y[gp])
+        obs <- new_array(gp, new_data$data$ff_y[gp])
       }
     } else { # lik_type is single_C
       if(is.null(new_data)){
@@ -93,21 +106,18 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
       sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
     )
     Z <- get_Z_single_C(lps, sample, history_condition, obs)
-  } else if (lik_type == "augmented") {
-    lps <- fitted_flocker(
-      flocker_fit,
-      components = use_components, 
-      draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
-      sample_new_levels = sample_new_levels, response = FALSE, unit_level = FALSE
+  } else if (lik_type %in% c("twolevel_single", "augmented")) {
+    Z <- get_twolevel_states(
+      flocker_fit, lik_type, draw_ids, history_condition, sample,
+      new_data, allow_new_levels, sample_new_levels
     )
-    Z <- get_Z_augmented(lps, sample, history_condition, obs)
   } else if (lik_type %in% c("multi_colex")) {
     lps2 <- fitted_flocker(
       flocker_fit, components = c("occ", "colo", "ex"),
       draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
       sample_new_levels = sample_new_levels, response = TRUE, unit_level = TRUE
     )
-    init <- lps2$linpred_occ[,1,]
+    init <- first_column_draw_matrix(lps2$linpred_occ)
     colo <- lps2$linpred_col
     ex <- lps2$linpred_ex
     if(history_condition){
@@ -139,7 +149,9 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     )
     colo <- lps2$linpred_col
     ex <- lps2$linpred_ex
-    init <- colo[,1,] / (colo[,1,] + ex[,1,])
+    init_colo <- first_column_draw_matrix(colo)
+    init_ex <- first_column_draw_matrix(ex)
+    init <- init_colo / (init_colo + init_ex)
     Z <- get_Z_dynamic(init, colo, ex, history_condition, sample, obs, det)
   } else if (lik_type == "multi_autologistic") {
     if(history_condition){
@@ -157,7 +169,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
       draw_ids = draw_ids, new_data = new_data, allow_new_levels = allow_new_levels, 
       sample_new_levels = sample_new_levels, response = TRUE, unit_level = TRUE
     )
-    init <- lps2$linpred_occ[,1,]
+    init <- first_column_draw_matrix(lps2$linpred_occ)
     colo <- lps2$linpred_col
     ex <- 1 - boot::inv.logit(boot::logit(colo) + lps2$linpred_auto)
     Z <- get_Z_dynamic(init, colo, ex, history_condition, sample, obs, lps1$linpred_det)
@@ -179,11 +191,62 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     )
     colo <- lps2$linpred_col
     ex <- 1 - boot::inv.logit(boot::logit(colo) + lps2$linpred_auto)
-    init <- colo[,1,] / (colo[,1,] + ex[,1,])
+    init_colo <- first_column_draw_matrix(colo)
+    init_ex <- first_column_draw_matrix(ex)
+    init <- init_colo / (init_colo + init_ex)
     Z <- get_Z_dynamic(init, colo, ex, history_condition, sample, obs, lps1$linpred_det)
   }
   class(Z) <- c("postZ", class(Z))
   Z
+}
+
+#' Get unit- and level-two occupancy states for a two-level model
+#' @noRd
+get_twolevel_states <- function(
+    flocker_fit, lik_type, draw_ids, history_condition, sample,
+    new_data, allow_new_levels, sample_new_levels
+    ) {
+  components <- prepare_twolevel_postprocessing(
+    flocker_fit, lik_type, draw_ids, new_data, allow_new_levels,
+    sample_new_levels, include_detection = history_condition
+  )
+  psi <- boot::inv.logit(components$occ_lp)
+  theta <- if(history_condition) {
+    boot::inv.logit(components$det_lp)
+  } else {
+    NULL
+  }
+  Omega <- boot::inv.logit(components$Omega_lp)
+  states <- get_twolevel_states_from_components(
+    psi, theta, Omega,
+    components$group_id, components$group_known_present,
+    sample, history_condition, components$obs
+  )
+
+  if(lik_type == "augmented") {
+    n_draw <- ncol(Omega)
+    unit_rows <- seq_len(nrow(psi))
+    unit_states <- array(
+      NA_real_, dim = c(components$n_site, nrow(Omega), n_draw)
+    )
+    for(i in unit_rows) {
+      unit_states[
+        components$unit_site[i], components$group_id[i],
+      ] <- states$unit[i, ]
+    }
+    states$unit <- unit_states
+  }
+
+  rownames(states$level2) <- components$group_names
+  if(lik_type == "augmented") {
+    unit_dimnames <- dimnames(states$unit)
+    if(is.null(unit_dimnames)) {
+      unit_dimnames <- vector("list", length(dim(states$unit)))
+    }
+    unit_dimnames[[2]] <- components$group_names
+    dimnames(states$unit) <- unit_dimnames
+  }
+  states
 }
 
 #' get Z matrix for single-season model
@@ -196,7 +259,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
 #' @noRd
 get_Z_single <- function(lps, sample, history_condition, obs = NULL){
   if(length(dim(lps$linpred_occ)) == 3) { # from flockerdata
-    lpo <- lps$linpred_occ[ , 1, ] # first index is unit, second is visit, third is draw
+    lpo <- first_column_draw_matrix(lps$linpred_occ)
   } else { # from data.frame
     assertthat::assert_that(length(dim(lps$linpred_occ)) == 2)
     lpo <- lps$linpred_occ
@@ -243,7 +306,7 @@ get_Z_single <- function(lps, sample, history_condition, obs = NULL){
 #' @noRd
 get_Z_single_C <- function(lps, sample, history_condition, obs = NULL){
   if(length(dim(lps$linpred_occ)) == 3) { # from flockerdata
-    lpo <- lps$linpred_occ[ , 1, ] # first index is unit, second is visit, third is draw
+    lpo <- first_column_draw_matrix(lps$linpred_occ)
   } else { # from data.frame
     assertthat::assert_that(length(dim(lps$linpred_occ)) == 2)
     lpo <- lps$linpred_occ
@@ -259,7 +322,7 @@ get_Z_single_C <- function(lps, sample, history_condition, obs = NULL){
       Z <- psi_all
     }
   } else {
-    theta_all <- boot::inv.logit(lps$linpred_det[ , 1, ])
+    theta_all <- boot::inv.logit(first_column_draw_matrix(lps$linpred_det))
     
     # get emission likelihoods
     el_0 <- el_1 <- new_matrix(psi_all)
@@ -286,73 +349,57 @@ get_Z_single_C <- function(lps, sample, history_condition, obs = NULL){
   Z
 }
 
-#' get Z matrix for data-augmented model
-#' @param lps the linear predictors from the model
-#' @param sample logical: return fitted probabilities or bernoulli samples
-#' @param history_condition logical: condition on the observed history?
-#' @param obs if history_condition is true, the observed histories
-#' @param quiet suppress messages and text bar when computing emission probabilties
-#' @return an array of fitted Z probabilities or sampled Z values. Rows are
-#'   units and columns are posterior iterations.
+#' Get unit- and level-two Z for two-level models from probability components
 #' @noRd
-get_Z_augmented <- function(lps, sample, history_condition, obs = NULL, quiet = TRUE){
-  lpo <- lps$linpred_occ[ , 1, , ] # first index is point, second is visit, third is species, fourth is draw
-  n_point <- nrow(lpo)
-  n_species <- ncol(lpo)
-  n_unit <- n_point * n_species
-  psi_all <- boot::inv.logit(lpo)
-  Omega <- boot::inv.logit(lps$linpred_Omega[1,1,,])
-  
-  if (!history_condition){
-    if(sample) {
-      Z1 <- new_array(psi_all, stats::rbinom(length(psi_all), 1, psi_all))
-      Z2 <- new_matrix(Omega, stats::rbinom(length(Omega), 1, Omega))
-    } else {
-      Z1 <- psi_all
-      Z2 <- Omega
-    }
+get_twolevel_states_from_components <- function(
+    psi_all, theta_all, Omega, group_id, group_known_present,
+    sample, history_condition, obs = NULL
+    ) {
+  n_unit <- nrow(psi_all)
+  n_draw <- ncol(psi_all)
+  n_group <- nrow(Omega)
+  if(!history_condition) {
+    level2_prob <- Omega
+    unit_given_level2_prob <- psi_all
   } else {
-    theta_all <- boot::inv.logit(lps$linpred_det)
-    
-    # get emission likelihoods
-    el_0 <- el_1 <- new_array(psi_all)
-    
-    if(! quiet){
-      message("computing emission probabilities")
-      pb <- utils::txtProgressBar(max = ncol(psi_all))
-    }
+    emissions <- occupancy_emission_components(psi_all, theta_all, obs)
+    unit_given_level2_prob <- Z_from_emission(
+      emissions$unavailable, emissions$available, psi_all
+    )
+    level2_prob <- matrix(NA_real_, nrow = n_group, ncol = n_draw)
 
-    for(j in seq_len(ncol(psi_all))){
-      if(! quiet){
-        utils::setTxtProgressBar(pb, j)
+    for(g in seq_len(n_group)) {
+      level2_prob[g, ] <- if(group_known_present[g] == 1) {
+        rep(1, n_draw)
+      } else {
+        rows <- which(group_id == g)
+        p_y_available <- apply(
+          emissions$unit_lik_available[rows, , drop = FALSE], 2, prod
+        )
+        Omega[g, ] * p_y_available /
+          ((1 - Omega[g, ]) + Omega[g, ] * p_y_available)
       }
-      for(i in seq_len(nslice(psi_all))){
-        el_0[ , j, i] <- emission_likelihood(0, obs[,,j], theta_all[,,j,i])
-        el_1[ , j, i] <- emission_likelihood(1, obs[,,j], theta_all[,,j,i])
-      }
-    }
-    # history-conditioned probabilities, given species is in metacommunity
-    hc <- Z_from_emission(el_0, el_1, psi_all)
-    if(sample) {
-      Z1 <- new_array(psi_all, stats::rbinom(length(hc), 1, hc))
-    } else {
-      Z1 <- hc
-    }
-    # history-conditioned Omegas
-    log_lik_absent <- apply(log(el_0), c(2,3), sum)
-    log_lik_present <- apply(log(el_1), c(2,3), sum)
-    hc2 <- exp(log_lik_present - apply(abind::abind(log_lik_absent, log_lik_present, along = 3), c(1,2), matrixStats::logSumExp))
-    if(sample){
-      Z2 <- new_matrix(hc2, stats::rbinom(length(hc2), 1, hc2))
-    } else {
-      Z2 <- hc2
     }
   }
-  Z <- new_array(Z1)
-  for(i in seq_len(nrow(Z))){
-    Z[i,,] <- Z1[i,,] * Z2
+
+  if(sample) {
+    level2_Z <- matrix(
+      stats::rbinom(length(level2_prob), 1, level2_prob),
+      nrow = n_group
+    )
+    unit_given_level2_Z <- matrix(
+      stats::rbinom(
+        length(unit_given_level2_prob), 1, unit_given_level2_prob
+      ),
+      nrow = n_unit
+    )
+  } else {
+    level2_Z <- level2_prob
+    unit_given_level2_Z <- unit_given_level2_prob
   }
-  Z
+
+  unit_Z <- unit_given_level2_Z * level2_Z[group_id, , drop = FALSE]
+  list(unit = unit_Z, level2 = level2_Z)
 }
 
 #' get Z matrix for dynamic model

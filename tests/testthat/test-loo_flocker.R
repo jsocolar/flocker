@@ -36,6 +36,14 @@ test_that("loo_flocker_onefit works correctly", {
   expect_identical(test_loo, test_loo_alt)
 })
 
+test_that("loo_flocker names two-level pointwise values by group", {
+  testthat::skip_on_cran()
+  suppressWarnings(
+    test_loo <- loo_flocker(example_flocker_model_twolevel)
+  )
+  expect_equal(rownames(test_loo$pointwise), letters[1:3])
+})
+
 test_that("loo_compare_flocker works correctly", {
   # check error
   expect_error(loo_compare_flocker(list(example_flocker_model_single2)), "model_list must contain at least two flocker_fit objects.")

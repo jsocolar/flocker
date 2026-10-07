@@ -2,33 +2,44 @@
 # following (also contained in this file):
 # make_flocker_data_static for a single-season model,
 # make_flocker_data_dynamic for a multi-season model, or
-# make_flocker_data_augmented for a data-augmented model.
+# make_flocker_data_augmented for a data-augmented model, or
+# make_flocker_data_twolevel_single for a two-level single-season model.
 
 
 ##### make_flocker_data ####
 #' Format data for occupancy model with \code{flock()}.
-#' @param obs If \code{type = "single"}, an I x J matrix-like object where 
-#'  closure is assumed across rows and columns are repeated sampling events. 
+#' @param obs If \code{type = "single"} or \code{type = "twolevel_single"},
+#'  an I x J matrix-like object where closure is assumed across rows and columns
+#'  are repeated sampling events.
 #'    If \code{type = "multi"}, an I x J x K array where rows are sites or 
 #'  species-sites, columns are repeated sampling events, and slices along the 
 #'  third dimension are seasons. Allowable values are 1 (detection), 0 (no 
 #'  detection), and NA (no sampling event).
 #'     If \code{type = "augmented"}, an L x J x K array where rows L are sites, 
-#'  columns J are repeat sampling events, and slices K are species. 
+#'  columns J are repeat sampling events, and slices K are species. Every
+#'  supplied species must have at least one detection; never-observed
+#'  pseudospecies are added through \code{n_aug}. Species names may be supplied
+#'  as names on the third dimension. If omitted, observed species are named
+#'  `species1`, `species2`, and so on. Names matching
+#'  `pseudospecies[digits]` are reserved for augmented pseudospecies.
 #'     The data must be packed so that, for a given unit (site, site-species, 
 #'  site-timestep, site-species-timestep) all realized visits come before any 
 #'  missing visits (NAs are trailing within their rows).
-#' @param unit_covs If \code{type = "single"} a dataframe of covariates for each 
-#' closure-unit that are constant across repeated sampling events within units.
+#' @param unit_covs If \code{type = "single"} or
+#'   \code{type = "twolevel_single"}, a dataframe of covariates for each
+#'   closure unit that are constant across repeated sampling events within
+#'   units. For \code{type = "twolevel_single"}, this must include the factor
+#'   column named by \code{level2_group}.
 #'   If \code{type = "multi"}, a list of such dataframes, one per timestep. All 
 #' dataframes must have identical column names and types, and all
 #' dataframes must have I rows.
 #'   If \code{type = "augmented"}, a dataframe of covariates for each site that
 #' are constant across repeated sampling events within sites (no dependence on
 #' species is allowed).
-#' @param event_covs If \code{type = "single"}, a named list of I x J matrices, 
-#' each one corresponding to a covariate that varies across repeated sampling 
-#' events within closure-units.
+#' @param event_covs If \code{type = "single"} or
+#'   \code{type = "twolevel_single"}, a named list of I x J matrices, each one
+#'   corresponding to a covariate that varies across repeated sampling events
+#'   within closure-units.
 #'   If \code{type = "multi"}, a named list of I x J x K arrays, each one 
 #' corresponding to a covariate that varies across repeated sampling events 
 #' within closure-units.
@@ -36,12 +47,21 @@
 #' corresponding to a covariate that varies across repeated sampling events
 #' within sites (no dependence on species is allowed).
 #' @param type The type of occupancy model desired. Options are:
-#'    \code{"single"} for a single_season model,
+#'    \code{"single"} for a single-season model,
 #'    \code{"multi"} for a multi-season (dynamic) model, or
 #'    \code{"augmented"} for a single-season multi-species model with 
-#'    data-augmentation for never-observed pseudospecies.
+#'    data-augmentation for never-observed pseudospecies, or
+#'    \code{"twolevel_single"} for a two-level single-season model.
 #' @param n_aug Number of pseudo-species to augment. Only applicable if 
 #'    \code{type = "augmented"}.
+#' @param level2_group The name of a factor column in \code{unit_covs} and, if
+#'    supplied, \code{level2_covs}, identifying the level-two group. Only
+#'    applicable if \code{type = "twolevel_single"}.
+#' @param level2_covs An optional dataframe with one row per level-two group
+#'    and no unused levels in its grouping factor. Row order is arbitrary;
+#'    factor-level order determines the internal group order, and every group
+#'    must be represented in \code{unit_covs}. Only applicable if
+#'    \code{type = "twolevel_single"}.
 #' @param quiet Hide progress bars and informational messages?
 #' @param newdata_checks If TRUE, turn off checks that must pass in order
 #' to use the data for model fitting, but not in other contexts (e.g. making
@@ -57,8 +77,10 @@
 #' )
 make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
                               type = "single", n_aug = NULL,
-                              quiet = FALSE, newdata_checks = FALSE) {
-  standard_mfd_checks(obs, unit_covs, event_covs, type, n_aug, quiet, newdata_checks)
+                              quiet = FALSE, newdata_checks = FALSE,
+                              level2_group = NULL, level2_covs = NULL) {
+  standard_mfd_checks(obs, unit_covs, event_covs, type, n_aug, quiet, newdata_checks,
+                      level2_group, level2_covs)
 
   if (!quiet) {
     if (type == "single") {
@@ -77,6 +99,11 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
                      "details, see make_flocker_data_augmented.  All warnings and ",
                      "error messages should be interpreted in the context of ",
                      "make_flocker_data_augmented"))
+    } else if (type == "twolevel_single") {
+      message(paste0("Formatting data for a two-level single-season occupancy ",
+                     "model. For details, see make_flocker_data_twolevel_single. ",
+                     "All warnings and error messages should be interpreted in ",
+                     "the context of make_flocker_data_twolevel_single"))
     }
   }
   
@@ -95,6 +122,12 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
   } else if (type == "augmented") {
     out <- make_flocker_data_augmented(
       obs, n_aug, unit_covs, event_covs, quiet, newdata_checks)
+    out$unit_covs <- names(unit_covs)
+    out$event_covs <- names(event_covs)
+  } else if (type == "twolevel_single") {
+    out <- make_flocker_data_twolevel_single(
+      obs, unit_covs, event_covs, level2_group, level2_covs,
+      quiet, newdata_checks)
     out$unit_covs <- names(unit_covs)
     out$event_covs <- names(event_covs)
   }
@@ -180,6 +213,7 @@ make_flocker_data_static <- function(
     out <- list(data = flocker_data, n_rep = n_rep,
                 type = "single")
   }
+  out$flocker_version <- flocker_version()
   class(out) <- c("list", "flocker_data")
   out
 }
@@ -355,6 +389,7 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
   
   out <- list(data = flocker_data, n_rep = n_rep, n_year = n_year,
               type = "multi")
+  out$flocker_version <- flocker_version()
   class(out) <- c("list", "flocker_data")
   out
 }
@@ -365,7 +400,12 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
 #'  \code{flock()}.
 #' @param obs An I x J x K array where rows I are sites, columns J are 
 #'  repeat sampling events, and slices K are species. Allowable values are 1 
-#'  (detection), 0 (no detection), and NA (no sampling event).
+#'  (detection), 0 (no detection), and NA (no sampling event). Every supplied
+#'  species must have at least one detection; never-observed pseudospecies are
+#'  added through \code{n_aug}. Species names may be supplied as names on the
+#'  third dimension. If omitted, observed species are named `species1`,
+#'  `species2`, and so on. Names matching `pseudospecies[digits]` are
+#'  reserved for augmented pseudospecies.
 #'   The data must be formatted so that all NAs are trailing within their rows.
 #' @param n_aug Number of pseudospecies to augment
 #' @param site_covs A dataframe of covariates for each site that are constant 
@@ -382,10 +422,18 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
                                         event_covs = NULL, quiet = FALSE, 
                                         newdata_checks = FALSE) {
   standard_mfd_checks(obs, site_covs, event_covs, "augmented", n_aug, quiet, newdata_checks)
+  n_observed_species <- dim(obs)[3]
+  observed_species_names <- dimnames(obs)[[3]]
+  if (is.null(observed_species_names)) {
+    observed_species_names <- paste0("species", seq_len(n_observed_species))
+  }
+  group_names <- c(
+    observed_species_names,
+    paste0("pseudospecies", seq_len(n_aug))
+  )
   obs1 <- obs[,,1]
   n_rep <- ncol(obs1)
-  n_sp_obs <- dim(obs)[3]
-  n_sp <- n_sp_obs + n_aug
+  n_sp <- dim(obs)[3] + n_aug
   n_site <- dim(obs)[1]
   aug_slice <- obs1
   aug_slice[!is.na(aug_slice)] <- 0
@@ -393,55 +441,182 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
   for (i in 1:n_aug) {
     obs <- abind::abind(obs, aug_slice, along = 3)
   }
-  
   obs <- expand_array_3D(obs)
-  
-  flocker_data <- data.frame(ff_y = expand_matrix(obs))
+  ff_species <- factor(rep(seq_len(n_sp), each = n_site), levels = seq_len(n_sp))
+  ff_site <- rep(seq_len(n_site), n_sp)
+  unit_covs <- data.frame(ff_species = ff_species)
   if (!is.null(site_covs)) {
-    site_covs_stacked <- stack_matrix(site_covs, n_rep*n_sp)
-    flocker_data <- cbind(flocker_data, site_covs_stacked)
+    unit_covs <- cbind(unit_covs, stack_matrix(site_covs, n_sp))
   }
+  level2_covs <- data.frame(
+    ff_species = factor(seq_len(n_sp), levels = seq_len(n_sp))
+  )
+  event_covs2 <- NULL
   if (!is.null(event_covs)) {
-    event_covs <- lapply(event_covs, function(x){stack_matrix(x, n_sp)})
+    event_covs2 <- lapply(event_covs, function(x){stack_matrix(x, n_sp)})
+  }
+  
+  out <- make_flocker_data_twolevel_single_(
+    obs = obs,
+    unit_covs = unit_covs,
+    event_covs = event_covs2,
+    level2_covs = level2_covs,
+    level2_group = "ff_species"
+  )
+  out$type <- "augmented"
+  out$n_sp <- n_sp
+  out$level2_group_names <- group_names
+  out$level2_covs <- character(0)
+  out$unit_site <- ff_site[out$unit_order]
+  
+  class(out) <- c("list", "flocker_data")
+  out
+}
+
+##### make_flocker_data_twolevel_single #####
+
+#' Format data for two-level single-season occupancy model, to be passed to
+#' \code{flock()}.
+#' @inheritParams make_flocker_data
+#' @param level2_group The name of a factor column in \code{unit_covs} and, if
+#'   supplied, \code{level2_covs}, identifying the level-two group.
+#' @param level2_covs An optional dataframe with one row per level-two group
+#'   and no unused levels in its grouping factor. Row order is arbitrary;
+#'   factor-level order determines the internal group order, and every group
+#'   must be represented in \code{unit_covs}. If omitted, a minimal table is
+#'   constructed from the groups represented in \code{unit_covs}.
+#' @return A flocker_data list that can be passed as data to \code{flock()}.
+#' @export
+make_flocker_data_twolevel_single <- function(
+    obs, unit_covs, event_covs = NULL, level2_group, level2_covs = NULL,
+    quiet = FALSE, newdata_checks = FALSE
+    ) {
+  standard_mfd_checks(obs, unit_covs, event_covs, "twolevel_single", NULL,
+                      quiet, newdata_checks, level2_group, level2_covs)
+
+  make_flocker_data_twolevel_single_(
+    obs, unit_covs, event_covs, level2_group, level2_covs
+  )
+}
+
+make_flocker_data_twolevel_single_ <- function(
+    obs, unit_covs, event_covs, level2_group, level2_covs
+    ) {
+
+  if (is.null(level2_covs)) {
+    represented <- levels(droplevels(unit_covs[[level2_group]]))
+    level2_factor <- factor(
+      represented,
+      levels = represented,
+      ordered = is.ordered(unit_covs[[level2_group]])
+    )
+    level2_covs <- stats::setNames(data.frame(level2_factor), level2_group)
+  }
+
+  group_levels <- levels(level2_covs[[level2_group]])
+  n_group <- length(group_levels)
+  level2_covs <- level2_covs[
+    match(group_levels, as.character(level2_covs[[level2_group]])),
+    ,
+    drop = FALSE
+  ]
+  group_id <- match(as.character(unit_covs[[level2_group]]), group_levels)
+  unit_group_counts <- tabulate(group_id, nbins = n_group)
+
+  n_unit <- nrow(obs)
+  n_rep <- ncol(obs)
+
+  # Put one real unit from each group first so those rows can also supply the
+  # group-level predictors without adding synthetic covariate observations.
+  representative_units <- match(seq_len(n_group), group_id)
+  unit_order <- c(
+    representative_units,
+    setdiff(seq_len(n_unit), representative_units)
+  )
+  obs <- obs[unit_order, , drop = FALSE]
+  unit_covs <- unit_covs[unit_order, , drop = FALSE]
+  if (!is.null(event_covs)) {
+    event_covs <- lapply(event_covs, function(x) {
+      x[unit_order, , drop = FALSE]
+    })
+  }
+  group_id <- group_id[unit_order]
+
+  unit_known_present <- as.integer(matrixStats::rowSums2(obs, na.rm = TRUE) > 0)
+  group_known_present <- integer(n_group)
+  for (g in seq_len(n_group)) {
+    group_known_present[g] <- as.integer(any(unit_known_present[group_id == g] == 1))
+  }
+
+  # join level2 covariates onto the unit covariates
+  level2_unit_rows <- level2_covs[
+    match(as.character(unit_covs[[level2_group]]), group_levels),
+    setdiff(names(level2_covs), level2_group),
+    drop = FALSE
+  ]
+  unit_covs_all <- cbind(unit_covs, level2_unit_rows)
+
+  flocker_data <- data.frame(ff_y = expand_matrix(obs))
+  unit_covs_stacked <- do.call(
+    rbind,
+    replicate(n_rep, unit_covs_all, simplify = FALSE)
+  )
+  flocker_data <- cbind(flocker_data, unit_covs_stacked)
+  if (!is.null(event_covs)) {
     event_covs <- as.data.frame(lapply(event_covs, expand_matrix))
     flocker_data <- cbind(flocker_data, event_covs)
   }
-  
-  flocker_data$ff_n_unit <- c(nrow(obs), 
-                           rep(-99, nrow(obs) - 1))
-  flocker_data$ff_n_rep <- c(apply(obs, 1, function(x){sum(!is.na(x))}), 
-                          rep(-99, nrow(obs) * (n_rep - 1)))
-  flocker_data$ff_Q <- c(as.integer(rowSums(obs, na.rm = T) > 0),
-                      rep(-99, nrow(obs) * (n_rep - 1)))
-  
-  flocker_data$ff_n_sp <- c(n_sp, rep(-99, nrow(flocker_data)-1))
-  flocker_data$ff_species <- rep(rep(c(1:n_sp), each = n_site), n_rep)
-  flocker_data$ff_superQ <- c(rep(1, n_sp_obs), rep(0, n_aug), rep(-99, nrow(flocker_data) - n_sp))
-  
+
   # Prepare to add rep indices, and trim flocker_data to existing observations
-  flocker_data$ff_unit <- 1:nrow(obs)
-  flocker_data <- flocker_data[!is.na(flocker_data$ff_y), ]
-  rep_indices <- as.data.frame(matrix(data = -99, nrow = nrow(flocker_data),
-                                      ncol = n_rep))
-  names(rep_indices) <- paste0("ff_rep_index", 1:n_rep)
-  if(!quiet){
-    message("formatting rep indices")
-    pb <- utils::txtProgressBar(min = 0, max = nrow(obs), style = 3)
-  }
-  for (i in 1:nrow(obs)) {
-    rep_indices[i, 1:flocker_data$ff_n_rep[i]] <- which(flocker_data$ff_unit == i)
-    if(!quiet){
-      utils::setTxtProgressBar(pb, i)
-    }
-  }
-  if(!quiet){
-    close(pb)
-  }
+  is_not_na <- !is.na(flocker_data$ff_y)
+  rep_index_vec <- rep(-99L, length(is_not_na))
+  rep_index_vec[is_not_na] <- seq_len(sum(is_not_na))
+  rep_index_matrix <- matrix(rep_index_vec, nrow = n_unit)
+  flocker_data <- flocker_data[is_not_na, ]
+
+  n_data <- nrow(flocker_data)
+  flocker_data$ff_n_unit <- c(n_unit, rep(-99L, n_data - 1))
+  flocker_data$ff_n_rep <- c(
+    matrixStats::rowSums2(!is.na(obs)),
+    rep(-99L, n_data - n_unit)
+  )
+  flocker_data$ff_Q <- c(unit_known_present, rep(-99L, n_data - n_unit))
+  flocker_data$ff_n_group <- c(n_group, rep(-99L, n_data - 1))
+  flocker_data$ff_group_known_present <- c(
+    group_known_present,
+    rep(-99L, n_data - n_group)
+  )
+  flocker_data$ff_n_unit_group <- c(
+    unit_group_counts,
+    rep(-99L, n_data - n_group)
+  )
+  flocker_data$ff_unit <- c(seq_len(n_unit), rep(-99L, n_data - n_unit))
+
+  group_indices <- unlist(
+    lapply(seq_len(n_group), function(g) which(group_id == g)),
+    use.names = FALSE
+  )
+  flocker_data$ff_group_index <- c(
+    group_indices,
+    rep(-99L, n_data - n_unit)
+  )
+
+  rep_indices <- as.data.frame(matrix(
+    data = -99L,
+    nrow = n_data,
+    ncol = n_rep
+  ))
+  names(rep_indices) <- paste0("ff_rep_index", seq_len(n_rep))
+  rep_indices[seq_len(n_unit), ] <- rep_index_matrix
   flocker_data <- cbind(flocker_data, rep_indices)
-  
+
   out <- list(data = flocker_data, n_rep = n_rep,
-              type = "augmented")
-  
+              unit_order = unit_order,
+              level2_group = level2_group,
+              level2_group_names = group_levels,
+              level2_covs = setdiff(names(level2_covs), level2_group),
+              type = "twolevel_single")
+  out$flocker_version <- flocker_version()
   class(out) <- c("list", "flocker_data")
   out
 }
@@ -451,7 +626,8 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
 #' input checking for make_flocker_data
 #' @inheritParams make_flocker_data
 standard_mfd_checks <- function(
-    obs, unit_covs, event_covs, type, n_aug, quiet, newdata_checks
+    obs, unit_covs, event_covs, type, n_aug, quiet, newdata_checks,
+    level2_group = NULL, level2_covs = NULL
 ) {
   
   unique_y <- unique(obs)
@@ -741,6 +917,176 @@ standard_mfd_checks <- function(
     )
   }
   
+  #### twolevel_single checks ####
+  if(type == "twolevel_single"){
+    assertthat::assert_that(
+      length(dim(obs)) == 2,
+      msg = "in a two-level single-season model, obs must have exactly two dimensions"
+    )
+    assertthat::assert_that(
+      !is.null(unit_covs),
+      msg = "unit_covs must be supplied for two-level single-season models"
+    )
+    assertthat::assert_that(
+      is.data.frame(unit_covs),
+      msg = "unit_covs must be a dataframe"
+    )
+    assertthat::assert_that(
+      is.null(level2_covs) | is.data.frame(level2_covs),
+      msg = "level2_covs must be NULL or a dataframe"
+    )
+    assertthat::assert_that(
+      is.character(level2_group) & length(level2_group) == 1,
+      msg = "level2_group must be a single column name"
+    )
+    assertthat::assert_that(
+      level2_group %in% names(unit_covs),
+      msg = "level2_group must name a column in unit_covs"
+    )
+    assertthat::assert_that(
+      is.factor(unit_covs[[level2_group]]),
+      msg = "level2_group must identify a factor column in unit_covs"
+    )
+    assertthat::assert_that(
+      newdata_checks | anyDuplicated(unit_covs[[level2_group]]) > 0,
+      msg = "At least one level-two group must contain more than one unit."
+    )
+    if (!is.null(level2_covs)) {
+      assertthat::assert_that(
+        level2_group %in% names(level2_covs),
+        msg = "level2_group must name a column in level2_covs"
+      )
+      assertthat::assert_that(
+        is.factor(level2_covs[[level2_group]]),
+        msg = paste0(
+          "level2_group must identify a factor column in level2_covs"
+        )
+      )
+      duplicate_level2_covs <- setdiff(
+        intersect(names(unit_covs), names(level2_covs)),
+        level2_group
+      )
+      assertthat::assert_that(
+        length(duplicate_level2_covs) == 0,
+        msg = paste0(
+          "level2_covs and unit_covs may only share the level2_group column. ",
+          "Duplicate column name(s): ",
+          paste(duplicate_level2_covs, collapse = ", ")
+        )
+      )
+      assertthat::assert_that(
+        !any(names(level2_covs) %in% names(event_covs)),
+        msg = "overlapping names detected between level2_covs and event_covs"
+      )
+      for (reserved in flocker_reserved()) {
+        assertthat::assert_that(
+          !any(grepl(reserved, names(level2_covs))),
+          msg = paste0(
+            "names of level2_covs include a reserved string matching ",
+            "the following regular expression: ", reserved
+          )
+        )
+      }
+      assertthat::assert_that(
+        !anyDuplicated(level2_covs[[level2_group]]),
+        msg = "level2_covs must contain no duplicate level2_group values"
+      )
+      assertthat::assert_that(
+        setequal(
+          as.character(level2_covs[[level2_group]]),
+          levels(level2_covs[[level2_group]])
+        ),
+        msg = paste0(
+          "level2_covs must contain exactly one row for each level2_group ",
+          "factor level"
+        )
+      )
+      assertthat::assert_that(
+        all(
+          as.character(unit_covs[[level2_group]]) %in%
+            as.character(level2_covs[[level2_group]])
+        ),
+        msg = "all level2_group values in unit_covs must appear in level2_covs"
+      )
+      empty_groups <- setdiff(
+        levels(level2_covs[[level2_group]]),
+        as.character(unit_covs[[level2_group]])
+      )
+      if (length(empty_groups) > 0) {
+        stop(
+          paste0(
+            "level2_covs contains groups with no corresponding units: ",
+            paste(empty_groups, collapse = ", ")
+          ),
+          call. = FALSE
+        )
+      }
+      assertthat::assert_that(
+        !any(is.na(level2_covs)),
+        msg = "A level-two covariate contains missing values."
+      )
+    }
+    assertthat::assert_that(
+      nrow(unit_covs) == nrow(obs),
+      msg = "Different numbers of rows found for obs and unit_covs."
+    )
+    assertthat::assert_that(
+      !any(is.na(unit_covs)),
+      msg = "A unit covariate contains missing values."
+    )
+    assertthat::assert_that(
+      !any(is.na(obs[ , 1])), 
+      msg = paste0("obs has NAs in its first column; this is not allowed in ", 
+                   "two-level single-season models")
+    )
+    assertthat::assert_that(
+      newdata_checks | (ncol(obs) >= 2), 
+      msg = paste0(
+        "obs must contain at least two columns unless being used for newdata ",
+        "(see newdata_checks argument)."
+      )
+    )
+    if (ncol(obs) > 2) {
+      for (j in 2:(ncol(obs) - 1)) {
+        the_nas <- is.na(obs[ , j])
+        if (any(the_nas)) {
+          the_nas2 <- which(the_nas)
+          assertthat::assert_that(
+            all(is.na(obs[the_nas2, j+1])),
+            msg = "Some rows of obs have non-trailing NAs"
+          )
+        }
+      }
+    }
+    assertthat::assert_that(
+      !all(is.na(obs[ , ncol(obs)])),
+      msg = "The final column of obs contains only NAs."
+    )
+    if (!is.null(event_covs)) {
+      assertthat::assert_that(
+        is_named_list(event_covs), 
+        msg = "event_covs must be NULL or a named list with no duplicate names."
+      )
+      missing_covs <- vector()
+      for (ec in seq_along(event_covs)) {
+        assertthat::assert_that(
+          all.equal(dim(event_covs[[ec]]), dim(obs)),
+          msg = paste0(
+            "Dimension mismatch found between obs and event_covs[[", ec, "]]."
+          )
+        )
+        missing_covs <- unique(c(missing_covs, which(is.na(event_covs[[ec]]))))
+      }
+      if (length(missing_covs) > 0) {
+        assertthat::assert_that(
+          all(missing_covs %in% which(is.na(obs))),
+          msg = paste0("An event covariate contains missing values ",
+                       "at a position where the response is not missing.")
+        )
+      }
+    }
+  }
+  
   #### augmented checks ####
   if(type == "augmented"){
     site_covs <- unit_covs
@@ -753,9 +1099,33 @@ standard_mfd_checks <- function(
       msg = "obs must have exactly three dimensions."
     )
     assertthat::assert_that(
+      dim(obs)[1] > 1,
+      msg = "Augmented models require more than one site."
+    )
+    assertthat::assert_that(
       is_one_pos_int(n_aug),
       msg = "n_aug must be a positive integer"
     )
+    species_names <- dimnames(obs)[[3]]
+    assertthat::assert_that(
+      is.null(species_names) |
+        !any(grepl("^pseudospecies[0-9]+$", species_names)),
+      msg = paste0(
+        "Observed species names matching 'pseudospecies' followed by digits ",
+        "are reserved for augmented pseudospecies"
+      )
+    )
+    detected_species <- apply(obs == 1, 3, any, na.rm = TRUE)
+    if (any(!detected_species)) {
+      stop(
+        paste0(
+          "The original obs array for an augmented model must contain only ",
+          "species with at least one detection. Add never-observed ",
+          "pseudospecies through n_aug."
+        ),
+        call. = FALSE
+      )
+    }
     
     for (i in 2:dim(obs)[3]) {
       na_obs_i <- which(is.na(obs[,,i]))
@@ -821,4 +1191,3 @@ standard_mfd_checks <- function(
     }
   }
 }
-
