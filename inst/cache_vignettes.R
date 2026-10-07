@@ -26,8 +26,11 @@ vigs <- list(
   c("vignettes/nonlinear_models.Rmd.orig", "vignettes/nonlinear_models.Rmd"),
   c("vignettes/articles/sbc.Rmd.orig", "vignettes/articles/sbc.Rmd"),
   c("vignettes/articles/sbc_multi.Rmd.orig", "vignettes/articles/sbc_multi.Rmd"),
-  c("vignettes/articles/sbc_aug.Rmd.orig", "vignettes/articles/sbc_aug.Rmd")
+  c("vignettes/articles/sbc_aug.Rmd.orig", "vignettes/articles/sbc_aug.Rmd"),
+  c("vignettes/articles/sbc_twolevel.Rmd.orig", "vignettes/articles/sbc_twolevel.Rmd")
 )
+
+sbc_vig_indices <- 4:length(vigs)
 
 with_dir(pkg_root, {
   # Ensure relative paths in chunks resolve from package root
@@ -56,7 +59,7 @@ with_dir(pkg_root, {
   for(i in 1:3){
     knit_one(vigs[[i]][[1]], vigs[[i]][[2]])
   }
-  for(i in 4:6){
+  for(i in sbc_vig_indices){
     # SBC: force figures into man/figures/sbc_vignette
     knit_one(vigs[[i]][[1]], vigs[[i]][[2]], fig_path = "man/figures/sbc_vignette")
   }
@@ -110,7 +113,7 @@ fix_article_fig_paths <- function(rmd_path,
 }
 
 # Apply to the cached article outputs (the .Rmd files, not the .orig)
-article_outfiles <- vapply(vigs[4:6], `[[`, character(1), 2)
+article_outfiles <- vapply(vigs[sbc_vig_indices], `[[`, character(1), 2)
 
 with_dir(pkg_root, {
   for (f in article_outfiles) fix_article_fig_paths(f)
