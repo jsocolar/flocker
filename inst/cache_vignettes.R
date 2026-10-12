@@ -20,6 +20,32 @@ find_pkg_root <- function() {
 
 pkg_root <- find_pkg_root()
 
+source_version <- package_version(
+  read.dcf(file.path(pkg_root, "DESCRIPTION"), fields = "Version")[[1]]
+)
+installed_version <- tryCatch(
+  utils::packageVersion("flocker"),
+  error = function(e) NULL
+)
+
+if (is.null(installed_version)) {
+  stop(
+    "flocker is not installed. Install this source tree before caching vignettes.",
+    call. = FALSE
+  )
+}
+
+if (installed_version != source_version) {
+  stop(
+    paste0(
+      "The installed flocker version (", installed_version,
+      ") does not match DESCRIPTION (", source_version, "). ",
+      "Install this source tree and restart R before caching vignettes."
+    ),
+    call. = FALSE
+  )
+}
+
 vigs <- list(
   c("vignettes/augmented_models.Rmd.orig", "vignettes/augmented_models.Rmd"),
   c("vignettes/flocker_tutorial.Rmd.orig", "vignettes/flocker_tutorial.Rmd"),
