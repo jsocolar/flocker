@@ -276,6 +276,23 @@ test_that("new_data works as expected", {
   expect_error(get_Z(example_flocker_model_single2, history_condition = TRUE, new_data = fd1$unit_covs))
 })
 
+test_that("single_C history conditioning uses observations from new_data", {
+  unit_covs <- example_flocker_model_single_C$data[c("uc1", "species")]
+  n_rep <- max(example_flocker_model_single_C$data$ff_n_trial)
+  new_obs <- matrix(0L, nrow = nrow(unit_covs), ncol = n_rep)
+  detected_units <- c(1L, nrow(new_obs))
+  new_obs[detected_units, 1] <- 1L
+  new_data <- make_flocker_data(new_obs, unit_covs, quiet = TRUE)
+
+  Z <- get_Z(
+    example_flocker_model_single_C,
+    new_data = new_data,
+    history_condition = TRUE
+  )
+
+  expect_true(all(Z[detected_units, , drop = FALSE] == 1))
+})
+
 
 test_that("incorrect types cause an error", {
   expect_error(forward_sim("init", c(0.5, 0.5), c(0.5, 0.5)))

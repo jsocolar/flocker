@@ -20,6 +20,13 @@
   species names and assign stable names to augmented pseudospecies.
 * Improved the numerical stability of two-level log-likelihood calculations by
   evaluating occupancy mixtures in log space.
+* Corrected backward smoothing and backward sampling of latent states from
+  multiseason models so that both use the appropriate transition probabilities
+  and future-data likelihoods.
+* Corrected history-conditioned `get_Z()` calculations for augmented models
+  and when using `new_data`, including rep-constant models. Augmented
+  group-level probabilities now marginalize over unit occupancy and incorporate
+  the fitted group-level occupancy probability.
 * Fixed reconstruction of maximally ragged observation and covariate arrays,
   including multiseason data with a final season that is unobserved in every
   series, and made post-processing robust when exactly one posterior draw is

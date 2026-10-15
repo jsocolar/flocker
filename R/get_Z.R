@@ -86,7 +86,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
       if(is.null(new_data)){
         obs <- flocker_fit$data[c("ff_n_suc", "ff_n_trial")]
       } else {
-        obs <- new_data[c("ff_n_suc", "ff_n_trial")]
+        obs <- new_data$data[c("ff_n_suc", "ff_n_trial")]
       }
     }
   } else { # history_condition is FALSE

@@ -45,3 +45,6 @@ vignettes/*.pdf
 
 # Local Codex scratch notes
 .codex/
+
+# Local fitted test fixtures
+.flocker-test-cache/
