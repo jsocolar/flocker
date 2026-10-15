@@ -70,11 +70,17 @@
 #'   \itemize{
 #'     \item \code{uc1}: numeric vector of length \code{n_pt} giving the unit-level covariate.
 #'     \item \code{ec1}: numeric vector of length \code{n_pt * n_season * n_rep}
-#'       giving the event-level covariate (ignored if \code{rep_constant = TRUE}).
+#'       giving the event-level covariate (ignored if \code{rep_constant = TRUE}),
+#'       ordered with point varying fastest, then rep, then season. This is the
+#'       order obtained by flattening an \code{n_pt} by \code{n_rep} by
+#'       \code{n_season} array in R.
 #'   }
 #'   If \code{NULL} (the default), covariates are simulated internally from 
 #'   standard normal distributions.
-#'   \code{ec1} is assumed not to vary by species.
+#'   Covariates are stored in this canonical, unexpanded form in the returned
+#'   \code{covariates} list and are assumed not to vary by species. For a
+#'   single-species simulation without missing visits, \code{covariates$ec1}
+#'   is identical to \code{as.vector(event_covs$ec1)}.
 #' @param seed random seed. NULL uses (and updates) the existing RNG state. Other values
 #'   do not update the global RNG state.
 #' @param ragged_rep logical: create data with variable (TRUE) or constant 
@@ -317,9 +323,8 @@ sfd <- function(
     id_point = 1:n_pt
     )
   if(is.null(covariates)) {
-    covariates <- list(
-      uc1 = stats::rnorm(n_pt)[unit_backbone$id_point]
-    )
+    covariates <- list(uc1 = stats::rnorm(n_pt))
+    unit_uc1 <- covariates$uc1[unit_backbone$id_point]
   } else {
     assertthat::assert_that(is.list(covariates), msg = "covariates must be a named list")
     assertthat::assert_that("uc1" %in% names(covariates), msg = "covariates must include uc1")
@@ -327,9 +332,10 @@ sfd <- function(
       is.numeric(covariates$uc1) && length(covariates$uc1) == n_pt,
       msg = "covariates$uc1 must be numeric of length n_pt"
     )
+    unit_uc1 <- covariates$uc1[unit_backbone$id_point]
   }
   
-  unit_backbone$uc1 <- covariates$uc1
+  unit_backbone$uc1 <- unit_uc1
   
   if (n_season > 1) {
     unit_backbone$col <- coefs$col_intercept[as.integer(unit_backbone$species)] +
@@ -403,29 +409,37 @@ sfd <- function(
     coefs$det_slope_unit[as.integer(visit_full$species)] * visit_full$uc1
   
   if (!rep_constant) {
+    # we don't allow ec1 to vary by species; this allows the covariate to play
+    # nicely with augmented models. Each visit (point x season x rep) has one
+    # ec1 value that must be expanded across the species-blocked rows of
+    # visit_full; assigning an unexpanded vector would recycle it
+    # species-fastest (visit-constant, species-varying).
+    visit_key <- paste(
+      visit_full$id_point,
+      visit_full$id_season,
+      visit_full$id_rep,
+      sep = "__"
+    )
+    event_index <- visit_full$id_point +
+      n_pt * (visit_full$id_rep - 1L) +
+      n_pt * n_rep * (visit_full$id_season - 1L)
     if ("ec1" %in% names(covariates)) {
       assertthat::assert_that(
         is.numeric(covariates$ec1) && length(covariates$ec1) == n_pt * n_season * n_rep,
         msg = "covariates$ec1 must be numeric of length n_pt * n_season * n_rep"
       )
+      visit_full$ec1 <- covariates$ec1[event_index]
     } else {
-      covariates$ec1 <- stats::rnorm(n_pt*n_season*n_rep)[ # we don't allow ec1 to vary by species;
-        # this allows the covariate to play nicely with augmented models.
-        
-        # I think that visit_full is already guaranteed to be blocked by species with everything
-        # else in consistent order, but this should ensure that the ordering stays correct no 
-        # matter what.
-        as.integer(factor( 
-          paste(
-            visit_full$id_point, 
-            visit_full$id_season, 
-            visit_full$id_rep, 
-            sep = "__"
-          )
-        ))
+      visit_full$ec1 <- stats::rnorm(n_pt*n_season*n_rep)[
+        # string-ordered levels, kept as-is so that seeded simulations
+        # reproduce output from previous versions (values are iid, so the
+        # mapping itself is immaterial here).
+        as.integer(factor(visit_key))
+      ]
+      covariates$ec1 <- visit_full$ec1[
+        match(seq_len(n_pt * n_rep * n_season), event_index)
       ]
     }
-    visit_full$ec1 <- covariates$ec1
     visit_full$logit_det <- visit_full$logit_det + 
       coefs$det_slope_visit[as.integer(visit_full$species)] * visit_full$ec1
   }
@@ -545,4 +559,3 @@ sfd <- function(
   out$covariates <- covariates
   out
 }
-

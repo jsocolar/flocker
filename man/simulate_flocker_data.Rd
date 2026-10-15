@@ -96,11 +96,17 @@ simulation. Supported names are:
 \itemize{
   \item \code{uc1}: numeric vector of length \code{n_pt} giving the unit-level covariate.
   \item \code{ec1}: numeric vector of length \code{n_pt * n_season * n_rep}
-    giving the event-level covariate (ignored if \code{rep_constant = TRUE}).
+    giving the event-level covariate (ignored if \code{rep_constant = TRUE}),
+    ordered with point varying fastest, then rep, then season. This is the
+    order obtained by flattening an \code{n_pt} by \code{n_rep} by
+    \code{n_season} array in R.
 }
 If \code{NULL} (the default), covariates are simulated internally from 
 standard normal distributions.
-\code{ec1} is assumed not to vary by species.}
+Covariates are stored in this canonical, unexpanded form in the returned
+\code{covariates} list and are assumed not to vary by species. For a
+single-species simulation without missing visits, \code{covariates$ec1}
+is identical to \code{as.vector(event_covs$ec1)}.}
 
 \item{seed}{random seed. NULL uses (and updates) the existing RNG state. Other values
 do not update the global RNG state.}

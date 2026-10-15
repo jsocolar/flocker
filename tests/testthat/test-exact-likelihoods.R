@@ -67,16 +67,17 @@ drop_draw <- function(x, draw = 1) {
   array(x[, , , draw], dim = dim(x)[1:3])
 }
 
-augmented_lpmf_from_flocker_data <- function(fd, psi, theta, Omega) {
+twolevel_lpmf_from_flocker_data <- function(fd, psi, theta, Omega) {
   d <- fd$data
   n_unit <- d$ff_n_unit[1]
-  n_sp <- d$ff_n_sp[1]
+  n_group <- d$ff_n_group[1]
   rep_cols <- grep("^ff_rep_index", names(d), value = TRUE)
+  unit_group <- get_unit_group(d)
   ll <- 0
 
-  for (sp in seq_len(n_sp)) {
+  for (g in seq_len(n_group)) {
     p_y_given_available <- 1
-    unit_rows <- which(d$ff_species[seq_len(n_unit)] == sp)
+    unit_rows <- which(unit_group == g)
 
     for (i in unit_rows) {
       indices <- as.integer(d[i, rep_cols])
@@ -93,15 +94,70 @@ augmented_lpmf_from_flocker_data <- function(fd, psi, theta, Omega) {
       p_y_given_available <- p_y_given_available * p_i
     }
 
-    if (d$ff_superQ[sp] == 1) {
-      ll <- ll + log(Omega * p_y_given_available)
+    if (d$ff_group_known_present[g] == 1) {
+      ll <- ll + log(Omega[g] * p_y_given_available)
     } else {
-      ll <- ll + log((1 - Omega) + Omega * p_y_given_available)
+      ll <- ll + log((1 - Omega[g]) + Omega[g] * p_y_given_available)
     }
   }
 
   ll
 }
+
+test_that("two-level likelihood matches exact grouped marginal likelihood", {
+  obs <- matrix(
+    c(
+      0, 0,
+      1, 0,
+      0, 0,
+      0, 0
+    ),
+    nrow = 4,
+    byrow = TRUE
+  )
+  theta <- matrix(
+    c(
+      0.2, 0.3,
+      0.4, 0.5,
+      0.6, 0.7,
+      0.3, 0.8
+    ),
+    nrow = 4,
+    byrow = TRUE
+  )
+  unit_covs <- data.frame(
+    group = factor(c("b", "a", "b", "a"), levels = c("a", "b"))
+  )
+  psi_original <- c(0.2, 0.7, 0.4, 0.6)
+  Omega <- c(0.3, 0.8)
+
+  fd <- make_flocker_data(
+    obs,
+    unit_covs,
+    event_covs = list(theta = theta),
+    type = "twolevel_single",
+    level2_group = "group",
+    quiet = TRUE
+  )
+  gp_unit <- get_positions(fd, unit_level = TRUE)
+  psi <- rep(NA_real_, nrow(fd$data))
+  psi[gp_unit] <- psi_original
+
+  unit_lik <- c(
+    (1 - psi_original[1]) + psi_original[1] * prod(1 - theta[1, ]),
+    psi_original[2] * theta[2, 1] * (1 - theta[2, 2]),
+    (1 - psi_original[3]) + psi_original[3] * prod(1 - theta[3, ]),
+    (1 - psi_original[4]) + psi_original[4] * prod(1 - theta[4, ])
+  )
+  expected <- log(Omega[1] * prod(unit_lik[c(2, 4)])) +
+    log((1 - Omega[2]) + Omega[2] * prod(unit_lik[c(1, 3)]))
+
+  expect_equal(
+    twolevel_lpmf_from_flocker_data(fd, psi, fd$data$theta, Omega),
+    expected,
+    tolerance = 1e-12
+  )
+})
 
 test_that("single-season rep-varying likelihood matches exact marginal likelihood", {
   obs <- matrix(
@@ -236,7 +292,9 @@ test_that("augmented likelihood matches exact marginal likelihood", {
     quiet = TRUE
   )
   gp <- get_positions(fd)
-  psi <- psi_by_site_species[as.matrix(gp[, 1, ])]
+  gp_unit <- get_positions(fd, unit_level = TRUE)
+  psi <- rep(NA_real_, nrow(fd$data))
+  psi[as.vector(gp_unit)] <- as.vector(psi_by_site_species)
 
   observed_species_lik <-
     ((1 - psi_by_site_species[1, 1]) +
@@ -259,7 +317,9 @@ test_that("augmented likelihood matches exact marginal likelihood", {
   expect_equal(fd$data$theta[gp[, , 2]], theta, check.attributes = FALSE)
   expect_equal(fd$data$theta[gp[, , 3]], theta, check.attributes = FALSE)
   expect_equal(
-    augmented_lpmf_from_flocker_data(fd, psi, fd$data$theta, Omega),
+    twolevel_lpmf_from_flocker_data(
+      fd, psi, fd$data$theta, rep(Omega, fd$data$ff_n_group[1])
+    ),
     expected,
     tolerance = 1e-12
   )

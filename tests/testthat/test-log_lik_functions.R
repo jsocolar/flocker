@@ -20,21 +20,25 @@ test_that("check log_lik functions work correctly", {
   
   testthat::skip_on_cran()
   
-  # augmented (20 species total, 8 draws)
+  # augmented (variable observed species plus 10 pseudospecies, 8 draws)
   ll_test <- log_lik_flocker(example_flocker_model_aug)
+  n_group <- example_flocker_model_aug$data$ff_n_group[1]
+  known_present <- example_flocker_model_aug$data$ff_group_known_present[
+    seq_len(n_group)
+  ]
+  n_observed <- sum(known_present)
+  n_aug <- n_group - n_observed
   expect_equal(dim(ll_test)[1], 16)
+  expect_equal(n_aug, 10)
+  expect_equal(
+    colnames(ll_test),
+    c(
+      paste0("observed_species", seq_len(n_observed)),
+      paste0("pseudospecies", seq_len(n_aug))
+    )
+  )
   
-  # NOTE: This assertion uses expect_gte rather than expect_equal because of an
-  # intermittent CI failure observed multiple times on Ubuntu release in which
-  # log_lik_flocker returns 19 columns instead of the expected 20 for the
-  # augmented model. The failure is always exactly 19 vs 20, always the same
-  # test line, and only occurs on Ubuntu release CI (not macOS, not Ubuntu devel,
-  # not Ubuntu oldrel, not local R 4.5.2 on macOS). The root cause has not been
-  # definitively identified but is suspected to lie in get_positions() under
-  # memory pressure. This assertion will be revisited and tightened when the
-  # augmented model branch is rewritten as part of the twolevel refactor.
-  
-  expect_gte(dim(ll_test)[2], 19)
+  expect_equal(dim(ll_test)[2], n_group)
   expect_equal(class(ll_test), c("matrix", "array"))
   expect_lte(max(ll_test), 0)
   expect_false(any(is.infinite(ll_test)))
@@ -112,6 +116,24 @@ test_that("log_lik_flocker new_data argument works correctly", {
   expect_equal(ll_newdata, ll_default, tolerance = 1e-10)
   
   testthat::skip_on_cran()
+
+  # generic two-level single-season
+  ll_default <- log_lik_flocker(example_flocker_model_twolevel)
+  ll_newdata <- log_lik_flocker(
+    example_flocker_model_twolevel,
+    new_data = mfd_twolevel,
+    allow_new_levels = FALSE
+  )
+  expect_equal(ll_newdata, ll_default, tolerance = 1e-10)
+
+  # augmented
+  ll_default <- log_lik_flocker(example_flocker_model_aug)
+  ll_newdata <- log_lik_flocker(
+    example_flocker_model_aug,
+    new_data = mfd_aug,
+    allow_new_levels = FALSE
+  )
+  expect_equal(ll_newdata, ll_default, tolerance = 1e-10)
   
   # multiseason colex explicit (uses mfd_multi_colex_ex from setup.R)
   ll_default <- log_lik_flocker(example_flocker_model_multi_colex_ex)
@@ -152,4 +174,31 @@ test_that("log_lik_flocker new_data argument works correctly", {
   )
   expect_equal(dim(ll_newdata), dim(ll_default))
   expect_equal(ll_newdata, ll_default, tolerance = 1e-10)
+})
+
+test_that("two-level log likelihood remains finite for very small probabilities", {
+  n_unit <- 679L
+  occ_lp <- matrix(1000, nrow = n_unit, ncol = 1)
+  det_lp <- array(0, dim = c(n_unit, 2, 1))
+  obs <- matrix(0, nrow = n_unit, ncol = 2)
+
+  group_ll <- log_lik_twolevel_single_from_components(
+    occ_lp, det_lp, matrix(1000, nrow = 1),
+    rep(1L, n_unit), 1L, obs
+  )
+  expect_equal(group_ll[1, 1], n_unit * 2 * log(0.5))
+
+  n_visit <- 1500L
+  unit_obs <- matrix(0, nrow = 1, ncol = n_visit)
+  unit_obs[1, 1] <- 1
+  unit_obs[1, n_visit] <- NA
+  unit_det_lp <- array(0, dim = c(1, n_visit, 1))
+  unit_det_lp[1, n_visit, 1] <- NA
+  unit_ll <- log_lik_twolevel_single_from_components(
+    matrix(1000, nrow = 1),
+    unit_det_lp,
+    matrix(1000, nrow = 1), 1L, 1L,
+    unit_obs
+  )
+  expect_equal(unit_ll[1, 1], (n_visit - 1) * log(0.5))
 })

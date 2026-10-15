@@ -1,7 +1,8 @@
 #' Compute loo for flocker_fit objects
 #' @param x a flocker_fit object or a list of flocker_fit objects
 #' @param thin specify the amount of thinning required. 1 or NULL implies no thinning, 2 implies every other value, 3 every third, etc.
-#' @return a loo object or a list of loo objects
+#' @return A loo object or a list of loo objects. For two-level models, the
+#'   pointwise values are named by level-two group.
 #' @export
 #' @examples 
 #' \dontrun{

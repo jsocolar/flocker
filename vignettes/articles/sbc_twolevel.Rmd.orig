@@ -1,0 +1,225 @@
+---
+title: "SBC for two-level flocker models"
+author: "Jacob Socolar"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{SBC for two-level flocker models}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+params:
+  n_sims_twolevel: 1000
+  n_groups_twolevel: 40
+  max_sites_per_group: 3
+  max_visits_per_site: 4
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.path = "man/figures/sbc_vignette/",
+  fig.retina = 2
+)
+dir.create("man/figures/sbc_vignette", recursive = TRUE, showWarnings = FALSE)
+
+```
+
+### Rmd parameters
+```{r display_params, echo = FALSE}
+data.frame(
+  Parameter = names(params),
+  value = unlist(params, use.names = FALSE),
+  row.names = NULL
+)
+
+```
+
+```{r setup2, message = FALSE}
+library(flocker)
+library(brms)
+library(SBC)
+set.seed(1)
+```
+
+## Overview
+
+This document is one of a series of simulation-based calibration exercises for
+models available in R package `flocker`. Here, our goal is to validate `flocker`'s
+data formatting, decoding, and likelihood implementations, and not `brms`'s
+construction of the linear predictors.
+
+We simulate a `twolevel_single` model with a ragged number of sites per group
+and a ragged number of visits per site. Every simulated dataset contains groups
+with one, two, and three sites, as well as sites with one, two, three, and four
+visits. We randomly reorder the sites and the rows of the group covariate table
+before calling `make_flocker_data()`, so this exercise also checks the packing of
+groups whose sites are not contiguous in the user-supplied data.
+
+The group-level, site-level, and visit-level formulas each contain an intercept
+and one numeric covariate. We use independent standard-normal priors for all six
+coefficients and draw the data-generating coefficients from those same priors.
+
+
+## Two-level single-season
+```{r twolevel-single, eval = TRUE}
+f_meta <- ~ 0 + Intercept + group_cov
+f_occ <- ~ 0 + Intercept + site_cov
+f_det <- ~ 0 + Intercept + visit_cov
+
+twolevel_prior <-
+  brms::set_prior("std_normal()") +
+  brms::set_prior("std_normal()", dpar = "occ") +
+  brms::set_prior("std_normal()", dpar = "Omega")
+
+simulate_twolevel_data <- function(
+    n_group,
+    max_sites_per_group,
+    max_visits_per_site) {
+  stopifnot(
+    n_group >= max_sites_per_group,
+    max_sites_per_group == 3,
+    max_visits_per_site == 4
+  )
+
+  coefs <- rnorm(6)
+  names(coefs) <- c(
+    "meta_intercept", "meta_slope",
+    "occ_intercept", "occ_slope",
+    "det_intercept", "det_slope"
+  )
+
+  group_names <- paste0("group", seq_len(n_group))
+  group_cov <- rnorm(n_group)
+  level2_prob <- boot::inv.logit(
+    coefs["meta_intercept"] + coefs["meta_slope"] * group_cov
+  )
+  level2_state <- rbinom(n_group, 1, level2_prob)
+
+  n_sites <- sample(seq_len(max_sites_per_group), n_group, replace = TRUE)
+  n_sites[seq_len(max_sites_per_group)] <- seq_len(max_sites_per_group)
+  n_unit <- sum(n_sites)
+  group_id <- rep(seq_len(n_group), n_sites)
+  level2_group <- factor(group_names[group_id], levels = group_names)
+
+  site_cov <- rnorm(n_unit)
+  occ_prob <- boot::inv.logit(
+    coefs["occ_intercept"] + coefs["occ_slope"] * site_cov
+  )
+  unit_state <- rbinom(n_unit, 1, level2_state[group_id] * occ_prob)
+
+  n_visits <- sample(seq_len(max_visits_per_site), n_unit, replace = TRUE)
+  n_visits[seq_len(max_visits_per_site)] <- seq_len(max_visits_per_site)
+  observed_visit <- outer(
+    n_visits,
+    seq_len(max_visits_per_site),
+    FUN = function(n, visit) visit <= n
+  )
+
+  visit_cov <- matrix(rnorm(n_unit * max_visits_per_site), nrow = n_unit)
+  det_prob <- boot::inv.logit(
+    coefs["det_intercept"] + coefs["det_slope"] * visit_cov
+  )
+  unit_state_by_visit <- matrix(
+    unit_state,
+    nrow = n_unit,
+    ncol = max_visits_per_site
+  )
+  obs <- matrix(NA_integer_, nrow = n_unit, ncol = max_visits_per_site)
+  obs[observed_visit] <- rbinom(
+    sum(observed_visit),
+    1,
+    (unit_state_by_visit * det_prob)[observed_visit]
+  )
+  visit_cov[!observed_visit] <- NA_real_
+
+  unit_covs <- data.frame(level2_group, site_cov)
+  level2_covs <- data.frame(
+    level2_group = factor(group_names, levels = group_names),
+    group_cov
+  )
+
+  # Exercise packing when neither input table is already in group order.
+  unit_order <- sample.int(n_unit)
+  obs <- obs[unit_order, , drop = FALSE]
+  visit_cov <- visit_cov[unit_order, , drop = FALSE]
+  unit_covs <- unit_covs[unit_order, , drop = FALSE]
+  level2_covs <- level2_covs[sample.int(n_group), , drop = FALSE]
+  row.names(unit_covs) <- NULL
+  row.names(level2_covs) <- NULL
+
+  flocker_data <- make_flocker_data(
+    obs = obs,
+    unit_covs = unit_covs,
+    event_covs = list(visit_cov = visit_cov),
+    type = "twolevel_single",
+    level2_group = "level2_group",
+    level2_covs = level2_covs,
+    quiet = TRUE
+  )
+
+  list(coefs = coefs, flocker_data = flocker_data)
+}
+
+# Make the Stan code.
+model_name <- paste0(tempdir(), "/sbc_twolevel_model.stan")
+example_data <- simulate_twolevel_data(
+  params$n_groups_twolevel,
+  params$max_sites_per_group,
+  params$max_visits_per_site
+)
+
+scode <- flocker_stancode(
+  f_meta = f_meta,
+  f_occ = f_occ,
+  f_det = f_det,
+  flocker_data = example_data$flocker_data,
+  prior = twolevel_prior,
+  backend = "cmdstanr"
+)
+writeLines(scode, model_name)
+
+twolevel_generator <- function(N) {
+  simulated <- simulate_twolevel_data(
+    N,
+    params$max_sites_per_group,
+    params$max_visits_per_site
+  )
+
+  list(
+    variables = list(
+      `b_Omega[1]` = unname(simulated$coefs["meta_intercept"]),
+      `b_Omega[2]` = unname(simulated$coefs["meta_slope"]),
+      `b_occ[1]` = unname(simulated$coefs["occ_intercept"]),
+      `b_occ[2]` = unname(simulated$coefs["occ_slope"]),
+      `b[1]` = unname(simulated$coefs["det_intercept"]),
+      `b[2]` = unname(simulated$coefs["det_slope"])
+    ),
+    generated = flocker_standata(
+      f_meta = f_meta,
+      f_occ = f_occ,
+      f_det = f_det,
+      flocker_data = simulated$flocker_data
+    )
+  )
+}
+
+twolevel_gen <- SBC_generator_function(
+  twolevel_generator,
+  N = params$n_groups_twolevel
+)
+twolevel_dataset <- suppressMessages(
+  generate_datasets(twolevel_gen, params$n_sims_twolevel)
+)
+
+twolevel_backend <-
+  SBC_backend_cmdstan_sample(
+    cmdstanr::cmdstan_model(model_name)
+  )
+
+twolevel_results <- compute_SBC(twolevel_dataset, twolevel_backend)
+
+plot_ecdf(twolevel_results)
+plot_rank_hist(twolevel_results)
+plot_ecdf_diff(twolevel_results)
+
+```

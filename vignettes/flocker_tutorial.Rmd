@@ -1,7 +1,7 @@
 ---
 title: "Fitting occupancy models with flocker"
 author: Jacob Socolar & Simon Mills
-date: "2026-02-24"
+date: "2026-10-12"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Fitting occupancy models with flocker}
@@ -388,9 +388,9 @@ brms::conditional_effects(rep_constant)
 The following functions work on all model types available in `flocker`.
 
 ### Fitted values
-Fitted values for any of the distributional parameter (one or more of occupancy,
-detection, colonization, extinction, autologistic, and/or Omega, the fitted 
-probability that a given (pseudo)species occurs in the metacommunity) are
+Fitted values for any of the distributional parameters (one or more of occupancy,
+detection, colonization, extinction, autologistic, and/or Omega, the fitted
+level-two occupancy probability) are
 available via `fitted_flocker`. For example:
 
 
@@ -409,19 +409,26 @@ to `make_flocker_data()`, with posterior iterations stacked along its final
 dimension.
 
 ### The posterior occupancy state
-The function `get_Z()` returns the posterior distribution of occupancy probabilities across the closure-units. The shape of the output depends on the class of model, and is an array in the shape of the first visit in `obs` as passed to `make_flocker_data`, with posterior iterations stacked along the final dimension. Thus, for a single-season rep-varying model, the output is a matrix where rows are posterior iterations, columns are closure-units, and values are draws from the posterior distribution of occupancy probabilities:
+The function `get_Z()` returns the posterior distribution of occupancy probabilities across the closure-units. For one-level and multiseason models, the output is an array in the shape of the first visit in `obs` as passed to `make_flocker_data`, with posterior iterations stacked along the final dimension. Thus, for a single-season rep-varying model, the output is a matrix where rows are posterior iterations, columns are closure-units, and values are draws from the posterior distribution of occupancy probabilities:
 
 
 ``` r
 get_Z(rep_varying)
 ```
 
+For two-level models, `get_Z()` returns a list with elements `unit` and
+`level2`. The `unit` element has the unit-level shape described above, while
+`level2` is a matrix with one row per level-two group and posterior iterations
+in columns. When `sample = TRUE`, the two elements are sampled jointly, so a
+unit can never be occupied when its level-two group is absent.
+
 For all model types, `get_Z()` accepts an optional `new_data` argument. Leaving 
 the default `new_data = NULL` supplies the posterior for the true occupancy state 
 at the locations of the data used to fit the model. Otherwise, the posterior is 
-computed over the new data. For single-season models, `new_data` can be supplied 
-as a dataframe of unit covariate values or as a `flocker_data` object. For 
-multi-season models, only a `flocker_data` object is allowed. Note that if 
+computed over the new data. For one-level single-season models, `new_data` can
+be supplied as a dataframe of unit covariate values or as a `flocker_data`
+object. For two-level, augmented, and multiseason models, only a `flocker_data`
+object is allowed. Note that if
 predictions are desired at sites without observations, it is acceptable to pass 
 an array of dummy observations (e.g. all zeros) to `make_flocker_data()` and 
 then to set `history_condition = FALSE` in the call to `get_Z()`.
@@ -473,9 +480,13 @@ loo_compare_flocker(
 )
 #> Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.
 #> Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.
-#>        elpd_diff se_diff
-#> model2    0.0       0.0 
-#> model1 -121.0      16.1
+#>   model elpd_diff se_diff p_worse diag_diff      diag_elpd
+#>  model2       0.0     0.0      NA           3 k_psis > 0.7
+#>  model1    -121.7    16.1    1.00           3 k_psis > 0.7
+#>
+#> Diagnostic flags present.
+#> See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)
+#> or https://mc-stan.org/loo/reference/loo-glossary.html.
 ```
 
 Likewise, we can compare the four flavors of multi-season model that we fit 
@@ -489,11 +500,11 @@ performs best:
 loo_compare_flocker(
   list(multi_colex, multi_colex_eq, multi_auto, multi_auto_eq)
 )
-#>        elpd_diff se_diff
-#> model1   0.0       0.0  
-#> model2 -16.5       6.2  
-#> model3 -41.7       9.5  
-#> model4 -57.5      10.8
+#>   model elpd_diff se_diff p_worse diag_diff diag_elpd
+#>  model1       0.0     0.0      NA
+#>  model2     -16.6     6.2    1.00
+#>  model3     -42.0     9.5    1.00
+#>  model4     -57.6    10.8    1.00
 ```
 
 Flocker also provides the function `loo_flocker()` to return a table of 

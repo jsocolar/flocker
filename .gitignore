@@ -42,3 +42,9 @@ vignettes/*.pdf
 .Renviron
 /Meta/
 /doc/
+
+# Local Codex scratch notes
+.codex/
+
+# Local fitted test fixtures
+.flocker-test-cache/

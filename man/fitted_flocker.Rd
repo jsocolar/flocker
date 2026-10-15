@@ -31,13 +31,12 @@ prediction. If `NULL` (the default) expected values are generated for the
 original data as formatted by make_flocker_data.}
 
 \item{unit_level}{Logical; defaults to FALSE. Relevant only when `new_data`
-is not a dataframe (i.e. it is `NULL` or a flocker_data object), and useful
-only for multiseason models with missing seasons. If FALSE, returns in the 
-shape of the observation matrix/array with NAs for missing visits. If
-TRUE, returns in the shape of the first visit, and returns values for all
-units that are not part of a trailing block of never-visited units,
-including never-visited units that are part of series with subsequent 
-visits.}
+is not a dataframe (i.e. it is `NULL` or a flocker_data object). If
+FALSE, returns in the shape of the observation matrix/array with NAs for
+missing visits. If TRUE, returns in the shape of the first visit, without
+repeating unit-level values across visits. For multiseason models, this
+also returns values for never-visited units that are not part of a
+trailing block of never-visited units.}
 
 \item{summarise}{if TRUE, return the expected value and upper and lower bound 
 of the credible interval, otherwise return posterior draws.}

@@ -12,7 +12,8 @@ loo_flocker(x, thin = NULL)
 \item{thin}{specify the amount of thinning required. 1 or NULL implies no thinning, 2 implies every other value, 3 every third, etc.}
 }
 \value{
-a loo object or a list of loo objects
+A loo object or a list of loo objects. For two-level models, the
+  pointwise values are named by level-two group.
 }
 \description{
 Compute loo for flocker_fit objects

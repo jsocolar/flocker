@@ -1,3 +1,10 @@
+test_that("flocker_version reports the loaded namespace version", {
+  expect_identical(
+    flocker_version(),
+    as.character(unname(getNamespaceVersion("flocker")))
+  )
+})
+
 test_that("log_inv_logit handles scalar input", {
   expect_equal(log_inv_logit(0), log(0.5))
   expect_equal(log_inv_logit(10), log(1 / (1 + exp(-10))))
@@ -123,9 +130,11 @@ test_that("bookkeeping works properly", {
   # flocker_reserved
   expect_true(all(grepl(flocker_reserved()[1], flocker_col_names())))
   expect_true(all(grepl(flocker_reserved()[2], paste0(".", c(".", "foo", 1:2)))))
+  expect_true(grepl(flocker_reserved()[3], "Intercept"))
+  expect_false(grepl(flocker_reserved()[3], "Intercept_covariate"))
   
   # flocker_model_types
-  expect_true(all(grepl("^single|^augmented|^multi", flocker_model_types())))
+  expect_true(all(grepl("^single|^twolevel|^augmented|^multi", flocker_model_types())))
   
   # flocker_data_input_types
   expect_true(
@@ -152,7 +161,92 @@ test_that("bookkeeping works properly", {
   }
   
   # flocker_data_output_types
-  expect_true(all(grepl("^single|^augmented|^multi", flocker_data_output_types())))
+  expect_true(all(grepl("^single|^twolevel|^augmented|^multi", flocker_data_output_types())))
+})
+
+test_that("group_level_Omega recovers canonical group values", {
+  fitted_Omega <- function(Omega, unit_level) {
+    structure(list(linpred_Omega = Omega), unit_level = unit_level)
+  }
+
+  twolevel_Omega <- array(NA_real_, dim = c(4, 2, 2))
+  twolevel_Omega[, , 1] <- cbind(
+    c(0.8, 0.8, 0.3, 0.3),
+    c(0.8, 0.8, 0.3, 0.3)
+  )
+  twolevel_Omega[, , 2] <- cbind(
+    c(0.9, 0.9, 0.4, 0.4),
+    c(0.9, 0.9, 0.4, 0.4)
+  )
+  twolevel_data <- data.frame(
+    ff_n_group = c(2, -99, -99, -99),
+    ff_n_unit = c(4, -99, -99, -99)
+  )
+  twolevel_metadata <- list(unit_order = c(3, 1, 4, 2))
+  expect_equal(
+    group_level_Omega(
+      fitted_Omega(twolevel_Omega, FALSE), "twolevel_single", twolevel_data,
+      twolevel_metadata
+    ),
+    rbind(c(0.3, 0.4), c(0.8, 0.9))
+  )
+  expect_equal(
+    group_level_Omega(
+      fitted_Omega(twolevel_Omega[, , 1], FALSE), "twolevel_single", twolevel_data,
+      twolevel_metadata
+    ),
+    matrix(c(0.3, 0.8), ncol = 1)
+  )
+  expect_equal(
+    group_level_Omega(
+      fitted_Omega(twolevel_Omega[, 1, ], TRUE), "twolevel_single",
+      twolevel_data, twolevel_metadata
+    ),
+    rbind(c(0.3, 0.4), c(0.8, 0.9))
+  )
+  expect_equal(
+    group_level_Omega(
+      fitted_Omega(twolevel_Omega[, 1, 1], TRUE), "twolevel_single",
+      twolevel_data, twolevel_metadata
+    ),
+    matrix(c(0.3, 0.8), ncol = 1)
+  )
+
+  augmented_Omega <- array(NA_real_, dim = c(2, 2, 3, 2))
+  augmented_Omega[, , , 1] <- array(
+    rep(c(0.2, 0.5, 0.7), each = 4), dim = c(2, 2, 3)
+  )
+  augmented_Omega[, , , 2] <- array(
+    rep(c(0.3, 0.6, 0.8), each = 4), dim = c(2, 2, 3)
+  )
+  augmented_data <- data.frame(ff_n_group = c(3, rep(-99, 11)))
+  expect_equal(
+    group_level_Omega(
+      fitted_Omega(augmented_Omega, FALSE), "augmented", augmented_data, list()
+    ),
+    rbind(c(0.2, 0.3), c(0.5, 0.6), c(0.7, 0.8))
+  )
+  expect_equal(
+    group_level_Omega(
+      fitted_Omega(augmented_Omega[, , , 1], FALSE), "augmented",
+      augmented_data, list()
+    ),
+    matrix(c(0.2, 0.5, 0.7), ncol = 1)
+  )
+  expect_equal(
+    group_level_Omega(
+      fitted_Omega(augmented_Omega[, 1, , ], TRUE), "augmented",
+      augmented_data, list()
+    ),
+    rbind(c(0.2, 0.3), c(0.5, 0.6), c(0.7, 0.8))
+  )
+  expect_equal(
+    group_level_Omega(
+      fitted_Omega(augmented_Omega[, 1, , 1], TRUE), "augmented",
+      augmented_data, list()
+    ),
+    matrix(c(0.2, 0.5, 0.7), ncol = 1)
+  )
 })
 
 test_that("fdtl function returns expected dataframe", {
@@ -165,8 +259,8 @@ test_that("fdtl function returns expected dataframe", {
   # Check if the result has the correct column names
   expect_named(result, c("model_type", "data_output_type", "data_input_type"))
   
-  # Check if the result has the correct number of rows (assuming 10 model types)
-  expect_equal(nrow(result), 7)
+  # Check if the result has the correct number of rows
+  expect_equal(nrow(result), 8)
   
   # Check if the result has the correct number of columns
   expect_equal(ncol(result), 3)
@@ -176,11 +270,13 @@ test_that("fdtl function returns expected dataframe", {
   
   # Check if the data_output_type and data_input_type columns contain the expected values
   expected_data_input_types <- c(
-    "single", "single", "augmented", "multi", "multi", "multi", "multi"
+    "single", "single", "twolevel_single", "augmented",
+    "multi", "multi", "multi", "multi"
   )
   
   expected_data_output_types <- c(
-    "single", "single_C", "augmented", "multi", "multi", "multi", "multi"
+    "single", "single_C", "twolevel_single", "augmented",
+    "multi", "multi", "multi", "multi"
   )
   
   
@@ -474,6 +570,110 @@ test_that("get_positions works properly", {
 })
 
 
+test_that("get_positions exactly reverses deterministic ragged formatting", {
+  recover <- function(flocker_data, variable, unit_level = FALSE) {
+    positions <- get_positions(flocker_data, unit_level = unit_level)
+    array(flocker_data$data[[variable]][positions], dim = dim(positions))
+  }
+
+  obs_single <- rbind(
+    c(1, 0, 1, 0),
+    c(0, 1, 0, NA),
+    c(1, 0, NA, NA),
+    c(0, NA, NA, NA)
+  )
+  event_single <- matrix(seq_along(obs_single), nrow = nrow(obs_single))
+  event_single[is.na(obs_single)] <- NA
+
+  fd_single <- make_flocker_data(
+    obs_single,
+    event_covs = list(event_id = event_single),
+    type = "single",
+    quiet = TRUE
+  )
+  expect_equal(recover(fd_single, "ff_y"), obs_single)
+  expect_equal(recover(fd_single, "event_id"), event_single)
+
+  unit_covs <- data.frame(
+    group = factor(c("b", "a", "b", "c"), levels = c("a", "b", "c"))
+  )
+  fd_twolevel <- make_flocker_data(
+    obs_single,
+    unit_covs = unit_covs,
+    event_covs = list(event_id = event_single),
+    type = "twolevel_single",
+    level2_group = "group",
+    quiet = TRUE
+  )
+  expect_equal(recover(fd_twolevel, "ff_y"), obs_single)
+  expect_equal(recover(fd_twolevel, "event_id"), event_single)
+
+  obs_augmented <- array(NA_real_, dim = c(4, 4, 2))
+  obs_augmented[, , 1] <- obs_single
+  obs_augmented[, , 2] <- rbind(
+    c(0, 1, 0, 1),
+    c(1, 0, 0, NA),
+    c(0, 0, NA, NA),
+    c(1, NA, NA, NA)
+  )
+  fd_augmented <- make_flocker_data(
+    obs_augmented,
+    event_covs = list(event_id = event_single),
+    type = "augmented",
+    n_aug = 2,
+    quiet = TRUE
+  )
+  expected_augmented_obs <- array(NA_real_, dim = c(4, 4, 4))
+  expected_augmented_obs[, , 1:2] <- obs_augmented
+  augmented_slice <- obs_single
+  augmented_slice[!is.na(augmented_slice)] <- 0
+  expected_augmented_obs[, , 3] <- augmented_slice
+  expected_augmented_obs[, , 4] <- augmented_slice
+  expected_augmented_event <- array(rep(event_single, 4), dim = c(4, 4, 4))
+  expect_equal(recover(fd_augmented, "ff_y"), expected_augmented_obs)
+  expect_equal(recover(fd_augmented, "event_id"), expected_augmented_event)
+
+  multi <- make_ragged_multi_fixture()
+  fd_multi <- suppressWarnings(make_flocker_data(
+    multi$obs,
+    unit_covs = multi$unit_covs,
+    event_covs = list(ec1 = multi$event),
+    type = "multi",
+    quiet = TRUE
+  ))
+  expect_equal(recover(fd_multi, "ff_y"), multi$obs)
+  expect_equal(recover(fd_multi, "ec1"), multi$event)
+  expect_equal(
+    recover(fd_multi, "uc1", unit_level = TRUE),
+    multi$expected_unit
+  )
+})
+
+
+test_that("get_positions retains a globally trailing multiseason dimension", {
+  recover <- function(flocker_data, variable, unit_level = FALSE) {
+    positions <- get_positions(flocker_data, unit_level = unit_level)
+    array(flocker_data$data[[variable]][positions], dim = dim(positions))
+  }
+
+  multi <- make_ragged_multi_fixture(global_trailing_season = TRUE)
+  fd_multi <- suppressWarnings(make_flocker_data(
+    multi$obs,
+    unit_covs = multi$unit_covs,
+    event_covs = list(ec1 = multi$event),
+    type = "multi",
+    quiet = TRUE
+  ))
+
+  expect_equal(recover(fd_multi, "ff_y"), multi$obs)
+  expect_equal(recover(fd_multi, "ec1"), multi$event)
+  expect_equal(
+    recover(fd_multi, "uc1", unit_level = TRUE),
+    multi$expected_unit
+  )
+})
+
+
 test_that("emission_likelihood function returns expected output", {
   # Test cases for state 0
   obs1 <- matrix(c(0, 0, 0, 0, NA), nrow = 1)
@@ -630,7 +830,28 @@ test_that("validate_flock_params works as expected", {
   augmented <- TRUE
   
   expect_silent(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
-                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
+                                      f_col, f_ex, multi_init, f_auto, augmented,
+                                      threads))
+  expect_error(
+    validate_flock_params(
+      f_occ, f_det, flocker_data, multiseason, f_col, f_ex, multi_init,
+      f_auto, augmented, threads, f_meta = ~ 1
+    ),
+    "f_meta must be NULL for augmented models"
+  )
+  expect_silent(
+    validate_flock_params(
+      NULL, brms::bf(det ~ 1, occ ~ 1), flocker_data, multiseason, f_col,
+      f_ex, multi_init, f_auto, augmented, threads
+    )
+  )
+  expect_error(
+    validate_flock_params(
+      NULL, brms::bf(det ~ 1, occ ~ 1, Omega ~ 1), flocker_data, multiseason,
+      f_col, f_ex, multi_init, f_auto, augmented, threads
+    ),
+    "Do not include an Omega formula"
+  )
   
   
   flocker_data <- fd_multi
@@ -667,6 +888,41 @@ test_that("validate_flock_params works as expected", {
   f_auto <- ~ uc1
   expect_silent(validate_flock_params(f_occ, f_det, flocker_data, multiseason, 
                                      f_col, f_ex, multi_init, f_auto, augmented, threads))
+})
+
+test_that("two-level formula variables respect their data level", {
+  obs <- matrix(c(1, 0, 0, 0, 0, 0), nrow = 3, byrow = TRUE)
+  unit_covs <- data.frame(
+    species = factor(c("a", "a", "b")),
+    unit_x = 1:3
+  )
+  level2_covs <- data.frame(
+    species = factor(c("b", "a"), levels = c("a", "b")),
+    group_x = c(2, 1)
+  )
+  fd <- make_flocker_data(
+    obs,
+    unit_covs,
+    type = "twolevel_single",
+    level2_covs = level2_covs,
+    level2_group = "species",
+    quiet = TRUE
+  )
+
+  expect_silent(validate_meta_formula_variables(~ 1, fd))
+  expect_silent(validate_meta_formula_variables(~ 0 + Intercept + group_x, fd))
+  expect_silent(validate_meta_formula_variables(~ group_x, fd))
+  expect_error(
+    validate_meta_formula_variables(~ species, fd),
+    "cannot be used in f_meta"
+  )
+  expect_error(
+    validate_meta_formula_variables(~ unit_x, fd),
+    "must be level-two covariates"
+  )
+  expect_silent(
+    validate_unit_formula_variables(~ species + group_x, NULL, NULL, NULL, fd)
+  )
 })
 
 test_that("formula_error works", {

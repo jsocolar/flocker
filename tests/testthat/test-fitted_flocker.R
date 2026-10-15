@@ -66,3 +66,40 @@ test_that("fitted_flocker works correctly", {
   expect_equal(names(fitted_flocker(example_flocker_model_single2, new_data = newdat2, allow_new_levels = T)),
                c("linpred_occ", "linpred_det"))
 })
+
+test_that("Omega follows the standard fitted_flocker return shape", {
+  testthat::skip_on_cran()
+
+  observation_level <- fitted_flocker(
+    example_flocker_model_aug,
+    components = c("occ", "Omega"),
+    draw_ids = 1:2
+  )
+  expect_identical(
+    dim(observation_level$linpred_Omega),
+    dim(observation_level$linpred_occ)
+  )
+  expect_identical(attr(observation_level, "unit_level"), FALSE)
+
+  unit_level <- fitted_flocker(
+    example_flocker_model_aug,
+    components = c("occ", "Omega"),
+    draw_ids = 1:2,
+    unit_level = TRUE
+  )
+  expect_identical(
+    dim(unit_level$linpred_Omega),
+    dim(unit_level$linpred_occ)
+  )
+  expect_identical(attr(unit_level, "unit_level"), TRUE)
+
+  one_draw <- fitted_flocker(
+    example_flocker_model_aug,
+    components = c("occ", "Omega"),
+    draw_ids = 1
+  )
+  expect_identical(
+    dim(one_draw$linpred_Omega),
+    dim(one_draw$linpred_occ)
+  )
+})

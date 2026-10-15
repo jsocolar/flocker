@@ -1,7 +1,7 @@
 ---
 title: "SBC for multi-season flocker models"
 author: "Jacob Socolar"
-date: "2026-02-24"
+date: "2026-10-12"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{SBC for multi-season flocker models}
