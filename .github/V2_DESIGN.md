@@ -403,6 +403,62 @@ Tests that require fitted Stan models should use the local fixture cache during
 development and continue to exercise fresh fixture construction in the full CI
 or release-validation path.
 
+## Test architecture and CRAN runtime
+
+Keep strong statistical and integration guarantees without making CRAN compile
+and sample one model for every supported family. Package checks should have
+distinct verification tiers.
+
+The CRAN deterministic tier should exercise every family without MCMC wherever
+possible. It should include data packing and reconstruction round trips, exact
+likelihood comparisons, simulation and validation tests, forward-backward
+algorithms, array shaping and naming, singleton dimensions and draws, and
+metadata behavior. Generate representative complete Stan programs for every
+family and pass them through `rstan::stanc()` so that CRAN checks syntax and
+Stan semantics without paying for C++ compilation and sampling for each one.
+
+Retain one deliberately minimal end-to-end fit in the CRAN tier. It should use
+a small intercept-only custom-family model, no random effects, and the minimum
+sampling needed to verify compilation, fitting, metadata attachment, and one
+representative post-processing operation. A mandatory sentinel test must fail
+if this fit is skipped or unavailable; a green CRAN check must not result from
+silently skipping every fitting test.
+
+The full CI integration tier should fit one small model for every distinct
+fitting implementation. Run the complete fitted-family matrix in one dedicated
+Linux job rather than in every operating-system and R-version check. Other
+matrix jobs can run the CRAN-sized tier plus selected platform-sensitive smoke
+fits. Preserve at least one periodic or release-time cold build of every
+fixture so that caches cannot conceal compilation failures.
+
+Replace eager global fitting in `tests/testthat/setup.R` with lazy, per-family
+fixture getters. A getter should first reuse an in-memory fixture, then read an
+explicitly configured compatible local or CI cache, and fit only when a test
+actually requests that family. Store and invalidate fixtures independently,
+using the operating system, R version, relevant package versions, fixture
+schema version, and fit-producing source as cache inputs. CRAN-skipped tests
+must never trigger construction of their fixtures.
+
+Do not ship full `brmsfit` fixtures in the source package. Generate small input
+data and deterministic expected values at test time, and keep development and
+CI fixture caches outside the package tarball. Separate post-processing into a
+thin adapter that extracts linear predictors and metadata from a `brmsfit` and
+deterministic helpers that accept ordinary arrays. Test the helpers extensively
+with small synthetic draws; test the adapter with the CRAN smoke fit and full
+CI fixtures. Avoid mocks that depend on undocumented `brmsfit` internals.
+
+SBC remains a release-validation tier rather than an ordinary package test.
+Run it before releases and after substantial likelihood or packing changes,
+then cache only its rendered results for package vignettes. Adding a model
+family should require deterministic tests, Stan semantic validation, one real
+fit in full CI, and SBC where warranted, but should not automatically add
+another fitted model to the CRAN check.
+
+Measure fixture-construction time, per-file test time, total CRAN-mode test
+time, full integration time, and source-tarball size before and after the
+rewrite. The CRAN test phase should be dominated by its one intentional Stan
+compilation rather than growing linearly with the number of model families.
+
 ## Recommended implementation sequence
 
 1. Freeze representative 1.1 behavior with characterization tests, especially
