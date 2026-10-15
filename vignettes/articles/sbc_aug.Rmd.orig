@@ -57,51 +57,68 @@ occupancy, colonization, extinction and/or autologistic terms as applicable,
 and one event covariate that affects detection only (for all models except the
 rep-constant).
 
+For the data-augmented model, we simulate a supercommunity of fixed size. Only
+species with at least one detection are retained as named species in the
+observation array. Present but undetected species are observationally
+indistinguishable from unavailable species, so both enter the anonymous
+augmented pool.
+
 
 ## Data-augmented
 ```{r data-augmented, eval = TRUE}
 # make the stancode
 model_name <- paste0(tempdir(), "/sbc_augmented_model.stan")
 
-omega <- boot::inv.logit(rnorm(1, 0, .1))
-available <- rbinom(1, params$n_pseudospecies_augmented, omega)
-unavailable <- params$n_pseudospecies_augmented - available
+repeat {
+  omega <- boot::inv.logit(rnorm(1, 0, .1))
+  available <- rbinom(1, params$n_pseudospecies_augmented, omega)
+  if (available == 0) next
 
-coef_means <- rnorm(5)        # population-level effects (std_normal)
-sigma <- abs(rnorm(5))        # half-normal(0,1) for sd parameters
+  coef_means <- rnorm(5)        # population-level effects (std_normal)
+  sigma <- abs(rnorm(5))        # half-normal(0,1) for sd parameters
 
-coefs_df <- data.frame(
-  det_intercept  = rnorm(available, coef_means[1], sigma[1]),
-  det_slope_unit = rnorm(available, coef_means[2], sigma[2]),
-  det_slope_visit= rnorm(available, coef_means[3], sigma[3]),
-  occ_intercept  = rnorm(available, coef_means[4], sigma[4]),
-  occ_slope_unit = rnorm(available, coef_means[5], sigma[5])
-)
+  coefs_df <- data.frame(
+    det_intercept  = rnorm(available, coef_means[1], sigma[1]),
+    det_slope_unit = rnorm(available, coef_means[2], sigma[2]),
+    det_slope_visit= rnorm(available, coef_means[3], sigma[3]),
+    occ_intercept  = rnorm(available, coef_means[4], sigma[4]),
+    occ_slope_unit = rnorm(available, coef_means[5], sigma[5])
+  )
 
-fd <- simulate_flocker_data(
-  n_pt = params$n_sites_augmented, n_sp = available,
-  params = list(coefs = coefs_df),
-  seed = NULL,
-  rep_constant = FALSE,
-  ragged_rep = TRUE
-)
+  fd <- simulate_flocker_data(
+    n_pt = params$n_sites_augmented, n_sp = available,
+    params = list(coefs = coefs_df),
+    seed = NULL,
+    rep_constant = FALSE,
+    ragged_rep = TRUE
+  )
 
-obs_aug <- fd$obs[seq_len(params$n_sites_augmented), ]
+  obs_aug <- array(
+    NA_real_,
+    dim = c(params$n_sites_augmented, ncol(fd$obs), available)
+  )
+  for (i in seq_len(available)) {
+    obs_aug[, , i] <- fd$obs[
+      ((i - 1) * params$n_sites_augmented) + seq_len(params$n_sites_augmented),
+      ,
+      drop = FALSE
+    ]
+  }
 
-for(i in 2:available){
-  obs_aug <- abind::abind(
-    obs_aug, 
-    fd$obs[((i - 1) * params$n_sites_augmented) + seq_len(params$n_sites_augmented), ], 
-    along = 3
-    )
+  detected_species <- apply(obs_aug == 1, 3, any, na.rm = TRUE)
+  n_detected <- sum(detected_species)
+  # The augmented formatter requires at least one named and one pseudo species.
+  if (n_detected > 0 && n_detected < params$n_pseudospecies_augmented) break
 }
 
+obs_aug <- obs_aug[, , detected_species, drop = FALSE]
+n_aug <- params$n_pseudospecies_augmented - n_detected
 event_covs_aug <- list(ec1 = fd$event_covs$ec1[seq_len(params$n_sites_augmented), ])
 unit_covs_aug <- data.frame(uc1 = fd$unit_covs[seq_len(params$n_sites_augmented), "uc1"])
 
 flocker_data = make_flocker_data(
   obs_aug, unit_covs_aug, event_covs_aug,
-  type = "augmented", n_aug = unavailable,
+  type = "augmented", n_aug = n_aug,
   quiet = TRUE)
   
 scode <- flocker_stancode(
@@ -119,45 +136,57 @@ scode <- flocker_stancode(
   )
 writeLines(scode, model_name)
 
-aug_generator <- function(N){  
-  omega <- boot::inv.logit(rnorm(1, 0, .1))
-  available <- rbinom(1, params$n_pseudospecies_augmented, omega)
-  unavailable <- params$n_pseudospecies_augmented - available
+aug_generator <- function(N){
+  repeat {
+    omega <- boot::inv.logit(rnorm(1, 0, .1))
+    available <- rbinom(1, params$n_pseudospecies_augmented, omega)
+    if (available == 0) next
 
-  coef_means <- rnorm(5)
-  sigma <- abs(rnorm(5))
+    coef_means <- rnorm(5)
+    sigma <- abs(rnorm(5))
 
-  coefs_df <- data.frame(
-    det_intercept   = rnorm(available, coef_means[1], sigma[1]),
-    det_slope_unit  = rnorm(available, coef_means[2], sigma[2]),
-    det_slope_visit = rnorm(available, coef_means[3], sigma[3]),
-    occ_intercept   = rnorm(available, coef_means[4], sigma[4]),
-    occ_slope_unit  = rnorm(available, coef_means[5], sigma[5])
-  )
-
-  fd <- simulate_flocker_data(
-    n_pt = params$n_sites_augmented, n_sp = available,
-    params = list(coefs = coefs_df),
-    seed = NULL,
-    rep_constant = FALSE,
-    ragged_rep = TRUE
-  )
-
-  obs_aug <- fd$obs[seq_len(params$n_sites_augmented), ]
-  for(i in 2:available){
-    obs_aug <- abind::abind(
-      obs_aug, 
-      fd$obs[((i - 1) * params$n_sites_augmented) + seq_len(params$n_sites_augmented), ], 
-      along = 3
+    coefs_df <- data.frame(
+      det_intercept   = rnorm(available, coef_means[1], sigma[1]),
+      det_slope_unit  = rnorm(available, coef_means[2], sigma[2]),
+      det_slope_visit = rnorm(available, coef_means[3], sigma[3]),
+      occ_intercept   = rnorm(available, coef_means[4], sigma[4]),
+      occ_slope_unit  = rnorm(available, coef_means[5], sigma[5])
     )
+
+    fd <- simulate_flocker_data(
+      n_pt = params$n_sites_augmented, n_sp = available,
+      params = list(coefs = coefs_df),
+      seed = NULL,
+      rep_constant = FALSE,
+      ragged_rep = TRUE
+    )
+
+    obs_aug <- array(
+      NA_real_,
+      dim = c(params$n_sites_augmented, ncol(fd$obs), available)
+    )
+    for (i in seq_len(available)) {
+      obs_aug[, , i] <- fd$obs[
+        ((i - 1) * params$n_sites_augmented) + seq_len(params$n_sites_augmented),
+        ,
+        drop = FALSE
+      ]
+    }
+
+    detected_species <- apply(obs_aug == 1, 3, any, na.rm = TRUE)
+    n_detected <- sum(detected_species)
+    # The augmented formatter requires at least one named and one pseudo species.
+    if (n_detected > 0 && n_detected < params$n_pseudospecies_augmented) break
   }
 
+  obs_aug <- obs_aug[, , detected_species, drop = FALSE]
+  n_aug <- params$n_pseudospecies_augmented - n_detected
   event_covs_aug <- list(ec1 = fd$event_covs$ec1[seq_len(params$n_sites_augmented), ])
   unit_covs_aug <- data.frame(uc1 = fd$unit_covs[seq_len(params$n_sites_augmented), "uc1"])
 
   flocker_data <- make_flocker_data(
     obs_aug, unit_covs_aug, event_covs_aug,
-    type = "augmented", n_aug = unavailable,
+    type = "augmented", n_aug = n_aug,
     quiet = TRUE
   )
 
