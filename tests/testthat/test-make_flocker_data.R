@@ -64,6 +64,27 @@ test_that("make_flocker_data works correctly", {
   # Still need to add checks for the rest of the error messages, and for proper error messages using rep-constant data
 })
 
+test_that("make_flocker_data accepts matrix-like data frames for obs", {
+  obs <- matrix(
+    c(1, 0,
+      0, 1,
+      0, NA),
+    nrow = 3,
+    byrow = TRUE
+  )
+
+  from_matrix <- make_flocker_data(obs, quiet = TRUE)
+  from_data_frame <- make_flocker_data(as.data.frame(obs), quiet = TRUE)
+  expect_identical(from_data_frame$data, from_matrix$data)
+
+  invalid_obs <- as.data.frame(obs)
+  invalid_obs[1, 1] <- 2
+  expect_error(
+    make_flocker_data(invalid_obs, quiet = TRUE),
+    "obs may only contain the values 0, 1, or NA"
+  )
+})
+
 test_that("make_flocker_data reserves brms's synthetic Intercept name", {
   obs <- matrix(c(1, 0, 0, 1), nrow = 2)
   expect_error(

@@ -323,6 +323,7 @@ sfd <- function(
     covariates <- list(
       uc1 = stats::rnorm(n_pt)[unit_backbone$id_point]
     )
+    unit_uc1 <- covariates$uc1
   } else {
     assertthat::assert_that(is.list(covariates), msg = "covariates must be a named list")
     assertthat::assert_that("uc1" %in% names(covariates), msg = "covariates must include uc1")
@@ -330,9 +331,10 @@ sfd <- function(
       is.numeric(covariates$uc1) && length(covariates$uc1) == n_pt,
       msg = "covariates$uc1 must be numeric of length n_pt"
     )
+    unit_uc1 <- covariates$uc1[unit_backbone$id_point]
   }
   
-  unit_backbone$uc1 <- covariates$uc1
+  unit_backbone$uc1 <- unit_uc1
   
   if (n_season > 1) {
     unit_backbone$col <- coefs$col_intercept[as.integer(unit_backbone$species)] +
@@ -555,4 +557,3 @@ sfd <- function(
   out$covariates <- covariates
   out
 }
-

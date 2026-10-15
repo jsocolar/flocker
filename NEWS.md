@@ -27,6 +27,10 @@
   and when using `new_data`, including rep-constant models. Augmented
   group-level probabilities now marginalize over unit occupancy and incorporate
   the fitted group-level occupancy probability.
+* Fixed expansion of user-supplied unit and event covariates in
+  `simulate_flocker_data()` so that values are shared across species at each
+  unit or visit, and allowed `make_flocker_data()` to accept data-frame
+  observation inputs as documented.
 * Fixed reconstruction of maximally ragged observation and covariate arrays,
   including multiseason data with a final season that is unobserved in every
   series, and made post-processing robust when exactly one posterior draw is

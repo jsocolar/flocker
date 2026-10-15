@@ -121,6 +121,29 @@ test_that("covariates validation works", {
                                      covariates=list(uc1=rnorm(3), ec1=rnorm(3)), seed=1))
 })
 
+test_that("user-supplied covariates are shared across species", {
+  n_pt <- 12L
+  uc1 <- seq_len(n_pt)
+  ec1 <- seq_len(n_pt * 2L)
+  fd <- simulate_flocker_data(
+    n_pt = n_pt,
+    n_sp = 2,
+    n_rep = 2,
+    rep_constant = FALSE,
+    covariates = list(uc1 = uc1, ec1 = ec1),
+    seed = 1
+  )
+
+  expected_one_species <- cbind(seq_len(n_pt), n_pt + seq_len(n_pt))
+  expect_equal(
+    unname(fd$event_covs$ec1),
+    unname(rbind(expected_one_species, expected_one_species))
+  )
+  expect_identical(fd$unit_covs$uc1, rep(uc1, 2L))
+  expect_identical(fd$covariates$uc1, uc1)
+  expect_identical(fd$covariates$ec1, ec1)
+})
+
 
 test_that("multiseason output shapes are correct", {
   fd <- simulate_flocker_data(n_pt=4, n_sp=2, n_rep=3, n_season=5,
