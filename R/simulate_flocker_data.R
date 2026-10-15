@@ -70,7 +70,10 @@
 #'   \itemize{
 #'     \item \code{uc1}: numeric vector of length \code{n_pt} giving the unit-level covariate.
 #'     \item \code{ec1}: numeric vector of length \code{n_pt * n_season * n_rep}
-#'       giving the event-level covariate (ignored if \code{rep_constant = TRUE}).
+#'       giving the event-level covariate (ignored if \code{rep_constant = TRUE}),
+#'       ordered with point varying fastest, then season, then rep (i.e. the
+#'       first \code{n_pt} elements are rep 1 of season 1 at points
+#'       \code{1, ..., n_pt}).
 #'   }
 #'   If \code{NULL} (the default), covariates are simulated internally from 
 #'   standard normal distributions.
@@ -403,29 +406,36 @@ sfd <- function(
     coefs$det_slope_unit[as.integer(visit_full$species)] * visit_full$uc1
   
   if (!rep_constant) {
+    # we don't allow ec1 to vary by species; this allows the covariate to play
+    # nicely with augmented models. Each visit (point x season x rep) has one
+    # ec1 value that must be expanded across the species-blocked rows of
+    # visit_full; assigning an unexpanded vector would recycle it
+    # species-fastest (visit-constant, species-varying).
+    visit_key <- paste(
+      visit_full$id_point,
+      visit_full$id_season,
+      visit_full$id_rep,
+      sep = "__"
+    )
     if ("ec1" %in% names(covariates)) {
       assertthat::assert_that(
         is.numeric(covariates$ec1) && length(covariates$ec1) == n_pt * n_season * n_rep,
         msg = "covariates$ec1 must be numeric of length n_pt * n_season * n_rep"
       )
+      # explicit levels (first appearance = visit_full's row order: point
+      # varying fastest, then season, then rep) keep the user-facing mapping
+      # predictable even when ids have mixed digit counts (point 10 vs 2).
+      visit_full$ec1 <-
+        covariates$ec1[as.integer(factor(visit_key, levels = unique(visit_key)))]
     } else {
-      covariates$ec1 <- stats::rnorm(n_pt*n_season*n_rep)[ # we don't allow ec1 to vary by species;
-        # this allows the covariate to play nicely with augmented models.
-        
-        # I think that visit_full is already guaranteed to be blocked by species with everything
-        # else in consistent order, but this should ensure that the ordering stays correct no 
-        # matter what.
-        as.integer(factor( 
-          paste(
-            visit_full$id_point, 
-            visit_full$id_season, 
-            visit_full$id_rep, 
-            sep = "__"
-          )
-        ))
+      covariates$ec1 <- stats::rnorm(n_pt*n_season*n_rep)[
+        # string-ordered levels, kept as-is so that seeded simulations
+        # reproduce output from previous versions (values are iid, so the
+        # mapping itself is immaterial here).
+        as.integer(factor(visit_key))
       ]
+      visit_full$ec1 <- covariates$ec1
     }
-    visit_full$ec1 <- covariates$ec1
     visit_full$logit_det <- visit_full$logit_det + 
       coefs$det_slope_visit[as.integer(visit_full$species)] * visit_full$ec1
   }

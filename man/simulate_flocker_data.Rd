@@ -96,7 +96,10 @@ simulation. Supported names are:
 \itemize{
   \item \code{uc1}: numeric vector of length \code{n_pt} giving the unit-level covariate.
   \item \code{ec1}: numeric vector of length \code{n_pt * n_season * n_rep}
-    giving the event-level covariate (ignored if \code{rep_constant = TRUE}).
+    giving the event-level covariate (ignored if \code{rep_constant = TRUE}),
+    ordered with point varying fastest, then season, then rep (i.e. the
+    first \code{n_pt} elements are rep 1 of season 1 at points
+    \code{1, ..., n_pt}).
 }
 If \code{NULL} (the default), covariates are simulated internally from 
 standard normal distributions.

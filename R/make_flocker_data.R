@@ -630,7 +630,9 @@ standard_mfd_checks <- function(
     level2_group = NULL, level2_covs = NULL
 ) {
   
-  unique_y <- unique(obs)
+  # unique() on a data.frame returns unique rows, not values; flatten first so
+  # matrix-like data.frames pass the same value check as matrices and arrays.
+  unique_y <- unique(as.vector(if (is.data.frame(obs)) as.matrix(obs) else obs))
   assertthat::assert_that(
     all(unique_y %in% c(0, 1, NA)),
     msg = "obs may only contain the values 0, 1, or NA"
