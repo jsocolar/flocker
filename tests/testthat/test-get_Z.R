@@ -307,14 +307,7 @@ test_that("edge cases are handled", {
   expect_error(forward_sim(0.5, numeric(0), numeric(0)))
 })
 
-# Test for forward_backward_algorithm function
-test_that("forward_backward_algorithm returns correct results", {
-  el0 <- c(0.1, 0.2, 0.3, 0.6)
-  el1 <- c(0.9, 0.8, 0.7, 0.2)
-  init <- 0.3
-  colo <- c(0.2, 0.15, 0.4, 0.1)
-  ex <- c(0.5, 0.6, 0.05, 0.7)
-
+brute_force_dynamic_state_probs <- function(el0, el1, init, colo, ex) {
   state_sequences <- as.matrix(expand.grid(rep(list(0:1), length(el0))))
   joint_prob <- numeric(nrow(state_sequences))
   for(i in seq_len(nrow(state_sequences))) {
@@ -333,11 +326,22 @@ test_that("forward_backward_algorithm returns correct results", {
     }
   }
   posterior_prob <- joint_prob / sum(joint_prob)
-  expected <- vapply(
+  vapply(
     seq_along(el0),
     function(t) sum(posterior_prob[state_sequences[, t] == 1]),
     numeric(1)
   )
+}
+
+# Test for forward_backward_algorithm function
+test_that("forward_backward_algorithm returns correct results", {
+  el0 <- c(0.1, 0.2, 0.3, 0.6)
+  el1 <- c(0.9, 0.8, 0.7, 0.2)
+  init <- 0.3
+  colo <- c(0.2, 0.15, 0.4, 0.1)
+  ex <- c(0.5, 0.6, 0.05, 0.7)
+
+  expected <- brute_force_dynamic_state_probs(el0, el1, init, colo, ex)
 
   result <- forward_backward_algorithm(el0, el1, init, colo, ex)
   expect_type(result, "double")
@@ -347,14 +351,35 @@ test_that("forward_backward_algorithm returns correct results", {
 
 # Test for forward_backward_sampling function
 test_that("forward_backward_sampling returns correct results", {
-  el0 <- c(0.1, 0.2, 0.3)
-  el1 <- c(0.9, 0.8, 0.7)
-  init <- 0.5
-  colo <- c(0.6, 0.7, 0.8)
-  ex <- c(0.4, 0.3, 0.2)
-  result <- forward_backward_sampling(el0, el1, init, colo, ex)
-  expect_type(result, "double")
-  expect_length(result, length(el0))
+  el0 <- c(0.1, 0.2, 0.3, 0.6)
+  el1 <- c(0.9, 0.8, 0.7, 0.2)
+  init <- 0.3
+  colo <- c(0.2, 0.15, 0.4, 0.1)
+  ex <- c(0.5, 0.6, 0.05, 0.7)
+  expected <- brute_force_dynamic_state_probs(el0, el1, init, colo, ex)
+
+  n_sim <- 50000
+  false_failure_bound <- 1e-7
+  mc_tolerance <- sqrt(
+    log(2 * length(expected) / false_failure_bound) / (2 * n_sim)
+  )
+  set.seed(7)
+  samples <- replicate(
+    n_sim,
+    forward_backward_sampling(el0, el1, init, colo, ex)
+  )
+  sampled_prob <- rowMeans(samples)
+  max_error <- max(abs(sampled_prob - expected))
+
+  expect_true(
+    max_error <= mc_tolerance,
+    info = paste0(
+      "This stochastic FFBS test uses a Hoeffding union bound and is ",
+      "designed to fail on fewer than one in one million RNG seeds when ",
+      "sampling is correct. Maximum error was ", signif(max_error, 4),
+      "; tolerance was ", signif(mc_tolerance, 4), "."
+    )
+  )
 })
 
 # Test for forward_algorithm function

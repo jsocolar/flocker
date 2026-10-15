@@ -580,7 +580,8 @@ forward_backward_sampling <- function(el0, el1, init, colo, ex) {
     # Iterate over the timesteps in reverse, starting from the second-to-last timestep
     for (t in (n - 1):1) {
       # Compute the conditional probabilities for the previous state, given the sampled state at t+1
-      cond_probs <- trans[t, (2 * sampled_states[t + 1] + 1):(2 * sampled_states[t + 1] + 2)] * forward_probs[t,]
+      cond_probs <- trans[t, c(1, 3) + sampled_states[t + 1]] *
+        forward_probs[t,]
       
       # Sample the current state based on the conditional probabilities
       sampled_states[t] <- sample(c(0, 1), size = 1, prob = cond_probs)
