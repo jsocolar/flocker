@@ -5,6 +5,7 @@ Doser
 HMMs
 Markovian
 Multiseason
+Rmd
 SBC
 al
 asymptote
@@ -36,6 +37,7 @@ mfd
 multiseason
 multispecies
 nondetection
+observationally
 occ
 parallelization
 params
@@ -45,10 +47,13 @@ pseudospecies
 sp
 stan
 stancode
+supercommunity
 termina
 textrm
 th
 toolchain
+twolevel
 unadvisable
+unexpanded
 unlooped
 vectorization

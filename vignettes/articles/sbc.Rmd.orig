@@ -41,7 +41,7 @@ set.seed(1)
 
 ## Overview
 
-This document is one of a series of simulation-based calibration exercieses for
+This document is one of a series of simulation-based calibration exercises for
 models available in R package `flocker`. Here, our goal is to validate `flocker`'s 
 data formatting, decoding, and likelihood implementations, and not `brms`'s 
 construction of the linear predictors.
@@ -240,4 +240,3 @@ plot_rank_hist(rep_varying_results)
 plot_ecdf_diff(rep_varying_results)
 
 ```
-
