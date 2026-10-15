@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">flocker</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0-2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1-0</span>
       </span>
     </div>
 
@@ -51,6 +51,9 @@
     </li>
     <li>
       <a href="../articles/sbc_multi.html">SBC for multi-season flocker models</a>
+    </li>
+    <li>
+      <a href="../articles/sbc_twolevel.html">SBC for two-level flocker models</a>
     </li>
     <li>
       <a href="../articles/sbc.html">SBC for single-season flocker models</a>
@@ -91,7 +94,9 @@
 <span>  <span class="va">type</span>,</span>
 <span>  <span class="va">n_aug</span>,</span>
 <span>  <span class="va">quiet</span>,</span>
-<span>  <span class="va">newdata_checks</span></span>
+<span>  <span class="va">newdata_checks</span>,</span>
+<span>  level2_group <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  level2_covs <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -100,22 +105,31 @@
 
 
 <dl><dt id="arg-obs">obs<a class="anchor" aria-label="anchor" href="#arg-obs"></a></dt>
-<dd><p>If <code>type = "single"</code>, an I x J matrix-like object where
-closure is assumed across rows and columns are repeated sampling events.
+<dd><p>If <code>type = "single"</code> or <code>type = "twolevel_single"</code>,
+an I x J matrix-like object where closure is assumed across rows and columns
+are repeated sampling events.
   If <code>type = "multi"</code>, an I x J x K array where rows are sites or
 species-sites, columns are repeated sampling events, and slices along the
 third dimension are seasons. Allowable values are 1 (detection), 0 (no
 detection), and NA (no sampling event).
    If <code>type = "augmented"</code>, an L x J x K array where rows L are sites,
-columns J are repeat sampling events, and slices K are species.
+columns J are repeat sampling events, and slices K are species. Every
+supplied species must have at least one detection; never-observed
+pseudospecies are added through <code>n_aug</code>. Species names may be supplied
+as names on the third dimension. If omitted, observed species are named
+`species1`, `species2`, and so on. Names matching
+`pseudospecies[digits]` are reserved for augmented pseudospecies.
    The data must be packed so that, for a given unit (site, site-species,
 site-timestep, site-species-timestep) all realized visits come before any
 missing visits (NAs are trailing within their rows).</p></dd>
 
 
 <dt id="arg-unit-covs">unit_covs<a class="anchor" aria-label="anchor" href="#arg-unit-covs"></a></dt>
-<dd><p>If <code>type = "single"</code> a dataframe of covariates for each
-closure-unit that are constant across repeated sampling events within units.
+<dd><p>If <code>type = "single"</code> or
+  <code>type = "twolevel_single"</code>, a dataframe of covariates for each
+  closure unit that are constant across repeated sampling events within
+  units. For <code>type = "twolevel_single"</code>, this must include the factor
+  column named by <code>level2_group</code>.
   If <code>type = "multi"</code>, a list of such dataframes, one per timestep. All
 dataframes must have identical column names and types, and all
 dataframes must have I rows.
@@ -125,9 +139,10 @@ species is allowed).</p></dd>
 
 
 <dt id="arg-event-covs">event_covs<a class="anchor" aria-label="anchor" href="#arg-event-covs"></a></dt>
-<dd><p>If <code>type = "single"</code>, a named list of I x J matrices,
-each one corresponding to a covariate that varies across repeated sampling
-events within closure-units.
+<dd><p>If <code>type = "single"</code> or
+  <code>type = "twolevel_single"</code>, a named list of I x J matrices, each one
+  corresponding to a covariate that varies across repeated sampling events
+  within closure-units.
   If <code>type = "multi"</code>, a named list of I x J x K arrays, each one
 corresponding to a covariate that varies across repeated sampling events
 within closure-units.
@@ -138,10 +153,11 @@ within sites (no dependence on species is allowed).</p></dd>
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
 <dd><p>The type of occupancy model desired. Options are:
-<code>"single"</code> for a single_season model,
+<code>"single"</code> for a single-season model,
 <code>"multi"</code> for a multi-season (dynamic) model, or
 <code>"augmented"</code> for a single-season multi-species model with
-data-augmentation for never-observed pseudospecies.</p></dd>
+data-augmentation for never-observed pseudospecies, or
+<code>"twolevel_single"</code> for a two-level single-season model.</p></dd>
 
 
 <dt id="arg-n-aug">n_aug<a class="anchor" aria-label="anchor" href="#arg-n-aug"></a></dt>
@@ -157,6 +173,20 @@ data-augmentation for never-observed pseudospecies.</p></dd>
 <dd><p>If TRUE, turn off checks that must pass in order
 to use the data for model fitting, but not in other contexts (e.g. making
 predictions or assessing log-likelihoods over new data).</p></dd>
+
+
+<dt id="arg-level-group">level2_group<a class="anchor" aria-label="anchor" href="#arg-level-group"></a></dt>
+<dd><p>The name of a factor column in <code>unit_covs</code> and, if
+supplied, <code>level2_covs</code>, identifying the level-two group. Only
+applicable if <code>type = "twolevel_single"</code>.</p></dd>
+
+
+<dt id="arg-level-covs">level2_covs<a class="anchor" aria-label="anchor" href="#arg-level-covs"></a></dt>
+<dd><p>An optional dataframe with one row per level-two group
+and no unused levels in its grouping factor. Row order is arbitrary;
+factor-level order determines the internal group order, and every group
+must be represented in <code>unit_covs</code>. Only applicable if
+<code>type = "twolevel_single"</code>.</p></dd>
 
 </dl></div>
 

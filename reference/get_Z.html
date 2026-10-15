@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">flocker</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0-2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1-0</span>
       </span>
     </div>
 
@@ -51,6 +51,9 @@
     </li>
     <li>
       <a href="../articles/sbc_multi.html">SBC for multi-season flocker models</a>
+    </li>
+    <li>
+      <a href="../articles/sbc_twolevel.html">SBC for two-level flocker models</a>
     </li>
     <li>
       <a href="../articles/sbc.html">SBC for single-season flocker models</a>
@@ -126,7 +129,8 @@ or bernoulli samples from those probabilities (TRUE)</p></dd>
 <dd><p>Optional new data at which to predict the Z matrix. Can be
 the output of `make_flocker_data` or the `unit_covs` input to
 `make_flocker_data` provided that `history_condition` is `FALSE` and the
-occupancy model is a single-season, non-augmented model.</p></dd>
+occupancy model is a one-level single-season model. Two-level,
+augmented, and multiseason models require a `flocker_data` object.</p></dd>
 
 
 <dt id="arg-allow-new-levels">allow_new_levels<a class="anchor" aria-label="anchor" href="#arg-allow-new-levels"></a></dt>
@@ -142,9 +146,14 @@ handled? Passed directly to `brms::prepare_predictions`, which see.</p></dd>
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>The posterior Z matrix in the shape of the first visit in `obs` as
-    passed to make_flocker_data, with posterior iterations stacked along the
-    final dimension</p>
+    <p>For one-level and multiseason models, the posterior Z matrix in the
+    shape of the first visit in `obs` as passed to make_flocker_data, with
+    posterior iterations stacked along the final dimension. For
+    `twolevel_single` and `augmented` models, a list with elements `unit` and
+    `level2`. The `unit` element has that same unit-level shape, and the
+    `level2` element is a matrix with one row per level-two group and
+    posterior iterations in columns. Group dimensions are named using the
+    level-two grouping factor, or species names for augmented models.</p>
     </div>
 
     <div id="ref-examples">

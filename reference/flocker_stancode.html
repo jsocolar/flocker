@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">flocker</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0-2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1-0</span>
       </span>
     </div>
 
@@ -51,6 +51,9 @@
     </li>
     <li>
       <a href="../articles/sbc_multi.html">SBC for multi-season flocker models</a>
+    </li>
+    <li>
+      <a href="../articles/sbc_twolevel.html">SBC for two-level flocker models</a>
     </li>
     <li>
       <a href="../articles/sbc.html">SBC for single-season flocker models</a>
@@ -96,6 +99,7 @@
 <span>  f_auto <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  augmented <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  threads <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  f_meta <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -172,6 +176,12 @@ data-augmented multi-species model, and FALSE otherwise.</p></dd>
 <dd><p>NULL or positive integer. If integer, the number of threads
 to use per chain in within chain parallelization. Currently available only
 with single-season rep-constant models, and must be set to NULL otherwise.</p></dd>
+
+
+<dt id="arg-f-meta">f_meta<a class="anchor" aria-label="anchor" href="#arg-f-meta"></a></dt>
+<dd><p>A brms-type model formula for level-two, or meta-occupancy.
+Required for <code>twolevel_single</code> models and must be <code>NULL</code> for all
+other model types. Must begin with "~".</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

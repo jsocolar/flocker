@@ -32,7 +32,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">flocker</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0-2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1-0</span>
       </span>
     </div>
 
@@ -70,6 +70,9 @@
       <a href="../articles/sbc_multi.html">SBC for multi-season flocker models</a>
     </li>
     <li>
+      <a href="../articles/sbc_twolevel.html">SBC for two-level flocker models</a>
+    </li>
+    <li>
       <a href="../articles/sbc.html">SBC for single-season flocker models</a>
     </li>
   </ul>
@@ -102,7 +105,7 @@
                         <h4 data-toc-skip class="author">Jacob
 Socolar</h4>
             
-            <h4 data-toc-skip class="date">2026-02-24</h4>
+            <h4 data-toc-skip class="date">2026-10-12</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/jsocolar/flocker/blob/main/vignettes/augmented_models.Rmd" class="external-link"><code>vignettes/augmented_models.Rmd</code></a></small>
       <div class="hidden name"><code>augmented_models.Rmd</code></div>
@@ -178,10 +181,7 @@ pseudospecies to augment the data with.</p>
 <span>  augmented <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  cores <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  refresh <span class="op">=</span> <span class="fl">0</span></span>
-<span>  <span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.</span></span>
-<span><span class="co">#&gt; Running the chains for more iterations may help. See</span></span>
-<span><span class="co">#&gt; https://mc-stan.org/misc/warnings.html#bulk-ess</span></span></code></pre></div>
+<span>  <span class="op">)</span></span></code></pre></div>
 <p>Here, the random effect of species is specified using the special
 grouping keyword <code>ff_species</code> (names beginning with
 <code>ff_</code> are reserved in <code>flocker</code> and are not
@@ -190,7 +190,7 @@ allowed as names for user-supplied covariates).</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fm</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  Family: occupancy_augmented </span></span>
 <span><span class="co">#&gt;   Links: mu = identity; occ = identity; Omega = identity </span></span>
-<span><span class="co">#&gt; Formula: ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ff_n_sp, ff_superQ, ff_species, ff_rep_index1, ff_rep_index2, ff_rep_index3, ff_rep_index4) ~ uc1 + ec1 + (1 + uc1 + ec1 | ff_species) </span></span>
+<span><span class="co">#&gt; Formula: ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ff_n_group, ff_group_known_present, ff_n_unit_group, ff_group_index, ff_rep_index1, ff_rep_index2, ff_rep_index3, ff_rep_index4) ~ uc1 + ec1 + (1 + uc1 + ec1 | ff_species)</span></span>
 <span><span class="co">#&gt;          occ ~ (1 | ff_species)</span></span>
 <span><span class="co">#&gt;          Omega ~ 1</span></span>
 <span><span class="co">#&gt;    Data: data (Number of observations: 25600) </span></span>
@@ -200,21 +200,21 @@ allowed as names for user-supplied covariates).</p>
 <span><span class="co">#&gt; Multilevel Hyperparameters:</span></span>
 <span><span class="co">#&gt; ~ff_species (Number of levels: 128) </span></span>
 <span><span class="co">#&gt;                    Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
-<span><span class="co">#&gt; sd(Intercept)          1.58      0.27     1.15     2.19 1.00      961     1454</span></span>
-<span><span class="co">#&gt; sd(uc1)                0.25      0.11     0.06     0.49 1.00     1244     1032</span></span>
-<span><span class="co">#&gt; sd(ec1)                0.39      0.09     0.23     0.58 1.00     2281     2648</span></span>
-<span><span class="co">#&gt; sd(occ_Intercept)      1.60      0.33     1.10     2.38 1.00      912     1233</span></span>
-<span><span class="co">#&gt; cor(Intercept,uc1)     0.74      0.22     0.15     0.98 1.00     2157     2522</span></span>
-<span><span class="co">#&gt; cor(Intercept,ec1)     0.56      0.20     0.10     0.86 1.00     2935     2678</span></span>
-<span><span class="co">#&gt; cor(uc1,ec1)           0.57      0.27    -0.07     0.94 1.00      793     1486</span></span>
+<span><span class="co">#&gt; sd(Intercept)          1.60      0.27     1.15     2.22 1.01      748     1806</span></span>
+<span><span class="co">#&gt; sd(uc1)                0.25      0.11     0.05     0.49 1.00      983      687</span></span>
+<span><span class="co">#&gt; sd(ec1)                0.39      0.09     0.23     0.59 1.00     2154     2757</span></span>
+<span><span class="co">#&gt; sd(occ_Intercept)      1.60      0.32     1.10     2.34 1.00      873     1650</span></span>
+<span><span class="co">#&gt; cor(Intercept,uc1)     0.74      0.23     0.11     0.98 1.00     1970     2008</span></span>
+<span><span class="co">#&gt; cor(Intercept,ec1)     0.57      0.19     0.13     0.86 1.00     2652     2626</span></span>
+<span><span class="co">#&gt; cor(uc1,ec1)           0.58      0.27    -0.08     0.95 1.00      709     1137</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Regression Coefficients:</span></span>
 <span><span class="co">#&gt;                 Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS</span></span>
-<span><span class="co">#&gt; Intercept           0.48      0.31    -0.14     1.10 1.01      351      528</span></span>
-<span><span class="co">#&gt; occ_Intercept       0.24      0.34    -0.47     0.89 1.01      525     1094</span></span>
-<span><span class="co">#&gt; Omega_Intercept    -1.27      0.22    -1.70    -0.85 1.00     7528     3124</span></span>
-<span><span class="co">#&gt; uc1                 0.01      0.07    -0.14     0.16 1.00      797     1472</span></span>
-<span><span class="co">#&gt; ec1                 0.07      0.09    -0.10     0.25 1.00     1082     1803</span></span>
+<span><span class="co">#&gt; Intercept           0.49      0.31    -0.13     1.09 1.01      468      978</span></span>
+<span><span class="co">#&gt; occ_Intercept       0.24      0.36    -0.53     0.91 1.00      601      879</span></span>
+<span><span class="co">#&gt; Omega_Intercept    -1.27      0.22    -1.71    -0.85 1.00     6670     2574</span></span>
+<span><span class="co">#&gt; uc1                 0.02      0.07    -0.14     0.15 1.00     1033     1750</span></span>
+<span><span class="co">#&gt; ec1                 0.07      0.09    -0.11     0.25 1.00     1223     1907</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS</span></span>
 <span><span class="co">#&gt; and Tail_ESS are effective sample size measures, and Rhat is the potential</span></span>

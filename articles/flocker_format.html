@@ -32,7 +32,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">flocker</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0-2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1-0</span>
       </span>
     </div>
 
@@ -70,6 +70,9 @@
       <a href="../articles/sbc_multi.html">SBC for multi-season flocker models</a>
     </li>
     <li>
+      <a href="../articles/sbc_twolevel.html">SBC for two-level flocker models</a>
+    </li>
+    <li>
       <a href="../articles/sbc.html">SBC for single-season flocker models</a>
     </li>
   </ul>
@@ -103,7 +106,7 @@ and the <code>flocker_data</code> format</h1>
                         <h4 data-toc-skip class="author">Jacob
 Socolar</h4>
             
-            <h4 data-toc-skip class="date">2026-09-07</h4>
+            <h4 data-toc-skip class="date">2026-10-15</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/jsocolar/flocker/blob/main/vignettes/flocker_format.Rmd" class="external-link"><code>vignettes/flocker_format.Rmd</code></a></small>
       <div class="hidden name"><code>flocker_format.Rmd</code></div>
@@ -301,10 +304,11 @@ modeling.</p>
 <p>Flocker provides a set of families that are more involved still. The
 first are the multi-season families, which group closure-units into
 series within which the occupancy state changes via modeled colonization
-and extinction dynamics. The second are data-augmented multi-species
-models, in which closure-units are grouped within species whose presence
-in the community (and thus availability for detection) is modeled
-explicitly.</p>
+and extinction dynamics. The second are two-level single-season models,
+in which closure-units are grouped into larger units whose presence, and
+thus availability for detection, is modeled explicitly. Data-augmented
+multi-species models are a special case: species are the level-two
+groups, and species-site combinations are the closure-units.</p>
 <div class="section level3">
 <h3 id="the-multi-season-format">The multi-season format<a class="anchor" aria-label="anchor" href="#the-multi-season-format"></a>
 </h3>
@@ -434,112 +438,131 @@ family via <code>stanvars</code>:</p>
 <span><span class="co">##   }</span></span></code></pre>
 </div>
 <div class="section level3">
-<h3 id="the-data-augmented-format">The data augmented format<a class="anchor" aria-label="anchor" href="#the-data-augmented-format"></a>
+<h3 id="the-two-level-format">The two-level format<a class="anchor" aria-label="anchor" href="#the-two-level-format"></a>
 </h3>
-<p>For the data augmented model, suppose that the dataset contains
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>I</mi><annotation encoding="application/x-tex">I</annotation></semantics></math>
-sites, up to
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>J</mi><annotation encoding="application/x-tex">J</annotation></semantics></math>
-visits per site, and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>K</mi><annotation encoding="application/x-tex">K</annotation></semantics></math>
-species (including the data-augmented pseudospecies). The data are
-ordered so that the first
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>I</mi><mo>×</mo><mi>K</mi></mrow><annotation encoding="application/x-tex">I \times K</annotation></semantics></math>
-rows each represent the first visit to each closure-unit (species
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>×</mi><annotation encoding="application/x-tex">\times</annotation></semantics></math>
-site). Then we pass auxiliary terms including:</p>
+<p>For a two-level single-season model, suppose that the dataset
+contains
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>G</mi><annotation encoding="application/x-tex">G</annotation></semantics></math>
+level-two groups,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>U</mi><annotation encoding="application/x-tex">U</annotation></semantics></math>
+closure-units distributed among those groups, and up to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>M</mi><annotation encoding="application/x-tex">M</annotation></semantics></math>
+visits per closure-unit. We arrange the data so that the first
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>G</mi><annotation encoding="application/x-tex">G</annotation></semantics></math>
+rows contain the first visits to one representative closure-unit from
+each group. This allows the likelihood to use the first
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>G</mi><annotation encoding="application/x-tex">G</annotation></semantics></math>
+elements of the group-level linear predictor, each computed from a real
+covariate row. The first
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>U</mi><annotation encoding="application/x-tex">U</annotation></semantics></math>
+rows contain the first visits to all closure-units, just as in the
+ordinary single-season format.</p>
+<p>The data-augmented model uses this same representation. In that case,
+the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>G</mi><annotation encoding="application/x-tex">G</annotation></semantics></math>
+groups are observed and augmented species, while the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>U</mi><annotation encoding="application/x-tex">U</annotation></semantics></math>
+closure-units are species-site combinations.</p>
+<p>We pass the following auxiliary terms:</p>
 <ul>
 <li>A <code>vint</code> term giving the total number of closure-units
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>I</mi><mo>×</mo><mi>K</mi></mrow><annotation encoding="application/x-tex">I \times K</annotation></semantics></math>.
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>U</mi><annotation encoding="application/x-tex">U</annotation></semantics></math>.
 Elements after the first are irrelevant.</li>
 <li>A <code>vint</code> term giving the number of sampling events per
 closure-unit. Elements after
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>I</mi><mo>×</mo><mi>K</mi></mrow><annotation encoding="application/x-tex">I \times K</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>U</mi><annotation encoding="application/x-tex">U</annotation></semantics></math>
 are irrelevant.</li>
 <li>A <code>vint</code> term giving the binary indicator
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Q</mi><annotation encoding="application/x-tex">Q</annotation></semantics></math>
-for whether there is at least one detection. Elements after
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>I</mi><mo>×</mo><mi>K</mi></mrow><annotation encoding="application/x-tex">I \times K</annotation></semantics></math>
+for whether there is at least one detection at each closure-unit.
+Elements after
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>U</mi><annotation encoding="application/x-tex">U</annotation></semantics></math>
 are irrelevant.</li>
-<li>A <code>vint</code> term giving the number of species
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>K</mi><annotation encoding="application/x-tex">K</annotation></semantics></math>.
+<li>A <code>vint</code> term giving the number of level-two groups
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>G</mi><annotation encoding="application/x-tex">G</annotation></semantics></math>.
 Elements after the first are irrelevant.</li>
-<li>A <code>vint</code> term giving a binary indicator for whether there
-is at least one observation of a species. Elements after
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>K</mi><annotation encoding="application/x-tex">K</annotation></semantics></math>
+<li>A <code>vint</code> term giving a binary indicator for whether each
+group is known present. In the current format, this indicator is 1 for
+groups with at least one detection and 0 otherwise. Elements after
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>G</mi><annotation encoding="application/x-tex">G</annotation></semantics></math>
 are irrelevant.</li>
-<li>A <code>vint</code> term giving the species to which a closure-unit
-belongs. Elements after
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>I</mi><mo>×</mo><mi>K</mi></mrow><annotation encoding="application/x-tex">I \times K</annotation></semantics></math>
+<li>A <code>vint</code> term giving the number of closure-units
+belonging to each group. Elements after
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>G</mi><annotation encoding="application/x-tex">G</annotation></semantics></math>
+are irrelevant.</li>
+<li>One <code>vint</code> term containing the closure-unit indices
+concatenated group by group. Its first
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>U</mi><annotation encoding="application/x-tex">U</annotation></semantics></math>
+elements form a permutation of the integers from 1 through
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>U</mi><annotation encoding="application/x-tex">U</annotation></semantics></math>.
+The preceding <code>vint</code> term gives the segment lengths that
+identify which indices belong to each group; elements after
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>U</mi><annotation encoding="application/x-tex">U</annotation></semantics></math>
 are irrelevant.</li>
 <li>Multiple <code>vint</code> terms, one for each sampling event up to
-the maximum number of sampling events at any site, giving the row index
-corresponding to that visit. Elements after
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>I</mi><mo>×</mo><mi>K</mi></mrow><annotation encoding="application/x-tex">I \times K</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>M</mi><annotation encoding="application/x-tex">M</annotation></semantics></math>,
+giving the row index corresponding to that visit. Elements after
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>U</mi><annotation encoding="application/x-tex">U</annotation></semantics></math>
 are irrelevant.</li>
 </ul>
-<p>Thus, we pass a number of <code>vint</code> terms equal to six plus
-the maximum number of visits at any site. Here’s <code>Stan</code> code
-to decode this format and compute the likelihood a dataset with a
-maximum of 4 repeat visits.</p>
+<p>Thus, we pass seven plus
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>M</mi><annotation encoding="application/x-tex">M</annotation></semantics></math><code>vint</code> terms, regardless of the number of groups or the
+number of closure-units within each group. Here’s <code>Stan</code> code
+to decode this format and compute the likelihood for a two-level model
+with a maximum of four repeat visits:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu">flocker</span><span class="fu">:::</span><span class="fu">make_occupancy_augmented_lpmf</span><span class="op">(</span><span class="fl">4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   real occupancy_augmented_lpmf(</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu">flocker</span><span class="fu">:::</span><span class="fu">make_occupancy_twolevel_single_lpmf</span><span class="op">(</span><span class="fl">4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">##   real occupancy_twolevel_single_lpmf(</span></span>
 <span><span class="co">##     array[] int y, // detection data</span></span>
 <span><span class="co">##     vector mu, // lin pred for detection</span></span>
 <span><span class="co">##     vector occ, // lin pred for occupancy. Elements after vint1[1] irrelevant.</span></span>
-<span><span class="co">##     vector Omega, // lin pred for availability.  Elements after 1 irrelevant.</span></span>
+<span><span class="co">##     vector Omega, // lin pred for group-level occupancy. Elements after vint4[1] irrelevant.</span></span>
 <span><span class="co">##     array[] int vint1, // n units (n_unit). Elements after 1 irrelevant.</span></span>
 <span><span class="co">##     array[] int vint2, // n sampling events per unit (n_rep). Elements after vint1[1] irrelevant.</span></span>
 <span><span class="co">##     array[] int vint3, // Indicator for &gt; 0 detections (Q). Elements after vint1[1] irrelevant.</span></span>
 <span><span class="co">##     </span></span>
-<span><span class="co">##     array[] int vint4, // n species (observed + augmented). Elements after 1 irrelevant.</span></span>
-<span><span class="co">##     array[] int vint5, // Indicator for species was observed.  Elements after vint4[1] irrelevant</span></span>
+<span><span class="co">##     array[] int vint4, // n top-level groups. Elements after 1 irrelevant.</span></span>
+<span><span class="co">##     array[] int vint5, // Indicator for group known present. Elements after vint4[1] irrelevant.</span></span>
 <span><span class="co">##     </span></span>
-<span><span class="co">##     array[] int vint6, // species</span></span>
+<span><span class="co">##     array[] int vint6, // n closure-units per top-level group. Elements after vint4[1] irrelevant.</span></span>
+<span><span class="co">##     array[] int vint7, // unit indices concatenated by top-level group. Elements after vint1[1] irrelevant.</span></span>
 <span><span class="co">##   </span></span>
 <span><span class="co">##   // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):</span></span>
-<span><span class="co">##     array[] int vint7,</span></span>
 <span><span class="co">##     array[] int vint8,</span></span>
 <span><span class="co">##     array[] int vint9,</span></span>
-<span><span class="co">##     array[] int vint10</span></span>
+<span><span class="co">##     array[] int vint10,</span></span>
+<span><span class="co">##     array[] int vint11</span></span>
 <span><span class="co">## ) {</span></span>
 <span><span class="co">##   // Create array of the rep indices that correspond to each unit.</span></span>
 <span><span class="co">##     array[vint1[1], 4] int index_array;</span></span>
-<span><span class="co">##       index_array[,1] = vint7[1:vint1[1]];</span></span>
-<span><span class="co">##       index_array[,2] = vint8[1:vint1[1]];</span></span>
-<span><span class="co">##       index_array[,3] = vint9[1:vint1[1]];</span></span>
-<span><span class="co">##       index_array[,4] = vint10[1:vint1[1]];</span></span>
+<span><span class="co">##       index_array[,1] = vint8[1:vint1[1]];</span></span>
+<span><span class="co">##       index_array[,2] = vint9[1:vint1[1]];</span></span>
+<span><span class="co">##       index_array[,3] = vint10[1:vint1[1]];</span></span>
+<span><span class="co">##       index_array[,4] = vint11[1:vint1[1]];</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">##   // Initialize and compute log-likelihood</span></span>
 <span><span class="co">##     real lp = 0;</span></span>
+<span><span class="co">##     int unit_offset = 0;</span></span>
 <span><span class="co">##     </span></span>
-<span><span class="co">##     for (sp in 1:vint4[1]) {</span></span>
-<span><span class="co">##       real lp_s = 0;</span></span>
-<span><span class="co">##       if (vint5[sp] == 1) {</span></span>
-<span><span class="co">##         for (i in 1:vint1[1]) {</span></span>
-<span><span class="co">##           if (vint6[i] == sp) {</span></span>
-<span><span class="co">##             array[vint2[i]] int indices = index_array[i, 1:vint2[i]];</span></span>
-<span><span class="co">##             if (vint3[i] == 1) {</span></span>
-<span><span class="co">##               lp_s += bernoulli_logit_lpmf(1 | occ[i]);</span></span>
-<span><span class="co">##               lp_s += bernoulli_logit_lpmf(y[indices] | mu[indices]);</span></span>
-<span><span class="co">##             }</span></span>
-<span><span class="co">##             if (vint3[i] == 0) {</span></span>
-<span><span class="co">##               lp_s += log_sum_exp(bernoulli_logit_lpmf(1 | occ[i]) + </span></span>
-<span><span class="co">##                                     sum(log1m_inv_logit(mu[indices])), bernoulli_logit_lpmf(0 | occ[i]));</span></span>
-<span><span class="co">##             }</span></span>
-<span><span class="co">##           }</span></span>
+<span><span class="co">##     for (g in 1:vint4[1]) {</span></span>
+<span><span class="co">##       real lp_g = 0;</span></span>
+<span><span class="co">##       for (j in 1:vint6[g]) {</span></span>
+<span><span class="co">##         int i = vint7[unit_offset + j];</span></span>
+<span><span class="co">##         array[vint2[i]] int indices = index_array[i, 1:vint2[i]];</span></span>
+<span><span class="co">##         if (vint3[i] == 1) {</span></span>
+<span><span class="co">##           lp_g += bernoulli_logit_lpmf(1 | occ[i]);</span></span>
+<span><span class="co">##           lp_g += bernoulli_logit_lpmf(y[indices] | mu[indices]);</span></span>
 <span><span class="co">##         }</span></span>
-<span><span class="co">##         lp += log_inv_logit(Omega[1]) + lp_s;</span></span>
+<span><span class="co">##         if (vint3[i] == 0) {</span></span>
+<span><span class="co">##           lp_g += log_sum_exp(bernoulli_logit_lpmf(1 | occ[i]) +</span></span>
+<span><span class="co">##                                 sum(log1m_inv_logit(mu[indices])), bernoulli_logit_lpmf(0 | occ[i]));</span></span>
+<span><span class="co">##         }</span></span>
+<span><span class="co">##       }</span></span>
+<span><span class="co">##       unit_offset += vint6[g];</span></span>
+<span><span class="co">##       if (vint5[g] == 1) {</span></span>
+<span><span class="co">##         lp += log_inv_logit(Omega[g]) + lp_g;</span></span>
 <span><span class="co">##       } else {</span></span>
-<span><span class="co">##         for (i in 1:vint1[1]) {</span></span>
-<span><span class="co">##           if (vint6[i] == sp) {</span></span>
-<span><span class="co">##             array[vint2[i]] int indices = index_array[i, 1:vint2[i]];</span></span>
-<span><span class="co">##             lp_s += log_sum_exp(bernoulli_logit_lpmf(1 | occ[i]) + </span></span>
-<span><span class="co">##                                   sum(log1m_inv_logit(mu[indices])), bernoulli_logit_lpmf(0 | occ[i]));</span></span>
-<span><span class="co">##           }</span></span>
-<span><span class="co">##         }</span></span>
-<span><span class="co">##         lp += log_sum_exp(log1m_inv_logit(Omega[1]), log_inv_logit(Omega[1]) + lp_s);  </span></span>
+<span><span class="co">##         lp += log_sum_exp(log1m_inv_logit(Omega[g]), log_inv_logit(Omega[g]) + lp_g);</span></span>
 <span><span class="co">##       }</span></span>
 <span><span class="co">##     }</span></span>
 <span><span class="co">##     return(lp);</span></span>

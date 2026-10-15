@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">flocker</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0-2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1-0</span>
       </span>
     </div>
 
@@ -53,6 +53,9 @@
       <a href="../articles/sbc_multi.html">SBC for multi-season flocker models</a>
     </li>
     <li>
+      <a href="../articles/sbc_twolevel.html">SBC for two-level flocker models</a>
+    </li>
+    <li>
       <a href="../articles/sbc.html">SBC for single-season flocker models</a>
     </li>
   </ul></li>
@@ -78,6 +81,20 @@
       <small>Source: <a href="https://github.com/jsocolar/flocker/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="1.1-0" id="flocker-11-0">flocker 1.1-0<a class="anchor" aria-label="anchor" href="#flocker-11-0"></a></h2>
+<ul><li>Added the <code>twolevel_single</code> model family for single-season occupancy models in which groups of closure units may themselves be structurally absent. Users specify the grouping factor with <code>level2_group</code>, may supply a separate table of group-level predictors with <code>level2_covs</code>, and model group-level occupancy with <code>f_meta</code>.</li>
+<li>Refactored the data-augmented model as a special case of the general two-level model, with shared data formatting, likelihood, fitting, and post-processing machinery.</li>
+<li>Breaking change for augmented models: every species supplied in the original <code>obs</code> array must have at least one detection. Never-observed pseudospecies must instead be added through <code>n_aug</code>.</li>
+<li>Breaking change for augmented models: <code><a href="../reference/get_Z.html">get_Z()</a></code> now returns a list containing <code>unit</code> states for species-site combinations and <code>level2</code> states for species. Generic two-level models use the same return structure. Joint samples from the two levels are mutually consistent.</li>
+<li>Two-level outputs from <code><a href="../reference/get_Z.html">get_Z()</a></code>, <code><a href="../reference/log_lik_flocker.html">log_lik_flocker()</a></code>, and <code><a href="../reference/loo_flocker.html">loo_flocker()</a></code> now retain user-supplied group names. Augmented models similarly retain supplied species names and assign stable names to augmented pseudospecies.</li>
+<li>Improved the numerical stability of two-level log-likelihood calculations by evaluating occupancy mixtures in log space.</li>
+<li>Corrected backward smoothing and backward sampling of latent states from multiseason models so that both use the appropriate transition probabilities and future-data likelihoods.</li>
+<li>Corrected history-conditioned <code><a href="../reference/get_Z.html">get_Z()</a></code> calculations for augmented models and when using <code>new_data</code>, including rep-constant models. Augmented group-level probabilities now marginalize over unit occupancy and incorporate the fitted group-level occupancy probability.</li>
+<li>Fixed expansion of user-supplied unit and event covariates in <code><a href="../reference/simulate_flocker_data.html">simulate_flocker_data()</a></code> so that values are shared across species at each unit or visit, and allowed <code><a href="../reference/make_flocker_data.html">make_flocker_data()</a></code> to accept data-frame observation inputs as documented.</li>
+<li>Fixed reconstruction of maximally ragged observation and covariate arrays, including multiseason data with a final season that is unobserved in every series, and made post-processing robust when exactly one posterior draw is requested.</li>
+<li>Fitted models and formatted data objects are now tagged with the version of <code>flocker</code> that created them. Two-level packing metadata is stored separately from the underlying <code>brmsfit</code> data.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.0-2" id="flocker-10-2">flocker 1.0-2<small>2026-06-22</small><a class="anchor" aria-label="anchor" href="#flocker-10-2"></a></h2>
 <ul><li>fixed a bug that resulted in incorrect log likelihoods returned by log_lik_flocker for the data augmented model. Model fitting was not affected, and posteriors were correct.</li>

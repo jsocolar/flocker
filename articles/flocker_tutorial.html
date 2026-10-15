@@ -32,7 +32,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">flocker</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0-2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1-0</span>
       </span>
     </div>
 
@@ -70,6 +70,9 @@
       <a href="../articles/sbc_multi.html">SBC for multi-season flocker models</a>
     </li>
     <li>
+      <a href="../articles/sbc_twolevel.html">SBC for two-level flocker models</a>
+    </li>
+    <li>
       <a href="../articles/sbc.html">SBC for single-season flocker models</a>
     </li>
   </ul>
@@ -102,7 +105,7 @@
                         <h4 data-toc-skip class="author">Jacob Socolar
 &amp; Simon Mills</h4>
             
-            <h4 data-toc-skip class="date">2026-02-24</h4>
+            <h4 data-toc-skip class="date">2026-10-12</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/jsocolar/flocker/blob/main/vignettes/flocker_tutorial.Rmd" class="external-link"><code>vignettes/flocker_tutorial.Rmd</code></a></small>
       <div class="hidden name"><code>flocker_tutorial.Rmd</code></div>
@@ -495,11 +498,10 @@ types. For example:</p>
 <div class="section level3">
 <h3 id="fitted-values">Fitted values<a class="anchor" aria-label="anchor" href="#fitted-values"></a>
 </h3>
-<p>Fitted values for any of the distributional parameter (one or more of
-occupancy, detection, colonization, extinction, autologistic, and/or
-Omega, the fitted probability that a given (pseudo)species occurs in the
-metacommunity) are available via <code>fitted_flocker</code>. For
-example:</p>
+<p>Fitted values for any of the distributional parameters (one or more
+of occupancy, detection, colonization, extinction, autologistic, and/or
+Omega, the fitted level-two occupancy probability) are available via
+<code>fitted_flocker</code>. For example:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/fitted_flocker.html">fitted_flocker</a></span><span class="op">(</span><span class="va">rep_constant</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/fitted_flocker.html">fitted_flocker</a></span><span class="op">(</span><span class="va">rep_varying</span><span class="op">)</span></span>
@@ -517,27 +519,34 @@ with posterior iterations stacked along its final dimension.</p>
 <h3 id="the-posterior-occupancy-state">The posterior occupancy state<a class="anchor" aria-label="anchor" href="#the-posterior-occupancy-state"></a>
 </h3>
 <p>The function <code><a href="../reference/get_Z.html">get_Z()</a></code> returns the posterior distribution
-of occupancy probabilities across the closure-units. The shape of the
-output depends on the class of model, and is an array in the shape of
-the first visit in <code>obs</code> as passed to
-<code>make_flocker_data</code>, with posterior iterations stacked along
-the final dimension. Thus, for a single-season rep-varying model, the
-output is a matrix where rows are posterior iterations, columns are
-closure-units, and values are draws from the posterior distribution of
-occupancy probabilities:</p>
+of occupancy probabilities across the closure-units. For one-level and
+multiseason models, the output is an array in the shape of the first
+visit in <code>obs</code> as passed to <code>make_flocker_data</code>,
+with posterior iterations stacked along the final dimension. Thus, for a
+single-season rep-varying model, the output is a matrix where rows are
+posterior iterations, columns are closure-units, and values are draws
+from the posterior distribution of occupancy probabilities:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/get_Z.html">get_Z</a></span><span class="op">(</span><span class="va">rep_varying</span><span class="op">)</span></span></code></pre></div>
+<p>For two-level models, <code><a href="../reference/get_Z.html">get_Z()</a></code> returns a list with
+elements <code>unit</code> and <code>level2</code>. The
+<code>unit</code> element has the unit-level shape described above,
+while <code>level2</code> is a matrix with one row per level-two group
+and posterior iterations in columns. When <code>sample = TRUE</code>,
+the two elements are sampled jointly, so a unit can never be occupied
+when its level-two group is absent.</p>
 <p>For all model types, <code><a href="../reference/get_Z.html">get_Z()</a></code> accepts an optional
 <code>new_data</code> argument. Leaving the default
 <code>new_data = NULL</code> supplies the posterior for the true
 occupancy state at the locations of the data used to fit the model.
-Otherwise, the posterior is computed over the new data. For
+Otherwise, the posterior is computed over the new data. For one-level
 single-season models, <code>new_data</code> can be supplied as a
 dataframe of unit covariate values or as a <code>flocker_data</code>
-object. For multi-season models, only a <code>flocker_data</code> object
-is allowed. Note that if predictions are desired at sites without
-observations, it is acceptable to pass an array of dummy observations
-(e.g. all zeros) to <code><a href="../reference/make_flocker_data.html">make_flocker_data()</a></code> and then to set
+object. For two-level, augmented, and multiseason models, only a
+<code>flocker_data</code> object is allowed. Note that if predictions
+are desired at sites without observations, it is acceptable to pass an
+array of dummy observations (e.g. all zeros) to
+<code><a href="../reference/make_flocker_data.html">make_flocker_data()</a></code> and then to set
 <code>history_condition = FALSE</code> in the call to
 <code><a href="../reference/get_Z.html">get_Z()</a></code>.</p>
 <p><code><a href="../reference/get_Z.html">get_Z()</a></code> accepts several additional arguments that
@@ -595,9 +604,13 @@ the rep-constant model.</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.</span></span>
 <span><span class="co">#&gt; Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.</span></span>
-<span><span class="co">#&gt;        elpd_diff se_diff</span></span>
-<span><span class="co">#&gt; model2    0.0       0.0 </span></span>
-<span><span class="co">#&gt; model1 -121.0      16.1</span></span></code></pre></div>
+<span><span class="co">#&gt;   model elpd_diff se_diff p_worse diag_diff      diag_elpd</span></span>
+<span><span class="co">#&gt;  model2       0.0     0.0      NA           3 k_psis &gt; 0.7</span></span>
+<span><span class="co">#&gt;  model1    -121.7    16.1    1.00           3 k_psis &gt; 0.7</span></span>
+<span><span class="co">#&gt;</span></span>
+<span><span class="co">#&gt; Diagnostic flags present.</span></span>
+<span><span class="co">#&gt; See ?`loo-glossary` (sections `diag_diff` and `diag_elpd`)</span></span>
+<span><span class="co">#&gt; or https://mc-stan.org/loo/reference/loo-glossary.html.</span></span></code></pre></div>
 <p>Likewise, we can compare the four flavors of multi-season model that
 we fit above. Recall that the data were simulated under
 colonization-extinction dynamics (rather than autologistic) and under
@@ -607,11 +620,11 @@ expected, the <code>multi_colex</code> model performs best:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/loo_compare_flocker.html">loo_compare_flocker</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">multi_colex</span>, <span class="va">multi_colex_eq</span>, <span class="va">multi_auto</span>, <span class="va">multi_auto_eq</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt;        elpd_diff se_diff</span></span>
-<span><span class="co">#&gt; model1   0.0       0.0  </span></span>
-<span><span class="co">#&gt; model2 -16.5       6.2  </span></span>
-<span><span class="co">#&gt; model3 -41.7       9.5  </span></span>
-<span><span class="co">#&gt; model4 -57.5      10.8</span></span></code></pre></div>
+<span><span class="co">#&gt;   model elpd_diff se_diff p_worse diag_diff diag_elpd</span></span>
+<span><span class="co">#&gt;  model1       0.0     0.0      NA</span></span>
+<span><span class="co">#&gt;  model2     -16.6     6.2    1.00</span></span>
+<span><span class="co">#&gt;  model3     -42.0     9.5    1.00</span></span>
+<span><span class="co">#&gt;  model4     -57.6    10.8    1.00</span></span></code></pre></div>
 <p>Flocker also provides the function <code><a href="../reference/loo_flocker.html">loo_flocker()</a></code> to
 return a table of <code>elpd_loo</code>, <code>p_loo</code>, and
 <code>looic</code> estimates from <code><a href="https://mc-stan.org/loo/reference/loo.html" class="external-link">loo::loo()</a></code> or
