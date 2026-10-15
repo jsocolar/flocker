@@ -309,14 +309,40 @@ test_that("edge cases are handled", {
 
 # Test for forward_backward_algorithm function
 test_that("forward_backward_algorithm returns correct results", {
-  el0 <- c(0.1, 0.2, 0.3)
-  el1 <- c(0.9, 0.8, 0.7)
-  init <- 0.5
-  colo <- c(0.6, 0.7, 0.8)
-  ex <- c(0.4, 0.3, 0.2)
+  el0 <- c(0.1, 0.2, 0.3, 0.6)
+  el1 <- c(0.9, 0.8, 0.7, 0.2)
+  init <- 0.3
+  colo <- c(0.2, 0.15, 0.4, 0.1)
+  ex <- c(0.5, 0.6, 0.05, 0.7)
+
+  state_sequences <- as.matrix(expand.grid(rep(list(0:1), length(el0))))
+  joint_prob <- numeric(nrow(state_sequences))
+  for(i in seq_len(nrow(state_sequences))) {
+    states <- state_sequences[i, ]
+    joint_prob[i] <- if(states[1] == 1) init else 1 - init
+    joint_prob[i] <- joint_prob[i] *
+      if(states[1] == 1) el1[1] else el0[1]
+    for(t in 2:length(el0)) {
+      transition_prob <- if(states[t - 1] == 0) {
+        if(states[t] == 1) colo[t] else 1 - colo[t]
+      } else {
+        if(states[t] == 0) ex[t] else 1 - ex[t]
+      }
+      emission_prob <- if(states[t] == 1) el1[t] else el0[t]
+      joint_prob[i] <- joint_prob[i] * transition_prob * emission_prob
+    }
+  }
+  posterior_prob <- joint_prob / sum(joint_prob)
+  expected <- vapply(
+    seq_along(el0),
+    function(t) sum(posterior_prob[state_sequences[, t] == 1]),
+    numeric(1)
+  )
+
   result <- forward_backward_algorithm(el0, el1, init, colo, ex)
   expect_type(result, "double")
   expect_length(result, length(el0))
+  expect_equal(result, expected, tolerance = 1e-12)
 })
 
 # Test for forward_backward_sampling function

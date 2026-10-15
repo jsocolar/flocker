@@ -654,7 +654,8 @@ backward_algorithm <- function(el0, el1, colo, ex) {
       assertthat::assert_that(all(is.na(trans_t)))
       backward_probs[t,] <- c(1,1)
     } else {
-      backward_probs[t,] <- (trans_t %*% c(el0[t + 1], el1[t + 1])) * backward_probs[t + 1,]
+      backward_probs[t,] <- trans_t %*%
+        (c(el0[t + 1], el1[t + 1]) * backward_probs[t + 1,])
     }
   }
   backward_probs
