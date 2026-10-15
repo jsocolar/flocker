@@ -449,6 +449,10 @@ schema unless it directly intersects changed code:
   `history_condition = FALSE`: historical code can pass `lps1$linpred_det`
   even though `lps1` is not defined on that branch.
 - Add known-state constraints in a later coherent PR.
+- Extend `simulate_flocker_data()` to generic `twolevel_single` models. The
+  1.1 implementation simulates ordinary single-season, multiseason, and
+  augmented models only; the two-level SBC vignette therefore retains its
+  bespoke simulator until the next planned vignette rebuild.
 - Explore two-level multiseason, waiting-time, false-positive, and CJS models
   only after their public boundaries and likelihood factorizations are clear.
 

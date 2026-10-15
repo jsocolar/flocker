@@ -71,13 +71,16 @@
 #'     \item \code{uc1}: numeric vector of length \code{n_pt} giving the unit-level covariate.
 #'     \item \code{ec1}: numeric vector of length \code{n_pt * n_season * n_rep}
 #'       giving the event-level covariate (ignored if \code{rep_constant = TRUE}),
-#'       ordered with point varying fastest, then season, then rep (i.e. the
-#'       first \code{n_pt} elements are rep 1 of season 1 at points
-#'       \code{1, ..., n_pt}).
+#'       ordered with point varying fastest, then rep, then season. This is the
+#'       order obtained by flattening an \code{n_pt} by \code{n_rep} by
+#'       \code{n_season} array in R.
 #'   }
 #'   If \code{NULL} (the default), covariates are simulated internally from 
 #'   standard normal distributions.
-#'   \code{ec1} is assumed not to vary by species.
+#'   Covariates are stored in this canonical, unexpanded form in the returned
+#'   \code{covariates} list and are assumed not to vary by species. For a
+#'   single-species simulation without missing visits, \code{covariates$ec1}
+#'   is identical to \code{as.vector(event_covs$ec1)}.
 #' @param seed random seed. NULL uses (and updates) the existing RNG state. Other values
 #'   do not update the global RNG state.
 #' @param ragged_rep logical: create data with variable (TRUE) or constant 
@@ -320,10 +323,8 @@ sfd <- function(
     id_point = 1:n_pt
     )
   if(is.null(covariates)) {
-    covariates <- list(
-      uc1 = stats::rnorm(n_pt)[unit_backbone$id_point]
-    )
-    unit_uc1 <- covariates$uc1
+    covariates <- list(uc1 = stats::rnorm(n_pt))
+    unit_uc1 <- covariates$uc1[unit_backbone$id_point]
   } else {
     assertthat::assert_that(is.list(covariates), msg = "covariates must be a named list")
     assertthat::assert_that("uc1" %in% names(covariates), msg = "covariates must include uc1")
@@ -419,24 +420,25 @@ sfd <- function(
       visit_full$id_rep,
       sep = "__"
     )
+    event_index <- visit_full$id_point +
+      n_pt * (visit_full$id_rep - 1L) +
+      n_pt * n_rep * (visit_full$id_season - 1L)
     if ("ec1" %in% names(covariates)) {
       assertthat::assert_that(
         is.numeric(covariates$ec1) && length(covariates$ec1) == n_pt * n_season * n_rep,
         msg = "covariates$ec1 must be numeric of length n_pt * n_season * n_rep"
       )
-      # explicit levels (first appearance = visit_full's row order: point
-      # varying fastest, then season, then rep) keep the user-facing mapping
-      # predictable even when ids have mixed digit counts (point 10 vs 2).
-      visit_full$ec1 <-
-        covariates$ec1[as.integer(factor(visit_key, levels = unique(visit_key)))]
+      visit_full$ec1 <- covariates$ec1[event_index]
     } else {
-      covariates$ec1 <- stats::rnorm(n_pt*n_season*n_rep)[
+      visit_full$ec1 <- stats::rnorm(n_pt*n_season*n_rep)[
         # string-ordered levels, kept as-is so that seeded simulations
         # reproduce output from previous versions (values are iid, so the
         # mapping itself is immaterial here).
         as.integer(factor(visit_key))
       ]
-      visit_full$ec1 <- covariates$ec1
+      covariates$ec1 <- visit_full$ec1[
+        match(seq_len(n_pt * n_rep * n_season), event_index)
+      ]
     }
     visit_full$logit_det <- visit_full$logit_det + 
       coefs$det_slope_visit[as.integer(visit_full$species)] * visit_full$ec1

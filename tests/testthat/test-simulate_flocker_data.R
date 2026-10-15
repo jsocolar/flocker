@@ -144,6 +144,106 @@ test_that("user-supplied covariates are shared across species", {
   expect_identical(fd$covariates$ec1, ec1)
 })
 
+test_that("covariate vectors follow the order of returned covariate objects", {
+  n_pt <- 3L
+  n_rep <- 2L
+  n_season <- 3L
+  uc1 <- seq_len(n_pt)
+  ec1_single <- seq_len(n_pt * n_rep)
+  ec1_multi <- seq_len(n_pt * n_rep * n_season)
+
+  single <- simulate_flocker_data(
+    n_pt = n_pt,
+    n_sp = 1,
+    n_rep = n_rep,
+    rep_constant = FALSE,
+    covariates = list(uc1 = uc1, ec1 = ec1_single),
+    seed = 1
+  )
+  expect_identical(single$covariates$uc1, single$unit_covs$uc1)
+  expect_identical(single$covariates$ec1, as.vector(single$event_covs$ec1))
+
+  augmented <- simulate_flocker_data(
+    n_pt = n_pt,
+    n_sp = 1,
+    n_rep = n_rep,
+    augmented = TRUE,
+    rep_constant = FALSE,
+    params = list(coefs = data.frame(
+      det_intercept = 100,
+      det_slope_unit = 0,
+      det_slope_visit = 0,
+      occ_intercept = 100
+    )),
+    covariates = list(uc1 = uc1, ec1 = ec1_single),
+    seed = 1
+  )
+  expect_identical(augmented$covariates$uc1, augmented$unit_covs$uc1)
+  expect_identical(
+    augmented$covariates$ec1,
+    as.vector(augmented$event_covs$ec1)
+  )
+
+  multi <- simulate_flocker_data(
+    n_pt = n_pt,
+    n_sp = 1,
+    n_rep = n_rep,
+    n_season = n_season,
+    multiseason = "colex",
+    multi_init = "explicit",
+    rep_constant = FALSE,
+    covariates = list(uc1 = uc1, ec1 = ec1_multi),
+    seed = 1
+  )
+  expect_true(all(vapply(
+    multi$unit_covs,
+    function(x) identical(multi$covariates$uc1, x$uc1),
+    logical(1)
+  )))
+  expect_identical(multi$covariates$ec1, as.vector(multi$event_covs$ec1))
+
+  generated_multi <- simulate_flocker_data(
+    n_pt = n_pt,
+    n_sp = 1,
+    n_rep = n_rep,
+    n_season = n_season,
+    multiseason = "autologistic",
+    multi_init = "equilibrium",
+    rep_constant = FALSE,
+    seed = 2
+  )
+  expect_true(all(vapply(
+    generated_multi$unit_covs,
+    function(x) identical(generated_multi$covariates$uc1, x$uc1),
+    logical(1)
+  )))
+  expect_identical(
+    generated_multi$covariates$ec1,
+    as.vector(generated_multi$event_covs$ec1)
+  )
+
+  generated_species <- simulate_flocker_data(
+    n_pt = n_pt,
+    n_sp = 2,
+    n_rep = n_rep,
+    rep_constant = FALSE,
+    seed = 3
+  )
+  expect_identical(
+    generated_species$unit_covs$uc1,
+    rep(generated_species$covariates$uc1, 2L)
+  )
+  one_species_events <- matrix(
+    generated_species$covariates$ec1,
+    nrow = n_pt,
+    ncol = n_rep
+  )
+  expect_identical(
+    unname(generated_species$event_covs$ec1),
+    unname(rbind(one_species_events, one_species_events))
+  )
+})
+
 
 test_that("multiseason output shapes are correct", {
   fd <- simulate_flocker_data(n_pt=4, n_sp=2, n_rep=3, n_season=5,
