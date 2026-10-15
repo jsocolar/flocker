@@ -454,6 +454,16 @@ family should require deterministic tests, Stan semantic validation, one real
 fit in full CI, and SBC where warranted, but should not automatically add
 another fitted model to the CRAN check.
 
+During the version 2 data migration, refactor each SBC document so one shared
+simulation-and-formatting helper creates both the throwaway dataset passed to
+`flocker_stancode()` and every dataset produced by the SBC generator. The
+single-season, multiseason, and augmented documents currently duplicate these
+paths. In particular, augmented detected-species filtering and the associated
+`n_aug` calculation must live in the shared helper so compilation and SBC
+datasets cannot follow different observation conventions. Do this when the
+packing rewrite already requires recaching the SBC vignettes, rather than as a
+standalone vignette rebuild.
+
 Measure fixture-construction time, per-file test time, total CRAN-mode test
 time, full integration time, and source-tarball size before and after the
 rewrite. The CRAN test phase should be dominated by its one intentional Stan
