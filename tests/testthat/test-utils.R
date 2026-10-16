@@ -285,6 +285,8 @@ test_that("fdtl function returns expected dataframe", {
 })
 
 test_that("is_flocker_fit works", {
+  testthat::skip_if(windows_cran)
+
   expect_true(is_flocker_fit(example_flocker_model_single2))
   expect_false(is_flocker_fit("foo"))
   expect_false(is_flocker_fit(NULL))
@@ -292,6 +294,8 @@ test_that("is_flocker_fit works", {
 })
 
 test_that("type_flocker_fit function returns expected string", {
+  testthat::skip_if(windows_cran)
+
   expect_identical(type_flocker_fit(example_flocker_model_single2), "single")
   
   # Create a dummy flocker_fit object

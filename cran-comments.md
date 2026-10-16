@@ -2,6 +2,14 @@
 
 0 errors | 0 warnings | 0 notes
 
+## Windows tests
+
+On CRAN Windows only, tests that require runtime compilation of Stan models are
+skipped because the current rstan/StanHeaders Windows toolchain fails during C++
+compilation before those tests can run. Tests that do not require fitted model
+fixtures continue to run on CRAN Windows. The complete test suite runs on macOS
+and Linux and in continuous integration.
+
 ## URL checks
 
 `urlchecker::url_check()` reports `403 Forbidden` responses for the following
