@@ -2,6 +2,10 @@
 
 These tests establish a baseline for the migration described in V2_DESIGN.md;
 that document remains authoritative. They do not prescribe the v2 row layout.
+The release baseline is flocker 1.1-0. The characterization branch additionally
+fixes one singleton-visit bug: subsetting the static formatter's index data
+frame must use `drop = FALSE`. The singleton-visit test is a regression test for
+that fix, rather than a claim that the unmodified release passes every case.
 
 - `test-packing-characterization.R` checks alignment of observations and unique
   event/unit/group covariates through nontrivial two-level permutations, including
@@ -36,3 +40,13 @@ Intentional differences to account for during migration:
 
 No new MCMC fixtures are required by these additions. Existing fixture setup is
 still eager; restructuring it into lazy per-family getters is separate work.
+
+Run the focused baseline with the compatible local fixture cache:
+
+```sh
+FLOCKER_TEST_CACHE_DIR="$PWD/.flocker-test-cache" NOT_CRAN=true \
+  Rscript --vanilla -e 'devtools::test(filter = "packing-characterization|make_flocker_data|exact-likelihoods|utils|singleton-draws|trailing-multiseason", reporter = "summary", stop_on_failure = TRUE)'
+```
+
+An absent or incompatible cache triggers fixture construction through the existing
+setup code, even for a filtered run.
