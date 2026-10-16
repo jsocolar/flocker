@@ -1,3 +1,9 @@
+# flocker 1.1-1
+
+* Fixed single-visit event formatting dropping the dimensions of its index table.
+* Added deterministic characterization tests for packing and reconstruction ahead
+  of the version 2 schema rewrite.
+
 # flocker 1.1-0
 
 * Added the `twolevel_single` model family for single-season occupancy models

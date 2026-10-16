@@ -207,7 +207,7 @@ make_flocker_data_static <- function(
     rep_indices[1:nrow(obs),] <- rep_index_vec
     
     flocker_data <- flocker_data[!is.na(flocker_data$ff_y), ]
-    rep_indices <- rep_indices[is_not_na,]
+    rep_indices <- rep_indices[is_not_na, , drop = FALSE]
     flocker_data <- cbind(flocker_data, rep_indices)
     
     out <- list(data = flocker_data, n_rep = n_rep,
