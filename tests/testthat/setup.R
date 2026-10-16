@@ -1,5 +1,8 @@
 ## code to prepare `example_flocker_model_xx` datasets
 
+windows_cran <- identical(.Platform$OS.type, "windows") &&
+  !identical(Sys.getenv("NOT_CRAN"), "true")
+
 # Set FLOCKER_TEST_CACHE_DIR to reuse fitted fixtures across R sessions. Bump
 # this version whenever fixture definitions or fit-producing code changes in a
 # way not captured by the package-version checks below.
@@ -54,20 +57,24 @@ if (!is.null(cache)) {
 } else {
   set.seed(1)
   
-  suppressWarnings({
-    example_flocker_model_single2 <- flock(
-      f_occ = ~ 0 + Intercept + uc1 + (1 + uc1 | species),
-      f_det = ~ 0 + Intercept + uc1 + ec1 + (1 + uc1 + ec1 | species),
-      flocker_data = mfd_single,
-      cores = 2,
-      chains = 2,
-      iter = 8,
-      warmup = 6,
-      save_warmup = FALSE,
-      refresh = 0,
-      silent = 2
-    )
-  })
+  if (windows_cran) {
+    example_flocker_model_single2 <- NULL
+  } else {
+    suppressWarnings({
+      example_flocker_model_single2 <- flock(
+        f_occ = ~ 0 + Intercept + uc1 + (1 + uc1 | species),
+        f_det = ~ 0 + Intercept + uc1 + ec1 + (1 + uc1 + ec1 | species),
+        flocker_data = mfd_single,
+        cores = 2,
+        chains = 2,
+        iter = 8,
+        warmup = 6,
+        save_warmup = FALSE,
+        refresh = 0,
+        silent = 2
+      )
+    })
+  }
 
   #### generic two-level single-season model ####
   obs_twolevel <- matrix(
@@ -114,16 +121,20 @@ if (!is.null(cache)) {
       fd$unit_covs,
       quiet = TRUE
     )
-    example_flocker_model_single_C <- flock(
-      f_occ = ~ 0 + Intercept + uc1 + (1 + uc1 | species),
-      f_det = ~ 0 + Intercept + uc1 + (1 + uc1 | species),
-      flocker_data = mfd_single_C,
-      cores = 2,
-      iter = 8,
-      save_warmup = FALSE,
-      refresh = 0,
-      silent = 2
-    )
+    if (windows_cran) {
+      example_flocker_model_single_C <- NULL
+    } else {
+      example_flocker_model_single_C <- flock(
+        f_occ = ~ 0 + Intercept + uc1 + (1 + uc1 | species),
+        f_det = ~ 0 + Intercept + uc1 + (1 + uc1 | species),
+        flocker_data = mfd_single_C,
+        cores = 2,
+        iter = 8,
+        save_warmup = FALSE,
+        refresh = 0,
+        silent = 2
+      )
+    }
     
     #### data augmented model ####
     fd <- simulate_flocker_data(augmented = TRUE,

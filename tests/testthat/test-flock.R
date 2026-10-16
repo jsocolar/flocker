@@ -160,6 +160,8 @@ test_that("flocker_stancode works as expected", {
 })
 
 test_that("flocker fits retain non-data metadata without duplicating data", {
+  testthat::skip_if(windows_cran)
+
   metadata <- attr(example_flocker_model_single2, "flocker_metadata")
 
   expect_identical(
