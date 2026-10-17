@@ -65,16 +65,9 @@ make_occupancy_single_lpmf <- function (max_rep) {
 #' @return Character string of Stan code corresponding to occupancy_single_C_lpmf
 #' @noRd
 make_occupancy_single_C_lpmf <- function () {
-  "real occupancy_single_C_lpmf(int y, real mu, real occ, int trials) {
-  if (y == 0) { 
-    return log_sum_exp(bernoulli_logit_lpmf(0 | occ), 
-                       bernoulli_logit_lpmf(1 | occ) + 
-                         binomial_logit_lpmf(0 | trials, mu)); 
-  } else { 
-    return bernoulli_logit_lpmf(1 | occ) +  
-      binomial_logit_lpmf(y | trials, mu); 
-  } 
-}"
+  path <- system.file("stan", "occupancy_single_C.stan",
+                      package = "flocker", mustWork = TRUE)
+  paste(readLines(path), collapse = "\n")
 }
 
 ##### twolevel_single #####
