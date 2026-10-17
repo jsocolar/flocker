@@ -209,6 +209,8 @@ make_flocker_data_static <- function(
     n_data <- nrow(flocker_data)
     flocker_data$ff_n_unit <- c(n_unit, rep(-99L, n_data - 1L))
     flocker_data$ff_unit_start <- c(unit_start, rep(-99L, n_data - n_unit))
+    flocker_data$ff_Q <- c(as.integer(rowSums(obs, na.rm = TRUE) > 0),
+                          rep(-99L, n_data - n_unit))
     rownames(flocker_data) <- NULL
     original_to_packed <- array(NA_integer_, dim(obs), dimnames(obs))
     original_to_packed[packed_to_original] <- seq_along(packed_to_original)

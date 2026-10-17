@@ -20,5 +20,11 @@ validate_single_packed_data <- function(x) {
       !identical(x$data$ff_unit_start, c(starts, rep(-99L, nrow(x$data) - n_unit)))) {
     stop("Invalid single-season event blocks; reformat the original data.")
   }
+  detected_units <- unique(rep(seq_len(n_unit), counts)[which(x$data$ff_y == 1L)])
+  expected_Q <- c(as.integer(seq_len(n_unit) %in% detected_units),
+                  rep(-99L, nrow(x$data) - n_unit))
+  if (!identical(x$data$ff_Q, expected_Q)) {
+    stop("Invalid single-season detection indicators; reformat the original data.")
+  }
   invisible(NULL)
 }

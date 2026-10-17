@@ -9,7 +9,7 @@ test_that("make_flocker_data works correctly", {
   expect_equal(class(fd), c("list", "flocker_data"))
   expect_named(fd, c("data", "metadata"))
   expect_identical(fd$metadata$flocker_version, flocker_version())
-  expect_equal(names(fd$data), c("ff_y", "uc1", "species", "ec1", "ff_n_unit", "ff_unit_start"))
+  expect_equal(names(fd$data), c("ff_y", "uc1", "species", "ec1", "ff_n_unit", "ff_unit_start", "ff_Q"))
   expect_true(all(fd$data$ff_y %in% c(0, 1)))
   expect_equal(fd$data$ff_n_unit, c(nrow(obs), rep(-99L, length(obs) - 1L)))
   expect_equal(fd$data$ff_unit_start[seq_len(nrow(obs))], seq(1L, length(obs), by = 4L))

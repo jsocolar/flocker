@@ -5,10 +5,11 @@ test_that("single-season packing preserves identities and real covariates", {
   unit <- data.frame(x = c(10, 20, 30), group = factor(c("a", "b", "a")))
   fd <- make_flocker_data(obs, unit, list(w = w), quiet = TRUE)
   expect_named(fd, c("data", "metadata"))
-  expect_named(fd$data, c("ff_y", "x", "group", "w", "ff_n_unit", "ff_unit_start"))
+  expect_named(fd$data, c("ff_y", "x", "group", "w", "ff_n_unit", "ff_unit_start", "ff_Q"))
   expect_equal(fd$data$ff_y, c(0L, 1L, 0L, 0L, 1L, 0L))
   expect_equal(fd$data$ff_n_unit, c(3L, rep(-99L, 5)))
   expect_equal(fd$data$ff_unit_start, c(1L, 4L, 5L, rep(-99L, 3)))
+  expect_identical(fd$data$ff_Q, c(1L, 0L, 1L, rep(-99L, 3)))
   expect_equal(fd$data$x, c(10, 10, 10, 20, 30, 30))
   expect_equal(as.character(fd$data$group), c("a", "a", "a", "b", "a", "a"))
   m <- get_flocker_metadata(fd)
@@ -28,6 +29,7 @@ test_that("single-season packing preserves identities and real covariates", {
   expect_equal(as.vector(sd$Y), fd$data$ff_y)
   expect_equal(as.vector(sd$vint1), fd$data$ff_n_unit)
   expect_equal(as.vector(sd$vint2), fd$data$ff_unit_start)
+  expect_equal(as.vector(sd$vint3), fd$data$ff_Q)
   expect_equal(unname(sd$X_occ[, "x"]), fd$data$x)
   code <- flocker_stancode(~ x, ~ x + w, fd)
   expect_match(code, make_occupancy_single_lpmf(), fixed = TRUE)
@@ -57,6 +59,11 @@ test_that("single-season fitting rejects incompatible packing and roles early", 
   expect_identical(prediction$metadata$data_role, "new_data")
   expect_error(flock(~ 1, ~ w, prediction), "new_data cannot")
   expect_error(flock(~ 1, ~ w, fd, threads = 2), "Threading is not supported")
+  for (q in list(NULL, c(0L, 0L, -99L), c(1L, 2L, -99L))) {
+    bad <- fd
+    bad$data$ff_Q <- q
+    expect_error(flock(~ 1, ~ w, bad), "Invalid single-season detection indicators")
+  }
   bad <- fd
   bad$data$ff_n_unit[1] <- 99L
   expect_error(flock(~ 1, ~ w, bad), "Invalid single-season event blocks")

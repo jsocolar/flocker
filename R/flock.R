@@ -260,7 +260,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
   # f_det_use is type specific and is handled below
   
   if (metadata$type == "single") {
-    f_det_use <- stats::as.formula(paste0("ff_y | vint(ff_n_unit, ff_unit_start) ", f_det_txt))
+    f_det_use <- stats::as.formula(paste0("ff_y | vint(ff_n_unit, ff_unit_start, ff_Q) ", f_det_txt))
     if(brms::is.brmsformula(f_det)) {
       f_use <- f_det
       f_use$formula <- f_det_use

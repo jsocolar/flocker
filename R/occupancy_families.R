@@ -6,8 +6,8 @@ occupancy_single <- function() {
     "occupancy_single", dpars = c("mu", "occ"),
     links = c("identity", "identity"),
     type = "int", 
-    # Unit count and event-block starts, padded to the event-row length.
-    vars = c("vint1", "vint2"),
+    # Unit count, event-block starts, and detection indicators, padded to event rows.
+    vars = c("vint1", "vint2", "vint3"),
     loop = FALSE)
 }
 

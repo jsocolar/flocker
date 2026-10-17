@@ -5,7 +5,7 @@ test_that("fixed-input single-season source integrates with brms", {
   family <- brms::custom_family(
     "occupancy_single", dpars = c("mu", "occ"),
     links = c("identity", "identity"), type = "int",
-    vars = c("vint1", "vint2"), loop = FALSE
+    vars = c("vint1", "vint2", "vint3"), loop = FALSE
   )
   # Hand-packed units: three visits, one visit, and two visits. There is no
   # dependence on the existing formatter or its dimension-dependent indices.
@@ -13,10 +13,11 @@ test_that("fixed-input single-season source integrates with brms", {
     y = c(0L, 1L, 0L, 0L, 0L, 0L),
     n_unit = c(3L, rep(-99L, 5)),
     unit_start = c(1L, 4L, 5L, rep(-99L, 3)),
+    Q = c(1L, 0L, 0L, rep(-99L, 3)),
     x = c(10, 10, 10, 20, 30, 30),
     w = c(0.2, 0.5, 0.8, 0.4, 0.1, 0.7)
   )
-  formula <- brms::bf(y | vint(n_unit, unit_start) ~ x + w, occ ~ x)
+  formula <- brms::bf(y | vint(n_unit, unit_start, Q) ~ x + w, occ ~ x)
   stanvars <- brms::stanvar(scode = source, block = "functions")
   code <- brms::make_stancode(formula, data, family = family, stanvars = stanvars)
   expect_match(code, source, fixed = TRUE)
@@ -25,8 +26,9 @@ test_that("fixed-input single-season source integrates with brms", {
   single <- data[4, , drop = FALSE]
   single$n_unit <- 1L
   single$unit_start <- 1L
+  single$Q <- as.integer(single$y > 0)
   code_single <- brms::make_stancode(
-    brms::bf(y | vint(n_unit, unit_start) ~ 1, occ ~ 1), single,
+    brms::bf(y | vint(n_unit, unit_start, Q) ~ 1, occ ~ 1), single,
     family = family, stanvars = stanvars
   )
   expect_match(code_single, source, fixed = TRUE)
@@ -35,8 +37,9 @@ test_that("fixed-input single-season source integrates with brms", {
   singletons <- data[1:3, , drop = FALSE]
   singletons$n_unit <- c(3L, -99L, -99L)
   singletons$unit_start <- 1:3
+  singletons$Q <- as.integer(singletons$y > 0)
   code_singletons <- brms::make_stancode(
-    brms::bf(y | vint(n_unit, unit_start) ~ 1, occ ~ 1), singletons,
+    brms::bf(y | vint(n_unit, unit_start, Q) ~ 1, occ ~ 1), singletons,
     family = family, stanvars = stanvars
   )
   expect_true(rstan::stanc(model_code = code_singletons)$status)
