@@ -8,11 +8,11 @@
 // brms therefore centers predictors and constructs bases at the visit level.
 real occupancy_single_lpmf(array[] int y, vector mu, vector occ,
                            array[] int n_event) {
-  int n = size(y);
+  int n = num_elements(y);
   int start = 1;
   real lp = 0;
 
-  if (num_elements(mu) != n || num_elements(occ) != n || size(n_event) != n) {
+  if (num_elements(mu) != n || num_elements(occ) != n || num_elements(n_event) != n) {
     reject("occupancy_single: inputs must have the same event-row length");
   }
 
