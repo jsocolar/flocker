@@ -291,6 +291,7 @@ is_flocker_fit <- function(x) {
 #' @noRd
 get_flocker_metadata <- function(x) {
   if (is_flocker_data(x)) {
+    if (!is.null(x$metadata)) return(x$metadata)
     return(x[setdiff(names(x), "data")])
   }
   assertthat::assert_that(
@@ -556,24 +557,24 @@ validate_flock_params <- function(f_occ, f_det, flocker_data,
                                augmented, threads, f_meta)
   
   # Check that parameters are valid in combination
-  if (flocker_data$type == "single") {
+  if (get_flocker_metadata(flocker_data)$type == "single") {
     validate_param_combos_single(f_occ, f_det, flocker_data, 
                                  multiseason, f_col, f_ex, multi_init, f_auto,
                                  augmented)
-  } else if (flocker_data$type == "single_C") {
+  } else if (get_flocker_metadata(flocker_data)$type == "single_C") {
     validate_param_combos_single_C(f_occ, f_det, flocker_data, 
                                    multiseason, f_col, f_ex, multi_init, f_auto,
                                    augmented)
-  } else if (flocker_data$type == "twolevel_single") {
+  } else if (get_flocker_metadata(flocker_data)$type == "twolevel_single") {
     validate_param_combos_twolevel_single(f_occ, f_det, flocker_data,
                                    multiseason, f_col, f_ex, multi_init, f_auto,
                                    augmented, threads, f_meta)
-  } else if (flocker_data$type == "augmented") {
+  } else if (get_flocker_metadata(flocker_data)$type == "augmented") {
     validate_param_combos_augmented(f_occ, f_det, flocker_data, 
                                    multiseason, f_col, f_ex, multi_init, f_auto,
                                    augmented, threads, f_meta)
   } else {
-    assertthat::assert_that(flocker_data$type == "multi") 
+    assertthat::assert_that(get_flocker_metadata(flocker_data)$type == "multi")
     # above line is redundant but included for clarity
     validate_param_combos_multi(f_occ, f_det, flocker_data, 
                                 multiseason, f_col, f_ex, multi_init, f_auto,
@@ -625,7 +626,7 @@ validate_params_individually <- function(f_occ, f_det, flocker_data,
   
   # Check that flocker_data is valid
   assertthat::assert_that(
-    flocker_data$type %in% flocker_data_output_types(),
+    get_flocker_metadata(flocker_data)$type %in% flocker_data_output_types(),
     msg = paste0("unrecognized data type; flocker_data is corrupt. ",
                  "If this error persists on newly formatted objects produced ",
                  "without errors by `make_flocker_data`, please report a bug.")
@@ -667,7 +668,7 @@ validate_unit_formula_variables <- function(f_occ, f_col, f_ex, f_auto, flocker_
     unit_terms <- c(unit_terms, labels(stats::terms(f_auto)))
   }
   assertthat::assert_that(
-    !any(unit_terms %in% flocker_data$event_covs),
+    !any(unit_terms %in% get_flocker_metadata(flocker_data)$event_covs),
     msg = paste0("Data passed to `make_flocker_data` as event covariates are ",
                  "being used in at least one unit-level formula (i.e. f_occ, ",
                  "f_col, f_ex, f_auto). If these covariates are variable ",

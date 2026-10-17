@@ -1,58 +1,12 @@
 ##### single #####
 
-#' Create Stan code for likelihood function occupancy_single_lpmf.
-#' @param max_rep Literal integer maximum number of repeated sampling events at 
-#'    any unit.
-#' @return Character string of Stan code corresponding to occupancy_single_lpmf
+#' Read the fixed-input single-season likelihood source
+#' @return Character string of Stan code
 #' @noRd
-make_occupancy_single_lpmf <- function (max_rep) {
-  assertthat::assert_that(
-    is_one_pos_int(max_rep, m = 1),
-    msg = "max_rep must be an integer greater than 1"
-  )
-  
-  sf_text1 <- "  real occupancy_single_lpmf(
-    array[] int y, // detection data
-    vector mu, // lin pred for detection
-    vector occ, // lin pred for occupancy. Elements after vint1[1] irrelevant.
-    array[] int vint1, // n units (n_unit). Elements after 1 irrelevant.
-    array[] int vint2, // n sampling events per unit (n_rep). Elements after vint1[1] irrelevant.
-    array[] int vint3, // Indicator for > 0 detections (Q). Elements after vint1[1] irrelevant.
-  
-  // indices for jth repeated sampling event to each unit (elements after vint1[1] irrelevant):"
-  
-  sf_text2 <- paste0("    array[] int vint", 3 + (1:max_rep), collapse = ",\n")
-  
-  sf_text3 <- paste0(") {
-  // Create array of the rep indices that correspond to each unit.
-    array[vint1[1], ", max_rep, "] int index_array;")
-  
-  sf_text4.1 <- "      index_array[,"
-  sf_text4.2 <- 1:max_rep
-  sf_text4.3 <- "] = vint"
-  sf_text4.4 <- 3 + (1:max_rep)
-  sf_text4.5 <- "[1:vint1[1]];\n"
-  sf_text4 <- paste0(sf_text4.1, sf_text4.2, sf_text4.3, sf_text4.4, sf_text4.5, collapse = "")
-  
-  sf_text5 <- "  // Initialize and compute log-likelihood
-    real lp = 0;
-    for (i in 1:vint1[1]) {
-      array[vint2[i]] int indices = index_array[i, 1:vint2[i]];
-      if (vint3[i] == 1) {
-        lp += bernoulli_logit_lpmf(1 | occ[i]);
-        lp += bernoulli_logit_lpmf(y[indices] | mu[indices]);
-      }
-      if (vint3[i] == 0) {
-        lp += log_sum_exp(bernoulli_logit_lpmf(1 | occ[i]) + 
-                              sum(log1m_inv_logit(mu[indices])), bernoulli_logit_lpmf(0 | occ[i]));
-      }
-    }
-    return(lp);
-  }
-"
-
-  out <- paste(sf_text1, sf_text2, sf_text3, sf_text4, sf_text5, sep = "\n")
-  out
+make_occupancy_single_lpmf <- function() {
+  path <- system.file("stan", "occupancy_single.stan",
+                      package = "flocker", mustWork = TRUE)
+  paste(readLines(path), collapse = "\n")
 }
 
 ##### single_C #####
