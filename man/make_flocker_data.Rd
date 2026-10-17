@@ -90,6 +90,17 @@ A flocker_data list that can be passed as data to \code{flock()}.
 \description{
 Format data for occupancy model with \code{flock()}.
 }
+\details{
+For one-level single-season data with event covariates, the object
+contains \code{data} and \code{metadata}. Observed visits are packed
+contiguously within units, with unit covariates repeated at their actual
+values on every visit. Consequently, brms centers unit-formula predictors
+and constructs spline bases from covariates expanded to the visit level.
+The occupancy likelihood nevertheless contributes once per unit.
+Setting \code{newdata_checks = TRUE} marks this representation as
+\code{new_data}, which cannot be used for fitting. Post-processing for this
+new representation is not yet implemented.
+}
 \examples{
 sfd <- simulate_flocker_data()
 make_flocker_data(
