@@ -1,6 +1,6 @@
 test_that("single-season source has a fixed input signature", {
   code <- make_occupancy_single_lpmf()
-  expect_match(code, "array[] int n_event", fixed = TRUE)
+  expect_match(code, "array[] int unit_start", fixed = TRUE)
   expect_no_match(code, "index_array", fixed = TRUE)
   expect_no_match(code, "vint4", fixed = TRUE)
 })

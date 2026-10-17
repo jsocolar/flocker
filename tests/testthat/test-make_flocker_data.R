@@ -9,9 +9,10 @@ test_that("make_flocker_data works correctly", {
   expect_equal(class(fd), c("list", "flocker_data"))
   expect_named(fd, c("data", "metadata"))
   expect_identical(fd$metadata$flocker_version, flocker_version())
-  expect_equal(names(fd$data), c("ff_y", "uc1", "species", "ec1", "ff_n_event"))
+  expect_equal(names(fd$data), c("ff_y", "uc1", "species", "ec1", "ff_n_unit", "ff_unit_start"))
   expect_true(all(fd$data$ff_y %in% c(0, 1)))
-  expect_equal(fd$data$ff_n_event, rep(4L, length(obs)))
+  expect_equal(fd$data$ff_n_unit, c(nrow(obs), rep(-99L, length(obs) - 1L)))
+  expect_equal(fd$data$ff_unit_start[seq_len(nrow(obs))], seq(1L, length(obs), by = 4L))
 
   event_covs[[1]] <- matrix(seq_along(obs), nrow(obs))
   obs[2, 4] <- NA
@@ -20,8 +21,9 @@ test_that("make_flocker_data works correctly", {
   expected_ids <- expected_ids[!is.na(obs[expected_ids])]
   expect_equal(fd$data$ec1, expected_ids)
   expect_equal(fd$data$ff_y, as.integer(obs[expected_ids]))
-  expect_equal(fd$data$ff_n_event, rep(c(4L, 3L, rep(4L, nrow(obs) - 2L)),
-                                     c(4L, 3L, rep(4L, nrow(obs) - 2L))))
+  counts <- c(4L, 3L, rep(4L, nrow(obs) - 2L))
+  expect_equal(fd$data$ff_unit_start,
+               c(cumsum(c(1L, head(counts, -1L))), rep(-99L, sum(counts) - length(counts))))
 
   obs[,4] <- NA
   expect_error(fd <- make_flocker_data(obs, quiet = TRUE),

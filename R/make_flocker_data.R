@@ -205,7 +205,10 @@ make_flocker_data_static <- function(
     for (name in names(event_covs)) {
       flocker_data[[name]] <- as.matrix(event_covs[[name]])[packed_to_original]
     }
-    flocker_data$ff_n_event <- rep(n_event, n_event)
+    unit_start <- cumsum(c(1L, head(n_event, -1L)))
+    n_data <- nrow(flocker_data)
+    flocker_data$ff_n_unit <- c(n_unit, rep(-99L, n_data - 1L))
+    flocker_data$ff_unit_start <- c(unit_start, rep(-99L, n_data - n_unit))
     rownames(flocker_data) <- NULL
     original_to_packed <- array(NA_integer_, dim(obs), dimnames(obs))
     original_to_packed[packed_to_original] <- seq_along(packed_to_original)
@@ -219,7 +222,7 @@ make_flocker_data_static <- function(
         packed_to_original = packed_to_original,
         original_to_packed = original_to_packed,
         event_unit = event_unit,
-        unit_start = cumsum(c(1L, head(n_event, -1L))),
+        unit_start = unit_start,
         n_event = n_event,
         unit_covs = names(unit_covs), event_covs = names(event_covs)
       )

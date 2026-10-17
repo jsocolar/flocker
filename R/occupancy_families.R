@@ -6,8 +6,8 @@ occupancy_single <- function() {
     "occupancy_single", dpars = c("mu", "occ"),
     links = c("identity", "identity"),
     type = "int", 
-    # Number of events in the enclosing unit, repeated on each event row.
-    vars = "vint1",
+    # Unit count and event-block starts, padded to the event-row length.
+    vars = c("vint1", "vint2"),
     loop = FALSE)
 }
 
