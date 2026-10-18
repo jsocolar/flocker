@@ -204,7 +204,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
   if (identical(metadata$type, "single")) {
     validate_single_packed_data(flocker_data)
     if (!is.null(threads)) {
-      stop("Threading is not supported for the new single-season schema.")
+      stop("Threading is not currently supported for rep-varying single-season models.")
     }
     occ_formula <- if (brms::is.brmsformula(f_det)) f_det$pforms$occ else f_occ
     if (any(all.vars(occ_formula) %in% metadata$event_covs)) {

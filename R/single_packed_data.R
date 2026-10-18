@@ -1,3 +1,6 @@
+# TODO: Delete this entire file after this PR merges. The structural checks are
+# temporary migration diagnostics; retain lightweight schema/version and data-role
+# checks at the fitting boundary, with packing invariants covered by formatter tests.
 # Validate the new rep-varying fitting contract before passing rows to brms.
 validate_single_packed_data <- function(x) {
   metadata <- get_flocker_metadata(x)

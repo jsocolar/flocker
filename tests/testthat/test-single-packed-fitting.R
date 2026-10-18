@@ -58,7 +58,7 @@ test_that("single-season fitting rejects incompatible packing and roles early", 
                                   newdata_checks = TRUE, quiet = TRUE)
   expect_identical(prediction$metadata$data_role, "new_data")
   expect_error(flock(~ 1, ~ w, prediction), "new_data cannot")
-  expect_error(flock(~ 1, ~ w, fd, threads = 2), "Threading is not supported")
+  expect_error(flock(~ 1, ~ w, fd, threads = 2), "Threading is not currently supported")
   for (q in list(NULL, c(0L, 0L, -99L), c(1L, 2L, -99L))) {
     bad <- fd
     bad$data$ff_Q <- q

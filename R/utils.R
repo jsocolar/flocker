@@ -556,25 +556,27 @@ validate_flock_params <- function(f_occ, f_det, flocker_data,
                                multiseason, f_col, f_ex, multi_init, f_auto,
                                augmented, threads, f_meta)
   
+  metadata <- get_flocker_metadata(flocker_data)
+
   # Check that parameters are valid in combination
-  if (get_flocker_metadata(flocker_data)$type == "single") {
+  if (metadata$type == "single") {
     validate_param_combos_single(f_occ, f_det, flocker_data, 
                                  multiseason, f_col, f_ex, multi_init, f_auto,
                                  augmented)
-  } else if (get_flocker_metadata(flocker_data)$type == "single_C") {
+  } else if (metadata$type == "single_C") {
     validate_param_combos_single_C(f_occ, f_det, flocker_data, 
                                    multiseason, f_col, f_ex, multi_init, f_auto,
                                    augmented)
-  } else if (get_flocker_metadata(flocker_data)$type == "twolevel_single") {
+  } else if (metadata$type == "twolevel_single") {
     validate_param_combos_twolevel_single(f_occ, f_det, flocker_data,
                                    multiseason, f_col, f_ex, multi_init, f_auto,
                                    augmented, threads, f_meta)
-  } else if (get_flocker_metadata(flocker_data)$type == "augmented") {
+  } else if (metadata$type == "augmented") {
     validate_param_combos_augmented(f_occ, f_det, flocker_data, 
                                    multiseason, f_col, f_ex, multi_init, f_auto,
                                    augmented, threads, f_meta)
   } else {
-    assertthat::assert_that(get_flocker_metadata(flocker_data)$type == "multi")
+    assertthat::assert_that(metadata$type == "multi")
     # above line is redundant but included for clarity
     validate_param_combos_multi(f_occ, f_det, flocker_data, 
                                 multiseason, f_col, f_ex, multi_init, f_auto,
