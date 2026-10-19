@@ -39,7 +39,7 @@ To simplify the `Stan` code that decodes this data structure, we also pass three
 Thus, the likelihood function has a number of `vint` terms equal to three plus the maximum number of repeat visits to any site. The `Stan` code to decode this format depends on the number of repeat visits and is generated on-the-fly at runtime. Here's how it looks for a dataset with a maximum of four repeat visits:
 
 ```{r stancode-example}
-cat(flocker:::make_occupancy_single_lpmf(4))
+cat(flocker:::make_occupancy_single_lpmf())
 
 ```
 
