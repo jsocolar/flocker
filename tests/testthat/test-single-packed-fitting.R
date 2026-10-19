@@ -17,6 +17,16 @@ test_that("single-season packing preserves identities and real covariates", {
   expect_identical(m$data_role, "model_data")
   expect_equal(m$unit_start, c(1L, 4L, 5L))
   expect_equal(m$event_unit, c(1L, 1L, 1L, 2L, 3L, 3L))
+  expected_positions <- rbind(c(1L, 2L, 3L), c(4L, NA_integer_, NA_integer_),
+                              c(5L, 6L, NA_integer_))
+  dimnames(expected_positions) <- dimnames(obs)
+  expect_identical(get_positions(fd), expected_positions)
+  expect_identical(get_positions(fd, unit_level = TRUE),
+                   c(ash = 1L, birch = 4L, cedar = 5L))
+  # Exercise the public reconstruction helper, preserving original names.
+  reconstructed <- array(fd$data$ff_y[get_positions(fd)], dim(obs), dimnames(get_positions(fd)))
+  expect_equal(reconstructed, obs)
+  expect_equal(unname(fd$data$x[get_positions(fd, unit_level = TRUE)]), unit$x)
   restored <- array(NA_real_, m$original_dim, m$original_dimnames)
   restored[m$packed_to_original] <- fd$data$ff_y
   expect_equal(restored, obs)
@@ -50,6 +60,7 @@ test_that("single-season fitting rejects incompatible packing and roles early", 
     bad <- fd
     bad$metadata$schema_version <- tag
     expect_error(flock(~ 1, ~ w, bad), "Incompatible single-season packing schema")
+    expect_error(get_positions(bad), "Incompatible single-season packing schema")
   }
   old <- structure(list(data = fd$data, type = "single", n_rep = 2L),
                    class = c("list", "flocker_data"))
@@ -57,6 +68,7 @@ test_that("single-season fitting rejects incompatible packing and roles early", 
   prediction <- make_flocker_data(obs, event_covs = list(w = matrix(1:4, 2)),
                                   newdata_checks = TRUE, quiet = TRUE)
   expect_identical(prediction$metadata$data_role, "new_data")
+  expect_identical(get_positions(prediction), get_positions(fd))
   expect_error(flock(~ 1, ~ w, prediction), "new_data cannot")
   expect_error(flock(~ 1, ~ w, fd, threads = 2), "Threading is not currently supported")
   for (q in list(NULL, c(0L, 0L, -99L), c(1L, 2L, -99L))) {

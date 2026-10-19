@@ -88,6 +88,7 @@ fitted_flocker <- function(
       msg = "CI must be between zero and one inclusive"
     )
   }
+  validate_postprocessing_data(flocker_fit, new_data)
   ndraws_total <- brms::ndraws(flocker_fit)
   if(!is.null(draw_ids)) {
     assertthat::assert_that(
@@ -105,7 +106,7 @@ fitted_flocker <- function(
     )
     if(is_flocker_data(new_data)) {
       assertthat::assert_that(
-        new_data$type == attributes(flocker_fit)$data_type,
+        get_flocker_metadata(new_data)$type == attributes(flocker_fit)$data_type,
         msg = "new_data is formatted for a different model type than flocker_fit"
       )
     }
@@ -275,6 +276,14 @@ fitted_flocker <- function(
     )
   }
   
+  if (dt == "single" && (is.null(new_data) || is_flocker_data(new_data))) {
+    metadata <- get_flocker_metadata(if (is.null(new_data)) flocker_fit else new_data)
+    original_names <- metadata$original_dimnames
+    for (i in seq_along(dn)) {
+      if (!is.null(original_names[[i]])) dn[[i]] <- original_names[[i]]
+    }
+  }
+
   if(summarise){
     dn <- append(dn, list(c("mean", paste0("Q", c(min(CI)*100, paste0(max(CI)*100))))))
   } else {

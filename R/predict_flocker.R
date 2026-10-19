@@ -41,6 +41,7 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
                             mixed = FALSE, 
                             allow_new_levels = FALSE,
                             sample_new_levels = "uncertainty") {
+  validate_postprocessing_data(flocker_fit, new_data)
   assertthat::assert_that(
     is_one_logical(mixed),
     msg = "`mixed` must be a single logical"
@@ -59,16 +60,17 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
   # rename all random effect levels so they show up as new levels
   if (mixed) {
     if (is.null(new_data)) {
-      # Read the attribute directly so older fits without flocker_metadata can
-      # retain the data-type-only fallback used for mixed prediction.
-      new_data_metadata <- attr(flocker_fit, "flocker_metadata")
-      if (is.null(new_data_metadata)) {
+      # Retain the legacy fallback for families not yet migrated to metadata.
+      # Single-season fits have already passed the schema check above.
+      if (is.null(attr(flocker_fit, "flocker_metadata"))) {
         new_data_metadata <- list(type = attr(flocker_fit, "data_type"))
+      } else {
+        new_data_metadata <- get_flocker_metadata(flocker_fit)
       }
       new_data <- flocker_fit$data
     } else {
       assertthat::assert_that(
-        identical(new_data$type, attributes(flocker_fit)$data_type),
+        identical(get_flocker_metadata(new_data)$type, attributes(flocker_fit)$data_type),
         msg = "the new_data data type does not match the flocker_fit data type"
       )
       new_data_metadata <- get_flocker_metadata(new_data)
@@ -93,9 +95,13 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
         new_data[, random_effects[i]] <- paste0(new_data[, random_effects[i]], 
                                               "_resampled")
       }
-      new_data <- c(list(data = new_data), new_data_metadata)
-      class(new_data) <- "flocker_data"
     }
+    if (identical(new_data_metadata$type, "single")) {
+      new_data <- list(data = new_data, metadata = new_data_metadata)
+    } else {
+      new_data <- c(list(data = new_data), new_data_metadata)
+    }
+    class(new_data) <- "flocker_data"
     assertthat::assert_that(
       identical(allow_new_levels, TRUE),
       msg = "set `allow_new_levels` to TRUE for mixed predictive checking"
@@ -138,5 +144,6 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
   
   predictions <- new_array(theta_all, rbinom2(length(theta_all), 1, theta_all * Z_samp_array))
   
+  dimnames(predictions) <- dimnames(theta_all)
   predictions
 }

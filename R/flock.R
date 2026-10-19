@@ -200,6 +200,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                   multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
                   augmented = FALSE, threads = NULL, f_meta = NULL,
                   ...) {
+  validate_no_time_series_terms(list(...)$autocor)
   metadata <- get_flocker_metadata(flocker_data)
   if (identical(metadata$type, "single")) {
     validate_single_packed_data(flocker_data)
