@@ -1,12 +1,12 @@
 single_rv_lpmf_from_flocker_data <- function(fd, psi, theta) {
   d <- fd$data
   n_unit <- d$ff_n_unit[1]
-  rep_cols <- grep("^ff_rep_index", names(d), value = TRUE)
+  unit_starts <- d$ff_unit_start[seq_len(n_unit)]
+  unit_ends <- c(unit_starts[-1] - 1L, nrow(d))
   ll <- 0
 
   for (i in seq_len(n_unit)) {
-    indices <- as.integer(d[i, rep_cols])
-    indices <- indices[indices != -99]
+    indices <- seq.int(unit_starts[i], unit_ends[i])
     y_i <- d$ff_y[indices]
     theta_i <- theta[indices]
 

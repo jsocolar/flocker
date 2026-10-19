@@ -90,12 +90,12 @@ test_that("log_lik_flocker new_data argument works correctly", {
   # wrong data type should error
   expect_error(
     log_lik_flocker(example_flocker_model_single2, new_data = mfd_multi_colex_ex),
-    "data type in new_data does not match"
+    "new_data is formatted for a different model type"
   )
   
   # --- equality checks: passing training data as new_data should match default ---
   
-  # single (uses shipped package data mfd_single)
+  # single (uses current-schema data from setup.R)
   ll_default <- log_lik_flocker(example_flocker_model_single2)
   ll_newdata <- log_lik_flocker(
     example_flocker_model_single2,

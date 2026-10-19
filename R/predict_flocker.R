@@ -144,6 +144,8 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
   
   predictions <- new_array(theta_all, rbinom2(length(theta_all), 1, theta_all * Z_samp_array))
   
-  dimnames(predictions) <- dimnames(theta_all)
+  if (identical(attr(flocker_fit, "data_type"), "single")) {
+    dimnames(predictions) <- dimnames(theta_all)
+  }
   predictions
 }
