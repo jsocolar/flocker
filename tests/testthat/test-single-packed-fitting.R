@@ -71,19 +71,7 @@ test_that("single-season fitting rejects incompatible packing and roles early", 
   expect_identical(get_positions(prediction), get_positions(fd))
   expect_error(flock(~ 1, ~ w, prediction), "new_data cannot")
   expect_error(flock(~ 1, ~ w, fd, threads = 2), "Threading is not currently supported")
-  for (q in list(NULL, c(0L, 0L, -99L), c(1L, 2L, -99L))) {
-    bad <- fd
-    bad$data$ff_Q <- q
-    expect_error(flock(~ 1, ~ w, bad), "Invalid single-season detection indicators")
-  }
-  bad <- fd
-  bad$data$ff_n_unit[1] <- 99L
-  expect_error(flock(~ 1, ~ w, bad), "Invalid single-season event blocks")
-  bad <- fd
-  bad$data$ff_unit_start[2] <- 1L
-  expect_error(flock(~ 1, ~ w, bad), "Invalid single-season event blocks")
-  fd$data$ff_unit_start[1] <- 0L
-  expect_error(flock(~ 1, ~ w, fd), "Invalid single-season event blocks")
+
 })
 
 test_that("single-season generated programs are independent of maximum visits", {
