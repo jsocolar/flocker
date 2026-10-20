@@ -195,11 +195,35 @@ Use domain-specific names for counts and offsets rather than abstract
 parent/child terminology. The exact columns remain a prototype decision; the
 principles above are settled.
 
-Explicitly represent zero-child segments. The prototype must settle how
-zero-visit units are represented while retaining unit predictors and avoiding
-arbitrary event-level values that would alter brms centering, spline bases,
-random-effect levels, or other preprocessing. Synthetic rows are not inert to
-brms merely because the custom likelihood ignores them.
+For the multiseason implementation, use two nested instances of the
+single-season block structure. `ff_n_series[1]` counts series, and the leading
+entries of `ff_series_start` index their first units. `ff_n_unit[1]` counts
+retained units, and the leading entries of `ff_unit_start` index their first
+packed rows. The next start (or the total at the final block) determines each
+block's end. `ff_Q` stores whether each unit contains a detection. Pad unused
+auxiliary entries with `-99`; these five columns have fixed width regardless
+of visits or seasons.
+
+Retain leading and internal unvisited seasons using one placeholder row per
+unit, with `ff_y = -99` and `ff_Q = 0`. Its emission probability is one under
+either state; its process transition still contributes. Repeat actual unit
+covariates at every visit and once on placeholders. Preserve supplied detection
+covariates on placeholders; replace missing numeric values with the mean over
+observed visits, and missing factor values with the first (reference) level.
+Covariates must be observed at realized visits. Placeholder imputation and
+visit-level expansion affect brms preprocessing, including centers and spline
+bases; ignoring a placeholder's emission does not make its covariates inert.
+
+Keep the packing machinery independent of multiseason likelihoods: two-level
+models can use the same nested structure, with groups in place of series and
+an additional precomputed group-level detection indicator. Model-specific
+validation remains separate; two-level models will initially reject unvisited
+units. Implement and validate multiseason models before migrating two-level
+models.
+
+Explicitly represent zero-child segments. The multiseason placeholder policy
+above is the accepted compromise for retaining unit predictors within brms's
+single data frame.
 
 For a possible future two-level multiseason model, allow a level-two group to
 contain multiple complete series. Require each series to belong wholly to one
@@ -303,6 +327,10 @@ forecast. History-conditioned forecasts propagate from preceding observed
 history. Hypothetical observations require a supplied event template and the
 necessary event covariates; a unit with no supplied visits has no event-level
 prediction.
+
+The initial multiseason migration preserves the existing trailing-season
+omission for both fitting and new data. Retaining trailing units for forecasts
+is a subsequent prediction-API change, not part of the packing migration.
 
 Under explicit initialization, `occ` applies at the first unit and transition
 components begin afterward. Under equilibrium initialization, first-unit
@@ -510,10 +538,9 @@ schema unless it directly intersects changed code:
 - Improve numerical stability in dynamic forward-backward post-processing and
   add a dedicated stress test with intentionally extreme predictors.
 - Extend the shared two-level post-processing preparation used by `get_Z()` and
-  `log_lik_flocker()` to one-level and multiseason models. During that work,
-  inspect the current autologistic `get_Z()` path where
-  `history_condition = FALSE`: historical code can pass `lps1$linpred_det`
-  even though `lps1` is not defined on that branch.
+  `log_lik_flocker()` to one-level and multiseason models. The multiseason
+  migration fixes the historical undefined `lps1` reference in autologistic
+  `get_Z(history_condition = FALSE)`.
 - Add known-state constraints in a later coherent PR.
 - Extend `simulate_flocker_data()` to generic `twolevel_single` models. The
   1.1 implementation simulates ordinary single-season, multiseason, and

@@ -276,9 +276,10 @@ fitted_flocker <- function(
     )
   }
   
-  if (dt == "single" && (is.null(new_data) || is_flocker_data(new_data))) {
+  if (dt %in% c("single", "multi") && (is.null(new_data) || is_flocker_data(new_data))) {
     metadata <- get_flocker_metadata(if (is.null(new_data)) flocker_fit else new_data)
     original_names <- metadata$original_dimnames
+    if (dt == "multi" && unit_level) original_names <- original_names[c(1, 3)]
     for (i in seq_along(dn)) {
       if (!is.null(original_names[[i]])) dn[[i]] <- original_names[[i]]
     }

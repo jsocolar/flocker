@@ -91,15 +91,21 @@ A flocker_data list that can be passed as data to \code{flock()}.
 Format data for occupancy model with \code{flock()}.
 }
 \details{
-For one-level single-season data with event covariates, the object
+For one-level single-season data with event covariates and for
+multiseason data, the object
 contains \code{data} and \code{metadata}. Observed visits are packed
 contiguously within units, with unit covariates repeated at their actual
 values on every visit. Consequently, brms centers unit-formula predictors
 and constructs spline bases from covariates expanded to the visit level.
-The occupancy likelihood nevertheless contributes once per unit.
+For multiseason data, units are additionally packed within series. Leading
+and internal unvisited seasons receive one placeholder row, retaining their
+unit covariates. Missing detection covariates on these rows are filled with
+the mean over observed visits for numeric covariates, or the first factor
+level for factors. Supplied values are preserved. Placeholder covariates
+participate in brms preprocessing, but have no detection likelihood.
+Trailing unvisited seasons are omitted and reconstructed as NA.
 Setting \code{newdata_checks = TRUE} marks this representation as
-\code{new_data}, which cannot be used for fitting. Post-processing for this
-new representation is not yet implemented.
+\code{new_data}, which cannot be used for fitting.
 }
 \examples{
 sfd <- simulate_flocker_data()

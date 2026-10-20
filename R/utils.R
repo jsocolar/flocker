@@ -172,8 +172,8 @@ get_unit_group <- function(data) {
 flocker_col_names <- function(n_rep = NULL, n_year = NULL) {
   out <- c("ff_y", 
     "ff_n_suc", "ff_n_trial", 
-    "ff_Q", "ff_n_unit", "ff_n_rep", "ff_unit",
-    "ff_n_series", "ff_n_year", "ff_series", "ff_year", "ff_series_year",
+    "ff_Q", "ff_n_unit", "ff_unit_start", "ff_n_rep", "ff_unit",
+    "ff_n_series", "ff_series_start", "ff_n_year", "ff_series", "ff_year", "ff_series_year",
     "ff_n_group", "ff_group_known_present", "ff_n_unit_group",
     "ff_species")
   if(!is.null(n_rep)) {
@@ -312,9 +312,9 @@ get_flocker_metadata <- function(x) {
 # Check the schema even when prediction bypasses get_positions (e.g. a
 # plain data frame). Other model families retain their current contracts.
 validate_postprocessing_data <- function(flocker_fit, new_data = NULL) {
-  validate_single_schema(flocker_fit)
+  validate_packed_schema(flocker_fit)
   if (is_flocker_data(new_data)) {
-    validate_single_schema(new_data)
+    validate_packed_schema(new_data)
     if (!identical(get_flocker_metadata(new_data)$type,
                    attr(flocker_fit, "data_type"))) {
       stop("new_data is formatted for a different model type than flocker_fit")
@@ -323,7 +323,7 @@ validate_postprocessing_data <- function(flocker_fit, new_data = NULL) {
   invisible(NULL)
 }
 
-validate_single_schema <- function(x) {
+validate_packed_schema <- function(x) {
   if (is_flocker_fit(x)) {
     type <- attr(x, "data_type")
     metadata <- attr(x, "flocker_metadata")
@@ -331,9 +331,10 @@ validate_single_schema <- function(x) {
     metadata <- get_flocker_metadata(x)
     type <- metadata$type
   }
-  if (identical(type, "single") &&
+  if (type %in% c("single", "multi") &&
       !identical(metadata$schema_version, 2L)) {
-    stop("Incompatible single-season packing schema. Pre-2.0 objects require a compatible 1.x installation or reformatting and refitting.")
+    stop(paste0("Incompatible ", if (type == "single") "single-season" else "multiseason",
+                " packing schema. Pre-2.0 objects require a compatible 1.x installation or reformatting and refitting."))
   }
   invisible(NULL)
 }
@@ -419,12 +420,18 @@ get_positions <- function(data_object, unit_level = FALSE) {
   }
 
   if (data_type == "single") {
-    validate_single_schema(data_object)
+    validate_packed_schema(data_object)
     metadata <- get_flocker_metadata(data_object)
     if (unit_level) {
       return(stats::setNames(metadata$unit_start, metadata$original_dimnames[[1]]))
     }
     return(metadata$original_to_packed)
+  }
+
+  if (data_type == "multi") {
+    validate_packed_schema(data_object)
+    metadata <- get_flocker_metadata(data_object)
+    return(if (unit_level) metadata$unit_to_packed else metadata$original_to_packed)
   }
 
   if(data_type == "single_C") {
@@ -475,47 +482,6 @@ get_positions <- function(data_object, unit_level = FALSE) {
       return(index_array)
     } else {
       return(as.matrix(index_array[,1,]))
-    }
-  } else if(data_type == "multi") {
-    n_series <- the_data$ff_n_series[1]
-    unit_index_frame <- the_data[
-      seq_len(n_series),
-      grepl("^ff_unit_index", names(the_data)),
-      drop = FALSE
-    ]
-    max_year <- ncol(unit_index_frame)
-
-    if(!unit_level){
-      index_array <- array(dim = c(n_series, n_rep, max_year))
-      rep_index_frame <- the_data[paste0("ff_rep_index", seq_len(n_rep))][seq_len(n_unit), ]
-      rep_mat  <- as.matrix(rep_index_frame)
-      unit_mat <- as.matrix(unit_index_frame)
-      
-      rc        <- which(!is.na(rep_mat), arr.ind = TRUE)
-      r_vals    <- rep_mat[rc]
-      unit_ids  <- rc[, 1]
-      visit_ids <- rc[, 2]
-      
-      uc           <- which(!is.na(unit_mat), arr.ind = TRUE)
-      unit_vals    <- unit_mat[uc]
-      series_lookup <- uc[, 1][match(unit_ids, unit_vals)]
-      year_lookup   <- uc[, 2][match(unit_ids, unit_vals)]
-      
-      valid <- !is.na(series_lookup)
-      index_array[cbind(series_lookup[valid], visit_ids[valid], year_lookup[valid])] <- r_vals[valid]
-      
-      index_array[index_array == -99] <- NA
-      
-      return(index_array)
-    } else {
-      unit_index_matrix <- array(dim = c(n_series, max_year))
-      unit_mat <- as.matrix(unit_index_frame)
-      uc <- which(!is.na(unit_mat), arr.ind = TRUE)
-      unit_index_matrix[uc] <- unit_mat[uc]
-      
-      unit_index_matrix[unit_index_matrix == -99] <- NA
-      
-      return(unit_index_matrix)
     }
   }
 }

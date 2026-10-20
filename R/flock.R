@@ -202,11 +202,13 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                   ...) {
   validate_no_time_series_terms(list(...)$autocor)
   metadata <- get_flocker_metadata(flocker_data)
-  if (identical(metadata$type, "single")) {
-    validate_single_schema(flocker_data)
+  if (metadata$type %in% c("single", "multi")) {
+    validate_packed_schema(flocker_data)
     if (!identical(metadata$data_role, "model_data")) {
       stop("Fitting requires model_data; new_data cannot be used for fitting.")
     }
+  }
+  if (identical(metadata$type, "single")) {
     if (!is.null(threads)) {
       stop("Threading is not currently supported for rep-varying single-season models.")
     }
@@ -335,175 +337,28 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  family = occupancy_family, 
                                  stanvars = stanvars,
                                  ...)
-  } else if (isTRUE(multiseason == "colex") & isTRUE(multi_init == "explicit")) {
-    n_rep <- metadata$n_rep
-    n_year <- metadata$n_year
-    vint_text1 <- paste0("ff_unit_index", seq(n_year), 
-                         collapse = ", ")
-    vint_text2 <- paste0("ff_rep_index", seq(n_rep), 
-                        collapse = ", ")
-    
-    f_det_use <- stats::as.formula(
-      paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
-             vint_text1, ", ", vint_text2, ") ", f_det_txt))
-    
-    if(brms::is.brmsformula(f_det)){
+  } else if (metadata$type == "multi") {
+    f_det_use <- stats::as.formula(paste0(
+      "ff_y | vint(ff_n_series, ff_series_start, ff_n_unit, ff_unit_start, ff_Q) ",
+      f_det_txt))
+    if (brms::is.brmsformula(f_det)) {
       f_use <- f_det
       f_use$formula <- f_det_use
+    } else if (multiseason == "colex") {
+      f_use <- if (multi_init == "explicit") brms::bf(f_det_use, f_occ_use, f_col_use, f_ex_use) else
+        brms::bf(f_det_use, f_col_use, f_ex_use)
     } else {
-      f_use <- brms::bf(f_det_use, f_occ_use, f_col_use, f_ex_use)
+      f_use <- if (multi_init == "explicit") brms::bf(f_det_use, f_occ_use, f_col_use, f_auto_use) else
+        brms::bf(f_det_use, f_col_use, f_auto_use)
     }
-    
-    stanvars <- 
-      brms::stanvar(
-        scode = make_emission_1(), 
-        block = "functions"
-      ) + 
-      brms::stanvar(
-        scode = make_colex_likelihoods(), 
-        block = "functions"
-        ) + 
-      brms::stanvar(
-        scode = make_forward_colex(), 
-        block = "functions"
-      ) + 
-      brms::stanvar(
-        scode = make_occupancy_multi_colex_lpmf(max_rep = n_rep, max_year = n_year), 
-        block = "functions"
-      )
-    out <- flocker_fit_code_util(output, 
-                                 f_use, 
-                                 data = flocker_data$data,
-                                 data2 = data2,
-                                 family = occupancy_multi_colex(n_year, n_rep), 
-                                 stanvars = stanvars,
-                                 ...)
-  } else if (isTRUE(multiseason == "colex") & isTRUE(multi_init == "equilibrium")) {
-    n_rep <- metadata$n_rep
-    n_year <- metadata$n_year
-    vint_text1 <- paste0("ff_unit_index", seq(n_year), 
-                         collapse = ", ")
-    vint_text2 <- paste0("ff_rep_index", seq(n_rep), 
-                         collapse = ", ")
-    f_det_use <- stats::as.formula(
-      paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
-             vint_text1, ", ", vint_text2, ") ", f_det_txt))
-    
-    if(brms::is.brmsformula(f_det)){
-      f_use <- f_det
-      f_use$formula <- f_det_use
+    family <- if (multiseason == "colex") {
+      if (multi_init == "explicit") occupancy_multi_colex() else occupancy_multi_colex_eq()
     } else {
-      f_use <- brms::bf(f_det_use, f_col_use, f_ex_use)
+      if (multi_init == "explicit") occupancy_multi_autologistic() else occupancy_multi_autologistic_eq()
     }
-    
-    stanvars <- 
-      brms::stanvar(
-        scode = make_emission_1(), 
-        block = "functions"
-      ) + 
-      brms::stanvar(
-        scode = make_colex_likelihoods(), 
-        block = "functions"
-      ) + 
-      brms::stanvar(
-        scode = make_forward_colex(), 
-        block = "functions"
-      ) + 
-      brms::stanvar(
-        scode = make_occupancy_multi_colex_eq_lpmf(max_rep = n_rep, max_year = n_year), 
-        block = "functions"
-      )
-    out <- flocker_fit_code_util(output, 
-                                 f_use, 
-                                 data = flocker_data$data,
-                                 data2 = data2,
-                                 family = occupancy_multi_colex_eq(n_year, n_rep), 
-                                 stanvars = stanvars,
-                                 ...)
-  } else if (isTRUE(multiseason == "autologistic") & isTRUE(multi_init == "explicit")) {
-    n_rep <- metadata$n_rep
-    n_year <- metadata$n_year
-    vint_text1 <- paste0("ff_unit_index", seq(n_year), 
-                         collapse = ", ")
-    vint_text2 <- paste0("ff_rep_index", seq(n_rep), 
-                         collapse = ", ")
-    f_det_use <- stats::as.formula(
-      paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
-             vint_text1, ", ", vint_text2, ") ", f_det_txt))
-    
-    if(brms::is.brmsformula(f_det)){
-      f_use <- f_det
-      f_use$formula <- f_det_use
-    } else {
-      f_use <- brms::bf(f_det_use, f_occ_use, f_col_use, f_auto_use)
-    }
-
-    stanvars <- 
-      brms::stanvar(
-        scode = make_emission_1(), 
-        block = "functions"
-      ) + 
-      brms::stanvar(
-        scode = make_colex_likelihoods(), 
-        block = "functions"
-      ) + 
-      brms::stanvar(
-        scode = make_forward_colex(), 
-        block = "functions"
-      ) + 
-      brms::stanvar(
-        scode = make_occupancy_multi_autologistic_lpmf(max_rep = n_rep, max_year = n_year), 
-        block = "functions"
-      )
-    out <- flocker_fit_code_util(output, 
-                                 f_use, 
-                                 data = flocker_data$data,
-                                 data2 = data2,
-                                 family = occupancy_multi_autologistic(n_year, n_rep), 
-                                 stanvars = stanvars,
-                                 ...)
-  } else if (isTRUE(multiseason == "autologistic") & isTRUE(multi_init == "equilibrium")) {
-    n_rep <- metadata$n_rep
-    n_year <- metadata$n_year
-    vint_text1 <- paste0("ff_unit_index", seq(n_year), 
-                         collapse = ", ")
-    vint_text2 <- paste0("ff_rep_index", seq(n_rep), 
-                         collapse = ", ")
-    f_det_use <- stats::as.formula(
-      paste0("ff_y | vint(ff_n_series, ff_n_unit, ff_n_year, ff_n_rep, ff_Q, ",
-             vint_text1, ", ", vint_text2, ") ", f_det_txt))
-    
-    if(brms::is.brmsformula(f_det)){
-      f_use <- f_det
-      f_use$formula <- f_det_use
-    } else {
-      f_use <- brms::bf(f_det_use, f_col_use, f_auto_use)
-    }
-    
-    stanvars <- 
-      brms::stanvar(
-        scode = make_emission_1(), 
-        block = "functions"
-      ) + 
-      brms::stanvar(
-        scode = make_colex_likelihoods(), 
-        block = "functions"
-      ) + 
-      brms::stanvar(
-        scode = make_forward_colex(), 
-        block = "functions"
-      ) + 
-      brms::stanvar(
-        scode = make_occupancy_multi_autologistic_eq_lpmf(max_rep = n_rep, max_year = n_year), 
-        block = "functions"
-      )
-    out <- flocker_fit_code_util(output, 
-                                 f_use, 
-                                 data = flocker_data$data,
-                                 data2 = data2,
-                                 family = occupancy_multi_autologistic_eq(n_year, n_rep), 
-                                 stanvars = stanvars,
-                                 ...)
+    stanvars <- brms::stanvar(scode = make_occupancy_multi_lpmf(), block = "functions")
+    out <- flocker_fit_code_util(output, f_use, data = flocker_data$data,
+                                 data2 = data2, family = family, stanvars = stanvars, ...)
   } else {
     stop("Error: unhandled type. This should not happen; please report a bug.")
   }

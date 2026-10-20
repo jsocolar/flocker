@@ -65,7 +65,7 @@ test_that("multiseason post-processing retains globally trailing seasons", {
       as.vector(Z_base)
     )
     expect_identical(
-      is.na(Z_trailing),
+      unname(is.na(Z_trailing)),
       array(
         rep(is.na(fixture_trailing$expected_unit), length(draw_ids)),
         dim = c(3, 6, length(draw_ids))
@@ -84,7 +84,7 @@ test_that("multiseason post-processing retains globally trailing seasons", {
       history_condition = history_condition,
       new_data = data_trailing
     )
-    expect_identical(is.na(predictions), expected_prediction_nas)
+    expect_identical(unname(is.na(predictions)), expected_prediction_nas)
   }
 
   expect_equal(

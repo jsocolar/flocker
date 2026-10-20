@@ -96,7 +96,7 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
                                               "_resampled")
       }
     }
-    if (identical(new_data_metadata$type, "single")) {
+    if (new_data_metadata$type %in% c("single", "multi")) {
       new_data <- list(data = new_data, metadata = new_data_metadata)
     } else {
       new_data <- c(list(data = new_data), new_data_metadata)
@@ -144,7 +144,7 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
   
   predictions <- new_array(theta_all, rbinom2(length(theta_all), 1, theta_all * Z_samp_array))
   
-  if (identical(attr(flocker_fit, "data_type"), "single")) {
+  if (attr(flocker_fit, "data_type") %in% c("single", "multi")) {
     dimnames(predictions) <- dimnames(theta_all)
   }
   predictions
