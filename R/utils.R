@@ -291,6 +291,7 @@ is_flocker_fit <- function(x) {
 #' @noRd
 get_flocker_metadata <- function(x) {
   if (is_flocker_data(x)) {
+    if (!is.null(x$metadata)) return(x$metadata)
     return(x[setdiff(names(x), "data")])
   }
   assertthat::assert_that(
@@ -306,6 +307,35 @@ get_flocker_metadata <- function(x) {
     )
   )
   metadata
+}
+
+# Check the schema even when prediction bypasses get_positions (e.g. a
+# plain data frame). Other model families retain their current contracts.
+validate_postprocessing_data <- function(flocker_fit, new_data = NULL) {
+  validate_single_schema(flocker_fit)
+  if (is_flocker_data(new_data)) {
+    validate_single_schema(new_data)
+    if (!identical(get_flocker_metadata(new_data)$type,
+                   attr(flocker_fit, "data_type"))) {
+      stop("new_data is formatted for a different model type than flocker_fit")
+    }
+  }
+  invisible(NULL)
+}
+
+validate_single_schema <- function(x) {
+  if (is_flocker_fit(x)) {
+    type <- attr(x, "data_type")
+    metadata <- attr(x, "flocker_metadata")
+  } else {
+    metadata <- get_flocker_metadata(x)
+    type <- metadata$type
+  }
+  if (identical(type, "single") &&
+      !identical(metadata$schema_version, 2L)) {
+    stop("Incompatible single-season packing schema. Pre-2.0 objects require a compatible 1.x installation or reformatting and refitting.")
+  }
+  invisible(NULL)
 }
 
 #' Extract lik_type from object of class flocker_fit
@@ -385,7 +415,16 @@ get_positions <- function(data_object, unit_level = FALSE) {
     # sufficient here for model types that need no additional metadata.
     data_type <- attributes(data_object)$data_type
   } else {
-    data_type <- data_object$type
+    data_type <- get_flocker_metadata(data_object)$type
+  }
+
+  if (data_type == "single") {
+    validate_single_schema(data_object)
+    metadata <- get_flocker_metadata(data_object)
+    if (unit_level) {
+      return(stats::setNames(metadata$unit_start, metadata$original_dimnames[[1]]))
+    }
+    return(metadata$original_to_packed)
   }
 
   if(data_type == "single_C") {
@@ -396,15 +435,13 @@ get_positions <- function(data_object, unit_level = FALSE) {
     n_rep <- max(the_data$ff_n_rep[seq_len(n_unit)], na.rm = TRUE)
   }
 
-  if(data_type %in% c("single", "twolevel_single")) {
+  if(data_type == "twolevel_single") {
     index_matrix <- as.matrix(
       the_data[seq_len(n_unit), grepl("^ff_rep_index", names(the_data))]
     )
     assertthat::assert_that(ncol(index_matrix) == n_rep)
-    if(data_type == "twolevel_single") {
-      unit_order <- get_flocker_metadata(data_object)$unit_order
-      index_matrix <- index_matrix[order(unit_order), , drop = FALSE]
-    }
+    unit_order <- get_flocker_metadata(data_object)$unit_order
+    index_matrix <- index_matrix[order(unit_order), , drop = FALSE]
     index_matrix[index_matrix == -99] <- NA
     if(!unit_level) {
       return(index_matrix)
@@ -550,30 +587,33 @@ Z_from_emission <- function(el0, el1, psi_unconditional){
 validate_flock_params <- function(f_occ, f_det, flocker_data,
                                   multiseason, f_col, f_ex, multi_init, f_auto,
                                   augmented, threads, f_meta = NULL) {
+  validate_no_time_series_terms(list(f_occ, f_det, f_col, f_ex, f_auto, f_meta))
   # Check that inputs are valid individually
   validate_params_individually(f_occ, f_det, flocker_data,
                                multiseason, f_col, f_ex, multi_init, f_auto,
                                augmented, threads, f_meta)
   
+  metadata <- get_flocker_metadata(flocker_data)
+
   # Check that parameters are valid in combination
-  if (flocker_data$type == "single") {
+  if (metadata$type == "single") {
     validate_param_combos_single(f_occ, f_det, flocker_data, 
                                  multiseason, f_col, f_ex, multi_init, f_auto,
                                  augmented)
-  } else if (flocker_data$type == "single_C") {
+  } else if (metadata$type == "single_C") {
     validate_param_combos_single_C(f_occ, f_det, flocker_data, 
                                    multiseason, f_col, f_ex, multi_init, f_auto,
                                    augmented)
-  } else if (flocker_data$type == "twolevel_single") {
+  } else if (metadata$type == "twolevel_single") {
     validate_param_combos_twolevel_single(f_occ, f_det, flocker_data,
                                    multiseason, f_col, f_ex, multi_init, f_auto,
                                    augmented, threads, f_meta)
-  } else if (flocker_data$type == "augmented") {
+  } else if (metadata$type == "augmented") {
     validate_param_combos_augmented(f_occ, f_det, flocker_data, 
                                    multiseason, f_col, f_ex, multi_init, f_auto,
                                    augmented, threads, f_meta)
   } else {
-    assertthat::assert_that(flocker_data$type == "multi") 
+    assertthat::assert_that(metadata$type == "multi")
     # above line is redundant but included for clarity
     validate_param_combos_multi(f_occ, f_det, flocker_data, 
                                 multiseason, f_col, f_ex, multi_init, f_auto,
@@ -581,6 +621,34 @@ validate_flock_params <- function(f_occ, f_det, flocker_data,
   }
   validate_unit_formula_variables(f_occ, f_col, f_ex, f_auto, flocker_data)
   validate_meta_formula_variables(f_meta, flocker_data)
+}
+
+# Reject time-series structures before brms can reorder packed rows. Traverse
+# calls rather than text so covariates named e.g. `ar` remain valid. Combined
+# brms formulas store subformulas in lists and autocor formulas in attributes.
+validate_no_time_series_terms <- function(x) {
+  forbidden <- c("ar", "ma", "arma", "cosy", "unstr",
+                 "cor_ar", "cor_ma", "cor_arma", "cor_cosy")
+  contains_term <- function(x) {
+    if (inherits(x, c("cor_arma", "cor_cosy"))) return(TRUE)
+    if (is.call(x)) {
+      fun <- x[[1L]]
+      if (is.call(fun) && as.character(fun[[1L]]) %in% c("::", ":::")) {
+        fun <- fun[[3L]]
+      }
+      if (is.symbol(fun) && as.character(fun) %in% forbidden) return(TRUE)
+      if (any(vapply(as.list(x)[-1L], contains_term, logical(1)))) return(TRUE)
+    } else if (is.list(x)) {
+      if (any(vapply(x, contains_term, logical(1)))) return(TRUE)
+    }
+    autocor <- attr(x, "autocor", exact = TRUE)
+    !is.null(autocor) && contains_term(autocor)
+  }
+  if (contains_term(x)) {
+    stop("Autoregressive and other time-series correlation terms (ar, ma, arma, cosy, unstr) are not supported by flocker.",
+         call. = FALSE)
+  }
+  invisible(NULL)
 }
 
 #' Check individual validity of params passed to `flock`
@@ -625,7 +693,7 @@ validate_params_individually <- function(f_occ, f_det, flocker_data,
   
   # Check that flocker_data is valid
   assertthat::assert_that(
-    flocker_data$type %in% flocker_data_output_types(),
+    get_flocker_metadata(flocker_data)$type %in% flocker_data_output_types(),
     msg = paste0("unrecognized data type; flocker_data is corrupt. ",
                  "If this error persists on newly formatted objects produced ",
                  "without errors by `make_flocker_data`, please report a bug.")
@@ -667,7 +735,7 @@ validate_unit_formula_variables <- function(f_occ, f_col, f_ex, f_auto, flocker_
     unit_terms <- c(unit_terms, labels(stats::terms(f_auto)))
   }
   assertthat::assert_that(
-    !any(unit_terms %in% flocker_data$event_covs),
+    !any(unit_terms %in% get_flocker_metadata(flocker_data)$event_covs),
     msg = paste0("Data passed to `make_flocker_data` as event covariates are ",
                  "being used in at least one unit-level formula (i.e. f_occ, ",
                  "f_col, f_ex, f_auto). If these covariates are variable ",

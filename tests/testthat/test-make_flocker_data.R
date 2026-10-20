@@ -5,38 +5,26 @@ test_that("make_flocker_data works correctly", {
   event_covs <- example_data$event_covs
   
   fd <- make_flocker_data(obs, unit_covs, event_covs, quiet = TRUE)
-  expect_equal(fd$type, "single")
+  expect_equal(fd$metadata$type, "single")
   expect_equal(class(fd), c("list", "flocker_data"))
-  expect_equal(
-    names(fd),
-    c("data", "n_rep", "type", "flocker_version", "unit_covs", "event_covs")
-  )
-  expect_identical(fd$flocker_version, flocker_version())
-  expect_true(
-    all(fd$data[1:1500, c("ff_rep_index1", "ff_rep_index2", 
-                          "ff_rep_index3", "ff_rep_index4")] == 
-          matrix(1:6000, ncol = 4))
-    )  
-  expect_equal(names(fd$data), c("ff_y", "uc1", "species", "ec1",
-                                 "ff_n_unit", "ff_n_rep", "ff_Q", "ff_unit", "ff_rep_index1", 
-                                 "ff_rep_index2", "ff_rep_index3", "ff_rep_index4"))
-  expect_true(all(fd$data$y %in% c(0,1,-99)))
-  
-  event_covs[[1]] <- matrix(1:6000, ncol = 4)
+  expect_named(fd, c("data", "metadata"))
+  expect_identical(fd$metadata$flocker_version, flocker_version())
+  expect_equal(names(fd$data), c("ff_y", "uc1", "species", "ec1", "ff_n_unit", "ff_unit_start", "ff_Q"))
+  expect_true(all(fd$data$ff_y %in% c(0, 1)))
+  expect_equal(fd$data$ff_n_unit, c(nrow(obs), rep(-99L, length(obs) - 1L)))
+  expect_equal(fd$data$ff_unit_start[seq_len(nrow(obs))], seq(1L, length(obs), by = 4L))
+
+  event_covs[[1]] <- matrix(seq_along(obs), nrow(obs))
+  obs[2, 4] <- NA
   fd <- make_flocker_data(obs, unit_covs, event_covs, quiet = TRUE)
-  expect_equal(fd$data$ec1, 1:6000)
-  
-  
-  obs[2,4] <- NA
-  fd <- make_flocker_data(obs, unit_covs, event_covs, quiet = TRUE)
-  expect_equal(
-    sum(fd$data[1:1500, c("ff_rep_index1", "ff_rep_index2", "ff_rep_index3")] - 
-          matrix(1:4500, ncol = 3)), 0)
-  expect_equal(fd$data$ff_rep_index4[1:1500], c(4501, -99, 4502:5999))
-  expect_true(all(fd$data$ff_y %in% c(0,1)))
-  expect_equal(fd$data$ec1[1:4500], 1:4500)
-  expect_equal(fd$data$ec1[4501:5999], c(4501, 4503:6000))
-  
+  expected_ids <- as.vector(t(matrix(seq_along(obs), nrow(obs))))
+  expected_ids <- expected_ids[!is.na(obs[expected_ids])]
+  expect_equal(fd$data$ec1, expected_ids)
+  expect_equal(fd$data$ff_y, as.integer(obs[expected_ids]))
+  counts <- c(4L, 3L, rep(4L, nrow(obs) - 2L))
+  expect_equal(fd$data$ff_unit_start,
+               c(cumsum(c(1L, head(counts, -1L))), rep(-99L, sum(counts) - length(counts))))
+
   obs[,4] <- NA
   expect_error(fd <- make_flocker_data(obs, quiet = TRUE),
                  "The final column of obs contains only NAs.")

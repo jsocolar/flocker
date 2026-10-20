@@ -522,6 +522,31 @@ schema unless it directly intersects changed code:
 - Explore two-level multiseason, waiting-time, false-positive, and CJS models
   only after their public boundaries and likelihood factorizations are clear.
 
+### Future detection autocorrelation
+
+Consider allowing brms autoregressive terms in the detection formula, such as
+`ar(time = visit_time, gr = unit, cov = TRUE)`, after the 2.0 foundation is in
+place. Contiguous visit blocks provide a possible route for brms to supply
+latent correlated effects within units. Conditional on these effects, the
+existing occupancy likelihood could consume the resulting detection predictors
+without changing its marginalization over occupancy states.
+
+Grouping by unit alone is not sufficient: brms sorts rows by group and time,
+which can move whole unit blocks and invalidate positional auxiliary columns.
+Support would require groups to correspond exactly to occupancy units, packing
+to agree with brms's final group/time ordering, and verification that outcomes,
+covariates, auxiliaries, and reconstruction mappings remain aligned. Define
+time ordering and the treatment of unequal visit intervals explicitly.
+
+Before enabling this, verify the generated latent-effect model, likelihood,
+and prediction behavior for existing and new visits, and assess identifiability
+with realistic detection histories. This is a future direction, not a 2.0
+requirement. Continue to reject brms time-series correlation terms across all
+formulas and model types until support is deliberately implemented. AR-style
+occupancy effects are outside this proposal; the existing autologistic
+multiseason model remains the intended mechanism for occupancy dependence
+across ordered units.
+
 ## Non-goals
 
 - Backward-compatible processing of pre-2.0 flocker data or fits.

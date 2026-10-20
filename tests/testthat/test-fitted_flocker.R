@@ -36,7 +36,10 @@ test_that("fitted_flocker works correctly", {
   expect_equal(nrow(test_out$linpred_occ), nrow(newdat))
   expect_equal(nrow(test_out$linpred_det), nrow(newdat))
   
-  new_flocker_dat <- list(data = example_flocker_model_single2$data, type = "single")
+  new_flocker_dat <- list(
+    data = example_flocker_model_single2$data,
+    metadata = get_flocker_metadata(example_flocker_model_single2)
+  )
   class(new_flocker_dat) <- "flocker_data"
   
   test_out2 <- fitted_flocker(example_flocker_model_single2, new_data = new_flocker_dat)
@@ -52,8 +55,7 @@ test_that("fitted_flocker works correctly", {
   expect_equal(
     dim(test_out$linpred_occ), 
     c(
-      example_flocker_model_single2$data$ff_n_unit[1], 
-      max(example_flocker_model_single2$data$ff_n_rep),
+      get_flocker_metadata(example_flocker_model_single2)$original_dim,
       brms::ndraws(example_flocker_model_single2)))
   
   # check new levels

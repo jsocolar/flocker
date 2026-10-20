@@ -37,6 +37,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
                    sample = FALSE,
                    new_data = NULL, allow_new_levels = FALSE, 
                    sample_new_levels = "uncertainty") {
+  validate_postprocessing_data(flocker_fit, new_data)
   # Input checking and processing
   assertthat::assert_that(
     is_one_logical(history_condition),
@@ -281,8 +282,10 @@ get_Z_single <- function(lps, sample, history_condition, obs = NULL){
     el_0 <- el_1 <- new_matrix(psi_all)
     
     for(i in seq_len(ncol(psi_all))){
-      el_0[ , i] <- emission_likelihood(0, obs, theta_all[,,i])
-      el_1[ , i] <- emission_likelihood(1, obs, theta_all[,,i])
+      det <- matrix(theta_all[, , i, drop = FALSE],
+                    nrow = nrow(obs), ncol = ncol(obs))
+      el_0[ , i] <- emission_likelihood(0, obs, det)
+      el_1[ , i] <- emission_likelihood(1, obs, det)
     }
     
     hc <- Z_from_emission(el_0, el_1, psi_all)
@@ -293,6 +296,8 @@ get_Z_single <- function(lps, sample, history_condition, obs = NULL){
       Z <- hc
     }
   }
+  dn <- dimnames(lps$linpred_occ)
+  dimnames(Z) <- if (length(dim(lps$linpred_occ)) == 3L) dn[c(1, 3)] else dn
   Z
 }
 
