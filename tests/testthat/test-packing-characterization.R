@@ -40,7 +40,7 @@ test_that("ragged two-level packing keeps all ecological levels aligned", {
   expected_unit_events[is.na(obs)] <- NA
   expect_equal(recover_packed_values(fd, "unit_marker"), expected_unit_events)
   expect_identical(dim(get_positions(fd)), c(5L, 3L))
-  expect_identical(fd$level2_group_names, c("cedar", "ash", "birch"))
+  expect_identical(get_flocker_metadata(fd)$level2_group_names, c("cedar", "ash", "birch"))
   expect_identical(get_flocker_metadata(fd)$unit_covs,
                    c("group", "unit_marker"))
   expect_identical(get_flocker_metadata(fd)$event_covs, "event_marker")

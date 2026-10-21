@@ -202,7 +202,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                   ...) {
   validate_no_time_series_terms(list(...)$autocor)
   metadata <- get_flocker_metadata(flocker_data)
-  if (metadata$type %in% c("single", "multi")) {
+  if (metadata$type %in% c("single", "multi", "twolevel_single")) {
     validate_packed_schema(flocker_data)
     if (!identical(metadata$data_role, "model_data")) {
       stop("Fitting requires model_data; new_data cannot be used for fitting.")
@@ -300,15 +300,23 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  stanvars = stanvars,
                                  threads = threads,
                                  ...)
-  } else if (metadata$type %in% c("twolevel_single", "augmented")) {
-    max_rep <- metadata$n_rep
-    if (metadata$type == "augmented") {
-      occupancy_family <- occupancy_augmented(max_rep)
-      occupancy_lpmf <- make_occupancy_augmented_lpmf(max_rep)
+  } else if (metadata$type == "twolevel_single") {
+    f_det_use <- stats::as.formula(paste0(
+      "ff_y | vint(ff_n_group, ff_group_start, ff_n_unit, ff_unit_start, ff_Q, ff_group_Q) ",
+      f_det_txt))
+    if (brms::is.brmsformula(f_det)) {
+      f_use <- f_det
+      f_use$formula <- f_det_use
     } else {
-      occupancy_family <- occupancy_twolevel_single(max_rep)
-      occupancy_lpmf <- make_occupancy_twolevel_single_lpmf(max_rep)
+      f_use <- brms::bf(f_det_use, f_occ_use, f_meta_use)
     }
+    out <- flocker_fit_code_util(output, f_use, data = flocker_data$data,
+      data2 = data2, family = occupancy_twolevel_single(),
+      stanvars = brms::stanvar(scode = make_occupancy_twolevel_single_lpmf(), block = "functions"), ...)
+  } else if (metadata$type == "augmented") {
+    max_rep <- metadata$n_rep
+    occupancy_family <- occupancy_augmented(max_rep)
+    occupancy_lpmf <- make_occupancy_augmented_lpmf(max_rep)
     vint_text <- paste0("ff_rep_index", 1:max_rep, 
                         collapse = ", ")
     f_det_use <- stats::as.formula(

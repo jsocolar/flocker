@@ -28,18 +28,16 @@ make_occupancy_single_C_lpmf <- function () {
 
 #' Create Stan code for likelihood function occupancy_twolevel_single_lpmf for 
 #' a rep-varying two-level single-season model. 
-#' @param max_rep Literal integer maximum number of repeated sampling events at 
-#'    any unit.
 #' @return Character string of Stan code corresponding to 
 #'    occupancy_twolevel_single_lpmf
 #' @noRd
-make_occupancy_twolevel_single_lpmf <- function (max_rep) {
-  make_occupancy_twolevel_single_lpmf_(
-    max_rep,
-    "occupancy_twolevel_single_lpmf"
-  )
+make_occupancy_twolevel_single_lpmf <- function() {
+  path <- system.file("stan", "occupancy_twolevel_single.stan",
+                      package = "flocker", mustWork = TRUE)
+  paste(make_occupancy_single_lpmf(), paste(readLines(path), collapse = "\n"), sep = "\n")
 }
 
+# Legacy generator retained for augmented models until their packing migrates.
 make_occupancy_twolevel_single_lpmf_ <- function(max_rep, lpmf_name) {
   assertthat::assert_that(
     is_one_pos_int(max_rep, m = 1),

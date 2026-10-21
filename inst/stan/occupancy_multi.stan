@@ -1,5 +1,6 @@
 // Series starts index rows. Each series stores its unit count at its first row,
-// and unit starts (relative to that series) and Q in its leading rows.
+// and unit starts (relative to that series) in its leading rows. Q gives the
+// unit detection indicator at every row, including zero on placeholders.
 // A unit with no visits has one row with y = -99. Its emission log probability
 // is zero under either state, but its occupancy transition still contributes.
 real occupancy_multi_loglik(array[] int y, vector mu, vector occ,
@@ -45,7 +46,7 @@ real occupancy_multi_loglik(array[] int y, vector mu, vector occ,
         reject("Invalid unit block.");
       }
       if (y[unit_start] == -99) {
-        if (unit_end != unit_start || Q[directory_row] != 0) {
+        if (unit_end != unit_start || Q[unit_start] != 0) {
           reject("An unvisited unit must have one placeholder row and Q = 0.");
         }
       } else {
@@ -53,18 +54,22 @@ real occupancy_multi_loglik(array[] int y, vector mu, vector occ,
                                        mu[unit_start:unit_end]);
       }
       if (u == 1) {
-        alpha_0 = bernoulli_logit_lpmf(0 | occ[unit_start]);
+        alpha_0 = Q[unit_start] == 1 ? negative_infinity()
+                                     : bernoulli_logit_lpmf(0 | occ[unit_start]);
         alpha_1 = bernoulli_logit_lpmf(1 | occ[unit_start]) + emission;
       } else {
         real previous_0 = alpha_0;
         real previous_1 = alpha_1;
-        alpha_0 = log_sum_exp(previous_0 + bernoulli_logit_lpmf(0 | colo[unit_start]),
-                              previous_1 + bernoulli_logit_lpmf(1 | ex[unit_start]));
+        if (Q[unit_start] == 1) {
+          alpha_0 = negative_infinity();
+        } else {
+          alpha_0 = log_sum_exp(previous_0 + bernoulli_logit_lpmf(0 | colo[unit_start]),
+                                previous_1 + bernoulli_logit_lpmf(1 | ex[unit_start]));
+        }
         alpha_1 = log_sum_exp(previous_0 + bernoulli_logit_lpmf(1 | colo[unit_start]),
                               previous_1 + bernoulli_logit_lpmf(0 | ex[unit_start]))
                   + emission;
       }
-      if (Q[directory_row] == 1) alpha_0 = negative_infinity();
     }
     lp += log_sum_exp(alpha_0, alpha_1);
   }

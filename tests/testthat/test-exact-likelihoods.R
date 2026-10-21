@@ -10,7 +10,7 @@ single_rv_lpmf_from_flocker_data <- function(fd, psi, theta) {
     y_i <- d$ff_y[indices]
     theta_i <- theta[indices]
 
-    if (d$ff_Q[i] == 1) {
+    if (d$ff_Q[unit_starts[i]] == 1) {
       p_i <- psi[i] * prod(theta_i^y_i * (1 - theta_i)^(1 - y_i))
     } else {
       p_i <- (1 - psi[i]) + psi[i] * prod(1 - theta_i)
@@ -69,6 +69,18 @@ drop_draw <- function(x, draw = 1) {
 
 twolevel_lpmf_from_flocker_data <- function(fd, psi, theta, Omega) {
   d <- fd$data
+  if (get_flocker_metadata(fd)$type == "twolevel_single") {
+    starts <- d$ff_group_start[seq_len(d$ff_n_group[1])]
+    ends <- c(starts[-1] - 1L, nrow(d))
+    return(sum(vapply(seq_along(starts), function(g) {
+      rows <- seq.int(starts[g], ends[g])
+      block <- list(data = d[rows, , drop = FALSE])
+      conditional <- exp(single_rv_lpmf_from_flocker_data(block,
+        psi[rows][block$data$ff_unit_start[seq_len(block$data$ff_n_unit[1])]], theta[rows]))
+      log(if (d$ff_group_Q[starts[g]] == 1) Omega[g] * conditional else
+        1 - Omega[g] + Omega[g] * conditional)
+    }, numeric(1))))
+  }
   n_unit <- d$ff_n_unit[1]
   n_group <- d$ff_n_group[1]
   rep_cols <- grep("^ff_rep_index", names(d), value = TRUE)

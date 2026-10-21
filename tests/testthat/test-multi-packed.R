@@ -25,11 +25,11 @@ test_that("multiseason blocks nest series, units, and visits", {
     units <- block$ff_n_unit[1]
     expect_identical(block$ff_unit_start[seq_len(units)], starts[[s]])
     expect_true(all(block$ff_unit_start[-seq_len(units)] == -99L))
-    expect_true(all(block$ff_Q[-seq_len(units)] == -99L))
     for (u in seq_len(units)) {
       unit_end <- if (u < units) starts[[s]][u + 1L] - 1L else nrow(block)
       y <- block$ff_y[seq.int(starts[[s]][u], unit_end)]
-      expect_identical(block$ff_Q[u], as.integer(any(y == 1)))
+      expect_identical(block$ff_Q[seq.int(starts[[s]][u], unit_end)],
+                       rep(as.integer(any(y == 1)), length(y)))
     }
   }
   expect_equal(array(fd$data$ff_y[get_positions(fd)], dim(x$obs), dimnames(x$obs)), x$obs)

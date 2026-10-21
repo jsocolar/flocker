@@ -68,7 +68,7 @@
 #' predictions or assessing log-likelihoods over new data).
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
 #' @details For one-level single-season data with event covariates and for
-#' multiseason data, the object
+#' multiseason and two-level data, the object
 #' contains \code{data} and \code{metadata}. Observed visits are packed
 #' contiguously within units, with unit covariates repeated at their actual
 #' values on every visit. Consequently, brms centers unit-formula predictors
@@ -80,6 +80,10 @@
 #' level for factors. Supplied values are preserved. Placeholder covariates
 #' participate in brms preprocessing, but have no detection likelihood.
 #' Trailing unvisited seasons are omitted and reconstructed as NA.
+#' Two-level models pack units within groups using the same local block
+#' structure. Group covariates are repeated across the group's visit rows and
+#' therefore also participate in visit-level preprocessing. Units without
+#' observations are not allowed in two-level models.
 #' Setting \code{newdata_checks = TRUE} marks this representation as
 #' \code{new_data}, which cannot be used for fitting.
 #' @export
@@ -143,8 +147,6 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
     out <- make_flocker_data_twolevel_single(
       obs, unit_covs, event_covs, level2_group, level2_covs,
       quiet, newdata_checks)
-    out$unit_covs <- names(unit_covs)
-    out$event_covs <- names(event_covs)
   }
   
   out
@@ -213,8 +215,7 @@ make_flocker_data_static <- function(
     n_data <- nrow(flocker_data)
     flocker_data$ff_n_unit <- c(n_unit, rep(-99L, n_data - 1L))
     flocker_data$ff_unit_start <- c(unit_start, rep(-99L, n_data - n_unit))
-    flocker_data$ff_Q <- c(as.integer(rowSums(obs, na.rm = TRUE) > 0),
-                          rep(-99L, n_data - n_unit))
+    flocker_data$ff_Q <- as.integer(rowSums(obs, na.rm = TRUE) > 0)[event_unit]
     rownames(flocker_data) <- NULL
     original_to_packed <- array(NA_integer_, dim(obs), dimnames(obs))
     original_to_packed[packed_to_original] <- seq_along(packed_to_original)
@@ -421,11 +422,50 @@ make_flocker_data_twolevel_single <- function(
   standard_mfd_checks(obs, unit_covs, event_covs, "twolevel_single", NULL,
                       quiet, newdata_checks, level2_group, level2_covs)
 
-  make_flocker_data_twolevel_single_(
-    obs, unit_covs, event_covs, level2_group, level2_covs
-  )
+  obs <- as.matrix(obs)
+  event_covs <- lapply(event_covs, function(x) if (is.data.frame(x)) as.matrix(x) else x)
+  if (is.null(level2_covs)) {
+    group_levels <- levels(droplevels(unit_covs[[level2_group]]))
+    level2_covs <- stats::setNames(data.frame(factor(group_levels, levels = group_levels)),
+                                  level2_group)
+  }
+  group_levels <- levels(level2_covs[[level2_group]])
+  level2_covs <- level2_covs[match(group_levels, as.character(level2_covs[[level2_group]])), , drop = FALSE]
+  group_id <- match(as.character(unit_covs[[level2_group]]), group_levels)
+  group_covs <- setdiff(names(level2_covs), level2_group)
+  covariates <- cbind(unit_covs, level2_covs[group_id, group_covs, drop = FALSE])
+  packed <- pack_nested_blocks(obs, covariates, event_covs, group_id)
+  data <- packed$data
+  n_row <- nrow(data)
+  n_group <- length(group_levels)
+  data$ff_n_group <- pad_packed(n_group, n_row)
+  data$ff_group_start <- pad_packed(packed$group_start, n_row)
+  data$ff_n_unit <- packed$n_unit
+  data$ff_unit_start <- packed$local_unit_start
+  data$ff_Q <- packed$Q
+  group_Q <- vapply(seq_len(n_group), function(g) {
+    as.integer(any(obs[group_id == g, , drop = FALSE] == 1, na.rm = TRUE))
+  }, integer(1))
+  data$ff_group_Q <- group_Q[group_id[packed$unit_order[packed$row_unit]]]
+  unit_to_packed <- integer(nrow(obs))
+  unit_to_packed[packed$unit_order] <- packed$unit_start
+  names(unit_to_packed) <- rownames(obs)
+  out <- list(data = data, metadata = list(
+    type = "twolevel_single", schema_version = 2L,
+    data_role = if (newdata_checks) "new_data" else "model_data",
+    flocker_version = flocker_version(), original_dim = dim(obs),
+    original_dimnames = dimnames(obs), original_to_packed = packed$original_to_packed,
+    unit_to_packed = unit_to_packed, unit_order = packed$unit_order,
+    group_start = packed$group_start, unit_start = packed$unit_start,
+    unit_group = group_id, group_representatives = match(seq_len(n_group), group_id),
+    level2_group = level2_group, level2_group_names = group_levels,
+    level2_covs = group_covs, unit_covs = names(unit_covs), event_covs = names(event_covs)
+  ))
+  class(out) <- c("list", "flocker_data")
+  out
 }
 
+# Legacy packing retained for the augmented formatter.
 make_flocker_data_twolevel_single_ <- function(
     obs, unit_covs, event_covs, level2_group, level2_covs
     ) {

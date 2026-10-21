@@ -96,7 +96,7 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
                                               "_resampled")
       }
     }
-    if (new_data_metadata$type %in% c("single", "multi")) {
+    if (new_data_metadata$type %in% c("single", "multi", "twolevel_single")) {
       new_data <- list(data = new_data, metadata = new_data_metadata)
     } else {
       new_data <- c(list(data = new_data), new_data_metadata)

@@ -51,17 +51,11 @@ test_that("make_occupancy_augmented_lpmf works correctly", {
   
 })
 
-test_that("make_occupancy_twolevel_single_lpmf works correctly", {
-  stan_code <- make_occupancy_twolevel_single_lpmf(3)
-  expect_match(stan_code, "real occupancy_twolevel_single_lpmf", fixed = TRUE)
-  expect_match(stan_code, "int i = vint7[unit_offset + j]", fixed = TRUE)
-  expect_match(stan_code, "unit_offset += vint6[g]", fixed = TRUE)
-  expect_match(stan_code, "index_array[,1] = vint8", fixed = TRUE)
-  expect_match(stan_code, "index_array[,2] = vint9", fixed = TRUE)
-  expect_match(stan_code, "index_array[,3] = vint10", fixed = TRUE)
-  expect_no_match(stan_code, "array[] int vint11", fixed = TRUE)
+test_that("two-level source reuses the single-season likelihood", {
+  code <- make_occupancy_twolevel_single_lpmf()
+  expect_match(code, make_occupancy_single_lpmf(), fixed = TRUE)
+  expect_match(code, "occupancy_single_lpmf(y[group_start:group_end] |", fixed = TRUE)
 })
-
 
 test_that("no-argument functions have correct return types", {
   expect_is(make_occupancy_single_C_lpmf(), "character")

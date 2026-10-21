@@ -9,7 +9,7 @@ test_that("single-season packing preserves identities and real covariates", {
   expect_equal(fd$data$ff_y, c(0L, 1L, 0L, 0L, 1L, 0L))
   expect_equal(fd$data$ff_n_unit, c(3L, rep(-99L, 5)))
   expect_equal(fd$data$ff_unit_start, c(1L, 4L, 5L, rep(-99L, 3)))
-  expect_identical(fd$data$ff_Q, c(1L, 0L, 1L, rep(-99L, 3)))
+  expect_identical(fd$data$ff_Q, c(1L, 1L, 1L, 0L, 1L, 1L))
   expect_equal(fd$data$x, c(10, 10, 10, 20, 30, 30))
   expect_equal(as.character(fd$data$group), c("a", "a", "a", "b", "a", "a"))
   m <- get_flocker_metadata(fd)

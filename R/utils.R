@@ -154,6 +154,10 @@ flocker_version <- function() {
 #' @noRd
 get_unit_group <- function(data) {
   n_group <- data$ff_n_group[1]
+  if (!is.null(data$ff_group_start)) {
+    starts <- data$ff_group_start[seq_len(n_group)]
+    return(rep(seq_len(n_group), data$ff_n_unit[starts]))
+  }
   n_unit <- data$ff_n_unit[1]
   n_unit_group <- data$ff_n_unit_group[seq_len(n_group)]
   unit_group <- integer(n_unit)
@@ -174,7 +178,7 @@ flocker_col_names <- function(n_rep = NULL, n_year = NULL) {
     "ff_n_suc", "ff_n_trial", 
     "ff_Q", "ff_n_unit", "ff_unit_start", "ff_n_rep", "ff_unit",
     "ff_n_series", "ff_series_start", "ff_n_year", "ff_series", "ff_year", "ff_series_year",
-    "ff_n_group", "ff_group_known_present", "ff_n_unit_group",
+    "ff_n_group", "ff_group_start", "ff_group_Q", "ff_group_known_present", "ff_n_unit_group",
     "ff_species")
   if(!is.null(n_rep)) {
     out <- c(out, paste0("ff_rep_index", 1:n_rep))
@@ -331,9 +335,9 @@ validate_packed_schema <- function(x) {
     metadata <- get_flocker_metadata(x)
     type <- metadata$type
   }
-  if (type %in% c("single", "multi") &&
+  if (type %in% c("single", "multi", "twolevel_single") &&
       !identical(metadata$schema_version, 2L)) {
-    stop(paste0("Incompatible ", if (type == "single") "single-season" else "multiseason",
+    stop(paste0("Incompatible ", switch(type, single = "single-season", multi = "multiseason", twolevel_single = "two-level"),
                 " packing schema. Pre-2.0 objects require a compatible 1.x installation or reformatting and refitting."))
   }
   invisible(NULL)
@@ -434,6 +438,12 @@ get_positions <- function(data_object, unit_level = FALSE) {
     return(if (unit_level) metadata$unit_to_packed else metadata$original_to_packed)
   }
 
+  if (data_type == "twolevel_single") {
+    validate_packed_schema(data_object)
+    metadata <- get_flocker_metadata(data_object)
+    return(if (unit_level) metadata$unit_to_packed else metadata$original_to_packed)
+  }
+
   if(data_type == "single_C") {
     n_unit <- nrow(the_data)
     n_rep <- max(the_data$ff_n_trial)
@@ -442,20 +452,7 @@ get_positions <- function(data_object, unit_level = FALSE) {
     n_rep <- max(the_data$ff_n_rep[seq_len(n_unit)], na.rm = TRUE)
   }
 
-  if(data_type == "twolevel_single") {
-    index_matrix <- as.matrix(
-      the_data[seq_len(n_unit), grepl("^ff_rep_index", names(the_data))]
-    )
-    assertthat::assert_that(ncol(index_matrix) == n_rep)
-    unit_order <- get_flocker_metadata(data_object)$unit_order
-    index_matrix <- index_matrix[order(unit_order), , drop = FALSE]
-    index_matrix[index_matrix == -99] <- NA
-    if(!unit_level) {
-      return(index_matrix)
-    } else {
-      return(index_matrix[, 1])
-    }
-  } else if(data_type == "single_C") {
+  if(data_type == "single_C") {
     index_matrix <- matrix(rep(seq_len(n_unit), n_rep), ncol = n_rep)
     if(!unit_level) {
       return(index_matrix)
@@ -719,20 +716,21 @@ validate_meta_formula_variables <- function(f_meta, flocker_data) {
   if (is.null(f_meta)) {
     return(invisible(NULL))
   }
+  metadata <- get_flocker_metadata(flocker_data)
   assertthat::assert_that(
-    "level2_covs" %in% names(flocker_data),
+    "level2_covs" %in% names(metadata),
     msg = "f_meta is only allowed for two-level models."
   )
   meta_vars <- setdiff(all.vars(f_meta), "Intercept")
   assertthat::assert_that(
-    !(flocker_data$level2_group %in% meta_vars),
+    !(metadata$level2_group %in% meta_vars),
     msg = paste0(
-      "The level-two grouping column (`", flocker_data$level2_group,
+      "The level-two grouping column (`", metadata$level2_group,
       "`) cannot be used in f_meta because it has only one latent state per level."
     )
   )
   assertthat::assert_that(
-    all(meta_vars %in% flocker_data$level2_covs),
+    all(meta_vars %in% metadata$level2_covs),
     msg = paste0("All variables in f_meta must be level-two covariates ",
                  "passed in level2_covs.")
   )

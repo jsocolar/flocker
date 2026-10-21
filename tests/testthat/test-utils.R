@@ -182,7 +182,7 @@ test_that("group_level_Omega recovers canonical group values", {
     ff_n_group = c(2, -99, -99, -99),
     ff_n_unit = c(4, -99, -99, -99)
   )
-  twolevel_metadata <- list(unit_order = c(3, 1, 4, 2))
+  twolevel_metadata <- list(original_dim = c(4L, 2L), group_representatives = c(3L, 1L))
   expect_equal(
     group_level_Omega(
       fitted_Omega(twolevel_Omega, FALSE), "twolevel_single", twolevel_data,

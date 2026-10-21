@@ -90,7 +90,7 @@ We pass the following auxiliary terms:
 Thus, we pass seven plus $M$ `vint` terms, regardless of the number of groups or the number of closure-units within each group. Here's `Stan` code to decode this format and compute the likelihood for a two-level model with a maximum of four repeat visits:
 
 ```{r twolevel-stancode-example}
-cat(flocker:::make_occupancy_twolevel_single_lpmf(4))
+cat(flocker:::make_occupancy_twolevel_single_lpmf())
 
 ```
 

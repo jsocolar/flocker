@@ -110,42 +110,28 @@ test_that("make_flocker_data handles two-level single-season data", {
     level2_covs = level2_covs, level2_group = "group", quiet = TRUE
   )
   
-  expect_equal(fd$type, "twolevel_single")
-  expect_equal(fd$level2_group, "group")
-  expect_equal(fd$level2_group_names, c("a", "b"))
-  expect_false("max_unit_group" %in% names(fd))
-  expect_equal(fd$level2_covs, "group_x")
-  expect_equal(
-    as.character(fd$data$group[seq_len(fd$data$ff_n_group[1])]),
-    c("a", "b")
-  )
-  expect_equal(fd$data$group_x[seq_len(fd$data$ff_n_group[1])], c(10, 20))
-  expect_equal(fd$data$ff_group_known_present[seq_len(fd$data$ff_n_group[1])], c(0, 1))
-  expect_equal(fd$data$ff_n_unit_group[seq_len(fd$data$ff_n_group[1])], c(2, 2))
-  expect_equal(
-    fd$data$ff_group_index[seq_len(fd$data$ff_n_unit[1])],
-    c(1, 4, 2, 3)
-  )
-  expect_equal(fd$unit_order, c(2, 1, 3, 4))
-  expect_equal(get_unit_group(fd$data), c(1, 2, 2, 1))
-  expect_false("unit_group" %in% names(fd))
-  expect_false(any(c("ff_orig_unit", "ff_group") %in% names(fd$data)))
-  expect_equal(
-    fd$data$group_x[seq_len(fd$data$ff_n_unit[1])],
-    c(10, 20, 20, 10)
-  )
+  metadata <- get_flocker_metadata(fd)
+  starts <- metadata$group_start
+  expect_equal(metadata$type, "twolevel_single")
+  expect_equal(metadata$level2_group, "group")
+  expect_equal(metadata$level2_group_names, c("a", "b"))
+  expect_equal(metadata$level2_covs, "group_x")
+  expect_equal(as.character(fd$data$group[starts]), c("a", "b"))
+  expect_equal(fd$data$group_x[starts], c(10, 20))
+  expect_equal(fd$data$ff_group_Q[starts], c(0, 1))
+  expect_equal(fd$data$ff_n_unit[starts], c(2, 2))
+  expect_equal(metadata$unit_order, c(2, 4, 1, 3))
+  expect_equal(get_unit_group(fd$data), c(1, 1, 2, 2))
+  expect_equal(fd$data$group_x[get_positions(fd, TRUE)], c(20, 10, 20, 10))
 
   fd_minimal <- make_flocker_data(
     obs, unit_covs, event_covs, type = "twolevel_single",
     level2_group = "group", quiet = TRUE
   )
   expect_equal(fd_minimal$data$ff_n_group[1], 2)
-  expect_equal(fd_minimal$level2_covs, character(0))
-  expect_equal(
-    as.character(fd_minimal$data$group[seq_len(fd_minimal$data$ff_n_group[1])]),
-    c("a", "b")
-  )
-  
+  expect_equal(get_flocker_metadata(fd_minimal)$level2_covs, character(0))
+  expect_equal(as.character(fd_minimal$data$group[fd_minimal$metadata$group_start]), c("a", "b"))
+
   unit_covs_bad <- unit_covs
   unit_covs_bad$group <- as.character(unit_covs_bad$group)
   expect_error(

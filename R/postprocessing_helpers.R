@@ -39,16 +39,19 @@ prepare_twolevel_postprocessing <- function(
 format_twolevel_postprocessing <- function(
     unit_lps, det_lps, obs, lik_type, flocker_data_data, flocker_metadata
     ) {
-  n_unit <- flocker_data_data$ff_n_unit[1]
+  n_unit <- if (lik_type == "twolevel_single") flocker_metadata$original_dim[1] else
+    flocker_data_data$ff_n_unit[1]
   unit_rows <- seq_len(n_unit)
   Omega_lp <- group_level_Omega(
     unit_lps, lik_type, flocker_data_data, flocker_metadata
   )
   n_group <- nrow(Omega_lp)
   n_draw <- ncol(Omega_lp)
-  group_known_present <- flocker_data_data$ff_group_known_present[
-    seq_len(n_group)
-  ]
+  group_known_present <- if (lik_type == "twolevel_single") {
+    flocker_data_data$ff_group_Q[flocker_metadata$group_start]
+  } else {
+    flocker_data_data$ff_group_known_present[seq_len(n_group)]
+  }
 
   if(lik_type == "twolevel_single") {
     occ_lp <- matrix(unit_lps$linpred_occ, nrow = n_unit)
@@ -111,8 +114,9 @@ occupancy_emission_components <- function(psi, theta, obs) {
   n_draw <- ncol(psi)
   el_0 <- el_1 <- matrix(NA_real_, nrow = n_unit, ncol = n_draw)
   for(i in seq_len(n_draw)) {
-    el_0[, i] <- emission_likelihood(0, obs, theta[, , i])
-    el_1[, i] <- emission_likelihood(1, obs, theta[, , i])
+    det <- matrix(theta[, , i, drop = FALSE], nrow = nrow(obs), ncol = ncol(obs))
+    el_0[, i] <- emission_likelihood(0, obs, det)
+    el_1[, i] <- emission_likelihood(1, obs, det)
   }
   list(
     unavailable = el_0,
@@ -153,7 +157,7 @@ group_level_Omega <- function(fitted_output, data_type, flocker_data_data,
   Omega <- fitted_output$linpred_Omega
   n_group <- flocker_data_data$ff_n_group[1]
   if(data_type == "twolevel_single") {
-    n_unit <- flocker_data_data$ff_n_unit[1]
+    n_unit <- flocker_metadata$original_dim[1]
     if(unit_level) {
       unit_Omega <- matrix(Omega, nrow = n_unit)
     } else if(length(dim(Omega)) == 2) {
@@ -161,7 +165,7 @@ group_level_Omega <- function(fitted_output, data_type, flocker_data_data,
     } else {
       unit_Omega <- matrix(Omega[, 1, , drop = FALSE], nrow = n_unit)
     }
-    group_representatives <- flocker_metadata$unit_order[seq_len(n_group)]
+    group_representatives <- flocker_metadata$group_representatives
     out <- unit_Omega[group_representatives, , drop = FALSE]
   } else {
     assertthat::assert_that(data_type == "augmented")

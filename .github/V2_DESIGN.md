@@ -200,9 +200,10 @@ single-season block structure. `ff_n_series[1]` counts series, and the leading
 entries of `ff_series_start` index their first dataframe rows. Within each
 series block, `ff_n_unit` stores the number of retained units at its first row.
 The leading rows of that block store unit starts in `ff_unit_start`, relative
-to the block's first row, and per-unit detection indicators in `ff_Q`. The next
+to the block's first row. `ff_Q` repeats each unit's detection indicator on
+every row belonging to that unit. The next
 start (or the block length at the final unit) determines each unit's end. Pad
-unused auxiliary entries with `-99`; these five columns have fixed width
+unused count and start entries with `-99`; these five columns have fixed width
 regardless of visits or seasons.
 
 Each series block therefore contains its complete unit directory, outcomes,
@@ -222,12 +223,25 @@ Covariates must be observed at realized visits. Placeholder imputation and
 visit-level expansion affect brms preprocessing, including centers and spline
 bases; ignoring a placeholder's emission does not make its covariates inert.
 
-Keep the packing machinery independent of multiseason likelihoods: two-level
-models can use the same nested structure, with groups in place of series and
-an additional precomputed group-level detection indicator. Model-specific
-validation remains separate; two-level models will initially reject unvisited
-units. Implement and validate multiseason models before migrating two-level
-models.
+For ordinary single-season models as well, `ff_Q` is a row-level unit detection
+indicator, not a padded lookup table. Placeholder rows in multiseason models
+have Q equal to zero. Likelihoods read Q at unit starts; multiseason forward
+updates skip the unoccupied-state calculation when Q is one.
+
+The two-level single-season implementation uses the same packing helper, with
+`ff_n_group` and `ff_group_start` in place of the series columns. Add
+`ff_group_Q` on every row to indicate any detection in that row's group.
+Unit counts, relative starts, and unit Q
+remain local to the group exactly as in multiseason packing. Reject units
+without visits. Repeat group covariates at every visit in their group.
+
+Conditional on group occupancy, call the existing single-season Stan likelihood
+on the group's row slices. The outer likelihood adds the group's log occupancy
+probability when there is a detection; otherwise it mixes that occupied-group
+likelihood with the probability of group absence. Reconstruction metadata
+preserves original unit order and group names. Keep augmented formatting,
+likelihood generation, and its post-processing representation on the existing
+contract until a separate migration.
 
 Explicitly represent zero-child segments. The multiseason placeholder policy
 above is the accepted compromise for retaining unit predictors within brms's
