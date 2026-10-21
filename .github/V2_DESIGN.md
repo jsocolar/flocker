@@ -197,12 +197,20 @@ principles above are settled.
 
 For the multiseason implementation, use two nested instances of the
 single-season block structure. `ff_n_series[1]` counts series, and the leading
-entries of `ff_series_start` index their first units. `ff_n_unit[1]` counts
-retained units, and the leading entries of `ff_unit_start` index their first
-packed rows. The next start (or the total at the final block) determines each
-block's end. `ff_Q` stores whether each unit contains a detection. Pad unused
-auxiliary entries with `-99`; these five columns have fixed width regardless
-of visits or seasons.
+entries of `ff_series_start` index their first dataframe rows. Within each
+series block, `ff_n_unit` stores the number of retained units at its first row.
+The leading rows of that block store unit starts in `ff_unit_start`, relative
+to the block's first row, and per-unit detection indicators in `ff_Q`. The next
+start (or the block length at the final unit) determines each unit's end. Pad
+unused auxiliary entries with `-99`; these five columns have fixed width
+regardless of visits or seasons.
+
+Each series block therefore contains its complete unit directory, outcomes,
+and covariates. Extracting its rows requires no rebasing of unit starts or
+lookup in another series's rows. The top-level series-start table remains
+global. This supports a future per-series likelihood or threaded evaluation
+without requiring either in this implementation. Reconstruction metadata may
+retain global unit-to-row mappings independently of the likelihood columns.
 
 Retain leading and internal unvisited seasons using one placeholder row per
 unit, with `ff_y = -99` and `ff_Q = 0`. Its emission probability is one under

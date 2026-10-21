@@ -292,12 +292,11 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
                                 rep(seq_len(n_series), n_season)[retained])
   data <- packed$data
   n_row <- nrow(data)
-  n_unit <- length(packed$unit_start)
   data$ff_n_series <- pad_packed(n_series, n_row)
   data$ff_series_start <- pad_packed(packed$group_start, n_row)
-  data$ff_n_unit <- pad_packed(n_unit, n_row)
-  data$ff_unit_start <- pad_packed(packed$unit_start, n_row)
-  data$ff_Q <- pad_packed(packed$Q, n_row)
+  data$ff_n_unit <- packed$n_unit
+  data$ff_unit_start <- packed$local_unit_start
+  data$ff_Q <- packed$Q
 
   packed_to_original <- original_indices[retained, , drop = FALSE][packed$packed_to_original]
   original_to_packed <- array(NA_integer_, dim(obs), dimnames(obs))

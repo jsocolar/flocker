@@ -6,7 +6,7 @@ windows_cran <- identical(.Platform$OS.type, "windows") &&
 # Set FLOCKER_TEST_CACHE_DIR to reuse fitted fixtures across R sessions. Bump
 # this version whenever fixture definitions or fit-producing code changes in a
 # way not captured by the package-version checks below.
-fixture_cache_version <- 3L
+fixture_cache_version <- 4L
 fixture_cache_dir <- Sys.getenv("FLOCKER_TEST_CACHE_DIR", unset = "")
 if (!nzchar(fixture_cache_dir)) {
   fixture_cache_dir <- tempdir()

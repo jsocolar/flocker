@@ -13,12 +13,25 @@ test_that("multiseason blocks nest series, units, and visits", {
   expect_identical(names(fd$data), c("ff_y", "uc1", "w", "ff_n_series",
                                     "ff_series_start", "ff_n_unit", "ff_unit_start", "ff_Q"))
   expect_identical(fd$data$ff_n_series, c(3L, rep(-99L, nrow(fd$data) - 1)))
-  expect_identical(fd$data$ff_series_start[1:3], c(1L, 6L, 10L))
-  expect_identical(fd$data$ff_n_unit, c(14L, rep(-99L, nrow(fd$data) - 1)))
-  expect_identical(fd$data$ff_unit_start[1:14], m$unit_start)
-  expect_true(all(fd$data$ff_unit_start[-(1:14)] == -99L))
-  expect_identical(fd$data$ff_Q[1:14],
-                   as.integer(vapply(split(fd$data$ff_y, m$event_unit), function(y) any(y == 1), logical(1))))
+  expect_identical(fd$data$ff_series_start[1:3], c(1L, 12L, 21L))
+  expect_identical(m$series_start, c(1L, 12L, 21L))
+  expect_identical(fd$data$ff_n_unit[c(1, 12, 21)], c(5L, 4L, 5L))
+  expect_true(all(fd$data$ff_n_unit[-c(1, 12, 21)] == -99L))
+  starts <- list(c(1L, 5L, 6L, 8L, 9L), c(1L, 4L, 5L, 6L),
+                 c(1L, 3L, 7L, 10L, 11L))
+  for (s in 1:3) {
+    rows <- seq.int(m$series_start[s], c(11L, 20L, 31L)[s])
+    block <- fd$data[rows, ]
+    units <- block$ff_n_unit[1]
+    expect_identical(block$ff_unit_start[seq_len(units)], starts[[s]])
+    expect_true(all(block$ff_unit_start[-seq_len(units)] == -99L))
+    expect_true(all(block$ff_Q[-seq_len(units)] == -99L))
+    for (u in seq_len(units)) {
+      unit_end <- if (u < units) starts[[s]][u + 1L] - 1L else nrow(block)
+      y <- block$ff_y[seq.int(starts[[s]][u], unit_end)]
+      expect_identical(block$ff_Q[u], as.integer(any(y == 1)))
+    }
+  }
   expect_equal(array(fd$data$ff_y[get_positions(fd)], dim(x$obs), dimnames(x$obs)), x$obs)
   expect_equal(unname(matrix(fd$data$uc1[get_positions(fd, TRUE)], 3)), x$expected_unit)
   expect_identical(dimnames(get_positions(fd)), dimnames(x$obs))
@@ -127,4 +140,21 @@ test_that("a one-season forward-backward calculation reduces to Bayes' rule", {
   expect_equal(forward_backward_algorithm(1, 0.6, 0.3, 0.2, 0.4),
                0.3 * 0.6 / (0.7 + 0.3 * 0.6))
   expect_equal(forward_backward_algorithm(0, 0.4, 0.3, 0.2, 0.4), 1)
+})
+
+test_that("a series unit directory is unchanged when packed on its own", {
+  x <- make_ragged_multi_fixture()
+  together <- format_ragged_multi_fixture()
+  starts <- together$data$ff_series_start[1:3]
+  ends <- c(starts[-1] - 1L, nrow(together$data))
+  for (s in 1:3) {
+    alone <- suppressWarnings(make_flocker_data(
+      x$obs[s, , , drop = FALSE],
+      lapply(x$unit_covs, function(d) d[s, , drop = FALSE]),
+      list(ec1 = x$event[s, , , drop = FALSE]), type = "multi", quiet = TRUE))
+    columns <- c("ff_y", "uc1", "ff_n_unit", "ff_unit_start", "ff_Q")
+    block <- together$data[seq.int(starts[s], ends[s]), columns]
+    rownames(block) <- NULL
+    expect_identical(block, alone$data[columns])
+  }
 })

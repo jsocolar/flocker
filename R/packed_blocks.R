@@ -17,7 +17,8 @@ pack_nested_blocks <- function(obs, unit_covs, event_covs, unit_group) {
   n_event <- as.integer(rowSums(!is.na(obs)))[unit_order]
   n_row_unit <- pmax(1L, n_event)
   unit_start <- block_starts(n_row_unit)
-  group_start <- which(!duplicated(group))
+  group_unit_start <- which(!duplicated(group))
+  group_start <- unit_start[group_unit_start]
   row_unit <- rep(seq_along(unit_order), n_row_unit)
   row_visit <- sequence(n_row_unit)
   packed_to_original <- unit_order[row_unit] + (row_visit - 1L) * nrow(obs)
@@ -48,9 +49,21 @@ pack_nested_blocks <- function(obs, unit_covs, event_covs, unit_group) {
   rownames(data) <- NULL
   original_to_packed <- matrix(NA_integer_, nrow(obs), ncol(obs), dimnames = dimnames(obs))
   original_to_packed[packed_to_original[!placeholder]] <- which(!placeholder)
+  # Each group carries its own unit directory in its leading rows. Unit
+  # starts are relative to the group, so an extracted block needs no rebasing.
+  local_n_unit <- local_unit_start <- local_Q <- rep(-99L, nrow(data))
+  Q <- as.integer(rowSums(obs, na.rm = TRUE)[unit_order] > 0)
+  group_unit_end <- c(group_unit_start[-1L] - 1L, length(unit_start))
+  for (g in seq_along(group_start)) {
+    units <- seq.int(group_unit_start[g], group_unit_end[g])
+    directory <- group_start[g] + seq_along(units) - 1L
+    local_n_unit[group_start[g]] <- length(units)
+    local_unit_start[directory] <- unit_start[units] - group_start[g] + 1L
+    local_Q[directory] <- Q[units]
+  }
   list(data = data, unit_order = unit_order, group_start = as.integer(group_start),
        unit_start = unit_start, n_event = n_event, row_unit = row_unit,
        packed_to_original = packed_to_original, placeholder = placeholder,
        original_to_packed = original_to_packed,
-       Q = as.integer(rowSums(obs, na.rm = TRUE)[unit_order] > 0))
+       n_unit = local_n_unit, local_unit_start = local_unit_start, Q = local_Q)
 }
