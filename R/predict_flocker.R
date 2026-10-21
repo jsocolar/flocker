@@ -60,8 +60,8 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
   # rename all random effect levels so they show up as new levels
   if (mixed) {
     if (is.null(new_data)) {
-      # Retain the legacy fallback for families not yet migrated to metadata.
-      # Single-season fits have already passed the schema check above.
+      # Rep-constant single-season fits can lack packed-schema metadata.
+      # All packed families have already passed the schema check above.
       if (is.null(attr(flocker_fit, "flocker_metadata"))) {
         new_data_metadata <- list(type = attr(flocker_fit, "data_type"))
       } else {

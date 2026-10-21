@@ -123,12 +123,8 @@ test_that("array utils work properly", {
 })
 
 test_that("bookkeeping works properly", {
-  # flocker_col_names
-  expect_true(all(grepl("^ff_", flocker_col_names(3, 4))))
-  expect_equal(7, length(flocker_col_names(3, 4)) - length(flocker_col_names()))
-  
   # flocker_reserved
-  expect_true(all(grepl(flocker_reserved()[1], flocker_col_names())))
+  expect_true(all(grepl(flocker_reserved()[1], c("ff_y", "ff_unit_start"))))
   expect_true(all(grepl(flocker_reserved()[2], paste0(".", c(".", "foo", 1:2)))))
   expect_true(grepl(flocker_reserved()[3], "Intercept"))
   expect_false(grepl(flocker_reserved()[3], "Intercept_covariate"))

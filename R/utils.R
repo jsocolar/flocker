@@ -158,28 +158,6 @@ get_unit_group <- function(data) {
   rep(seq_len(n_group), data$ff_n_unit[starts])
 }
 
-#' column names created in flocker
-#' @param n_rep max number of repeat visits
-#' @param n_year max length of hmm series in dynamic models
-#' @return character vector of column names created internally by 
-#'    make_flocker_data
-#' @noRd
-flocker_col_names <- function(n_rep = NULL, n_year = NULL) {
-  out <- c("ff_y", 
-    "ff_n_suc", "ff_n_trial", 
-    "ff_Q", "ff_n_unit", "ff_unit_start", "ff_n_rep", "ff_unit",
-    "ff_n_series", "ff_series_start", "ff_n_year", "ff_series", "ff_year", "ff_series_year",
-    "ff_n_group", "ff_group_start", "ff_group_Q", "ff_group_known_present", "ff_n_unit_group",
-    "ff_species")
-  if(!is.null(n_rep)) {
-    out <- c(out, paste0("ff_rep_index", 1:n_rep))
-  }
-  if(!is.null(n_year)) {
-    out <- c(out, paste0("ff_unit_index", 1:n_year))
-  }
-  out
-}
-
 #' Reserved names in flocker
 #' @return character vector of regexes matching reserved variable names
 #' @noRd
@@ -540,6 +518,12 @@ validate_flock_params <- function(f_occ, f_det, flocker_data,
                                 multiseason, f_col, f_ex, multi_init, f_auto,
                                 augmented, threads)
   }
+  if (brms::is.brmsformula(f_det)) {
+    validate_unit_formula_variables(f_det$pforms$occ, f_det$pforms$colo,
+                                    f_det$pforms$ex, f_det$pforms$autologistic,
+                                    flocker_data)
+    validate_meta_formula_variables(f_det$pforms$Omega, flocker_data)
+  }
   validate_unit_formula_variables(f_occ, f_col, f_ex, f_auto, flocker_data)
   validate_meta_formula_variables(f_meta, flocker_data)
 }
@@ -642,19 +626,7 @@ validate_params_individually <- function(f_occ, f_det, flocker_data,
 #' @noRd
 validate_unit_formula_variables <- function(f_occ, f_col, f_ex, f_auto, flocker_data) {
   # Check that no event covariates are used in unit formulas
-  unit_terms <- character(0)
-  if(!is.null(f_occ)){
-    unit_terms <- c(unit_terms, labels(stats::terms(f_occ)))
-  }
-  if(!is.null(f_col)){
-    unit_terms <- c(unit_terms, labels(stats::terms(f_col)))
-  }
-  if(!is.null(f_ex)){
-    unit_terms <- c(unit_terms, labels(stats::terms(f_ex)))
-  }
-  if(!is.null(f_auto)){
-    unit_terms <- c(unit_terms, labels(stats::terms(f_auto)))
-  }
+  unit_terms <- unique(unlist(lapply(list(f_occ, f_col, f_ex, f_auto), all.vars)))
   assertthat::assert_that(
     !any(unit_terms %in% get_flocker_metadata(flocker_data)$event_covs),
     msg = paste0("Data passed to `make_flocker_data` as event covariates are ",
@@ -679,7 +651,7 @@ validate_meta_formula_variables <- function(f_meta, flocker_data) {
     "level2_covs" %in% names(metadata),
     msg = "f_meta is only allowed for two-level models."
   )
-  meta_vars <- setdiff(all.vars(f_meta), "Intercept")
+  meta_vars <- setdiff(all.vars(f_meta[[length(f_meta)]]), "Intercept")
   assertthat::assert_that(
     !(metadata$level2_group %in% meta_vars),
     msg = paste0(
