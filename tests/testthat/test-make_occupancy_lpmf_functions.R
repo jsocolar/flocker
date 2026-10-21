@@ -5,50 +5,10 @@ test_that("single-season source has a fixed input signature", {
   expect_no_match(code, "vint4", fixed = TRUE)
 })
 
-test_that("make_occupancy_augmented_lpmf works correctly", {
-  # Test with max_rep = 2
-  stan_code_2 <- make_occupancy_augmented_lpmf(2)
-  expect_match(stan_code_2, "real occupancy_augmented_lpmf", fixed = TRUE)
-  expect_match(stan_code_2, "array[] int vint7", fixed = TRUE)
-  expect_match(stan_code_2, "array[] int vint8", fixed = TRUE)
-  expect_match(stan_code_2, "array[] int vint9", fixed = TRUE)
-  expect_no_match(stan_code_2, "array[] int vint10", fixed = TRUE)
-  
-  expect_match(stan_code_2, "int i = vint7[unit_offset + j]", fixed = TRUE)
-  expect_match(stan_code_2, "index_array[,1] = vint8", fixed = TRUE)
-  expect_match(stan_code_2, "index_array[,2] = vint9", fixed = TRUE)
-  expect_no_match(stan_code_2, "index_array[,3", fixed = TRUE)
-  
-  # Test with max_rep = 4
-  stan_code_4 <- make_occupancy_augmented_lpmf(4)
-  expect_match(stan_code_4, "array[] int vint7", fixed = TRUE)
-  expect_match(stan_code_4, "array[] int vint8", fixed = TRUE)
-  expect_match(stan_code_4, "array[] int vint9", fixed = TRUE)
-  expect_match(stan_code_4, "array[] int vint10", fixed = TRUE)
-  expect_match(stan_code_4, "array[] int vint11", fixed = TRUE)
-  expect_no_match(stan_code_4, "array[] int vint12", fixed = TRUE)
-
-  expect_match(stan_code_4, "index_array[,1] = vint8", fixed = TRUE)
-  expect_match(stan_code_4, "index_array[,2] = vint9", fixed = TRUE)
-  expect_match(stan_code_4, "index_array[,3] = vint10", fixed = TRUE)
-  expect_match(stan_code_4, "index_array[,4] = vint11", fixed = TRUE)
-  expect_no_match(stan_code_4, "index_array[,5", fixed = TRUE)
-  
-  # Test with max_rep = 1 (invalid input)
-  expect_error(make_occupancy_augmented_lpmf(1), "max_rep must be an integer greater than 1")
-  
-  # Test with max_rep = -2 (invalid input)
-  expect_error(make_occupancy_augmented_lpmf(-2), "max_rep must be an integer greater than 1")
-  
-  # Test with max_rep = 3.5 (invalid input)
-  expect_error(make_occupancy_augmented_lpmf(3.5), "max_rep must be an integer greater than 1")
-  
-  # Test with max_rep = "foo" (invalid input)
-  expect_error(make_occupancy_augmented_lpmf("foo"), "max_rep must be an integer greater than 1")
-  
-  # Test with max_rep = c(2, 3) (invalid input)
-  expect_error(make_occupancy_augmented_lpmf(c(2, 3)), "max_rep must be an integer greater than 1")
-  
+test_that("augmented source delegates to the two-level likelihood", {
+  code <- make_occupancy_augmented_lpmf()
+  expect_match(code, make_occupancy_twolevel_single_lpmf(), fixed = TRUE)
+  expect_match(code, "return occupancy_twolevel_single_lpmf(y |", fixed = TRUE)
 })
 
 test_that("two-level source reuses the single-season likelihood", {

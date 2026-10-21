@@ -245,6 +245,8 @@ get_twolevel_states <- function(
     if(is.null(unit_dimnames)) {
       unit_dimnames <- vector("list", length(dim(states$unit)))
     }
+    metadata <- get_flocker_metadata(if (is.null(new_data)) flocker_fit else new_data)
+    unit_dimnames[1] <- list(metadata$original_dimnames[[1]])
     unit_dimnames[[2]] <- components$group_names
     dimnames(states$unit) <- unit_dimnames
   }

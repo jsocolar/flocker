@@ -154,17 +154,8 @@ flocker_version <- function() {
 #' @noRd
 get_unit_group <- function(data) {
   n_group <- data$ff_n_group[1]
-  if (!is.null(data$ff_group_start)) {
-    starts <- data$ff_group_start[seq_len(n_group)]
-    return(rep(seq_len(n_group), data$ff_n_unit[starts]))
-  }
-  n_unit <- data$ff_n_unit[1]
-  n_unit_group <- data$ff_n_unit_group[seq_len(n_group)]
-  unit_group <- integer(n_unit)
-  unit_indices <- data$ff_group_index[seq_len(n_unit)]
-  unit_group[unit_indices] <- rep(seq_len(n_group), n_unit_group)
-
-  unit_group
+  starts <- data$ff_group_start[seq_len(n_group)]
+  rep(seq_len(n_group), data$ff_n_unit[starts])
 }
 
 #' column names created in flocker
@@ -335,9 +326,9 @@ validate_packed_schema <- function(x) {
     metadata <- get_flocker_metadata(x)
     type <- metadata$type
   }
-  if (type %in% c("single", "multi", "twolevel_single") &&
+  if (type %in% c("single", "multi", "twolevel_single", "augmented") &&
       !identical(metadata$schema_version, 2L)) {
-    stop(paste0("Incompatible ", switch(type, single = "single-season", multi = "multiseason", twolevel_single = "two-level"),
+    stop(paste0("Incompatible ", switch(type, single = "single-season", multi = "multiseason", twolevel_single = "two-level", augmented = "augmented"),
                 " packing schema. Pre-2.0 objects require a compatible 1.x installation or reformatting and refitting."))
   }
   invisible(NULL)
@@ -438,49 +429,16 @@ get_positions <- function(data_object, unit_level = FALSE) {
     return(if (unit_level) metadata$unit_to_packed else metadata$original_to_packed)
   }
 
-  if (data_type == "twolevel_single") {
+  if (data_type %in% c("twolevel_single", "augmented")) {
     validate_packed_schema(data_object)
     metadata <- get_flocker_metadata(data_object)
     return(if (unit_level) metadata$unit_to_packed else metadata$original_to_packed)
   }
 
-  if(data_type == "single_C") {
-    n_unit <- nrow(the_data)
-    n_rep <- max(the_data$ff_n_trial)
-  } else {
-    n_unit <- the_data$ff_n_unit[1]
-    n_rep <- max(the_data$ff_n_rep[seq_len(n_unit)], na.rm = TRUE)
-  }
-
-  if(data_type == "single_C") {
-    index_matrix <- matrix(rep(seq_len(n_unit), n_rep), ncol = n_rep)
-    if(!unit_level) {
-      return(index_matrix)
-    } else {
-      return(index_matrix[, 1])
-    }
-  } else if(data_type == "augmented") {
-    n_species <- the_data$ff_n_group[1]
-    n_site <- n_unit / n_species
-    index_array <- array(dim = c(n_site, n_rep, n_species))
-    rep_index_frame <- the_data[paste0("ff_rep_index", seq_len(n_rep))]
-    rep_index_matrix <- as.matrix(rep_index_frame)
-    metadata <- get_flocker_metadata(data_object)
-    unit_site <- metadata$unit_site
-    unit_group <- get_unit_group(the_data)
-    for(r in seq_len(n_unit)){
-      visit_ids <- which(rep_index_matrix[r, ] != -99)
-      sp_id <- unit_group[r]
-      site_id <- unit_site[r]
-      index_array[site_id, visit_ids, sp_id] <- rep_index_matrix[r, visit_ids]
-    }
-    index_array[index_array == -99] <- NA
-    if(!unit_level) {
-      return(index_array)
-    } else {
-      return(as.matrix(index_array[,1,]))
-    }
-  }
+  n_unit <- nrow(the_data)
+  n_rep <- max(the_data$ff_n_trial)
+  index_matrix <- matrix(rep(seq_len(n_unit), n_rep), ncol = n_rep)
+  if (!unit_level) index_matrix else index_matrix[, 1]
 }
 
 #' Get emission likelihoods given observations and detection probabilities

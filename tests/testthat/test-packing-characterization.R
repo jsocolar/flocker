@@ -88,7 +88,7 @@ test_that("augmented species names align with reconstructed site and event value
   expected_obs <- array(NA_real_, c(2, 2, 3))
   expected_obs[, , 1:2] <- obs
   expected_obs[, , 3] <- matrix(c(0, 0, 0, NA), 2)
-  expect_identical(fd$level2_group_names, c("wren", "thrush", "pseudospecies1"))
+  expect_identical(get_flocker_metadata(fd)$level2_group_names, c("wren", "thrush", "pseudospecies1"))
   expect_equal(recover_packed_values(fd, "ff_y"), expected_obs)
   expect_equal(recover_packed_values(fd, "event_marker"),
                array(rep(event_marker, 3), c(2, 2, 3)))

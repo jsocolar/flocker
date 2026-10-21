@@ -92,7 +92,7 @@ Format data for occupancy model with \code{flock()}.
 }
 \details{
 For one-level single-season data with event covariates and for
-multiseason and two-level data, the object
+multiseason, two-level, and augmented data, the object
 contains \code{data} and \code{metadata}. Observed visits are packed
 contiguously within units, with unit covariates repeated at their actual
 values on every visit. Consequently, brms centers unit-formula predictors
@@ -107,7 +107,10 @@ Trailing unvisited seasons are omitted and reconstructed as NA.
 Two-level models pack units within groups using the same local block
 structure. Group covariates are repeated across the group's visit rows and
 therefore also participate in visit-level preprocessing. Units without
-observations are not allowed in two-level models.
+observations are not allowed in two-level models. Augmented data use the
+same packing, with species as groups and site-species combinations as units.
+Added pseudospecies share the observed species' sampling mask and covariates;
+metadata reconstruct the site-by-visit-by-species arrays and species names.
 Setting \code{newdata_checks = TRUE} marks this representation as
 \code{new_data}, which cannot be used for fitting.
 }

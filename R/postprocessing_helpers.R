@@ -39,19 +39,14 @@ prepare_twolevel_postprocessing <- function(
 format_twolevel_postprocessing <- function(
     unit_lps, det_lps, obs, lik_type, flocker_data_data, flocker_metadata
     ) {
-  n_unit <- if (lik_type == "twolevel_single") flocker_metadata$original_dim[1] else
-    flocker_data_data$ff_n_unit[1]
+  n_unit <- length(flocker_metadata$unit_order)
   unit_rows <- seq_len(n_unit)
   Omega_lp <- group_level_Omega(
     unit_lps, lik_type, flocker_data_data, flocker_metadata
   )
   n_group <- nrow(Omega_lp)
   n_draw <- ncol(Omega_lp)
-  group_known_present <- if (lik_type == "twolevel_single") {
-    flocker_data_data$ff_group_Q[flocker_metadata$group_start]
-  } else {
-    flocker_data_data$ff_group_known_present[seq_len(n_group)]
-  }
+  group_known_present <- flocker_data_data$ff_group_Q[flocker_metadata$group_start]
 
   if(lik_type == "twolevel_single") {
     occ_lp <- matrix(unit_lps$linpred_occ, nrow = n_unit)

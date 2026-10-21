@@ -51,17 +51,14 @@ occupancy_twolevel_single <- function() {
 }
 
 #' Define the rep-varying augmented occupancy family
-#' @param max_rep the maximum number of repeat sampling events at a unit
 #' @return a "customfamily" "brmsfamily" object from brms
 #' @noRd
-occupancy_augmented <- function(max_rep) {
+occupancy_augmented <- function() {
   brms::custom_family(
     "occupancy_augmented", dpars = c("mu", "occ", "Omega"),
     links = c("identity", "identity", "identity"),
     type = "int", 
-    # Integer aterms for n_unit, n_rep, Q, n_group, group_known_present,
-    # n_unit_group, group_index, rep_index1...
-    vars = c(paste0("vint", seq(7 + max_rep))),
+    vars = paste0("vint", seq_len(6)),
     loop = FALSE)
 }
 

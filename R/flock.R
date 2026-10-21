@@ -202,7 +202,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                   ...) {
   validate_no_time_series_terms(list(...)$autocor)
   metadata <- get_flocker_metadata(flocker_data)
-  if (metadata$type %in% c("single", "multi", "twolevel_single")) {
+  if (metadata$type %in% c("single", "multi", "twolevel_single", "augmented")) {
     validate_packed_schema(flocker_data)
     if (!identical(metadata$data_role, "model_data")) {
       stop("Fitting requires model_data; new_data cannot be used for fitting.")
@@ -300,51 +300,23 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  stanvars = stanvars,
                                  threads = threads,
                                  ...)
-  } else if (metadata$type == "twolevel_single") {
+  } else if (metadata$type %in% c("twolevel_single", "augmented")) {
     f_det_use <- stats::as.formula(paste0(
       "ff_y | vint(ff_n_group, ff_group_start, ff_n_unit, ff_unit_start, ff_Q, ff_group_Q) ",
       f_det_txt))
     if (brms::is.brmsformula(f_det)) {
       f_use <- f_det
       f_use$formula <- f_det_use
+      if (metadata$type == "augmented") f_use <- f_use + brms::lf(Omega ~ 1)
     } else {
       f_use <- brms::bf(f_det_use, f_occ_use, f_meta_use)
     }
+    family <- if (metadata$type == "augmented") occupancy_augmented() else occupancy_twolevel_single()
+    code <- if (metadata$type == "augmented") make_occupancy_augmented_lpmf() else
+      make_occupancy_twolevel_single_lpmf()
     out <- flocker_fit_code_util(output, f_use, data = flocker_data$data,
-      data2 = data2, family = occupancy_twolevel_single(),
-      stanvars = brms::stanvar(scode = make_occupancy_twolevel_single_lpmf(), block = "functions"), ...)
-  } else if (metadata$type == "augmented") {
-    max_rep <- metadata$n_rep
-    occupancy_family <- occupancy_augmented(max_rep)
-    occupancy_lpmf <- make_occupancy_augmented_lpmf(max_rep)
-    vint_text <- paste0("ff_rep_index", 1:max_rep, 
-                        collapse = ", ")
-    f_det_use <- stats::as.formula(
-      paste0("ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ff_n_group, ",
-             "ff_group_known_present, ff_n_unit_group, ",
-             "ff_group_index, ",
-             vint_text, ") ", f_det_txt))
-    
-    if(brms::is.brmsformula(f_det)){
-      f_use <- f_det
-      f_use$formula <- f_det_use
-      if (metadata$type == "augmented") {
-        f_use <- f_use + brms::lf(Omega ~ 1)
-      }
-    } else {
-      f_use <- brms::bf(f_det_use, f_occ_use, f_meta_use)
-    }
-    stanvars <- brms::stanvar(
-      scode = occupancy_lpmf, 
-      block = "functions"
-    )
-    out <- flocker_fit_code_util(output, 
-                                 f_use, 
-                                 data = flocker_data$data,
-                                 data2 = data2,
-                                 family = occupancy_family, 
-                                 stanvars = stanvars,
-                                 ...)
+      data2 = data2, family = family,
+      stanvars = brms::stanvar(scode = code, block = "functions"), ...)
   } else if (metadata$type == "multi") {
     f_det_use <- stats::as.formula(paste0(
       "ff_y | vint(ff_n_series, ff_series_start, ff_n_unit, ff_unit_start, ff_Q) ",

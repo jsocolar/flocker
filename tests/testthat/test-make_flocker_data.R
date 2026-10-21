@@ -204,7 +204,7 @@ test_that("augmented data preserve and validate species names", {
     named_obs, type = "augmented", n_aug = 2, quiet = TRUE
   )
   expect_equal(
-    named_fd$level2_group_names,
+    get_flocker_metadata(named_fd)$level2_group_names,
     c("warbler", "thrush", "pseudospecies1", "pseudospecies2")
   )
 
@@ -212,7 +212,7 @@ test_that("augmented data preserve and validate species names", {
     obs, type = "augmented", n_aug = 2, quiet = TRUE
   )
   expect_equal(
-    unnamed_fd$level2_group_names,
+    get_flocker_metadata(unnamed_fd)$level2_group_names,
     c("species1", "species2", "pseudospecies1", "pseudospecies2")
   )
 
@@ -254,7 +254,7 @@ test_that("augmented internal identifiers use reserved ff_ names", {
   expect_false(any(c("ff_orig_unit", "ff_group", "ff_site") %in% names(fd$data)))
   expect_false(any(c("ff_n_sp", "ff_superQ", "ff_known_present") %in% names(fd$data)))
   expect_equal(
-    fd$data$ff_group_known_present[seq_len(fd$data$ff_n_group[1])],
+    fd$data$ff_group_Q[get_flocker_metadata(fd)$group_start],
     c(1, 1, 0)
   )
   for (sp in seq_len(dim(gp)[3])) {
@@ -267,9 +267,9 @@ test_that("augmented internal identifiers use reserved ff_ names", {
       matrix(site_covs$species, nrow = 2, ncol = 2)
     )
   }
-  unit_rows <- seq_len(fd$data$ff_n_unit[1])
-  orig_unit <- fd$unit_order
-  expect_equal(fd$unit_site, rep(1:2, 3)[orig_unit])
+  unit_rows <- get_flocker_metadata(fd)$unit_start
+  orig_unit <- get_flocker_metadata(fd)$unit_order
+  expect_equal(get_flocker_metadata(fd)$unit_site, rep(1:2, 3)[orig_unit])
   expect_equal(get_unit_group(fd$data), rep(1:3, each = 2)[orig_unit])
   expect_equal(
     as.integer(fd$data$ff_species[unit_rows]),

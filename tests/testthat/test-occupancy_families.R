@@ -31,12 +31,12 @@ test_that("custom families are what they claim", {
   expect_length(result$vars, 6)
   expect_equal(result$dpars, c("mu", "occ", "Omega"))
   
-  result <- occupancy_augmented(4)
+  result <- occupancy_augmented()
   expect_is(result, "customfamily")
   expect_is(result, "brmsfamily")
   expect_is(result, "family")
   expect_false(result$loop)
-  expect_length(result$vars, 11)
+  expect_length(result$vars, 6)
   expect_equal(result$dpars, c("mu", "occ", "Omega"))
   
   result <- occupancy_multi_colex()

@@ -239,9 +239,18 @@ Conditional on group occupancy, call the existing single-season Stan likelihood
 on the group's row slices. The outer likelihood adds the group's log occupancy
 probability when there is a detection; otherwise it mixes that occupied-group
 likelihood with the probability of group absence. Reconstruction metadata
-preserves original unit order and group names. Keep augmented formatting,
-likelihood generation, and its post-processing representation on the existing
-contract until a separate migration.
+preserves original unit order and group names.
+
+Augmented models use an adapter that adds zero-detection pseudospecies using
+exactly the observed sampling mask, expands the site and event covariates over
+species, and calls the same two-level packing workhorse. Species are the outer
+groups and site-species combinations are units. Species labels and the original
+site-by-visit-by-species shape live in metadata for reconstruction. The stable
+augmented Stan function delegates to the two-level likelihood; its group
+occupancy formula remains intercept-only. Both occupancy levels, predictions,
+and per-species log likelihoods use the shared two-level post-processing path.
+The adapter validates augmented inputs before creating internal `ff_species`
+columns, so the shared workhorse does not repeat public input validation.
 
 Explicitly represent zero-child segments. The multiseason placeholder policy
 above is the accepted compromise for retaining unit predictors within brms's

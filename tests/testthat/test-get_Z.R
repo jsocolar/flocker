@@ -216,8 +216,8 @@ test_that("get_Z returns both levels for augmented models", {
   testthat::skip_on_cran()
 
   n_group <- example_flocker_model_aug$data$ff_n_group[1]
-  known_present <- example_flocker_model_aug$data$ff_group_known_present[
-    seq_len(n_group)
+  known_present <- example_flocker_model_aug$data$ff_group_Q[
+    get_flocker_metadata(example_flocker_model_aug)$group_start
   ]
   n_observed <- sum(known_present)
   n_aug <- n_group - n_observed
