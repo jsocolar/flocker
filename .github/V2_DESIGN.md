@@ -168,7 +168,11 @@ either formatted data or fitted models. Keep that helper internal unless a
 specific user-facing need emerges.
 
 Accept the breaking change from top-level fields such as
-`flocker_data$n_rep` to `flocker_data$metadata$n_rep`.
+`flocker_data$n_rep` to `flocker_data$metadata$n_rep`. This also applies to
+rep-constant single-season (`single_C`) models: retain their compact binomial
+data representation and threading support, but use the same metadata container,
+schema version, and data-role checks as all other families. Do not retain a
+compatibility fallback for flat pre-2.0 objects.
 
 ## Packed-data schema
 

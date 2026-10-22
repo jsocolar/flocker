@@ -133,10 +133,6 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
     out <- make_flocker_data_static(
       obs, unit_covs, event_covs, quiet, newdata_checks
       )
-    if (is.null(out$metadata)) {
-      out$unit_covs <- names(unit_covs)
-      out$event_covs <- names(event_covs)
-    }
   } else if (type == "multi") {
     out <- make_flocker_data_dynamic(
       obs, unit_covs, event_covs, quiet, newdata_checks
@@ -195,8 +191,13 @@ make_flocker_data_static <- function(
     if (!is.null(unit_covs)) {
       flocker_data <- cbind(flocker_data, unit_covs)
     }
-    out <- list(data = flocker_data, n_rep = n_rep, 
-                type = "single_C")
+    out <- list(data = flocker_data, metadata = list(
+      type = "single_C", schema_version = 2L,
+      data_role = if (newdata_checks) "new_data" else "model_data",
+      flocker_version = flocker_version(), n_rep = n_rep,
+      original_dim = dim(obs), original_dimnames = dimnames(obs),
+      unit_covs = names(unit_covs), event_covs = names(event_covs)
+    ))
   } else {
     # Pack actual events contiguously within each unit. Unit covariates retain
     # their real values on every visit, including when used for detection.
@@ -238,7 +239,6 @@ make_flocker_data_static <- function(
     class(out) <- c("list", "flocker_data")
     return(out)
   }
-  out$flocker_version <- flocker_version()
   class(out) <- c("list", "flocker_data")
   out
 }

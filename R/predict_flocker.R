@@ -60,13 +60,7 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
   # rename all random effect levels so they show up as new levels
   if (mixed) {
     if (is.null(new_data)) {
-      # Rep-constant single-season fits can lack packed-schema metadata.
-      # All packed families have already passed the schema check above.
-      if (is.null(attr(flocker_fit, "flocker_metadata"))) {
-        new_data_metadata <- list(type = attr(flocker_fit, "data_type"))
-      } else {
-        new_data_metadata <- get_flocker_metadata(flocker_fit)
-      }
+      new_data_metadata <- get_flocker_metadata(flocker_fit)
       new_data <- flocker_fit$data
     } else {
       assertthat::assert_that(
@@ -96,11 +90,7 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
                                               "_resampled")
       }
     }
-    if (new_data_metadata$type %in% c("single", "multi", "twolevel_single", "augmented")) {
-      new_data <- list(data = new_data, metadata = new_data_metadata)
-    } else {
-      new_data <- c(list(data = new_data), new_data_metadata)
-    }
+    new_data <- list(data = new_data, metadata = new_data_metadata)
     class(new_data) <- "flocker_data"
     assertthat::assert_that(
       identical(allow_new_levels, TRUE),

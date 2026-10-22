@@ -202,7 +202,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                   ...) {
   validate_no_time_series_terms(list(...)$autocor)
   metadata <- get_flocker_metadata(flocker_data)
-  if (metadata$type %in% c("single", "multi", "twolevel_single", "augmented")) {
+  if (metadata$type %in% c("single", "single_C", "multi", "twolevel_single", "augmented")) {
     validate_packed_schema(flocker_data)
     if (!identical(metadata$data_role, "model_data")) {
       stop("Fitting requires model_data; new_data cannot be used for fitting.")

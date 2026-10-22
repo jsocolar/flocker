@@ -51,7 +51,7 @@ test_that("aggregated single-season packing preserves ragged sufficient statisti
   fd <- make_flocker_data(
     obs, unit_covs = data.frame(unit_marker = c(17, 31, 59)), quiet = TRUE
   )
-  expect_identical(fd$type, "single_C")
+  expect_identical(fd$metadata$type, "single_C")
   expect_equal(fd$data$ff_n_trial, c(3, 1, 2))
   expect_equal(fd$data$ff_n_suc, c(2, 0, 1))
   expect_equal(recover_packed_values(fd, "unit_marker", TRUE), c(17, 31, 59))

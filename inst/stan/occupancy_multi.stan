@@ -3,6 +3,9 @@
 // unit detection indicator at every row, including zero on placeholders.
 // A unit with no visits has one row with y = -99. Its emission log probability
 // is zero under either state, but its occupancy transition still contributes.
+// Predictor inputs are logits: mu for detection, occ for initial occupancy,
+// colo for colonization, and ex for extinction. These inputs are not
+// probabilities or log-probabilities.
 real occupancy_multi_loglik(array[] int y, vector mu, vector occ,
                             vector colo, vector ex,
                             array[] int n_series, array[] int series_starts,
@@ -76,6 +79,9 @@ real occupancy_multi_loglik(array[] int y, vector mu, vector occ,
   return lp;
 }
 
+// Predictor inputs are logits: mu for detection, occ for initial occupancy,
+// colo for colonization, and ex for extinction. These inputs are not
+// probabilities or log-probabilities.
 real occupancy_multi_colex_lpmf(array[] int y, vector mu, vector occ,
                                 vector colo, vector ex,
                                 array[] int n_series, array[] int series_starts,
@@ -85,6 +91,9 @@ real occupancy_multi_colex_lpmf(array[] int y, vector mu, vector occ,
                                 n_series, series_starts, n_unit, unit_starts, Q);
 }
 
+// Predictor inputs are logits: mu for detection, colo for colonization, and
+// ex for extinction. Initial occupancy is derived internally at equilibrium.
+// These inputs are not probabilities or log-probabilities.
 real occupancy_multi_colex_eq_lpmf(array[] int y, vector mu,
                                    vector colo, vector ex,
                                    array[] int n_series, array[] int series_starts,
@@ -96,6 +105,10 @@ real occupancy_multi_colex_eq_lpmf(array[] int y, vector mu,
                                 n_series, series_starts, n_unit, unit_starts, Q);
 }
 
+// mu, occ, and colo are logits of detection, initial occupancy, and
+// colonization probabilities. autologistic is an additive log-odds effect of
+// previous occupancy: colo + autologistic is the logit persistence probability.
+// No predictor input is a probability or a log-probability.
 real occupancy_multi_autologistic_lpmf(array[] int y, vector mu, vector occ,
                                        vector colo, vector autologistic,
                                        array[] int n_series, array[] int series_starts,
@@ -106,6 +119,11 @@ real occupancy_multi_autologistic_lpmf(array[] int y, vector mu, vector occ,
                                 n_series, series_starts, n_unit, unit_starts, Q);
 }
 
+// mu and colo are logits of detection and colonization probabilities.
+// autologistic is an additive log-odds effect of previous occupancy:
+// colo + autologistic is the logit persistence probability. Initial occupancy
+// is derived internally at equilibrium. No predictor input is a probability
+// or a log-probability.
 real occupancy_multi_autologistic_eq_lpmf(array[] int y, vector mu,
                                           vector colo, vector autologistic,
                                           array[] int n_series, array[] int series_starts,

@@ -8,6 +8,8 @@
 // read. Units without observed events are not represented in this contract.
 // Unit covariates are repeated at their actual values on every event row:
 // brms therefore centers predictors and constructs bases at the visit level.
+// Predictor inputs: mu is logit detection probability; occ is logit occupancy
+// probability. Neither input is a probability or a log-probability.
 real occupancy_single_lpmf(array[] int y, vector mu, vector occ,
                            array[] int n_unit, array[] int unit_starts,
                            array[] int Q) {

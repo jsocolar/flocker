@@ -1,6 +1,9 @@
 // Each group is a self-contained one-level occupancy dataset, conditional on
 // the group being occupied. Its outer occupancy indicator is marginalized here.
 // Q and group_Q repeat the unit and group detection indicators at every row.
+// Predictor inputs are logits: mu for detection conditional on unit occupancy,
+// occ for unit occupancy conditional on group occupancy, and Omega for group
+// occupancy. These inputs are not probabilities or log-probabilities.
 real occupancy_twolevel_single_lpmf(array[] int y, vector mu, vector occ,
                                     vector Omega, array[] int n_group,
                                     array[] int group_starts, array[] int n_unit,

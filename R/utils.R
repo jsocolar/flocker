@@ -264,8 +264,10 @@ is_flocker_fit <- function(x) {
 #' @noRd
 get_flocker_metadata <- function(x) {
   if (is_flocker_data(x)) {
-    if (!is.null(x$metadata)) return(x$metadata)
-    return(x[setdiff(names(x), "data")])
+    if (!is.list(x$metadata)) {
+      stop("Incompatible flocker_data structure. Pre-2.0 objects require reformatting with make_flocker_data().")
+    }
+    return(x$metadata)
   }
   assertthat::assert_that(
     is_flocker_fit(x),
@@ -283,7 +285,7 @@ get_flocker_metadata <- function(x) {
 }
 
 # Check the schema even when prediction bypasses get_positions (e.g. a
-# plain data frame). Other model families retain their current contracts.
+# plain data frame).
 validate_postprocessing_data <- function(flocker_fit, new_data = NULL) {
   validate_packed_schema(flocker_fit)
   if (is_flocker_data(new_data)) {
@@ -304,9 +306,9 @@ validate_packed_schema <- function(x) {
     metadata <- get_flocker_metadata(x)
     type <- metadata$type
   }
-  if (type %in% c("single", "multi", "twolevel_single", "augmented") &&
+  if (type %in% c("single", "single_C", "multi", "twolevel_single", "augmented") &&
       !identical(metadata$schema_version, 2L)) {
-    stop(paste0("Incompatible ", switch(type, single = "single-season", multi = "multiseason", twolevel_single = "two-level", augmented = "augmented"),
+    stop(paste0("Incompatible ", switch(type, single = "single-season", single_C = "rep-constant single-season", multi = "multiseason", twolevel_single = "two-level", augmented = "augmented"),
                 " packing schema. Pre-2.0 objects require a compatible 1.x installation or reformatting and refitting."))
   }
   invisible(NULL)
@@ -385,8 +387,8 @@ get_positions <- function(data_object, unit_level = FALSE) {
   )
   the_data <- data_object$data
   if(is_flocker_fit(data_object)) {
-    # Older fits predate flocker_metadata but still carry data_type, which is
-    # sufficient here for model types that need no additional metadata.
+    # Read the type before schema validation so incompatible fits receive
+    # a model-specific error even when their metadata is missing.
     data_type <- attributes(data_object)$data_type
   } else {
     data_type <- get_flocker_metadata(data_object)$type
@@ -413,6 +415,7 @@ get_positions <- function(data_object, unit_level = FALSE) {
     return(if (unit_level) metadata$unit_to_packed else metadata$original_to_packed)
   }
 
+  validate_packed_schema(data_object)
   n_unit <- nrow(the_data)
   n_rep <- max(the_data$ff_n_trial)
   index_matrix <- matrix(rep(seq_len(n_unit), n_rep), ncol = n_rep)
