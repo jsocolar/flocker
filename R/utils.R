@@ -306,8 +306,7 @@ validate_packed_schema <- function(x) {
     metadata <- get_flocker_metadata(x)
     type <- metadata$type
   }
-  if (type %in% c("single", "single_C", "multi", "twolevel_single", "augmented") &&
-      !identical(metadata$schema_version, 2L)) {
+  if (!identical(metadata$schema_version, 2L)) {
     stop(paste0("Incompatible ", switch(type, single = "single-season", single_C = "rep-constant single-season", multi = "multiseason", twolevel_single = "two-level", augmented = "augmented"),
                 " packing schema. Pre-2.0 objects require a compatible 1.x installation or reformatting and refitting."))
   }
@@ -385,37 +384,22 @@ get_positions <- function(data_object, unit_level = FALSE) {
     isTRUE(is_flocker_fit(data_object)) | isTRUE(is_flocker_data(data_object)),
     msg = "the data object must either be a flocker_fit or a flocker_data object"
   )
+  validate_packed_schema(data_object)
+  metadata <- get_flocker_metadata(data_object)
+  data_type <- metadata$type
   the_data <- data_object$data
-  if(is_flocker_fit(data_object)) {
-    # Read the type before schema validation so incompatible fits receive
-    # a model-specific error even when their metadata is missing.
-    data_type <- attributes(data_object)$data_type
-  } else {
-    data_type <- get_flocker_metadata(data_object)$type
-  }
 
   if (data_type == "single") {
-    validate_packed_schema(data_object)
-    metadata <- get_flocker_metadata(data_object)
     if (unit_level) {
       return(stats::setNames(metadata$unit_start, metadata$original_dimnames[[1]]))
     }
     return(metadata$original_to_packed)
   }
 
-  if (data_type == "multi") {
-    validate_packed_schema(data_object)
-    metadata <- get_flocker_metadata(data_object)
+  if (data_type %in% c("multi", "twolevel_single", "augmented")) {
     return(if (unit_level) metadata$unit_to_packed else metadata$original_to_packed)
   }
 
-  if (data_type %in% c("twolevel_single", "augmented")) {
-    validate_packed_schema(data_object)
-    metadata <- get_flocker_metadata(data_object)
-    return(if (unit_level) metadata$unit_to_packed else metadata$original_to_packed)
-  }
-
-  validate_packed_schema(data_object)
   n_unit <- nrow(the_data)
   n_rep <- max(the_data$ff_n_trial)
   index_matrix <- matrix(rep(seq_len(n_unit), n_rep), ncol = n_rep)
@@ -515,8 +499,6 @@ validate_flock_params <- function(f_occ, f_det, flocker_data,
                                    multiseason, f_col, f_ex, multi_init, f_auto,
                                    augmented, threads, f_meta)
   } else {
-    assertthat::assert_that(metadata$type == "multi")
-    # above line is redundant but included for clarity
     validate_param_combos_multi(f_occ, f_det, flocker_data, 
                                 multiseason, f_col, f_ex, multi_init, f_auto,
                                 augmented, threads)

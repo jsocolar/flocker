@@ -104,12 +104,6 @@ fitted_flocker <- function(
       isTRUE(class(new_data) == "data.frame") | isTRUE(is_flocker_data(new_data)),
       msg = "new_data must be NULL, a dataframe, or a flocker_data object"
     )
-    if(is_flocker_data(new_data)) {
-      assertthat::assert_that(
-        get_flocker_metadata(new_data)$type == attributes(flocker_fit)$data_type,
-        msg = "new_data is formatted for a different model type than flocker_fit"
-      )
-    }
   }
   
   model_type <- type_flocker_fit(flocker_fit)

@@ -47,10 +47,10 @@ test_that("single-season packing preserves identities and real covariates", {
   # The public combined-formula route uses the same packed input.
   combined <- flocker_standata(f_det = brms::bf(det ~ x + w, occ ~ x), flocker_data = fd)
   expect_equal(combined, sd)
-  expect_error(flocker_stancode(~ w, ~ w, fd), "occupancy formula")
-  expect_error(flocker_stancode(~ log(w), ~ w, fd), "occupancy formula")
+  expect_error(flocker_stancode(~ w, ~ w, fd), "event covariates")
+  expect_error(flocker_stancode(~ log(w), ~ w, fd), "event covariates")
   expect_error(flocker_stancode(f_det = brms::bf(det ~ w, occ ~ log(w)),
-                               flocker_data = fd), "occupancy formula")
+                               flocker_data = fd), "event covariates")
 })
 
 test_that("single-season fitting rejects incompatible packing and roles early", {

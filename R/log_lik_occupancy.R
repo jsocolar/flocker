@@ -49,12 +49,6 @@ log_lik_flocker <- function(
         "by `make_flocker_data`"
       )
     )
-    a <- attributes(flocker_fit)
-    fit_datatype <- a$data_type
-    assertthat::assert_that(
-      get_flocker_metadata(new_data)$type == fit_datatype,
-      msg = "the data type in new_data does not match the data type in flocker_fit"
-    )
   }
   
   lik_type <- type_flocker_fit(flocker_fit)

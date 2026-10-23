@@ -210,10 +210,6 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     if (!is.null(threads)) {
       stop("Threading is not currently supported for rep-varying single-season models.")
     }
-    occ_formula <- if (brms::is.brmsformula(f_det)) f_det$pforms$occ else f_occ
-    if (any(all.vars(occ_formula) %in% metadata$event_covs)) {
-      stop("The occupancy formula must not use event covariates; supply unit-constant predictors as unit covariates.")
-    }
   }
   ### validate parameters
   validate_flock_params(f_occ, f_det, flocker_data, multiseason, f_col, 
