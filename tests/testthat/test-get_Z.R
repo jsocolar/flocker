@@ -173,7 +173,6 @@ test_that("two-level state probabilities are calculated exactly", {
 })
 
 test_that("generic two-level states remain in original unit order", {
-  unit_order <- c(3L, 1L, 4L, 2L)
   original_group <- c(2L, 2L, 1L, 1L)
   psi <- matrix(
     c(0.2, 0.3,
@@ -191,20 +190,16 @@ test_that("generic two-level states remain in original unit order", {
     ),
     unit_level = TRUE
   )
-  packed_data <- data.frame(
-    ff_n_unit = c(4L, -99L, -99L, -99L),
-    ff_n_group = c(2L, -99L, -99L, -99L),
-    ff_n_unit_group = c(2L, 2L, -99L, -99L),
-    ff_group_index = c(1L, 3L, 2L, 4L),
-    ff_group_known_present = c(1L, 0L, -99L, -99L)
+  packed <- make_flocker_data(
+    matrix(c(0, 0, 1, 0), ncol = 1),
+    data.frame(group = factor(original_group, levels = 1:2,
+                              labels = c("group1", "group2"))),
+    type = "twolevel_single", level2_group = "group", newdata_checks = TRUE,
+    quiet = TRUE
   )
   components <- format_twolevel_postprocessing(
     unit_lps, det_lps = NULL, obs = NULL, lik_type = "twolevel_single",
-    flocker_data_data = packed_data,
-    flocker_metadata = list(
-      unit_order = unit_order,
-      level2_group_names = c("group1", "group2")
-    )
+    flocker_data_data = packed$data, flocker_metadata = get_flocker_metadata(packed)
   )
   states <- get_twolevel_states_from_components(
     boot::inv.logit(components$occ_lp), NULL,
@@ -221,8 +216,8 @@ test_that("get_Z returns both levels for augmented models", {
   testthat::skip_on_cran()
 
   n_group <- example_flocker_model_aug$data$ff_n_group[1]
-  known_present <- example_flocker_model_aug$data$ff_group_known_present[
-    seq_len(n_group)
+  known_present <- example_flocker_model_aug$data$ff_group_Q[
+    get_flocker_metadata(example_flocker_model_aug)$group_start
   ]
   n_observed <- sum(known_present)
   n_aug <- n_group - n_observed

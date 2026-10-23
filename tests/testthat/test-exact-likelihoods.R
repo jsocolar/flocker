@@ -10,7 +10,7 @@ single_rv_lpmf_from_flocker_data <- function(fd, psi, theta) {
     y_i <- d$ff_y[indices]
     theta_i <- theta[indices]
 
-    if (d$ff_Q[i] == 1) {
+    if (d$ff_Q[unit_starts[i]] == 1) {
       p_i <- psi[i] * prod(theta_i^y_i * (1 - theta_i)^(1 - y_i))
     } else {
       p_i <- (1 - psi[i]) + psi[i] * prod(1 - theta_i)
@@ -69,39 +69,19 @@ drop_draw <- function(x, draw = 1) {
 
 twolevel_lpmf_from_flocker_data <- function(fd, psi, theta, Omega) {
   d <- fd$data
-  n_unit <- d$ff_n_unit[1]
-  n_group <- d$ff_n_group[1]
-  rep_cols <- grep("^ff_rep_index", names(d), value = TRUE)
-  unit_group <- get_unit_group(d)
-  ll <- 0
-
-  for (g in seq_len(n_group)) {
-    p_y_given_available <- 1
-    unit_rows <- which(unit_group == g)
-
-    for (i in unit_rows) {
-      indices <- as.integer(d[i, rep_cols])
-      indices <- indices[indices != -99]
-      y_i <- d$ff_y[indices]
-      theta_i <- theta[indices]
-
-      if (d$ff_Q[i] == 1) {
-        p_i <- psi[i] * prod(theta_i^y_i * (1 - theta_i)^(1 - y_i))
-      } else {
-        p_i <- (1 - psi[i]) + psi[i] * prod(1 - theta_i)
-      }
-
-      p_y_given_available <- p_y_given_available * p_i
-    }
-
-    if (d$ff_group_known_present[g] == 1) {
-      ll <- ll + log(Omega[g] * p_y_given_available)
-    } else {
-      ll <- ll + log((1 - Omega[g]) + Omega[g] * p_y_given_available)
-    }
+  if (get_flocker_metadata(fd)$type %in% c("twolevel_single", "augmented")) {
+    starts <- d$ff_group_start[seq_len(d$ff_n_group[1])]
+    ends <- c(starts[-1] - 1L, nrow(d))
+    return(sum(vapply(seq_along(starts), function(g) {
+      rows <- seq.int(starts[g], ends[g])
+      block <- list(data = d[rows, , drop = FALSE])
+      conditional <- exp(single_rv_lpmf_from_flocker_data(block,
+        psi[rows][block$data$ff_unit_start[seq_len(block$data$ff_n_unit[1])]], theta[rows]))
+      log(if (d$ff_group_Q[starts[g]] == 1) Omega[g] * conditional else
+        1 - Omega[g] + Omega[g] * conditional)
+    }, numeric(1))))
   }
 
-  ll
 }
 
 test_that("two-level likelihood matches exact grouped marginal likelihood", {

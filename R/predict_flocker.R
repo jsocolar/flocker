@@ -60,19 +60,9 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
   # rename all random effect levels so they show up as new levels
   if (mixed) {
     if (is.null(new_data)) {
-      # Retain the legacy fallback for families not yet migrated to metadata.
-      # Single-season fits have already passed the schema check above.
-      if (is.null(attr(flocker_fit, "flocker_metadata"))) {
-        new_data_metadata <- list(type = attr(flocker_fit, "data_type"))
-      } else {
-        new_data_metadata <- get_flocker_metadata(flocker_fit)
-      }
+      new_data_metadata <- get_flocker_metadata(flocker_fit)
       new_data <- flocker_fit$data
     } else {
-      assertthat::assert_that(
-        identical(get_flocker_metadata(new_data)$type, attributes(flocker_fit)$data_type),
-        msg = "the new_data data type does not match the flocker_fit data type"
-      )
       new_data_metadata <- get_flocker_metadata(new_data)
       new_data <- new_data$data
     }
@@ -96,11 +86,7 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
                                               "_resampled")
       }
     }
-    if (identical(new_data_metadata$type, "single")) {
-      new_data <- list(data = new_data, metadata = new_data_metadata)
-    } else {
-      new_data <- c(list(data = new_data), new_data_metadata)
-    }
+    new_data <- list(data = new_data, metadata = new_data_metadata)
     class(new_data) <- "flocker_data"
     assertthat::assert_that(
       identical(allow_new_levels, TRUE),
@@ -144,7 +130,7 @@ predict_flocker <- function(flocker_fit, draw_ids = NULL,
   
   predictions <- new_array(theta_all, rbinom2(length(theta_all), 1, theta_all * Z_samp_array))
   
-  if (identical(attr(flocker_fit, "data_type"), "single")) {
+  if (attr(flocker_fit, "data_type") %in% c("single", "multi", "augmented")) {
     dimnames(predictions) <- dimnames(theta_all)
   }
   predictions

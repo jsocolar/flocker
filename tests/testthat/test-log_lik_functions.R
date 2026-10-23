@@ -23,8 +23,8 @@ test_that("check log_lik functions work correctly", {
   # augmented (variable observed species plus 10 pseudospecies, 8 draws)
   ll_test <- log_lik_flocker(example_flocker_model_aug)
   n_group <- example_flocker_model_aug$data$ff_n_group[1]
-  known_present <- example_flocker_model_aug$data$ff_group_known_present[
-    seq_len(n_group)
+  known_present <- example_flocker_model_aug$data$ff_group_Q[
+    get_flocker_metadata(example_flocker_model_aug)$group_start
   ]
   n_observed <- sum(known_present)
   n_aug <- n_group - n_observed

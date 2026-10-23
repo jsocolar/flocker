@@ -67,15 +67,28 @@
 #' to use the data for model fitting, but not in other contexts (e.g. making
 #' predictions or assessing log-likelihoods over new data).
 #' @return A flocker_data list that can be passed as data to \code{flock()}.
-#' @details For one-level single-season data with event covariates, the object
+#' @details For one-level single-season data with event covariates and for
+#' multiseason, two-level, and augmented data, the object
 #' contains \code{data} and \code{metadata}. Observed visits are packed
 #' contiguously within units, with unit covariates repeated at their actual
 #' values on every visit. Consequently, brms centers unit-formula predictors
 #' and constructs spline bases from covariates expanded to the visit level.
-#' The occupancy likelihood nevertheless contributes once per unit.
+#' For multiseason data, units are additionally packed within series. Leading
+#' and internal unvisited seasons receive one placeholder row, retaining their
+#' unit covariates. Missing detection covariates on these rows are filled with
+#' the mean over observed visits for numeric covariates, or the first factor
+#' level for factors. Supplied values are preserved. Placeholder covariates
+#' participate in brms preprocessing, but have no detection likelihood.
+#' Trailing unvisited seasons are omitted and reconstructed as NA.
+#' Two-level models pack units within groups using the same local block
+#' structure. Group covariates are repeated across the group's visit rows and
+#' therefore also participate in visit-level preprocessing. Units without
+#' observations are not allowed in two-level models. Augmented data use the
+#' same packing, with species as groups and site-species combinations as units.
+#' Added pseudospecies share the observed species' sampling mask and covariates;
+#' metadata reconstruct the site-by-visit-by-species arrays and species names.
 #' Setting \code{newdata_checks = TRUE} marks this representation as
-#' \code{new_data}, which cannot be used for fitting. Post-processing for this
-#' new representation is not yet implemented.
+#' \code{new_data}, which cannot be used for fitting.
 #' @export
 #' @examples
 #' sfd <- simulate_flocker_data()
@@ -120,27 +133,17 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
     out <- make_flocker_data_static(
       obs, unit_covs, event_covs, quiet, newdata_checks
       )
-    if (is.null(out$metadata)) {
-      out$unit_covs <- names(unit_covs)
-      out$event_covs <- names(event_covs)
-    }
   } else if (type == "multi") {
     out <- make_flocker_data_dynamic(
       obs, unit_covs, event_covs, quiet, newdata_checks
       )
-    out$unit_covs <- names(unit_covs[[1]])
-    out$event_covs <- names(event_covs)
   } else if (type == "augmented") {
     out <- make_flocker_data_augmented(
       obs, n_aug, unit_covs, event_covs, quiet, newdata_checks)
-    out$unit_covs <- names(unit_covs)
-    out$event_covs <- names(event_covs)
   } else if (type == "twolevel_single") {
     out <- make_flocker_data_twolevel_single(
       obs, unit_covs, event_covs, level2_group, level2_covs,
       quiet, newdata_checks)
-    out$unit_covs <- names(unit_covs)
-    out$event_covs <- names(event_covs)
   }
   
   out
@@ -188,8 +191,13 @@ make_flocker_data_static <- function(
     if (!is.null(unit_covs)) {
       flocker_data <- cbind(flocker_data, unit_covs)
     }
-    out <- list(data = flocker_data, n_rep = n_rep, 
-                type = "single_C")
+    out <- list(data = flocker_data, metadata = list(
+      type = "single_C", schema_version = 2L,
+      data_role = if (newdata_checks) "new_data" else "model_data",
+      flocker_version = flocker_version(), n_rep = n_rep,
+      original_dim = dim(obs), original_dimnames = dimnames(obs),
+      unit_covs = names(unit_covs), event_covs = names(event_covs)
+    ))
   } else {
     # Pack actual events contiguously within each unit. Unit covariates retain
     # their real values on every visit, including when used for detection.
@@ -209,8 +217,7 @@ make_flocker_data_static <- function(
     n_data <- nrow(flocker_data)
     flocker_data$ff_n_unit <- c(n_unit, rep(-99L, n_data - 1L))
     flocker_data$ff_unit_start <- c(unit_start, rep(-99L, n_data - n_unit))
-    flocker_data$ff_Q <- c(as.integer(rowSums(obs, na.rm = TRUE) > 0),
-                          rep(-99L, n_data - n_unit))
+    flocker_data$ff_Q <- as.integer(rowSums(obs, na.rm = TRUE) > 0)[event_unit]
     rownames(flocker_data) <- NULL
     original_to_packed <- array(NA_integer_, dim(obs), dimnames(obs))
     original_to_packed[packed_to_original] <- seq_along(packed_to_original)
@@ -232,7 +239,6 @@ make_flocker_data_static <- function(
     class(out) <- c("list", "flocker_data")
     return(out)
   }
-  out$flocker_version <- flocker_version()
   class(out) <- c("list", "flocker_data")
   out
 }
@@ -265,150 +271,49 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
   
   standard_mfd_checks(obs, unit_covs, event_covs, "multi", NULL, quiet, newdata_checks)
   
-  n_year <- nslice(obs) # nslice checks that obs is a 3-D array
   n_series <- nrow(obs)
-  n_rep <- ncol(obs)
-  n_total <- n_year*n_series*n_rep
-  
-  # All unit covs are guaranteed to be not NA provided the unit is not part of, 
-  # a block of trailing NAs, and all event covs are not NA provided that the 
-  # response is not missing
-  
-  # add dummy data for the first visit to each unit, whether the unit was
-  # sampled or not, unless the unit is part of a block of trailing NAs.
-  n_year_obs <- apply(obs[ , 1, ], 1, max_position_not_na)
-  for (i in seq_along(n_year_obs)) {
-    obs[i, 1, 1 : n_year_obs[i]][is.na(obs[i, 1, 1 : n_year_obs[i]])] <- -99
-  }
-  
-  # How many units will get modeled?
-  rep1 <- obs[ , 1, ]
-  n_unit <- sum(!is.na(rep1)) # We have already added a dummy value for rep1 if 
-                              # it's NA and the unit is getting modeled.
-  assertthat::assert_that(
-    n_unit == sum(n_year_obs),
-    msg = "error 4. This should not happen; please report a bug."
-  )
-  
-  if (!is.null(event_covs)) {
-    for (i in seq_along(event_covs)) {
-      the_nas_event <- which(is.na(event_covs[[i]][ , 1, ]))
-      the_m99s <- which(obs[ , 1, ] == -99)
-      nas_replace <- shared_elements(the_nas_event, the_m99s)
-      if (length(nas_replace) > 0) {
-        if (!quiet) {
-          warning(paste0("One or more event_covariates are NA on the first ",
-                         "repeat visit to one or more units. This is ",
-                         "allowable as long as the units in question were ",
-                         "never visited (i.e. all visits NA in that site x ",
-                         "timestep. However, to pass data to Stan, flocker will ",
-                         "impute a covariate value corresponding to the mean of", 
-                         "the event covariate across all sites/seasons.", 
-                         "This imputation has no effect on the fitted posterior", 
-                         "in any way, but could lead to spurious predicted", 
-                         "detection probabilities on these never-conducted ", 
-                         "visits."))
-        }
-        event_covs[[i]][ , 1, ][nas_replace] <- 
-          mean(event_covs[[i]], na.rm = TRUE)
-      }
-    }
-  }
-  
-  flocker_data <- data.frame(ff_y = expand_matrix(expand_array_3D(obs)))
-  flocker_data$ff_n_unit <- c(n_unit, rep(-99, n_total - 1))
-  if (!is.null(unit_covs)) {
-    unit_covs_stacked <- stack_matrix(do.call(rbind, unit_covs), n_rep)
-    flocker_data <- cbind(flocker_data, unit_covs_stacked)
-  }
-  event_covs <- as.data.frame(lapply(event_covs, function(x){expand_matrix(expand_array_3D((x)))}))
-  flocker_data <- cbind(flocker_data, event_covs)
-  # number of series (HMMs)
-  flocker_data$ff_n_series <- c(n_series, rep(-99, n_total - 1))
+  n_visit <- ncol(obs)
+  n_season <- nslice(obs)
+  first_visit <- matrix(obs[, 1, , drop = FALSE], n_series, n_season)
+  n_season_observed <- apply(first_visit, 1, max_position_not_na)
+  unit_grid <- matrix(seq_len(n_series * n_season), n_series, n_season)
+  retained <- as.vector(col(unit_grid) <= n_season_observed)
+  retained_units <- which(retained)
+  # Matrix rows are conceptual series-season units; columns are visits.
+  original_indices <- matrix(aperm(array(seq_along(obs), dim(obs)), c(1, 3, 2)),
+                             n_series * n_season, n_visit)
+  unit_obs <- matrix(obs[as.vector(original_indices)], n_series * n_season, n_visit)
+  unit_obs <- unit_obs[retained, , drop = FALSE]
+  covariates <- if (is.null(unit_covs)) NULL else do.call(rbind, unit_covs)[retained, , drop = FALSE]
+  event_values <- lapply(event_covs, function(x) {
+    values <- x[as.vector(original_indices[retained, , drop = FALSE])]
+    dim(values) <- dim(unit_obs)
+    values
+  })
+  packed <- pack_nested_blocks(unit_obs, covariates, event_values,
+                                rep(seq_len(n_series), n_season)[retained], outer = "series")
+  data <- packed$data
 
-  # For each series:
-  # Number of units (seasons) in each series (don't marginalize over trailing
-  # seasons with no observations)
-  # all series have at least one unit
-  flocker_data$ff_n_year <- c(apply(rep1, 1, max_position_not_na),
-                           rep(-99, n_total - n_series))
-
-  # For each unit:
-  # Number of reps in each unit
-  obs_unstacked <- expand_array_3D(obs)
-  flocker_data$ff_n_rep <- c(
-    apply(obs_unstacked, 1, max_position_not_na, treat_m99_NA = TRUE),
-    rep(-99, n_total - n_series*n_year)
-  )
-  flocker_data$ff_Q <- c(as.integer(apply(obs_unstacked, 1, function(x){isTRUE(any(x == 1))})),
-                      rep(-99, n_total - n_series*n_year))
-
-  # Prepare to add unit and rep indices:
-  flocker_data$ff_series <- seq(n_series)
-  flocker_data$ff_year <- rep(seq(n_year), each = n_series)
-  flocker_data$ff_series_year <- paste0(flocker_data$ff_series, "__", flocker_data$ff_year)
-    
-  # Trim flocker data to existing units
-  flocker_data <- flocker_data[!is.na(flocker_data$ff_y), ]
-  
-  assertthat::assert_that(
-    n_unit == length(unique(flocker_data$ff_series_year)),
-    msg = "error 1; this should not happen; please report a bug"
-  )
-  
-  # Unit indices: indices for the unique units belonging to each series
-  unit_indices <- as.data.frame(matrix(data = -99, nrow = nrow(flocker_data),
-                                      ncol = n_year))
-  names(unit_indices) <- paste0("ff_unit_index", seq(n_year))
-  if(!quiet){
-    message("formatting unit indices")
-    pb <- utils::txtProgressBar(min = 0, max = n_series, style = 3)
-  }
-  for (i in 1:n_series) {
-    unit_indices[i, 1:flocker_data$ff_n_year[i]] <- 
-      which(flocker_data$ff_series[seq(n_unit)] == flocker_data$ff_series[i])
-    if(!quiet){
-      utils::setTxtProgressBar(pb, i)
-    }
-  }
-  if(!quiet){
-    close(pb)
-  }
-  
-  flocker_data <- cbind(flocker_data, unit_indices)
-  
-  # Rep indices: indices for the unique reps belonging to each unit
-  rep_indices <- as.data.frame(matrix(data = -99, nrow = nrow(flocker_data),
-                                       ncol = n_rep))
-  names(rep_indices) <- paste0("ff_rep_index", seq(n_rep))
-  
-  if(!quiet){
-    message("formatting rep indices")
-    pb <- utils::txtProgressBar(min = 0, max = n_unit, style = 3)
-  }
-
-  for (i in seq(n_unit)) {
-    assertthat::assert_that(
-      !duplicated(flocker_data$ff_series_year)[i],
-      msg = "error 2; this should not happen; please report a bug"
-    )
-    if (flocker_data$ff_n_rep[i] > 0) {
-      rep_indices[i, 1:flocker_data$ff_n_rep[i]] <- 
-        which(flocker_data$ff_series_year == flocker_data$ff_series_year[i])
-    }
-    if(!quiet){
-      utils::setTxtProgressBar(pb, i)
-    }
-  }
-  if(!quiet){
-    close(pb)
-  }
-  
-  flocker_data <- cbind(flocker_data, rep_indices)
-  
-  out <- list(data = flocker_data, n_rep = n_rep, n_year = n_year,
-              type = "multi")
-  out$flocker_version <- flocker_version()
+  packed_to_original <- original_indices[retained, , drop = FALSE][packed$packed_to_original]
+  original_to_packed <- array(NA_integer_, dim(obs), dimnames(obs))
+  original_to_packed[as.vector(original_indices[retained, , drop = FALSE])] <-
+    as.vector(packed$original_to_packed)
+  unit_to_packed <- matrix(NA_integer_, n_series, n_season,
+                           dimnames = dimnames(obs)[c(1, 3)])
+  unit_order <- retained_units[packed$unit_order]
+  unit_to_packed[retained_units] <- packed$unit_to_packed
+  out <- list(data = data, metadata = list(
+    type = "multi", schema_version = 2L,
+    data_role = if (newdata_checks) "new_data" else "model_data",
+    flocker_version = flocker_version(),
+    original_dim = dim(obs), original_dimnames = dimnames(obs),
+    packed_to_original = packed_to_original,
+    original_to_packed = original_to_packed, unit_to_packed = unit_to_packed,
+    unit_order = unit_order, series_start = packed$group_start,
+    unit_start = packed$unit_start, n_event = packed$n_event,
+    event_unit = packed$row_unit, placeholder = packed$placeholder,
+    unit_covs = names(unit_covs[[1]]), event_covs = names(event_covs)
+  ))
   class(out) <- c("list", "flocker_data")
   out
 }
@@ -450,7 +355,8 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
     observed_species_names,
     paste0("pseudospecies", seq_len(n_aug))
   )
-  obs1 <- obs[,,1]
+  input_dimnames <- dimnames(obs)
+  obs1 <- matrix(obs[, , 1, drop = FALSE], dim(obs)[1], dim(obs)[2])
   n_rep <- ncol(obs1)
   n_sp <- dim(obs)[3] + n_aug
   n_site <- dim(obs)[1]
@@ -480,13 +386,21 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
     unit_covs = unit_covs,
     event_covs = event_covs2,
     level2_covs = level2_covs,
-    level2_group = "ff_species"
+    level2_group = "ff_species", newdata_checks = newdata_checks
   )
-  out$type <- "augmented"
-  out$n_sp <- n_sp
-  out$level2_group_names <- group_names
-  out$level2_covs <- character(0)
-  out$unit_site <- ff_site[out$unit_order]
+  metadata <- out$metadata
+  metadata$type <- "augmented"
+  metadata$n_sp <- n_sp
+  metadata$level2_group_names <- group_names
+  metadata$unit_site <- ff_site[metadata$unit_order]
+  metadata$original_dim <- as.integer(c(n_site, n_rep, n_sp))
+  metadata$original_dimnames <- list(input_dimnames[[1]], input_dimnames[[2]], group_names)
+  metadata$original_to_packed <- aperm(
+    array(metadata$original_to_packed, c(n_site, n_sp, n_rep)), c(1, 3, 2))
+  metadata$unit_to_packed <- matrix(metadata$unit_to_packed, n_site, n_sp)
+  metadata$unit_covs <- names(site_covs)
+  metadata$event_covs <- names(event_covs)
+  out$metadata <- metadata
   
   class(out) <- c("list", "flocker_data")
   out
@@ -514,128 +428,45 @@ make_flocker_data_twolevel_single <- function(
                       quiet, newdata_checks, level2_group, level2_covs)
 
   make_flocker_data_twolevel_single_(
-    obs, unit_covs, event_covs, level2_group, level2_covs
+    obs, unit_covs, event_covs, level2_group, level2_covs, newdata_checks
   )
 }
 
+# Shared packing workhorse; each public formatter validates its own inputs.
 make_flocker_data_twolevel_single_ <- function(
-    obs, unit_covs, event_covs, level2_group, level2_covs
+    obs, unit_covs, event_covs, level2_group, level2_covs,
+    newdata_checks = FALSE
     ) {
-
+  obs <- as.matrix(obs)
+  event_covs <- lapply(event_covs, function(x) if (is.data.frame(x)) as.matrix(x) else x)
   if (is.null(level2_covs)) {
-    represented <- levels(droplevels(unit_covs[[level2_group]]))
-    level2_factor <- factor(
-      represented,
-      levels = represented,
-      ordered = is.ordered(unit_covs[[level2_group]])
-    )
-    level2_covs <- stats::setNames(data.frame(level2_factor), level2_group)
+    group_levels <- levels(droplevels(unit_covs[[level2_group]]))
+    level2_covs <- stats::setNames(data.frame(factor(group_levels, levels = group_levels)),
+                                  level2_group)
   }
-
   group_levels <- levels(level2_covs[[level2_group]])
-  n_group <- length(group_levels)
-  level2_covs <- level2_covs[
-    match(group_levels, as.character(level2_covs[[level2_group]])),
-    ,
-    drop = FALSE
-  ]
+  level2_covs <- level2_covs[match(group_levels, as.character(level2_covs[[level2_group]])), , drop = FALSE]
   group_id <- match(as.character(unit_covs[[level2_group]]), group_levels)
-  unit_group_counts <- tabulate(group_id, nbins = n_group)
-
-  n_unit <- nrow(obs)
-  n_rep <- ncol(obs)
-
-  # Put one real unit from each group first so those rows can also supply the
-  # group-level predictors without adding synthetic covariate observations.
-  representative_units <- match(seq_len(n_group), group_id)
-  unit_order <- c(
-    representative_units,
-    setdiff(seq_len(n_unit), representative_units)
-  )
-  obs <- obs[unit_order, , drop = FALSE]
-  unit_covs <- unit_covs[unit_order, , drop = FALSE]
-  if (!is.null(event_covs)) {
-    event_covs <- lapply(event_covs, function(x) {
-      x[unit_order, , drop = FALSE]
-    })
-  }
-  group_id <- group_id[unit_order]
-
-  unit_known_present <- as.integer(matrixStats::rowSums2(obs, na.rm = TRUE) > 0)
-  group_known_present <- integer(n_group)
-  for (g in seq_len(n_group)) {
-    group_known_present[g] <- as.integer(any(unit_known_present[group_id == g] == 1))
-  }
-
-  # join level2 covariates onto the unit covariates
-  level2_unit_rows <- level2_covs[
-    match(as.character(unit_covs[[level2_group]]), group_levels),
-    setdiff(names(level2_covs), level2_group),
-    drop = FALSE
-  ]
-  unit_covs_all <- cbind(unit_covs, level2_unit_rows)
-
-  flocker_data <- data.frame(ff_y = expand_matrix(obs))
-  unit_covs_stacked <- do.call(
-    rbind,
-    replicate(n_rep, unit_covs_all, simplify = FALSE)
-  )
-  flocker_data <- cbind(flocker_data, unit_covs_stacked)
-  if (!is.null(event_covs)) {
-    event_covs <- as.data.frame(lapply(event_covs, expand_matrix))
-    flocker_data <- cbind(flocker_data, event_covs)
-  }
-
-  # Prepare to add rep indices, and trim flocker_data to existing observations
-  is_not_na <- !is.na(flocker_data$ff_y)
-  rep_index_vec <- rep(-99L, length(is_not_na))
-  rep_index_vec[is_not_na] <- seq_len(sum(is_not_na))
-  rep_index_matrix <- matrix(rep_index_vec, nrow = n_unit)
-  flocker_data <- flocker_data[is_not_na, ]
-
-  n_data <- nrow(flocker_data)
-  flocker_data$ff_n_unit <- c(n_unit, rep(-99L, n_data - 1))
-  flocker_data$ff_n_rep <- c(
-    matrixStats::rowSums2(!is.na(obs)),
-    rep(-99L, n_data - n_unit)
-  )
-  flocker_data$ff_Q <- c(unit_known_present, rep(-99L, n_data - n_unit))
-  flocker_data$ff_n_group <- c(n_group, rep(-99L, n_data - 1))
-  flocker_data$ff_group_known_present <- c(
-    group_known_present,
-    rep(-99L, n_data - n_group)
-  )
-  flocker_data$ff_n_unit_group <- c(
-    unit_group_counts,
-    rep(-99L, n_data - n_group)
-  )
-  flocker_data$ff_unit <- c(seq_len(n_unit), rep(-99L, n_data - n_unit))
-
-  group_indices <- unlist(
-    lapply(seq_len(n_group), function(g) which(group_id == g)),
-    use.names = FALSE
-  )
-  flocker_data$ff_group_index <- c(
-    group_indices,
-    rep(-99L, n_data - n_unit)
-  )
-
-  rep_indices <- as.data.frame(matrix(
-    data = -99L,
-    nrow = n_data,
-    ncol = n_rep
+  group_covs <- setdiff(names(level2_covs), level2_group)
+  covariates <- cbind(unit_covs, level2_covs[group_id, group_covs, drop = FALSE])
+  packed <- pack_nested_blocks(obs, covariates, event_covs, group_id)
+  data <- packed$data
+  n_group <- length(group_levels)
+  group_Q <- vapply(seq_len(n_group), function(g) {
+    as.integer(any(obs[group_id == g, , drop = FALSE] == 1, na.rm = TRUE))
+  }, integer(1))
+  data$ff_group_Q <- group_Q[group_id[packed$unit_order[packed$row_unit]]]
+  out <- list(data = data, metadata = list(
+    type = "twolevel_single", schema_version = 2L,
+    data_role = if (newdata_checks) "new_data" else "model_data",
+    flocker_version = flocker_version(), original_dim = dim(obs),
+    original_dimnames = dimnames(obs), original_to_packed = packed$original_to_packed,
+    unit_to_packed = packed$unit_to_packed, unit_order = packed$unit_order,
+    group_start = packed$group_start, unit_start = packed$unit_start,
+    unit_group = group_id, group_representatives = match(seq_len(n_group), group_id),
+    level2_group = level2_group, level2_group_names = group_levels,
+    level2_covs = group_covs, unit_covs = names(unit_covs), event_covs = names(event_covs)
   ))
-  names(rep_indices) <- paste0("ff_rep_index", seq_len(n_rep))
-  rep_indices[seq_len(n_unit), ] <- rep_index_matrix
-  flocker_data <- cbind(flocker_data, rep_indices)
-
-  out <- list(data = flocker_data, n_rep = n_rep,
-              unit_order = unit_order,
-              level2_group = level2_group,
-              level2_group_names = group_levels,
-              level2_covs = setdiff(names(level2_covs), level2_group),
-              type = "twolevel_single")
-  out$flocker_version <- flocker_version()
   class(out) <- c("list", "flocker_data")
   out
 }
@@ -813,7 +644,7 @@ standard_mfd_checks <- function(
     # Check that no NAs are non-trailing across columns (i.e. reps within series-
     # years)
     for (k in seq(n_year)) {
-      for (j in 1:(n_rep - 1)) {
+      for (j in seq_len(n_rep - 1L)) {
         the_nas <- is.na(obs[ , j, k])
         if (any(the_nas)) {
           the_nas2 <- which(the_nas)
@@ -930,7 +761,8 @@ standard_mfd_checks <- function(
     )
     
     
-    n_year_obs <- apply(obs[ , 1, ], 1, max_position_not_na)
+    n_year_obs <- apply(matrix(obs[, 1, , drop = FALSE], n_series, n_year),
+                        1, max_position_not_na)
     assertthat::assert_that(
       !any(n_year_obs == 0),
       msg = paste0("at least one series (i.e. row; generally a site or a ",

@@ -49,12 +49,6 @@ log_lik_flocker <- function(
         "by `make_flocker_data`"
       )
     )
-    a <- attributes(flocker_fit)
-    fit_datatype <- a$data_type
-    assertthat::assert_that(
-      get_flocker_metadata(new_data)$type == fit_datatype,
-      msg = "the data type in new_data does not match the data type in flocker_fit"
-    )
   }
   
   lik_type <- type_flocker_fit(flocker_fit)
@@ -231,6 +225,7 @@ log_lik_flocker <- function(
     ll <- log_lik_dynamic(init, colo, ex, obs, det) |>
       t()
   }
+  if (startsWith(lik_type, "multi")) dimnames(ll) <- dimnames(colo)[c(3, 1)]
   ll
 }
 
@@ -404,8 +399,10 @@ log_lik_dynamic <- function(init, colo, ex, obs, det){
   
   for(i in 1:nsite){
     for(j in 1:ndraw){
-      el0 <- emission_likelihood(0, t(obs[i,,]), t(det[i,,,j]))
-      el1 <- emission_likelihood(1, t(obs[i,,]), t(det[i,,,j]))
+      obs_series <- t(matrix(obs[i, , , drop = FALSE], nrow = dim(obs)[2]))
+      det_series <- t(matrix(det[i, , , j, drop = FALSE], nrow = dim(obs)[2]))
+      el0 <- emission_likelihood(0, obs_series, det_series)
+      el1 <- emission_likelihood(1, obs_series, det_series)
       forward_output <- forward_algorithm(el0, el1, init[i,j], colo[i,,j], ex[i,,j]) |>
         rowSums()
       # forward_output should be strictly decreasing except when there is a season

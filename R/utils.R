@@ -32,41 +32,7 @@ log1m_inv_logit <- function (x) {
 }
 
 
-#' extended binomial RNG
-#' @param p binomial probability
-#' @param s number of successes
-#' @return a sample representing a possible number of trials
-#' @details random samples `y` from the distribution proportional to 
-#'   binomial_pmf(y | n, s)
-#' @noRd
-extended_binomial_rng <- function(p, s) {
-  assertthat::assert_that(is.numeric(p) & length(p) == 1)
-  assertthat::assert_that(is_one_pos_int(s))
-  assertthat::assert_that(p > 0 & p <= 1)
-
-  r <- stats::runif(length(p))
-  c <- 0
-  y <- s - 1
-  while(c < r){
-    y <- y + 1
-    c <- c + p * stats::dbinom(s, y, p)
-  }
-  y
-}
-
 ##### array manipulation #####
-#' convert matrix-like object to long vector format
-#' @param m matrix-like object to expand
-#' @return vector
-#' @noRd
-expand_matrix <- function (m) {
-  assertthat::assert_that(
-    isTRUE(length(dim(m)) == 2),
-    msg = "error in expand_matrix: dimension of input is not 2"
-    )
-  as.vector(as.matrix(m))
-}
-
 #' convert array to long matrix format
 #' @param a 3D array to expand
 #' @return matrix
@@ -154,35 +120,8 @@ flocker_version <- function() {
 #' @noRd
 get_unit_group <- function(data) {
   n_group <- data$ff_n_group[1]
-  n_unit <- data$ff_n_unit[1]
-  n_unit_group <- data$ff_n_unit_group[seq_len(n_group)]
-  unit_group <- integer(n_unit)
-  unit_indices <- data$ff_group_index[seq_len(n_unit)]
-  unit_group[unit_indices] <- rep(seq_len(n_group), n_unit_group)
-
-  unit_group
-}
-
-#' column names created in flocker
-#' @param n_rep max number of repeat visits
-#' @param n_year max length of hmm series in dynamic models
-#' @return character vector of column names created internally by 
-#'    make_flocker_data
-#' @noRd
-flocker_col_names <- function(n_rep = NULL, n_year = NULL) {
-  out <- c("ff_y", 
-    "ff_n_suc", "ff_n_trial", 
-    "ff_Q", "ff_n_unit", "ff_n_rep", "ff_unit",
-    "ff_n_series", "ff_n_year", "ff_series", "ff_year", "ff_series_year",
-    "ff_n_group", "ff_group_known_present", "ff_n_unit_group",
-    "ff_species")
-  if(!is.null(n_rep)) {
-    out <- c(out, paste0("ff_rep_index", 1:n_rep))
-  }
-  if(!is.null(n_year)) {
-    out <- c(out, paste0("ff_unit_index", 1:n_year))
-  }
-  out
+  starts <- data$ff_group_start[seq_len(n_group)]
+  rep(seq_len(n_group), data$ff_n_unit[starts])
 }
 
 #' Reserved names in flocker
@@ -250,32 +189,6 @@ fdtl <- function(){
   )
 }
 
-#' flocker_data_output_types that yield rep-constant models
-#' @return character vector of data output types
-#' @noRd
-rep_constant_types <- function() {
-  c("single_C")
-}
-
-#' flocker_data_output_types valid for use with threading
-#' @return character vector of data output types
-#' @noRd
-threading_types <- function() {
-  c("single_C")
-}
-
-#' flocker_data_output_types valid for use with colex models
-#' @return character vector of data output types
-#' @noRd
-multi_types <- function() {
-  c("multi")
-}
-
-#' possible values for the `multi_init` parameter if not NULL
-#' @return character vector of options
-#' @noRd
-multi_init_types <- function(){c("explicit", "equilibrium")}
-
 ##### flocker_fit manipulation #####
 #' Test whether an object is of class flocker_fit
 #' @param x object to be tested
@@ -291,8 +204,10 @@ is_flocker_fit <- function(x) {
 #' @noRd
 get_flocker_metadata <- function(x) {
   if (is_flocker_data(x)) {
-    if (!is.null(x$metadata)) return(x$metadata)
-    return(x[setdiff(names(x), "data")])
+    if (!is.list(x$metadata)) {
+      stop("Incompatible flocker_data structure. Pre-2.0 objects require reformatting with make_flocker_data().")
+    }
+    return(x$metadata)
   }
   assertthat::assert_that(
     is_flocker_fit(x),
@@ -310,11 +225,11 @@ get_flocker_metadata <- function(x) {
 }
 
 # Check the schema even when prediction bypasses get_positions (e.g. a
-# plain data frame). Other model families retain their current contracts.
+# plain data frame).
 validate_postprocessing_data <- function(flocker_fit, new_data = NULL) {
-  validate_single_schema(flocker_fit)
+  validate_packed_schema(flocker_fit)
   if (is_flocker_data(new_data)) {
-    validate_single_schema(new_data)
+    validate_packed_schema(new_data)
     if (!identical(get_flocker_metadata(new_data)$type,
                    attr(flocker_fit, "data_type"))) {
       stop("new_data is formatted for a different model type than flocker_fit")
@@ -323,7 +238,7 @@ validate_postprocessing_data <- function(flocker_fit, new_data = NULL) {
   invisible(NULL)
 }
 
-validate_single_schema <- function(x) {
+validate_packed_schema <- function(x) {
   if (is_flocker_fit(x)) {
     type <- attr(x, "data_type")
     metadata <- attr(x, "flocker_metadata")
@@ -331,9 +246,9 @@ validate_single_schema <- function(x) {
     metadata <- get_flocker_metadata(x)
     type <- metadata$type
   }
-  if (identical(type, "single") &&
-      !identical(metadata$schema_version, 2L)) {
-    stop("Incompatible single-season packing schema. Pre-2.0 objects require a compatible 1.x installation or reformatting and refitting.")
+  if (!identical(metadata$schema_version, 2L)) {
+    stop(paste0("Incompatible ", switch(type, single = "single-season", single_C = "rep-constant single-season", multi = "multiseason", twolevel_single = "two-level", augmented = "augmented"),
+                " packing schema. Pre-2.0 objects require a compatible 1.x installation or reformatting and refitting."))
   }
   invisible(NULL)
 }
@@ -409,115 +324,26 @@ get_positions <- function(data_object, unit_level = FALSE) {
     isTRUE(is_flocker_fit(data_object)) | isTRUE(is_flocker_data(data_object)),
     msg = "the data object must either be a flocker_fit or a flocker_data object"
   )
+  validate_packed_schema(data_object)
+  metadata <- get_flocker_metadata(data_object)
+  data_type <- metadata$type
   the_data <- data_object$data
-  if(is_flocker_fit(data_object)) {
-    # Older fits predate flocker_metadata but still carry data_type, which is
-    # sufficient here for model types that need no additional metadata.
-    data_type <- attributes(data_object)$data_type
-  } else {
-    data_type <- get_flocker_metadata(data_object)$type
-  }
 
   if (data_type == "single") {
-    validate_single_schema(data_object)
-    metadata <- get_flocker_metadata(data_object)
     if (unit_level) {
       return(stats::setNames(metadata$unit_start, metadata$original_dimnames[[1]]))
     }
     return(metadata$original_to_packed)
   }
 
-  if(data_type == "single_C") {
-    n_unit <- nrow(the_data)
-    n_rep <- max(the_data$ff_n_trial)
-  } else {
-    n_unit <- the_data$ff_n_unit[1]
-    n_rep <- max(the_data$ff_n_rep[seq_len(n_unit)], na.rm = TRUE)
+  if (data_type %in% c("multi", "twolevel_single", "augmented")) {
+    return(if (unit_level) metadata$unit_to_packed else metadata$original_to_packed)
   }
 
-  if(data_type == "twolevel_single") {
-    index_matrix <- as.matrix(
-      the_data[seq_len(n_unit), grepl("^ff_rep_index", names(the_data))]
-    )
-    assertthat::assert_that(ncol(index_matrix) == n_rep)
-    unit_order <- get_flocker_metadata(data_object)$unit_order
-    index_matrix <- index_matrix[order(unit_order), , drop = FALSE]
-    index_matrix[index_matrix == -99] <- NA
-    if(!unit_level) {
-      return(index_matrix)
-    } else {
-      return(index_matrix[, 1])
-    }
-  } else if(data_type == "single_C") {
-    index_matrix <- matrix(rep(seq_len(n_unit), n_rep), ncol = n_rep)
-    if(!unit_level) {
-      return(index_matrix)
-    } else {
-      return(index_matrix[, 1])
-    }
-  } else if(data_type == "augmented") {
-    n_species <- the_data$ff_n_group[1]
-    n_site <- n_unit / n_species
-    index_array <- array(dim = c(n_site, n_rep, n_species))
-    rep_index_frame <- the_data[paste0("ff_rep_index", seq_len(n_rep))]
-    rep_index_matrix <- as.matrix(rep_index_frame)
-    metadata <- get_flocker_metadata(data_object)
-    unit_site <- metadata$unit_site
-    unit_group <- get_unit_group(the_data)
-    for(r in seq_len(n_unit)){
-      visit_ids <- which(rep_index_matrix[r, ] != -99)
-      sp_id <- unit_group[r]
-      site_id <- unit_site[r]
-      index_array[site_id, visit_ids, sp_id] <- rep_index_matrix[r, visit_ids]
-    }
-    index_array[index_array == -99] <- NA
-    if(!unit_level) {
-      return(index_array)
-    } else {
-      return(as.matrix(index_array[,1,]))
-    }
-  } else if(data_type == "multi") {
-    n_series <- the_data$ff_n_series[1]
-    unit_index_frame <- the_data[
-      seq_len(n_series),
-      grepl("^ff_unit_index", names(the_data)),
-      drop = FALSE
-    ]
-    max_year <- ncol(unit_index_frame)
-
-    if(!unit_level){
-      index_array <- array(dim = c(n_series, n_rep, max_year))
-      rep_index_frame <- the_data[paste0("ff_rep_index", seq_len(n_rep))][seq_len(n_unit), ]
-      rep_mat  <- as.matrix(rep_index_frame)
-      unit_mat <- as.matrix(unit_index_frame)
-      
-      rc        <- which(!is.na(rep_mat), arr.ind = TRUE)
-      r_vals    <- rep_mat[rc]
-      unit_ids  <- rc[, 1]
-      visit_ids <- rc[, 2]
-      
-      uc           <- which(!is.na(unit_mat), arr.ind = TRUE)
-      unit_vals    <- unit_mat[uc]
-      series_lookup <- uc[, 1][match(unit_ids, unit_vals)]
-      year_lookup   <- uc[, 2][match(unit_ids, unit_vals)]
-      
-      valid <- !is.na(series_lookup)
-      index_array[cbind(series_lookup[valid], visit_ids[valid], year_lookup[valid])] <- r_vals[valid]
-      
-      index_array[index_array == -99] <- NA
-      
-      return(index_array)
-    } else {
-      unit_index_matrix <- array(dim = c(n_series, max_year))
-      unit_mat <- as.matrix(unit_index_frame)
-      uc <- which(!is.na(unit_mat), arr.ind = TRUE)
-      unit_index_matrix[uc] <- unit_mat[uc]
-      
-      unit_index_matrix[unit_index_matrix == -99] <- NA
-      
-      return(unit_index_matrix)
-    }
-  }
+  n_unit <- nrow(the_data)
+  n_rep <- max(the_data$ff_n_trial)
+  index_matrix <- matrix(rep(seq_len(n_unit), n_rep), ncol = n_rep)
+  if (!unit_level) index_matrix else index_matrix[, 1]
 }
 
 #' Get emission likelihoods given observations and detection probabilities
@@ -613,11 +439,15 @@ validate_flock_params <- function(f_occ, f_det, flocker_data,
                                    multiseason, f_col, f_ex, multi_init, f_auto,
                                    augmented, threads, f_meta)
   } else {
-    assertthat::assert_that(metadata$type == "multi")
-    # above line is redundant but included for clarity
     validate_param_combos_multi(f_occ, f_det, flocker_data, 
                                 multiseason, f_col, f_ex, multi_init, f_auto,
                                 augmented, threads)
+  }
+  if (brms::is.brmsformula(f_det)) {
+    validate_unit_formula_variables(f_det$pforms$occ, f_det$pforms$colo,
+                                    f_det$pforms$ex, f_det$pforms$autologistic,
+                                    flocker_data)
+    validate_meta_formula_variables(f_det$pforms$Omega, flocker_data)
   }
   validate_unit_formula_variables(f_occ, f_col, f_ex, f_auto, flocker_data)
   validate_meta_formula_variables(f_meta, flocker_data)
@@ -721,19 +551,7 @@ validate_params_individually <- function(f_occ, f_det, flocker_data,
 #' @noRd
 validate_unit_formula_variables <- function(f_occ, f_col, f_ex, f_auto, flocker_data) {
   # Check that no event covariates are used in unit formulas
-  unit_terms <- character(0)
-  if(!is.null(f_occ)){
-    unit_terms <- c(unit_terms, labels(stats::terms(f_occ)))
-  }
-  if(!is.null(f_col)){
-    unit_terms <- c(unit_terms, labels(stats::terms(f_col)))
-  }
-  if(!is.null(f_ex)){
-    unit_terms <- c(unit_terms, labels(stats::terms(f_ex)))
-  }
-  if(!is.null(f_auto)){
-    unit_terms <- c(unit_terms, labels(stats::terms(f_auto)))
-  }
+  unit_terms <- unique(unlist(lapply(list(f_occ, f_col, f_ex, f_auto), all.vars)))
   assertthat::assert_that(
     !any(unit_terms %in% get_flocker_metadata(flocker_data)$event_covs),
     msg = paste0("Data passed to `make_flocker_data` as event covariates are ",
@@ -753,20 +571,21 @@ validate_meta_formula_variables <- function(f_meta, flocker_data) {
   if (is.null(f_meta)) {
     return(invisible(NULL))
   }
+  metadata <- get_flocker_metadata(flocker_data)
   assertthat::assert_that(
-    "level2_covs" %in% names(flocker_data),
+    "level2_covs" %in% names(metadata),
     msg = "f_meta is only allowed for two-level models."
   )
-  meta_vars <- setdiff(all.vars(f_meta), "Intercept")
+  meta_vars <- setdiff(all.vars(f_meta[[length(f_meta)]]), "Intercept")
   assertthat::assert_that(
-    !(flocker_data$level2_group %in% meta_vars),
+    !(metadata$level2_group %in% meta_vars),
     msg = paste0(
-      "The level-two grouping column (`", flocker_data$level2_group,
+      "The level-two grouping column (`", metadata$level2_group,
       "`) cannot be used in f_meta because it has only one latent state per level."
     )
   )
   assertthat::assert_that(
-    all(meta_vars %in% flocker_data$level2_covs),
+    all(meta_vars %in% metadata$level2_covs),
     msg = paste0("All variables in f_meta must be level-two covariates ",
                  "passed in level2_covs.")
   )
@@ -1070,16 +889,6 @@ is_one_pos_int <- function(x, m = 0) {
   if(!is.numeric(x)){return(FALSE)}
   if(length(x) != 1){return(FALSE)}
   isTRUE(x == floor(x)) & isTRUE(x > m)
-}
-
-#' get shared elements between two vectors
-#' @param x vector
-#' @param y vector
-#' @return all unique elements that occur at least once in both x and y
-#' @noRd
-shared_elements <- function (x, y) {
-  ux <- unique(x)
-  ux[ux %in% y]
 }
 
 #' get largest index in a vector that is not NA
