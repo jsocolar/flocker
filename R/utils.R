@@ -32,41 +32,7 @@ log1m_inv_logit <- function (x) {
 }
 
 
-#' extended binomial RNG
-#' @param p binomial probability
-#' @param s number of successes
-#' @return a sample representing a possible number of trials
-#' @details random samples `y` from the distribution proportional to 
-#'   binomial_pmf(y | n, s)
-#' @noRd
-extended_binomial_rng <- function(p, s) {
-  assertthat::assert_that(is.numeric(p) & length(p) == 1)
-  assertthat::assert_that(is_one_pos_int(s))
-  assertthat::assert_that(p > 0 & p <= 1)
-
-  r <- stats::runif(length(p))
-  c <- 0
-  y <- s - 1
-  while(c < r){
-    y <- y + 1
-    c <- c + p * stats::dbinom(s, y, p)
-  }
-  y
-}
-
 ##### array manipulation #####
-#' convert matrix-like object to long vector format
-#' @param m matrix-like object to expand
-#' @return vector
-#' @noRd
-expand_matrix <- function (m) {
-  assertthat::assert_that(
-    isTRUE(length(dim(m)) == 2),
-    msg = "error in expand_matrix: dimension of input is not 2"
-    )
-  as.vector(as.matrix(m))
-}
-
 #' convert array to long matrix format
 #' @param a 3D array to expand
 #' @return matrix
@@ -222,32 +188,6 @@ fdtl <- function(){
     )
   )
 }
-
-#' flocker_data_output_types that yield rep-constant models
-#' @return character vector of data output types
-#' @noRd
-rep_constant_types <- function() {
-  c("single_C")
-}
-
-#' flocker_data_output_types valid for use with threading
-#' @return character vector of data output types
-#' @noRd
-threading_types <- function() {
-  c("single_C")
-}
-
-#' flocker_data_output_types valid for use with colex models
-#' @return character vector of data output types
-#' @noRd
-multi_types <- function() {
-  c("multi")
-}
-
-#' possible values for the `multi_init` parameter if not NULL
-#' @return character vector of options
-#' @noRd
-multi_init_types <- function(){c("explicit", "equilibrium")}
 
 ##### flocker_fit manipulation #####
 #' Test whether an object is of class flocker_fit
@@ -949,16 +889,6 @@ is_one_pos_int <- function(x, m = 0) {
   if(!is.numeric(x)){return(FALSE)}
   if(length(x) != 1){return(FALSE)}
   isTRUE(x == floor(x)) & isTRUE(x > m)
-}
-
-#' get shared elements between two vectors
-#' @param x vector
-#' @param y vector
-#' @return all unique elements that occur at least once in both x and y
-#' @noRd
-shared_elements <- function (x, y) {
-  ux <- unique(x)
-  ux[ux %in% y]
 }
 
 #' get largest index in a vector that is not NA
