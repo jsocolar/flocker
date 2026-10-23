@@ -271,9 +271,9 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
   
   standard_mfd_checks(obs, unit_covs, event_covs, "multi", NULL, quiet, newdata_checks)
   
-  n_series <- dim(obs)[1]
-  n_visit <- dim(obs)[2]
-  n_season <- dim(obs)[3]
+  n_series <- nrow(obs)
+  n_visit <- ncol(obs)
+  n_season <- nslice(obs)
   first_visit <- matrix(obs[, 1, , drop = FALSE], n_series, n_season)
   n_season_observed <- apply(first_visit, 1, max_position_not_na)
   unit_grid <- matrix(seq_len(n_series * n_season), n_series, n_season)
@@ -291,22 +291,17 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
     values
   })
   packed <- pack_nested_blocks(unit_obs, covariates, event_values,
-                                rep(seq_len(n_series), n_season)[retained])
+                                rep(seq_len(n_series), n_season)[retained], outer = "series")
   data <- packed$data
-  n_row <- nrow(data)
-  data$ff_n_series <- pad_packed(n_series, n_row)
-  data$ff_series_start <- pad_packed(packed$group_start, n_row)
-  data$ff_n_unit <- packed$n_unit
-  data$ff_unit_start <- packed$local_unit_start
-  data$ff_Q <- packed$Q
 
   packed_to_original <- original_indices[retained, , drop = FALSE][packed$packed_to_original]
   original_to_packed <- array(NA_integer_, dim(obs), dimnames(obs))
-  original_to_packed[packed_to_original[!packed$placeholder]] <- which(!packed$placeholder)
+  original_to_packed[as.vector(original_indices[retained, , drop = FALSE])] <-
+    as.vector(packed$original_to_packed)
   unit_to_packed <- matrix(NA_integer_, n_series, n_season,
                            dimnames = dimnames(obs)[c(1, 3)])
   unit_order <- retained_units[packed$unit_order]
-  unit_to_packed[unit_order] <- packed$unit_start
+  unit_to_packed[retained_units] <- packed$unit_to_packed
   out <- list(data = data, metadata = list(
     type = "multi", schema_version = 2L,
     data_role = if (newdata_checks) "new_data" else "model_data",
@@ -456,26 +451,17 @@ make_flocker_data_twolevel_single_ <- function(
   covariates <- cbind(unit_covs, level2_covs[group_id, group_covs, drop = FALSE])
   packed <- pack_nested_blocks(obs, covariates, event_covs, group_id)
   data <- packed$data
-  n_row <- nrow(data)
   n_group <- length(group_levels)
-  data$ff_n_group <- pad_packed(n_group, n_row)
-  data$ff_group_start <- pad_packed(packed$group_start, n_row)
-  data$ff_n_unit <- packed$n_unit
-  data$ff_unit_start <- packed$local_unit_start
-  data$ff_Q <- packed$Q
   group_Q <- vapply(seq_len(n_group), function(g) {
     as.integer(any(obs[group_id == g, , drop = FALSE] == 1, na.rm = TRUE))
   }, integer(1))
   data$ff_group_Q <- group_Q[group_id[packed$unit_order[packed$row_unit]]]
-  unit_to_packed <- integer(nrow(obs))
-  unit_to_packed[packed$unit_order] <- packed$unit_start
-  names(unit_to_packed) <- rownames(obs)
   out <- list(data = data, metadata = list(
     type = "twolevel_single", schema_version = 2L,
     data_role = if (newdata_checks) "new_data" else "model_data",
     flocker_version = flocker_version(), original_dim = dim(obs),
     original_dimnames = dimnames(obs), original_to_packed = packed$original_to_packed,
-    unit_to_packed = unit_to_packed, unit_order = packed$unit_order,
+    unit_to_packed = packed$unit_to_packed, unit_order = packed$unit_order,
     group_start = packed$group_start, unit_start = packed$unit_start,
     unit_group = group_id, group_representatives = match(seq_len(n_group), group_id),
     level2_group = level2_group, level2_group_names = group_levels,

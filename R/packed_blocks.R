@@ -11,7 +11,10 @@ pad_packed <- function(x, n_row) {
 # per retained unit, in the caller's desired within-group order. Model-specific
 # validation and selection of retained units belong to the caller. In particular,
 # multiseason models allow empty units; two-level models need not allow them.
-pack_nested_blocks <- function(obs, unit_covs, event_covs, unit_group) {
+# outer names the outer directory columns; the packing is identical for both.
+pack_nested_blocks <- function(obs, unit_covs, event_covs, unit_group,
+                               outer = c("group", "series")) {
+  outer <- match.arg(outer)
   unit_order <- order(unit_group, seq_len(nrow(obs)))
   group <- unit_group[unit_order]
   n_event <- as.integer(rowSums(!is.na(obs)))[unit_order]
@@ -60,9 +63,16 @@ pack_nested_blocks <- function(obs, unit_covs, event_covs, unit_group) {
     local_n_unit[group_start[g]] <- length(units)
     local_unit_start[directory] <- unit_start[units] - group_start[g] + 1L
   }
+  data[[paste0("ff_n_", outer)]] <- pad_packed(length(group_start), nrow(data))
+  data[[paste0("ff_", outer, "_start")]] <- pad_packed(group_start, nrow(data))
+  data$ff_n_unit <- local_n_unit
+  data$ff_unit_start <- local_unit_start
+  data$ff_Q <- Q[row_unit]
+  unit_to_packed <- integer(nrow(obs))
+  unit_to_packed[unit_order] <- unit_start
+  names(unit_to_packed) <- rownames(obs)
   list(data = data, unit_order = unit_order, group_start = as.integer(group_start),
        unit_start = unit_start, n_event = n_event, row_unit = row_unit,
        packed_to_original = packed_to_original, placeholder = placeholder,
-       original_to_packed = original_to_packed,
-       n_unit = local_n_unit, local_unit_start = local_unit_start, Q = Q[row_unit])
+       original_to_packed = original_to_packed, unit_to_packed = unit_to_packed)
 }
