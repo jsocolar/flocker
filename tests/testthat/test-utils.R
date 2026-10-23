@@ -39,11 +39,6 @@ test_that("array utils work properly", {
   testdf <- as.data.frame(testmat)
   testarray <- array(1:8, dim = c(2,2,2))
   
-  # expand_matrix
-  expect_error(expand_matrix(1:4))
-  expect_identical(expand_matrix(testmat), c(NA, 1:3))
-  expect_identical(expand_matrix(testdf), c(NA, 1:3))
-  
   # expand_array_3D
   expect_error(expand_array_3D(testarray[,,1]))
   expect_equal(expand_array_3D(testarray), matrix(c(1,2,5,6,3,4,7,8), ncol = 2))
@@ -123,12 +118,8 @@ test_that("array utils work properly", {
 })
 
 test_that("bookkeeping works properly", {
-  # flocker_col_names
-  expect_true(all(grepl("^ff_", flocker_col_names(3, 4))))
-  expect_equal(7, length(flocker_col_names(3, 4)) - length(flocker_col_names()))
-  
   # flocker_reserved
-  expect_true(all(grepl(flocker_reserved()[1], flocker_col_names())))
+  expect_true(all(grepl(flocker_reserved()[1], c("ff_y", "ff_unit_start"))))
   expect_true(all(grepl(flocker_reserved()[2], paste0(".", c(".", "foo", 1:2)))))
   expect_true(grepl(flocker_reserved()[3], "Intercept"))
   expect_false(grepl(flocker_reserved()[3], "Intercept_covariate"))
@@ -182,7 +173,7 @@ test_that("group_level_Omega recovers canonical group values", {
     ff_n_group = c(2, -99, -99, -99),
     ff_n_unit = c(4, -99, -99, -99)
   )
-  twolevel_metadata <- list(unit_order = c(3, 1, 4, 2))
+  twolevel_metadata <- list(original_dim = c(4L, 2L), group_representatives = c(3L, 1L))
   expect_equal(
     group_level_Omega(
       fitted_Omega(twolevel_Omega, FALSE), "twolevel_single", twolevel_data,
@@ -1067,55 +1058,6 @@ test_that("is_one_pos_int returns FALSE for a NULL value", {
   null_value <- NULL
   m <- 0
   expect_false(is_one_pos_int(null_value, m))
-})
-
-test_that("shared_elements returns correct shared elements for two non-empty vectors", {
-  vec1 <- c(1, 2, 3, 4, 5, 6)
-  vec2 <- c(4, 5, 6, 7, 8, 9)
-  expected_output <- c(4, 5, 6)
-  expect_equal(shared_elements(vec1, vec2), expected_output)
-})
-
-test_that("shared_elements returns an empty vector when there are no shared elements", {
-  vec1 <- c(1, 2, 3)
-  vec2 <- c(4, 5, 6)
-  expected_output <- integer(0)
-  expect_equal(shared_elements(vec1, vec2), expected_output)
-})
-
-test_that("shared_elements handles vectors with duplicate elements correctly", {
-  vec1 <- c(1, 1, 2, 2, 3, 3)
-  vec2 <- c(2, 2, 3, 3, 4, 4)
-  expected_output <- c(2, 3)
-  expect_equal(shared_elements(vec1, vec2), expected_output)
-})
-
-test_that("shared_elements returns an empty vector when both input vectors are empty", {
-  vec1 <- integer(0)
-  vec2 <- integer(0)
-  expected_output <- integer(0)
-  expect_equal(shared_elements(vec1, vec2), expected_output)
-})
-
-test_that("shared_elements returns an empty vector when one input vector is empty", {
-  vec1 <- c(1, 2, 3)
-  vec2 <- integer(0)
-  expected_output <- integer(0)
-  expect_equal(shared_elements(vec1, vec2), expected_output)
-})
-
-test_that("shared_elements works with character vectors", {
-  vec1 <- c("apple", "banana", "cherry")
-  vec2 <- c("banana", "cherry", "date")
-  expected_output <- c("banana", "cherry")
-  expect_equal(shared_elements(vec1, vec2), expected_output)
-})
-
-test_that("shared_elements works with mixed-type vectors", {
-  vec1 <- c(1, "apple", 2, "banana")
-  vec2 <- c("banana", 2, "date", 3)
-  expected_output <- c(2, "banana")
-  expect_equal(shared_elements(vec1, vec2), expected_output)
 })
 
 test_that("max_position_not_na works correctly", {

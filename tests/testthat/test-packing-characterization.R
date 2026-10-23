@@ -40,7 +40,7 @@ test_that("ragged two-level packing keeps all ecological levels aligned", {
   expected_unit_events[is.na(obs)] <- NA
   expect_equal(recover_packed_values(fd, "unit_marker"), expected_unit_events)
   expect_identical(dim(get_positions(fd)), c(5L, 3L))
-  expect_identical(fd$level2_group_names, c("cedar", "ash", "birch"))
+  expect_identical(get_flocker_metadata(fd)$level2_group_names, c("cedar", "ash", "birch"))
   expect_identical(get_flocker_metadata(fd)$unit_covs,
                    c("group", "unit_marker"))
   expect_identical(get_flocker_metadata(fd)$event_covs, "event_marker")
@@ -51,7 +51,7 @@ test_that("aggregated single-season packing preserves ragged sufficient statisti
   fd <- make_flocker_data(
     obs, unit_covs = data.frame(unit_marker = c(17, 31, 59)), quiet = TRUE
   )
-  expect_identical(fd$type, "single_C")
+  expect_identical(fd$metadata$type, "single_C")
   expect_equal(fd$data$ff_n_trial, c(3, 1, 2))
   expect_equal(fd$data$ff_n_suc, c(2, 0, 1))
   expect_equal(recover_packed_values(fd, "unit_marker", TRUE), c(17, 31, 59))
@@ -88,7 +88,7 @@ test_that("augmented species names align with reconstructed site and event value
   expected_obs <- array(NA_real_, c(2, 2, 3))
   expected_obs[, , 1:2] <- obs
   expected_obs[, , 3] <- matrix(c(0, 0, 0, NA), 2)
-  expect_identical(fd$level2_group_names, c("wren", "thrush", "pseudospecies1"))
+  expect_identical(get_flocker_metadata(fd)$level2_group_names, c("wren", "thrush", "pseudospecies1"))
   expect_equal(recover_packed_values(fd, "ff_y"), expected_obs)
   expect_equal(recover_packed_values(fd, "event_marker"),
                array(rep(event_marker, 3), c(2, 2, 3)))

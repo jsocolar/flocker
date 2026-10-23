@@ -761,18 +761,24 @@ mod9 <- flock(
 [See here](https://paulbuerkner.com/brms/articles/brms_phylogenetics.html) for further details about specifying phylogenetic effects in `brms`.
 
 ### Spatial and autoregressive structures
-In addition to spatial Gaussian processes, `brms` provides a variety of 
-autoregressive structures, both one-dimensional (see `brms::ar()`, 
-`brms::arma()`) and two-dimensional (see `brms::car()`, `brms::sar()`. [See here](https://paulbuerkner.com/brms/reference/car.html) for details about conditional autoregressive (CAR) models in `brms`, and note that `flock()` 
-accepts a `data2` argument that it can pass to `brms` as necessary.
+In addition to spatial Gaussian processes, `brms` provides conditional
+and simultaneous autoregressive structures (`car()` and `sar()`). Their
+applicability depends on the model family and ecological level of the effect;
+not every structure supported by `brms` is supported by a flocker custom family.
+[See here](https://paulbuerkner.com/brms/reference/car.html) for details about
+conditional autoregressive (CAR) models. `flock()` accepts a `data2` argument
+for supplying matrices required by these structures.
 
-Our principle caution for users is that these autoregressive structures might 
-lead to degenerate models when applied at the visit level (in detection 
-formulas) or at the closure-unit level (in occupancy, colonization, extinction, 
-or autologistic formulas) because observation-level random effects are often 
-degenerate in regressions with Bernoulli responses. Thus we recommend applying
-autoregressive terms to groupings of multiple visits (detection formula) or 
-multiple closure-units (other formulas). However, we note that `flocker` *does* 
+`flocker` rejects brms time-series correlation terms (`ar()`, `ma()`, `arma()`,
+`cosy()`, and `unstr()`) in all model formulas. These terms can reorder rows,
+invalidating the packed data used by the occupancy likelihood. Detection
+AR effects grouped by closure-unit are a possible future extension, but are
+not currently supported.
+
+Latent correlation models for binary observations require care: information
+about their variance and dependence parameters comes from patterns across
+observations, and may be weak for short or sparse detection histories.
+However, we note that `flocker` *does*
 provide a well-identified one-dimensional first-order autoregressive structure 
 for occupancy across closure-units in a single-season model. This is achieved by 
 co-opting the autologistic parameterization of the multi-season model and 

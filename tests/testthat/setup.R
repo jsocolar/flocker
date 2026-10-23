@@ -6,7 +6,7 @@ windows_cran <- identical(.Platform$OS.type, "windows") &&
 # Set FLOCKER_TEST_CACHE_DIR to reuse fitted fixtures across R sessions. Bump
 # this version whenever fixture definitions or fit-producing code changes in a
 # way not captured by the package-version checks below.
-fixture_cache_version <- 1L
+fixture_cache_version <- 8L
 fixture_cache_dir <- Sys.getenv("FLOCKER_TEST_CACHE_DIR", unset = "")
 if (!nzchar(fixture_cache_dir)) {
   fixture_cache_dir <- tempdir()
@@ -56,6 +56,11 @@ if (!is.null(cache)) {
   list2env(cache, envir = .GlobalEnv)
 } else {
   set.seed(1)
+  # Build single-season test data with the current packing schema rather than
+  # using the serialized 1.x example data shipped with the package.
+  single_data <- simulate_flocker_data(n_pt = 20, n_sp = 8)
+  mfd_single <- make_flocker_data(single_data$obs, single_data$unit_covs,
+                                single_data$event_covs, quiet = TRUE)
   
   if (windows_cran) {
     example_flocker_model_single2 <- NULL
@@ -291,6 +296,7 @@ if (!is.null(cache)) {
     example_flocker_model_single2 = example_flocker_model_single2,
     mfd_twolevel = mfd_twolevel,
     example_flocker_model_twolevel = example_flocker_model_twolevel,
+    mfd_single = mfd_single,
     mfd_single_C = mfd_single_C,
     example_flocker_model_single_C = example_flocker_model_single_C,
     mfd_aug = mfd_aug,

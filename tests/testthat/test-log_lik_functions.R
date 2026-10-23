@@ -23,8 +23,8 @@ test_that("check log_lik functions work correctly", {
   # augmented (variable observed species plus 10 pseudospecies, 8 draws)
   ll_test <- log_lik_flocker(example_flocker_model_aug)
   n_group <- example_flocker_model_aug$data$ff_n_group[1]
-  known_present <- example_flocker_model_aug$data$ff_group_known_present[
-    seq_len(n_group)
+  known_present <- example_flocker_model_aug$data$ff_group_Q[
+    get_flocker_metadata(example_flocker_model_aug)$group_start
   ]
   n_observed <- sum(known_present)
   n_aug <- n_group - n_observed
@@ -90,12 +90,12 @@ test_that("log_lik_flocker new_data argument works correctly", {
   # wrong data type should error
   expect_error(
     log_lik_flocker(example_flocker_model_single2, new_data = mfd_multi_colex_ex),
-    "data type in new_data does not match"
+    "new_data is formatted for a different model type"
   )
   
   # --- equality checks: passing training data as new_data should match default ---
   
-  # single (uses shipped package data mfd_single)
+  # single (uses current-schema data from setup.R)
   ll_default <- log_lik_flocker(example_flocker_model_single2)
   ll_newdata <- log_lik_flocker(
     example_flocker_model_single2,
