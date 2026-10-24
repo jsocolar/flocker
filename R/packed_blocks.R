@@ -8,8 +8,6 @@ pad_packed <- function(x, n_row) {
 }
 
 # Pack visits in unit_order, retaining mappings to the original input order.
-# A nested caller can group the units without splitting the input matrices.
-# Public formatters validate outcomes, covariates, and trailing missing visits.
 # Empty units are opt-in and occupy one placeholder row. Replacement values
 # are supplied by the caller independently of the packing order.
 pack_unit_block <- function(obs, unit_covs = NULL, event_covs = NULL,
@@ -55,9 +53,10 @@ pack_unit_block <- function(obs, unit_covs = NULL, event_covs = NULL,
        original_to_packed = original_to_packed)
 }
 
-# Choose replacements over the entire dataset, independently of series.
-# Only observed visits contribute to numeric means. Factor levels retain their
-# global ordering, even if a level is absent from an individual series.
+# Choose detection covariate values for ghost rows representing unvisited units
+# in multiseason models. We choose the mean (or for factors the reference level)
+# over the entire dataset, independently of series. Only observed visits contribute
+# to numeric means.
 placeholder_covariate_values <- function(obs, event_covs) {
   lapply(event_covs, function(x) {
     if (is.character(x)) x <- factor(x)
@@ -67,9 +66,9 @@ placeholder_covariate_values <- function(obs, event_covs) {
   })
 }
 
-# Pack all units once, then replace the single block directory with directories
-# local to each outer group. Inputs contain retained units only; within-group
-# order is preserved. outer names the outer directory columns.
+# Use pack_unit_block to pack all units once, then replace the single directory 
+# with directories local to each outer block (group or series). Inputs contain 
+# retained units only.
 pack_nested_blocks <- function(obs, unit_covs, event_covs, unit_group,
                                outer = c("group", "series"), allow_empty = FALSE,
                                placeholder_values = NULL) {
