@@ -8,6 +8,7 @@ pad_packed <- function(x, n_row) {
 }
 
 # Pack visits in unit_order, retaining mappings to the original input order.
+# Inputs are already validated; missing visits must trail within each unit.
 # Empty units are opt-in and occupy one placeholder row. Replacement values
 # are supplied by the caller independently of the packing order.
 pack_unit_block <- function(obs, unit_covs = NULL, event_covs = NULL,
@@ -68,7 +69,7 @@ placeholder_covariate_values <- function(obs, event_covs) {
 
 # Use pack_unit_block to pack all units once, then replace the single directory 
 # with directories local to each outer block (group or series). Inputs contain 
-# retained units only.
+# retained units only. Input order within each group or series is preserved.
 pack_nested_blocks <- function(obs, unit_covs, event_covs, unit_group,
                                outer = c("group", "series"), allow_empty = FALSE,
                                placeholder_values = NULL) {
