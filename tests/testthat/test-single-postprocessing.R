@@ -1,5 +1,5 @@
 test_that("single-season post-processing preserves names and singleton dimensions", {
-  fit <- example_flocker_model_single2
+  fit <- fixture_fit("single")
   skip_if(is.null(fit), "single-season fitted fixture unavailable")
   obs <- rbind(c(1, 0, 0), c(0, NA, NA))
   dimnames(obs) <- list(c("ash", "birch"), c("am", "noon", "pm"))
@@ -59,7 +59,7 @@ test_that("single-season post-processing preserves names and singleton dimension
 })
 
 test_that("single-season schema checks cover all post-processing entry points", {
-  fit <- example_flocker_model_single2
+  fit <- fixture_fit("single")
   skip_if(is.null(fit), "single-season fitted fixture unavailable")
   fd <- structure(list(data = fit$data, metadata = get_flocker_metadata(fit)),
                   class = "flocker_data")

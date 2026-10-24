@@ -1,17 +1,17 @@
 test_that("get_Z gives valid returns", {
-  Z_single <- get_Z(example_flocker_model_single2)
+  Z_single <- get_Z(fixture_fit("single"))
   expect_true(all(Z_single >= 0))
   expect_true(all(Z_single <= 1))
   expect_true(any(Z_single == 1))
   
-  Z_single_C <- get_Z(example_flocker_model_single_C)
+  Z_single_C <- get_Z(fixture_fit("single_C"))
   expect_true(all(Z_single_C >= 0))
   expect_true(all(Z_single_C <= 1))
   expect_true(any(Z_single_C == 1))
   
   testthat::skip_on_cran()
   
-  Z_augmented <- get_Z(example_flocker_model_aug)
+  Z_augmented <- get_Z(fixture_fit("aug"))
   expect_named(Z_augmented, c("unit", "level2"))
   expect_true(all(Z_augmented$unit >= 0))
   expect_true(all(Z_augmented$unit <= 1))
@@ -19,61 +19,61 @@ test_that("get_Z gives valid returns", {
   expect_true(all(Z_augmented$level2 >= 0))
   expect_true(all(Z_augmented$level2 <= 1))
   
-  Z_multi_colex_ex <- get_Z(example_flocker_model_multi_colex_ex)
+  Z_multi_colex_ex <- get_Z(fixture_fit("multi_colex_ex"))
   expect_true(all(Z_multi_colex_ex >= 0, na.rm = T))
   expect_true(all(Z_multi_colex_ex <= 1, na.rm = T))
   expect_true(any(Z_multi_colex_ex == 1, na.rm = T))
   
-  Z_multi_colex_eq <- get_Z(example_flocker_model_multi_colex_eq)
+  Z_multi_colex_eq <- get_Z(fixture_fit("multi_colex_eq"))
   expect_true(all(Z_multi_colex_eq >= 0, na.rm = T))
   expect_true(all(Z_multi_colex_eq <= 1, na.rm = T))
   expect_true(any(Z_multi_colex_eq == 1, na.rm = T))
   
-  Z_multi_auto_ex <- get_Z(example_flocker_model_multi_auto_ex)
+  Z_multi_auto_ex <- get_Z(fixture_fit("multi_auto_ex"))
   expect_true(all(Z_multi_auto_ex >= 0, na.rm = T))
   expect_true(all(Z_multi_auto_ex <= 1, na.rm = T))
   expect_true(any(Z_multi_auto_ex == 1, na.rm = T))
   
-  Z_multi_auto_eq <- get_Z(example_flocker_model_multi_auto_eq)
+  Z_multi_auto_eq <- get_Z(fixture_fit("multi_auto_eq"))
   expect_true(all(Z_multi_auto_eq >= 0, na.rm = T))
   expect_true(all(Z_multi_auto_eq <= 1, na.rm = T))
   expect_true(any(Z_multi_auto_eq == 1, na.rm = T))
   
   
   
-  Z_single_nohist <- get_Z(example_flocker_model_single2, history_condition = FALSE)
+  Z_single_nohist <- get_Z(fixture_fit("single"), history_condition = FALSE)
   expect_true(all(Z_single_nohist >= 0))
   expect_true(all(Z_single_nohist <= 1))
   expect_true(sum(Z_single == 1) > sum(Z_single_nohist == 1))
   
-  Z_single_C_nohist <- get_Z(example_flocker_model_single_C, history_condition = FALSE)
+  Z_single_C_nohist <- get_Z(fixture_fit("single_C"), history_condition = FALSE)
   expect_true(all(Z_single_C_nohist >= 0))
   expect_true(all(Z_single_C_nohist <= 1))
   expect_true(sum(Z_single_C == 1) > sum(Z_single_C_nohist == 1))
   
-  Z_augmented_nohist <- get_Z(example_flocker_model_aug, history_condition = FALSE)
+  Z_augmented_nohist <- get_Z(fixture_fit("aug"), history_condition = FALSE)
   expect_true(all(Z_augmented_nohist$unit >= 0))
   expect_true(all(Z_augmented_nohist$unit <= 1))
   expect_true(
     sum(Z_augmented$unit == 1) > sum(Z_augmented_nohist$unit == 1)
   )
   
-  Z_multi_colex_ex_nohist <- get_Z(example_flocker_model_multi_colex_ex, history_condition = FALSE)
+  Z_multi_colex_ex_nohist <- get_Z(fixture_fit("multi_colex_ex"), history_condition = FALSE)
   expect_true(all(Z_multi_colex_ex_nohist >= 0, na.rm = T))
   expect_true(all(Z_multi_colex_ex_nohist <= 1, na.rm = T))
   expect_true(sum(Z_multi_colex_ex == 1, na.rm = TRUE) > sum(Z_multi_colex_ex_nohist == 1, na.rm = TRUE))
   
-  Z_multi_colex_eq_nohist <- get_Z(example_flocker_model_multi_colex_eq, history_condition = FALSE)
+  Z_multi_colex_eq_nohist <- get_Z(fixture_fit("multi_colex_eq"), history_condition = FALSE)
   expect_true(all(Z_multi_colex_eq_nohist >= 0, na.rm = T))
   expect_true(all(Z_multi_colex_eq_nohist <= 1, na.rm = T))
   expect_true(sum(Z_multi_colex_eq == 1, na.rm = TRUE) > sum(Z_multi_colex_eq_nohist == 1, na.rm = TRUE))
   
-  Z_multi_auto_ex_nohist <- get_Z(example_flocker_model_multi_auto_ex, history_condition = FALSE)
+  Z_multi_auto_ex_nohist <- get_Z(fixture_fit("multi_auto_ex"), history_condition = FALSE)
   expect_true(all(Z_multi_auto_ex_nohist >= 0, na.rm = T))
   expect_true(all(Z_multi_auto_ex_nohist <= 1, na.rm = T))
   expect_true(sum(Z_multi_auto_ex == 1, na.rm = TRUE) > sum(Z_multi_auto_ex_nohist == 1, na.rm = TRUE))
   
-  Z_multi_auto_eq_nohist <- get_Z(example_flocker_model_multi_auto_eq, history_condition = FALSE)
+  Z_multi_auto_eq_nohist <- get_Z(fixture_fit("multi_auto_eq"), history_condition = FALSE)
   expect_true(all(Z_multi_auto_eq_nohist >= 0, na.rm = T))
   expect_true(all(Z_multi_auto_eq_nohist <= 1, na.rm = T))
   expect_true(sum(Z_multi_auto_eq == 1, na.rm = TRUE) > sum(Z_multi_auto_eq_nohist == 1, na.rm = TRUE))
@@ -82,15 +82,15 @@ test_that("get_Z gives valid returns", {
 
 
 test_that("get_Z with sampling gives valid returns", {
-  Z_single <- get_Z(example_flocker_model_single2, sample = TRUE)
+  Z_single <- get_Z(fixture_fit("single"), sample = TRUE)
   expect_true(all(Z_single %in% c(0, 1, NA)))
   
-  Z_single_C <- get_Z(example_flocker_model_single_C, sample = TRUE)
+  Z_single_C <- get_Z(fixture_fit("single_C"), sample = TRUE)
   expect_true(all(Z_single_C %in% c(0, 1, NA)))
   
   testthat::skip_on_cran()
   
-  Z_augmented <- get_Z(example_flocker_model_aug, sample = TRUE)
+  Z_augmented <- get_Z(fixture_fit("aug"), sample = TRUE)
   expect_true(all(Z_augmented$unit %in% c(0, 1, NA)))
   expect_true(all(Z_augmented$level2 %in% c(0, 1, NA)))
   for(sp in seq_len(nrow(Z_augmented$level2))) {
@@ -103,16 +103,16 @@ test_that("get_Z with sampling gives valid returns", {
     expect_true(all(Z_augmented$unit[, sp, ] <= group_Z))
   }
   
-  Z_multi_colex_ex <- get_Z(example_flocker_model_multi_colex_ex, sample = TRUE)
+  Z_multi_colex_ex <- get_Z(fixture_fit("multi_colex_ex"), sample = TRUE)
   expect_true(all(Z_multi_colex_ex %in% c(0, 1, NA)))
   
-  Z_multi_colex_eq <- get_Z(example_flocker_model_multi_colex_eq, sample = TRUE)
+  Z_multi_colex_eq <- get_Z(fixture_fit("multi_colex_eq"), sample = TRUE)
   expect_true(all(Z_multi_colex_eq %in% c(0, 1, NA)))
   
-  Z_multi_auto_ex <- get_Z(example_flocker_model_multi_auto_ex, sample = TRUE)
+  Z_multi_auto_ex <- get_Z(fixture_fit("multi_auto_ex"), sample = TRUE)
   expect_true(all(Z_multi_auto_ex %in% c(0, 1, NA)))
   
-  Z_multi_auto_eq <- get_Z(example_flocker_model_multi_auto_eq, sample = TRUE)
+  Z_multi_auto_eq <- get_Z(fixture_fit("multi_auto_eq"), sample = TRUE)
   expect_true(all(Z_multi_auto_eq %in% c(0, 1, NA)))
 
 })
@@ -215,15 +215,15 @@ test_that("generic two-level states remain in original unit order", {
 test_that("get_Z returns both levels for augmented models", {
   testthat::skip_on_cran()
 
-  n_group <- example_flocker_model_aug$data$ff_n_group[1]
-  known_present <- example_flocker_model_aug$data$ff_group_Q[
-    get_flocker_metadata(example_flocker_model_aug)$group_start
+  n_group <- fixture_fit("aug")$data$ff_n_group[1]
+  known_present <- fixture_fit("aug")$data$ff_group_Q[
+    get_flocker_metadata(fixture_fit("aug"))$group_start
   ]
   n_observed <- sum(known_present)
   n_aug <- n_group - n_observed
 
   conditioned <- get_Z(
-    example_flocker_model_aug, draw_ids = 1:2
+    fixture_fit("aug"), draw_ids = 1:2
   )
   expected_names <- c(
     paste0("observed_species", seq_len(n_observed)),
@@ -238,26 +238,26 @@ test_that("get_Z returns both levels for augmented models", {
   expect_true(all(conditioned$level2[known_present == 1, ] == 1))
 
   unconditioned <- get_Z(
-    example_flocker_model_aug, draw_ids = 1:2,
+    fixture_fit("aug"), draw_ids = 1:2,
     history_condition = FALSE
   )
   Omega <- fitted_flocker(
-    example_flocker_model_aug, components = "Omega", draw_ids = 1:2,
+    fixture_fit("aug"), components = "Omega", draw_ids = 1:2,
     response = TRUE, unit_level = TRUE
   )
   expected <- group_level_Omega(
-    Omega, "augmented", example_flocker_model_aug$data,
-    get_flocker_metadata(example_flocker_model_aug)
+    Omega, "augmented", fixture_fit("aug")$data,
+    get_flocker_metadata(fixture_fit("aug"))
   )
   expect_equal(as.vector(unconditioned$level2), as.vector(expected))
 
   one_draw <- get_Z(
-    example_flocker_model_aug, draw_ids = 1
+    fixture_fit("aug"), draw_ids = 1
   )
   expect_equal(dim(one_draw$level2), c(n_group, 1L))
 
   sampled <- get_Z(
-    example_flocker_model_aug, draw_ids = 1:2, sample = TRUE
+    fixture_fit("aug"), draw_ids = 1:2, sample = TRUE
   )
   expect_true(all(sampled$unit %in% 0:1))
   expect_true(all(sampled$level2 %in% 0:1))
@@ -266,21 +266,21 @@ test_that("get_Z returns both levels for augmented models", {
 test_that("new_data works as expected", {
   fd1 <- simulate_flocker_data(n_sp = 5)
   mfd1 <- make_flocker_data(fd1$obs, fd1$unit_covs, fd1$event_covs, quiet = TRUE)
-  expect_silent(get_Z(example_flocker_model_single2, new_data = mfd1))
-  expect_silent(get_Z(example_flocker_model_single2, history_condition = FALSE, new_data = fd1$unit_covs))
-  expect_error(get_Z(example_flocker_model_single2, history_condition = TRUE, new_data = fd1$unit_covs))
+  expect_silent(get_Z(fixture_fit("single"), new_data = mfd1))
+  expect_silent(get_Z(fixture_fit("single"), history_condition = FALSE, new_data = fd1$unit_covs))
+  expect_error(get_Z(fixture_fit("single"), history_condition = TRUE, new_data = fd1$unit_covs))
 })
 
 test_that("single_C history conditioning uses observations from new_data", {
-  unit_covs <- example_flocker_model_single_C$data[c("uc1", "species")]
-  n_rep <- max(example_flocker_model_single_C$data$ff_n_trial)
+  unit_covs <- fixture_fit("single_C")$data[c("uc1", "species")]
+  n_rep <- max(fixture_fit("single_C")$data$ff_n_trial)
   new_obs <- matrix(0L, nrow = nrow(unit_covs), ncol = n_rep)
   detected_units <- c(1L, nrow(new_obs))
   new_obs[detected_units, 1] <- 1L
   new_data <- make_flocker_data(new_obs, unit_covs, quiet = TRUE)
 
   Z <- get_Z(
-    example_flocker_model_single_C,
+    fixture_fit("single_C"),
     new_data = new_data,
     history_condition = TRUE
   )
