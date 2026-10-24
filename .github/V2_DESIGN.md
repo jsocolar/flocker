@@ -532,6 +532,27 @@ time, full integration time, and source-tarball size before and after the
 rewrite. The CRAN test phase should be dominated by its one intentional Stan
 compilation rather than growing linearly with the number of model families.
 
+## Near-term integration and validation sequence
+
+The fixed-width schema and shared packing implementation are now integrated on
+`flocker2_0`. First bring the existing families, packaged examples, documentation,
+and test infrastructure into a clean state on that branch. Keep the packaged
+example fit compact: retain four posterior draws and do not ship its compiled
+platform-specific Stan library. The fit demonstrates the API, not inference.
+
+After this cleanup, use a separate long-lived development branch targeting
+`flocker2_0` for further priorities. Integrate reviewable changes there before
+merging that branch into `flocker2_0`, and merge `flocker2_0` into `main` only
+when ready for the 2.0 release. The recent 1.1 CRAN release leaves room for
+additional development before 2.0; the initial schema migration does not by
+itself close the release scope.
+
+Run the long SBC exercises separately when resources permit. Record the exact
+`flocker2_0` commit and toolchain used for each run. Subsequent likelihood or
+packing changes require corresponding validation; results from an earlier
+baseline do not automatically validate those changes. Do not regenerate SBC
+results as a side effect of example or documentation maintenance.
+
 ## Recommended implementation sequence
 
 1. Freeze representative 1.1 behavior with characterization tests, especially
