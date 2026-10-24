@@ -181,7 +181,6 @@ make_flocker_data_static <- function(
     ) {
   standard_mfd_checks(obs, unit_covs, event_covs, "single", NULL, quiet, newdata_checks)
   
-  n_unit <- nrow(obs)
   n_rep <- ncol(obs)
 
   if (is.null(event_covs)) {
@@ -199,40 +198,20 @@ make_flocker_data_static <- function(
       unit_covs = names(unit_covs), event_covs = names(event_covs)
     ))
   } else {
-    # Pack actual events contiguously within each unit. Unit covariates retain
-    # their real values on every visit, including when used for detection.
     obs <- as.matrix(obs)
-    n_event <- as.integer(rowSums(!is.na(obs)))
-    packed_to_original <- as.vector(t(matrix(seq_along(obs), nrow = n_unit)))
-    packed_to_original <- packed_to_original[!is.na(obs[packed_to_original])]
-    event_unit <- rep(seq_len(n_unit), n_event)
-    flocker_data <- data.frame(ff_y = as.integer(obs[packed_to_original]))
-    if (!is.null(unit_covs)) {
-      flocker_data <- cbind(flocker_data, unit_covs[event_unit, , drop = FALSE])
-    }
-    for (name in names(event_covs)) {
-      flocker_data[[name]] <- as.matrix(event_covs[[name]])[packed_to_original]
-    }
-    unit_start <- cumsum(c(1L, head(n_event, -1L)))
-    n_data <- nrow(flocker_data)
-    flocker_data$ff_n_unit <- c(n_unit, rep(-99L, n_data - 1L))
-    flocker_data$ff_unit_start <- c(unit_start, rep(-99L, n_data - n_unit))
-    flocker_data$ff_Q <- as.integer(rowSums(obs, na.rm = TRUE) > 0)[event_unit]
-    rownames(flocker_data) <- NULL
-    original_to_packed <- array(NA_integer_, dim(obs), dimnames(obs))
-    original_to_packed[packed_to_original] <- seq_along(packed_to_original)
+    packed <- pack_unit_block(obs, unit_covs, lapply(event_covs, as.matrix))
     out <- list(
-      data = flocker_data,
+      data = packed$data,
       metadata = list(
         type = "single", schema_version = 2L,
         data_role = if (newdata_checks) "new_data" else "model_data",
         flocker_version = flocker_version(),
         original_dim = dim(obs), original_dimnames = dimnames(obs),
-        packed_to_original = packed_to_original,
-        original_to_packed = original_to_packed,
-        event_unit = event_unit,
-        unit_start = unit_start,
-        n_event = n_event,
+        packed_to_original = packed$packed_to_original,
+        original_to_packed = packed$original_to_packed,
+        event_unit = packed$row_unit,
+        unit_start = packed$unit_start,
+        n_event = packed$n_event,
         unit_covs = names(unit_covs), event_covs = names(event_covs)
       )
     )
@@ -290,8 +269,11 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
     dim(values) <- dim(unit_obs)
     values
   })
+  placeholder_values <- placeholder_covariate_values(unit_obs, event_values)
   packed <- pack_nested_blocks(unit_obs, covariates, event_values,
-                                rep(seq_len(n_series), n_season)[retained], outer = "series")
+                                rep(seq_len(n_series), n_season)[retained],
+                                outer = "series", allow_empty = TRUE,
+                                placeholder_values = placeholder_values)
   data <- packed$data
 
   packed_to_original <- original_indices[retained, , drop = FALSE][packed$packed_to_original]

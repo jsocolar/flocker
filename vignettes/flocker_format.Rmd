@@ -17,82 +17,81 @@ knitr::opts_chunk$set(echo = TRUE)
 
 `brms` offers the option to specify models that incorporate `Stan` code for custom likelihood functions. `brms` can then fit models using these likelihoods where the distributional parameters of the custom likelihood are given linear predictors in the usual way. Relatively straightforward examples are given in the [brms custom families vignette](https://paulbuerkner.com/brms/articles/brms_customfamilies.html), but `brms` provides surprising flexibility to do fancy things with custom families. In this vignette, I show how we use this flexibility to harness `brms` to occupancy modeling likelihoods. I assume that the reader knows a little bit about [occupancy models](https://jsocolar.github.io/closureOccupancy/) and `brms`, but not much else.
 
+`flocker 2.0` brings a major update to the `flocker_data` format and to this article. Previously, the `flocker_data` format included columns such that the first data row corresponding to a given unit stored the row indices for each visit belonging to that unit. Now, `flocker` uses one column of unit-start indices to encode the boundaries between contiguous blocks of visits.  The critical advantage of this approach over the previous format is that the format contains a fixed number of indexing columns regardless of how many visits exist in the data. With one column of unit-start indices regardless of the number of visits, both the `brms` custom families and their associated `Stan` code are stable objects that no longer need to be assembled at runtime. For details of the new format, read on.
+
 ## The problem
 The challenge in shoehorning an occupancy model into a `brms` custom family is that each multiplicative term in the occupancy-model likelihood represents a [closure-unit](https://jsocolar.github.io/flocker/articles/flocker_tutorial.html#terms-and-definitions) that might contain multiple repeat visits *with different detection covariates*. The likelihood does not factorize at the visit level and therefore must be computed unit-wise, but the linear predictor for detection needs to be computed visit-wise. How can we tell `brms` to compute a visit-wise detection predictor without telling it to try to compute a visit-wise log-likelihood?
 
 ## Two key tricks: unlooped families and `vint` terms
 The first trick involves the unassuming `loop` argument to `brms::custom_family()`. Defaulting to `TRUE`, `loop` controls whether or not the custom likelihood will be evaluated row-wise. The `brms::custom_family` documentation points out that setting `loop = FALSE` can enable efficient vectorized computation of the likelihood. We are going to co-opt this argument for a different purpose. We are going to perform a custom likelihood computation that has access to all rows of the data simultaneously not to enable vectorization, but to ensure that the likelihood can "see" all of the relevant visits simultaneously as it computes the unit-wise likelihood.
 
-Let's think this through: our likelihood function is going to ingest a one-dimensional array `y` of visit-wise integer response data, and then vectors of pre-computed linear predictors for two distributional parameters: `occ` for occupancy and `det` for detection. If we have $M$ total visits to each site, then $\frac{M-1}{M}$ of the elements of `occ` will be redundant (since the occupancy predictor cannot change across visits), but there will be no redundancy in `y` nor `det`. 
+Let's think this through: our likelihood function is going to ingest a one-dimensional array `y` of visit-wise integer response data, and then vectors of pre-computed linear predictors for two distributional parameters: `occ` for occupancy and `det` for detection. If we have $M$ total visits to each site, then a fraction $\frac{M-1}{M}$ of the elements of `occ` will be redundant (since the occupancy predictor cannot change across visits), but there will be no redundancy in `y` nor `det`.
 
-What we need now is a likelihood function that can associate each row with the correct closure-unit.  Here's where the second trick comes in. Some likelihoods require "extra" response data that inform the likelihood without being involved in the computation of the linear predictors. The canonical example is the number of trials in a binomial response. To supply such data in custom likelihoods, `brms` provides the functions `vint()` and `vreal()` (for integer and real data respectively). We are going to use repeated calls to `vint()` to inject all of the necessary indexing information into the likelihood.
+In the `flocker` interface, the detection component is called `det`; in the custom-family signature and the `Stan` code below, it is called `mu`. Both `mu` and `occ` enter the likelihood on the logit scale, rather than as probabilities or log-probabilities.
+
+What we need now is a likelihood function that can associate each row with the correct closure-unit.  Here's where the second trick comes in. Some likelihoods require "extra" response data that inform the likelihood without being involved in the computation of the linear predictors. The canonical example is the number of trials in a binomial response. To supply such data in custom likelihoods, `brms` provides the functions `vint()` and `vreal()` (for integer and real data respectively). We are going to use `vint()` to inject all of the necessary indexing information into the likelihood.
 
 ## The `flocker_data` format for a single-season model
-Suppose the model has $N$ unique closure-units, and the maximum number of visits to any closure-unit is $M$. We will ensure that the data are formatted such that the first $N$ rows correspond to the first visits to each closure-unit. Then we will pass $M$ `vint` terms whose first $N$ elements each give the row indices $i$ corresponding to the $m$th visit to that closure-unit, for $m$ in $1$ to $M$. All subsequent elements with indices $i > N$ are irrelevant. Note that the first of these `vint` arrays is redundant and contains as its first $N$ elements simply the integers from 1 to $N$. We include it anyway to keep the code logic transparent and avoid bugs. Moreover, it will become relevant in more advanced multi-season models where it is possible to have closure-units that receive zero visits but still are relevant to the likelihood (see [Even fancier families]).
+Suppose the model has $N$ unique closure-units. We ensure that the rows corresponding to each closure unit occur together in the input data. Then we supply a `vint` term whose first `N` elements give the row index where each unit begins. All subsequent elements of the `vint` column, with indices $i > N$, are irrelevant.
 
-To simplify the `Stan` code that decodes this data structure, we also pass three additional `vint` terms: 
+We also pass two additional precomputed `vint` terms to help simplify the `Stan` code and improve computational efficiency.
 
-* the first giving $N$ as its first element, with all subsequent elements irrelevant,
-* the second giving the total number of repeat visits at each closure-unit as its first $N$ elements, with all subsequent elements irrelevant,
-* and the third containing a pre-computed binary indicator for whether or not a closure-unit has at least one detection as its first $N$ elements, with all subsequent elements irrelevant.
+* A term whose first element gives the number of units, with all other elements irrelevant, and
+* A pre-computed binary indicator at each row that encodes whether or not that row belongs to a closure-unit that has at least one detection.
 
-Thus, the likelihood function has a number of `vint` terms equal to three plus the maximum number of repeat visits to any site. The `Stan` code to decode this format depends on the number of repeat visits and is generated on-the-fly at runtime. Here's how it looks for a dataset with a maximum of four repeat visits:
+For example, suppose unit A has three visits and at least one detection, while unit B has two visits and no detections. The auxiliary columns look like this:
+
+| Row | Unit (for illustration) | `ff_n_unit` | `ff_unit_start` | `ff_Q` |
+|---:|:---|---:|---:|---:|
+| 1 | A | 2 | 1 | 1 |
+| 2 | A | -99 | 4 | 1 |
+| 3 | A | -99 | -99 | 1 |
+| 4 | B | -99 | -99 | 0 |
+| 5 | B | -99 | -99 | 0 |
+
+Indices are one-based. Notice that the unit-start directory occupies the first $N$ rows: its entries do not necessarily sit at the starts of the units they describe. Unused count and start entries contain `-99`, while `ff_Q` carries the correct unit detection indicator on every row. The unit labels in this table are illustrative; the likelihood identifies units from the start indices.
+
+Here's the `Stan` code that can unpack this data and compute the likelihood:
 
 ```{r stancode-example}
 cat(flocker:::make_occupancy_single_lpmf())
 
 ```
 
-In addition to the functions to generate this custom `Stan` code, the main workhorses in `flocker` are functions to pack and unpack data and linear predictors from the shape of the observational data to the `flocker_data` format (and back). For further details, check out `flocker:::make_flocker_data_static` (for packing) and `flocker:::get_positions` (for unpacking).
+In addition to this custom `Stan` code, the main workhorses in `flocker` are functions to pack and unpack data and linear predictors from the shape of the observational data to the `flocker_data` format (and back). For further details, check out `flocker:::make_flocker_data_static` (for packing) and `flocker:::get_positions` (for unpacking).
 
-### A note on performance
-As noted, the `flocker` approach to fitting in `brms` contains one substantial redundancy, which is that the linear predictor for occupancy gets computed redundantly several-fold too many times, since it need be computed only once per closure-unit, whereas `flocker` computes it once per visit. In addition, it is not possible to use `Stan`'s `reduce_sum` functionality for within-chain parallelization of the computation of the linear predictors, since chunking up the data destroys the validity of the indexing (and requires a level of control that `reduce_sum` does not provide to ensure that no closure-units end up split across multiple chunks). Despite these disadvantages, we find that occupancy modeling with `flocker` is remarkably performant, in many cases outperforming our previous hand-coded `Stan` implementations of models for large datasets and comparing favorably to other contemporary packages for occupancy modeling. 
+The formatted object has two parts. `flocker_data$data` is the dataframe consumed by `brms`, containing covariates, outcomes, and auxiliary columns. `flocker_data$metadata` records the original dimensions and names, reconstruction mappings, schema version, and whether the object was formatted for fitting or prediction. For visit-level families, `get_positions()` uses those mappings to restore the original observation layout; it does not infer that layout from the packed values.
+
+There is one useful exception to the visit-level representation. For ordinary single-season models without event covariates, `flocker` uses the `single_C` family: one row per unit, containing the number of detections and the number of visits for a binomial likelihood. This family uses `loop = TRUE` and supports within-chain threading. It has the same `$data`/`$metadata` container as the other families.
+
+### A note on performance and certain `brms` structures
+As noted, the `flocker` approach to fitting in `brms` contains one substantial inefficiency, which is that the linear predictor for occupancy gets computed redundantly several-fold too many times. It needs to be computed only once per closure-unit, but `flocker` computes it once per visit. Furthermore, within-chain threading is not currently supported for the visit-level families. Arbitrarily splitting the packed rows can divide closure-units or invalidate their indexing. Despite these disadvantages, we find that occupancy modeling with `flocker` is remarkably performant, in many cases outperforming our previous hand-coded `Stan` implementations of models for large datasets and comparing favorably to other contemporary packages for occupancy modeling.
+
+In addition to the above issues of computational efficiency, the `flocker_data` format introduces a few further quirks that directly influence model specification in certain cases. One such issue arises because certain temporal autoregressive structures (including `ar()` and `arma()`) cause `brms` to reorder the data rows prior to fitting. As this reordering invalidates the packed structure of a `flocker_data` object, these terms are currently disallowed in `flocker` models.
+
+A second issue is that unit covariates are repeated at their actual values on every visit row. Consequently, `brms` centers predictors and constructs spline bases from the expanded visit-level covariate data. Units with more visits therefore contribute more rows to this preprocessing. Group-level covariates in two-level models are likewise repeated across their groups' visit rows. The likelihood reads the occupancy predictors at unit or group starts, but this does not change the data that `brms` uses to construct those predictors. Some model structures, such as the default choice of spline basis, might be influenced by this repetition of values.
 
 ## Even fancier families
-Flocker provides a set of families that are more involved still. The first are the multi-season families, which group closure-units into series within which the occupancy state changes via modeled colonization and extinction dynamics. The second are two-level single-season models, in which closure-units are grouped into larger units whose presence, and thus availability for detection, is modeled explicitly. Data-augmented multi-species models are a special case: species are the level-two groups, and species-site combinations are the closure-units.
+Flocker also provides a set of more involved families. The first are the multi-season families, which group closure-units into series within which the occupancy state changes via modeled colonization and extinction dynamics. The second are two-level single-season models, in which closure-units are grouped into larger units whose presence, and thus availability for detection, is modeled explicitly. Data-augmented multi-species models are a special case: species are the level-two groups, and species-site combinations are the closure-units.
 
-### The multi-season format
-We fit multi-season models via a hidden Markov model (HMM) approach to the likelihood. This vignette does not cover the implementation of that likelihood in detail--just the necessary data that we need to send to the unlooped likelihood function. Suppose the data contain $S$ distinct series (i.e. distinct hidden Markov sequences), $U$ closure-units (i.e. the sum over series of the number of timesteps per series). The data are ordered so that the first $S$ rows correspond to the first repeat visit to the first timestep of all series (or to a ghost row if a given series has no visits in the first timestep), and the first $U$ rows correspond to the first repeat visit to each closure-unit (i.e. timestep, or a ghost row if a given timestep contains no visits).
+Both of these families share a format, differing only in the inclusion of one extra pre-computed column in the two-level case. The format consists of a stack of single-season `flocker_data` blocks, one per group or series. The `vint` columns for the number and starting rows of each unit "start over" within blocks, and they specify the unit positions relative to the start of the block. An additional pair of `vint` columns give the number of blocks and the starting positions of each block, precisely analogous to the way we index unit starts in the single level case. Outer block starts index rows of the entire dataframe, while unit starts index rows relative to their own block.
 
-We pass:
+In multiseason models, the order of the units within series is encoded by the order in which the units appear in the series block. Thus, we pass a total of five `vint` columns: the same three columns that are used in the single-level format, plus two outer columns giving the number of series and the positions of the series starts. In two-level models, we supply one extra `vint` column giving a binary indicator for whether at least one unit within a group has at least one detection, for six `vint` columns total.
 
-* A `vint` term for the number of series $S$. Elements after the first are irrelevant.
-* A `vint` term for the total number of closure-units $U$, including never-visited closure-units. Elements after the first are irrelevant.
-* A `vint` term for the number of closure-units (timesteps) in each series. Elements after $S$ are irrelevant.
-* A `vint` term for the number of sampling events in each closure-unit. Elements after $U$ are irrelevant.
-* A `vint` term giving the binary indicator $Q$ for whether there is at least one detection. Elements after $U$ are irrelevant.
-* Multiple `vint` terms, one for each timestep up to the maximum number of timesteps in any series, giving the row index of the first visit in that timestep within each series. Elements after $S$ are irrelevant.
-* Multiple `vint` terms, one for each sampling event up to the maximum number of sampling events in any unit, giving the row index corresponding to that visit. Elements after $U$ are irrelevant.
+### The multi-season format details
+Multi-season models also have the property that series may contain closure-units with no visits (i.e. unvisited seasons) that nevertheless cannot be dropped from the likelihood, and may have unit covariates associated with them. For each retained unvisited season, we add one placeholder row with an observed-outcome sentinel of `-99` and `ff_Q = 0`. This represents an existing ecological unit, not an extra unit. The placeholder contributes no detection information, but the unit's occupancy state and any transition into it remain part of the likelihood. Leading and internal unvisited seasons are retained; trailing unvisited seasons are currently omitted.
 
-Thus, we pass a number of `vint` terms equal to four plus the maximum number of timesteps in any series plus the maximum number of visits in any timestep. Here's `Stan` code to decode this format and compute the likelihood for 5 timesteps with a maximum of 4 repeat visits, in this case for the colonization-extinction flavor of multispecies model. Note that this likelihood includes custom functions that `flocker` defines elsewhere and passes to the custom family via `stanvars`:
+Unit covariates on placeholder rows retain their supplied values. Missing detection covariates are replaced with the mean across all observed visits in all series for numeric covariates, or the reference level for factors. Supplied nonmissing detection covariates on placeholder rows are retained. The replacements are chosen before splitting the data into series, so a series' own covariate distribution does not determine its replacement values.
+
+Adding copies of a numeric covariate's observed mean preserves its raw mean and range. This limits some effects of the placeholder rows on preprocessing, but it does not preserve the empirical distribution or sample size, nor generally the mean after a nonlinear transformation. Factor reference-level replacements also change level frequencies. These rows therefore need to be borne in mind when interpreting centering, spline construction, and Gaussian-process preprocessing; they do not provide a blanket guarantee that all such operations are unaffected.
+
+Here is the `Stan` code that unpacks the multiseason format:
 
 ```{r multiseason-stancode-example}
 cat(flocker:::make_occupancy_multi_lpmf())
 
 ```
 
-### The two-level format
-For a two-level single-season model, suppose that the dataset contains $G$ level-two groups, $U$ closure-units distributed among those groups, and up to $M$ visits per closure-unit. We arrange the data so that the first $G$ rows contain the first visits to one representative closure-unit from each group. This allows the likelihood to use the first $G$ elements of the group-level linear predictor, each computed from a real covariate row. The first $U$ rows contain the first visits to all closure-units, just as in the ordinary single-season format.
-
-The data-augmented model uses this same representation. In that case, the $G$ groups are observed and augmented species, while the $U$ closure-units are species-site combinations.
-
-We pass the following auxiliary terms:
-
-* A `vint` term giving the total number of closure-units $U$. Elements after the first are irrelevant.
-* A `vint` term giving the number of sampling events per closure-unit. Elements after $U$ are irrelevant.
-* A `vint` term giving the binary indicator $Q$ for whether there is at least one detection at each closure-unit. Elements after $U$ are irrelevant.
-* A `vint` term giving the number of level-two groups $G$. Elements after the first are irrelevant.
-* A `vint` term giving a binary indicator for whether each group is known present. In the current format, this indicator is 1 for groups with at least one detection and 0 otherwise. Elements after $G$ are irrelevant.
-* A `vint` term giving the number of closure-units belonging to each group. Elements after $G$ are irrelevant.
-* One `vint` term containing the closure-unit indices concatenated group by group. Its first $U$ elements form a permutation of the integers from 1 through $U$. The preceding `vint` term gives the segment lengths that identify which indices belong to each group; elements after $U$ are irrelevant.
-* Multiple `vint` terms, one for each sampling event up to $M$, giving the row index corresponding to that visit. Elements after $U$ are irrelevant.
-
-Thus, we pass seven plus $M$ `vint` terms, regardless of the number of groups or the number of closure-units within each group. Here's `Stan` code to decode this format and compute the likelihood for a two-level model with a maximum of four repeat visits:
-
-```{r twolevel-stancode-example}
-cat(flocker:::make_occupancy_twolevel_single_lpmf())
-
-```
 
 <center>
 
