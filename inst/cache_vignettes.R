@@ -66,7 +66,10 @@ cache_vignettes <- function(vignettes = NULL, render_html = FALSE, pkg_root = ge
     env <- new.env(parent = globalenv())
     env$params <- rmarkdown::yaml_front_matter(infile)$params
     message("Knitting ", infile, " -> ", outfile)
-    knitr::knit(infile, output = outfile, envir = env)
+    # root.dir controls chunk evaluation, but knitr can write relative figure
+    # paths from the calling directory. Align both directories so article
+    # figures land beside the cached Rmd and its relative links resolve.
+    withr::with_dir(root, knitr::knit(infile, output = outfile, envir = env))
     if (is_sbc) {
       # Cached articles resolve image links relative to vignettes/articles.
       lines <- readLines(outfile, warn = FALSE)
