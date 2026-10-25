@@ -1,0 +1,549 @@
+---
+title: "Exact versus truncated Poisson N-mixture likelihoods"
+output:
+  html_document:
+    toc: true
+params:
+  output_dir: null
+---
+
+## Refreshing this cached article
+
+The executable source is `n_mixture_benchmark.Rmd.orig`; the `.Rmd` is a
+static snapshot for rendering without rerunning Stan or timings. Both live
+under `vignettes/articles`, which is excluded from the CRAN source package.
+Edit the `.orig` and regenerate the `.Rmd` only when new timings are wanted.
+
+To refresh this article alone and render its cached HTML, run from the package root:
+
+```r
+source("inst/cache_vignettes.R")
+cache_vignettes("n_mixture_benchmark", render_html = TRUE)
+```
+
+Omit `render_html = TRUE` to update only the cached `.Rmd`. Pass a vector of
+vignette names to refresh a selection. Calling `cache_vignettes()` without a
+selection refreshes all registered vignettes, including the long SBC articles;
+sourcing the script itself does not run anything.
+
+## Purpose and assumptions
+
+This development benchmark compares the current exact Poisson/binomial
+N-mixture likelihood with two implementations that sum over abundance through
+**N = 1,000**, inclusive:
+
+1. The exact likelihood, with log coefficients precomputed in R.
+2. Optimized truncation, with log combinatorial weights precomputed in R and
+   a vectorized log-sum-exp during evaluation.
+3. Direct truncation, calling the Poisson and binomial log PMFs at every
+   possible abundance.
+
+Every visit within a unit has the same observed count: 0, 10, ..., 100.
+We consider 2, 5, and 10 visits. Detection probability is 0.5 throughout,
+and expected abundance is `max(1, 2 * count)`. The truncation starts at the
+observed maximum and does not renormalize the Poisson distribution. These
+parameter settings leave negligible probability above the fixed cutoff. A
+separate check below uses `K = max(10, 10 * count)` for optimized truncation
+only, so the zero-count case uses a cutoff of 10.
+
+Timings include likelihood evaluation and reverse-mode differentiation through
+`rstan::grad_log_prob()`. Each call evaluates 20 identical units to amortize
+R-interface overhead; results are divided by 20. Five timing blocks per
+method use rotating method order and calibration to approximately 0.15 seconds
+or more per block. We report the median. Garbage collection occurs outside
+timed blocks. Compilation and initialization are excluded. R coefficient
+precomputation is timed separately; very short times may round to zero.
+
+Before timing each configuration, likelihoods and all parameter gradients
+must agree to absolute tolerance `1e-7`. These are local likelihood-kernel
+measurements, not whole-model fitting speedups. Both the exact polynomial
+evaluation and the optimized truncated sum use vectorized expressions with
+precomputed data-only coefficients and powers.
+
+## Setup
+
+Knit this document from the flocker source checkout. It requires the development
+N-mixture helpers, `pkgload`, `rstan`, and a working Stan C++ toolchain. The full
+benchmark takes several minutes. It does not run the package test suite or SBC.
+This article is excluded from the CRAN source package by `.Rbuildignore`.
+
+By default, diagnostic files and CSV results go into a fresh temporary directory.
+Supply `params = list(output_dir = "/path/to/results")` to `rmarkdown::render()`
+to retain them elsewhere. No fitted-model objects are saved.
+
+```{r setup, message=FALSE}
+# Keep plots with the excluded development article, not in the CRAN package.
+knitr::opts_chunk$set(fig.path = 'figures/n_mixture_benchmark/', fig.retina = 2)
+# Find the checkout from the document directory or another directory within it.
+package_root <- normalizePath(getwd())
+while (!file.exists(file.path(package_root, 'DESCRIPTION'))) {
+  parent <- dirname(package_root)
+  if (identical(parent, package_root)) stop('Render from within the flocker checkout.')
+  package_root <- parent
+}
+stopifnot(read.dcf(file.path(package_root, 'DESCRIPTION'))[1, 'Package'] == 'flocker')
+pkgload::load_all(package_root, helpers = FALSE, quiet = TRUE)
+library(rstan)
+output_dir <- params$output_dir
+if (is.null(output_dir)) output_dir <- tempfile('flocker-nmix-benchmark-')
+dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+output_dir <- normalizePath(output_dir, mustWork = TRUE)
+```
+
+## Stan implementations
+
+The exact implementation is read directly from the package's `.stan` file.
+All four methods, including the recursion described below, share the same
+compiled model and parameterization.
+
+```{r stan-source}
+source_code <- paste(readLines(system.file('stan', 'n_mixture_poisson_binomial.stan', package = 'flocker', mustWork = TRUE)), collapse='\n')
+code <- paste0('functions {', source_code, '
+ real n_mixture_poisson_binomial_truncated_lpmf(array[] int y, vector eta, real log_lambda, int K) {
+   int M = max(y);
+   vector[K-M+1] terms;
+   for (n in M:K) {
+     terms[n-M+1] = poisson_log_lpmf(n | log_lambda);
+     for (t in 1:num_elements(y))
+       terms[n-M+1] += binomial_logit_lpmf(y[t] | n, eta[t]);
+   }
+   return log_sum_exp(terms);
+ }
+ real n_mixture_poisson_binomial_truncated_precomputed_lpmf(array[] int y, vector eta, real log_lambda,
+                                  int M, vector log_weights, vector excess) {
+   real log_q = sum(log1m_inv_logit(eta));
+   real base = M * log_lambda - exp(log_lambda);
+   for (t in 1:num_elements(y))
+     base += y[t]*log_inv_logit(eta[t]) + (M-y[t])*log1m_inv_logit(eta[t]);
+   return base + log_sum_exp(log_weights + excess * (log_lambda + log_q));
+ }
+ // Section 3 recursion generalized to visit-specific binomial detection.
+ // log_ratio_factors contains (T-1)*log(N) - sum(log(N-y[t])),
+ // for N=M+1,...,K, precomputed in R. Recurse backward on the log scale.
+ real n_mixture_poisson_binomial_truncated_recursive_lpmf(array[] int y, vector eta, real log_lambda,
+                               int M, real log_weight_start, vector log_ratio_factors) {
+   real log_theta = log_lambda + sum(log1m_inv_logit(eta));
+   real base = M * log_lambda - exp(log_lambda) + log_weight_start;
+   real log_nested_sum = 0;
+   int steps = num_elements(log_ratio_factors);
+   for (t in 1:num_elements(y))
+     base += y[t]*log_inv_logit(eta[t]) + (M-y[t])*log1m_inv_logit(eta[t]);
+   if (steps > 0) {
+     for (i in 1:steps) {
+       int j = steps - i + 1;
+       log_nested_sum = log1p_exp(log_theta + log_ratio_factors[j] + log_nested_sum);
+     }
+   }
+   return base + log_nested_sum;
+ }
+}
+data {
+ int T; array[T] int y; int M; int C; vector[C] lc; vector[C] coef_power; real lf;
+ int K; vector[K-M+1] log_weights; vector[K-M+1] excess;
+ vector[K-M] log_ratio_factors;
+ int method; int batch;
+}
+parameters { real log_lambda; vector[T] eta; }
+model {
+ for (i in 1:batch) {
+   if (method == 1) target += n_mixture_poisson_binomial_unit_lpmf(y | eta, log_lambda, M, lf, lc, coef_power);
+   else if (method == 2) target += n_mixture_poisson_binomial_truncated_precomputed_lpmf(y | eta, log_lambda, M, log_weights, excess);
+   else if (method == 3) target += n_mixture_poisson_binomial_truncated_lpmf(y | eta, log_lambda, K);
+   else target += n_mixture_poisson_binomial_truncated_recursive_lpmf(y | eta, log_lambda, M, log_weights[1], log_ratio_factors);
+ }
+}')
+writeLines(code, file.path(output_dir, 'benchmark.stan'))
+```
+
+```{r compile, message=FALSE}
+sm <- stan_model(model_code = code)
+```
+
+## Run the benchmark
+
+The single fixed-parameter iteration initializes the Stan model so its density
+and gradient methods can be called. It does not perform posterior sampling.
+
+```{r benchmark}
+results <- list()
+exact_reference <- list()
+# Parameter-independent factors for successive-term ratios. When K=M the
+# empty vector makes the recursion return the single starting term.
+n_mixture_poisson_binomial_recursion_factors <- function(y, K) {
+  N <- seq.int(max(y), K)[-1]
+  as.array((length(y) - 1) * log(N) -
+    vapply(N, function(n) sum(log(n - y)), numeric(1)))
+}
+idx <- 0L
+batch <- 20L
+timed <- function(f, calls) {
+  unname(system.time(for (i in seq_len(calls)) f())[['elapsed']])
+}
+for (T in c(2L,5L,10L)) for (count in seq.int(0L,100L,10L)) {
+  y <- rep(count,T)
+  # Positive abundance even for all-zero histories; far below the cutoff.
+  lambda <- max(1,2*count)
+  eta <- rep(0,T)
+  pars <- c(log(lambda),eta)
+  pre_calls <- 20L
+  prep_ms <- 1000*timed(function() n_mixture_binomial_log_coefficients(y),pre_calls)/pre_calls
+  lc <- n_mixture_binomial_log_coefficients(y)
+  N <- count:1000L
+  weights <- -lgamma(N+1)
+  for (n in y) weights <- weights + lchoose(N,n)
+  d <- list(T=T,y=as.array(y),M=count,C=length(lc),lc=as.array(lc),
+    coef_power=as.array(as.numeric(seq_along(lc)-1L)),
+    lf=sum(lgamma(y+1)),K=1000L,log_weights=as.array(weights),
+    excess=as.array(as.numeric(N-count)),batch=batch,
+    log_ratio_factors=n_mixture_poisson_binomial_recursion_factors(y, 1000L))
+  fits <- lapply(1:3,function(method) sampling(sm,data=c(d,list(method=method)),
+    algorithm='Fixed_param',chains=1,iter=1,warmup=0,refresh=0,seed=1,
+    init=list(list(log_lambda=log(lambda),eta=as.array(eta)))))
+  lp <- vapply(fits,function(f) log_prob(f,pars),numeric(1))/batch
+  grad <- lapply(fits,function(f) as.numeric(grad_log_prob(f,pars))/batch)
+  stopifnot(max(abs(lp-lp[1]))<1e-7,
+            max(abs(grad[[1]]-grad[[2]]))<1e-7,
+            max(abs(grad[[1]]-grad[[3]]))<1e-7)
+  for (f in fits) for (i in 1:5) grad_log_prob(f,pars)
+  # Calibrate to >= 0.15 seconds per timing block to avoid clock granularity.
+  calls <- vapply(fits,function(f) {
+    elapsed <- timed(function() grad_log_prob(f,pars),10L)
+    as.integer(max(10,ceiling(10*0.15/max(elapsed,0.001))))
+  },integer(1))
+  times <- matrix(NA_real_,5,3)
+  for (round in 1:5) for (method in ((seq_len(3)+round-2) %% 3)+1) {
+    gc()
+    times[round,method] <- 1e6*timed(function() grad_log_prob(fits[[method]],pars),calls[method])/
+      calls[method]/batch
+  }
+  idx <- idx+1L
+  # Retain exact values, gradients, and inputs for the separate cutoff check.
+  # This avoids rerunning or retiming the exact method in that check.
+  exact_reference[[paste(T, count, sep = '_')]] <- list(
+    data = d, pars = pars, lp = lp[1], gradient = grad[[1]],
+    optimized_lp = lp[2], optimized_gradient = grad[[2]])
+  results[[idx]] <- data.frame(visits=T,count=count,degree=length(lc)-1,
+    lambda=lambda,precompute_ms=prep_ms,
+    exact_us=median(times[,1]),truncated_precomputed_us=median(times[,2]),
+    truncated_direct_us=median(times[,3]),
+    optimized_speedup=median(times[,2])/median(times[,1]),
+    direct_speedup=median(times[,3])/median(times[,1]),
+    max_loglik_difference=max(abs(lp-lp[1])),
+    max_gradient_difference=max(abs(grad[[1]]-grad[[2]]),abs(grad[[1]]-grad[[3]])))
+  saveRDS(list(results=results,times=times,calls=calls),file.path(output_dir, 'progress.rds'))
+  write.csv(do.call(rbind,results),file.path(output_dir, 'results.csv'),row.names=FALSE)
+  cat(sprintf('visits=%d count=%d exact=%.2fus optimized=%.2fus direct=%.2fus ratio=%.2fx\n',
+      T,count,median(times[,1]),median(times[,2]),median(times[,3]),median(times[,2])/median(times[,1])))
+  flush.console()
+}
+```
+
+## Results
+
+Ratios above one mean that the exact implementation is faster; ratios below
+one mean truncation is faster. Ratios close to one should be treated as a tie
+unless repeated measurements establish a difference.
+
+```{r speedups}
+results <- do.call(rbind, results)
+speedups <- reshape(results[c('count', 'visits', 'optimized_speedup')],
+                    idvar = 'count', timevar = 'visits', direction = 'wide')
+names(speedups) <- c('Count per visit', '2 visits', '5 visits', '10 visits')
+knitr::kable(speedups, digits = 2, row.names = FALSE,
+             caption = 'Exact speedup relative to optimized truncation')
+```
+
+```{r absolute-times}
+knitr::kable(results[c('visits', 'count', 'precompute_ms', 'exact_us',
+                       'truncated_precomputed_us', 'truncated_direct_us')],
+             digits = 3, row.names = FALSE,
+             caption = 'Precomputation in milliseconds; gradient evaluation in microseconds per unit')
+```
+
+```{r agreement}
+c(max_loglik_difference = max(results$max_loglik_difference),
+  max_gradient_difference = max(results$max_gradient_difference))
+output_dir
+```
+
+## Optimized truncation with a count-dependent cutoff
+
+This separate check times **only the optimized truncated likelihood**, using
+`K = max(10, 10 * count)` instead of 1,000. It reuses the compiled model and the exact
+values, gradients, and timings from the first benchmark. Detection probabilities,
+abundance means, batches, warmup calls, and timing calibration are unchanged.
+The comparison therefore uses separate timing blocks, not interleaved timings
+between the two cutoff rules.
+
+For count zero, we use `K = 10` because positive abundance can produce
+all-zero observations. We report approximation errors and flag any speedup
+for an inaccurate approximation. Unlike the fixed-cutoff benchmark, this
+check records agreement rather than asserting it. The error
+columns are absolute differences from the exact per-unit log likelihood and
+the largest absolute difference across its parameter gradients.
+
+```{r count-dependent-benchmark}
+count_cutoff_results <- list()
+count_cutoff_reference <- list()
+for (key in names(exact_reference)) {
+  reference <- exact_reference[[key]]
+  d <- reference$data
+  pars <- reference$pars
+  count <- d$M
+  d$K <- as.integer(max(10L, 10L * count))
+  N <- seq.int(count, d$K)
+  weights <- -lgamma(N + 1)
+  for (n in d$y) weights <- weights + lchoose(N, n)
+  d$log_weights <- as.array(weights)
+  d$excess <- as.array(as.numeric(N - count))
+  d$log_ratio_factors <- n_mixture_poisson_binomial_recursion_factors(d$y, d$K)
+  fit <- sampling(sm, data = c(d, list(method = 2L)),
+    algorithm = 'Fixed_param', chains = 1, iter = 1, warmup = 0,
+    refresh = 0, seed = 1,
+    init = list(list(log_lambda = pars[1], eta = as.array(pars[-1]))))
+  lp <- log_prob(fit, pars) / d$batch
+  gradient <- as.numeric(grad_log_prob(fit, pars)) / d$batch
+  count_cutoff_reference[[key]] <- list(data = d, lp = lp, gradient = gradient)
+  lp_error <- abs(lp - reference$lp)
+  gradient_error <- max(abs(gradient - reference$gradient))
+  for (i in 1:5) grad_log_prob(fit, pars)
+  elapsed <- timed(function() grad_log_prob(fit, pars), 10L)
+  calls <- as.integer(max(10, ceiling(10 * 0.15 / max(elapsed, 0.001))))
+  times <- numeric(5)
+  for (round in 1:5) {
+    gc()
+    times[round] <- 1e6 * timed(function() grad_log_prob(fit, pars), calls) /
+      calls / d$batch
+  }
+  count_cutoff_results[[key]] <- data.frame(
+    visits = d$T, count = count, cutoff = d$K,
+    count_cutoff_us = median(times),
+    loglik_error = lp_error, gradient_error = gradient_error,
+    agrees = lp_error < 1e-7 && gradient_error < 1e-7)
+  write.csv(do.call(rbind, count_cutoff_results),
+            file.path(output_dir, 'count-cutoff-results.csv'), row.names = FALSE)
+}
+count_cutoff_results <- do.call(rbind, count_cutoff_results)
+comparison <- merge(results, count_cutoff_results, by = c('visits', 'count'))
+comparison <- comparison[order(comparison$visits, comparison$count), ]
+comparison$count_cutoff_speedup <- comparison$count_cutoff_us / comparison$exact_us
+write.csv(comparison, file.path(output_dir, 'cutoff-comparison.csv'), row.names = FALSE)
+```
+
+### Timing and accuracy comparison
+
+The labels "10x" below include the minimum cutoff of 10.
+
+Both speedup columns use truncation time divided by exact time: values above
+one favor the exact method. Rows marked `agrees = FALSE` compare computations
+that are not numerically equivalent at the tested parameter values.
+
+```{r cutoff-comparison-table}
+knitr::kable(comparison[c('visits', 'count', 'cutoff', 'exact_us',
+  'truncated_precomputed_us', 'count_cutoff_us', 'optimized_speedup',
+  'count_cutoff_speedup', 'agrees')], digits = 3, row.names = FALSE,
+  col.names = c('Visits', 'Count', '10x cutoff', 'Exact (us)',
+    'Optimized K=1000 (us)', 'Optimized K=10x (us)', 'Exact speedup vs K=1000',
+    'Exact speedup vs K=10x', 'Agrees'),
+  caption = 'Gradient timings per unit and exact-method speedups')
+knitr::kable(comparison[c('visits', 'count', 'loglik_error', 'gradient_error')],
+  digits = 12, row.names = FALSE,
+  caption = 'Absolute errors for the count-dependent cutoff relative to exact evaluation')
+```
+
+The plot includes the original direct truncation for context. Times use a
+logarithmic scale; red crosses flag count-dependent timings whose likelihood
+or gradient failed the agreement tolerance.
+
+```{r cutoff-comparison-plot, fig.width=11, fig.height=4.5}
+local({
+  old_par <- par(mfrow = c(1, 3), mar = c(4, 4, 3, 1))
+  on.exit(par(old_par))
+  colors <- c('#222222', '#0072B2', '#009E73', '#CC79A7')
+  columns <- c('exact_us', 'truncated_precomputed_us',
+               'count_cutoff_us', 'truncated_direct_us')
+  limits <- range(as.matrix(comparison[columns]))
+  for (visits in sort(unique(comparison$visits))) {
+    panel <- comparison[comparison$visits == visits, ]
+    matplot(panel$count, as.matrix(panel[columns]), type = 'o', log = 'y',
+      lty = c(1, 2, 3, 4), pch = c(16, 17, 15, 18), col = colors,
+      ylim = limits, xlab = 'Count per visit', ylab = 'Microseconds per unit',
+      main = paste(visits, 'visits'))
+    bad <- !panel$agrees
+    points(panel$count[bad], panel$count_cutoff_us[bad], pch = 4,
+           col = 'red', cex = 1.6, lwd = 2)
+    if (visits == min(comparison$visits)) {
+      legend('topleft', c('Exact', 'Optimized K=1000', 'Optimized K=10x',
+                         'Direct K=1000'), col = colors,
+             lty = 1:4, pch = c(16, 17, 15, 18), cex = 0.65, bty = 'n')
+    }
+  }
+})
+```
+
+## Recursive optimized truncation at both cutoffs
+
+Section 3 of Goldstein and de Valpine's supplemental materials for
+*Comparing N-mixture models and GLMMs for relative abundance estimation in a
+citizen science dataset* (2022; supplement `41598_2022_16368_MOESM1_ESM.pdf`)
+describes successive-term ratios and a nested summation adapted from Meehan
+et al. The existing optimized benchmark **does not use that recursion**: it
+precomputes log combinatorial weights and evaluates all terms with one
+vectorized log-sum-exp. Both approaches avoid repeated factorial calculations.
+
+For multiple visits, let
+\(a_N = \Pr(N\mid\lambda)\prod_t\Pr(y_t\mid N,p_t)\),
+\(M=\max_t y_t\), and \(q=\prod_t(1-p_t)\). Combining the Poisson and
+binomial recursions gives, for \(N>M\),
+
+\[
+\frac{a_N}{a_{N-1}}
+= \lambda q\,\frac{N^{T-1}}{\prod_t(N-y_t)} = r_N.
+\]
+
+Thus the truncated likelihood is
+\(a_M[1+r_{M+1}(1+r_{M+2}(\ldots(1+r_K)\ldots))]\).
+The data-only quantity \((T-1)\log N-\sum_t\log(N-y_t)\) is precomputed in R.
+Starting with \(s=0\), we work backward from \(N=K\) to \(M+1\), updating
+\(s=\log(1+\exp(\log r_N+s))\), and finally return \(\log a_M+s\).
+`log1p_exp` makes the recursion stable without forming tiny probabilities or
+large products. This is the multiple-visit version of the nested recursion;
+the single-observation factor in the supplement cannot be used unchanged.
+
+The new pair of benchmarks times **only method 4**, at `K=1000` and
+`K=max(10, 10*count)`. It reuses earlier exact and optimized-sum results.
+Each recursive result must agree with the existing optimized implementation
+at the **same cutoff** to `1e-7` in log likelihood and gradients before it is
+timed. Its error relative to the exact likelihood is recorded separately,
+so truncation error is not mistaken for a recursion error. Data preparation
+is outside the timed gradient calls, as for the other optimized methods.
+The two recursive cutoff settings are timed in alternating order across five
+blocks; comparisons with earlier methods still use separate benchmark runs.
+
+```{r recursive-benchmark}
+recursive_results <- list()
+for (key in names(exact_reference)) {
+  reference <- exact_reference[[key]]
+  pars <- reference$pars
+  configurations <- list(
+    fixed = list(data = reference$data, lp = reference$optimized_lp,
+                 gradient = reference$optimized_gradient),
+    count = count_cutoff_reference[[key]])
+  fits <- lapply(configurations, function(configuration) {
+    sampling(sm, data = c(configuration$data, list(method = 4L)),
+      algorithm = 'Fixed_param', chains = 1, iter = 1, warmup = 0,
+      refresh = 0, seed = 1,
+      init = list(list(log_lambda = pars[1], eta = as.array(pars[-1]))))
+  })
+  checks <- lapply(seq_along(fits), function(i) {
+    d <- configurations[[i]]$data
+    lp <- log_prob(fits[[i]], pars) / d$batch
+    gradient <- as.numeric(grad_log_prob(fits[[i]], pars)) / d$batch
+    same_cutoff_lp_error <- abs(lp - configurations[[i]]$lp)
+    same_cutoff_gradient_error <- max(abs(gradient - configurations[[i]]$gradient))
+    stopifnot(same_cutoff_lp_error < 1e-7, same_cutoff_gradient_error < 1e-7)
+    c(loglik_error = abs(lp - reference$lp),
+      gradient_error = max(abs(gradient - reference$gradient)),
+      same_cutoff_loglik_error = same_cutoff_lp_error,
+      same_cutoff_gradient_error = same_cutoff_gradient_error)
+  })
+  for (fit in fits) for (i in 1:5) grad_log_prob(fit, pars)
+  calls <- vapply(fits, function(fit) {
+    elapsed <- timed(function() grad_log_prob(fit, pars), 10L)
+    as.integer(max(10, ceiling(10 * 0.15 / max(elapsed, 0.001))))
+  }, integer(1))
+  times <- matrix(NA_real_, 5, 2)
+  for (round in 1:5) for (i in if (round %% 2) 1:2 else 2:1) {
+    gc()
+    times[round, i] <- 1e6 * timed(function() grad_log_prob(fits[[i]], pars), calls[i]) /
+      calls[i] / configurations[[i]]$data$batch
+  }
+  for (i in seq_along(fits)) {
+    d <- configurations[[i]]$data
+    errors <- checks[[i]]
+    recursive_results[[paste(key, names(configurations)[i], sep = '_')]] <- data.frame(
+      visits = d$T, count = d$M, cutoff_rule = names(configurations)[i], cutoff = d$K,
+      recursive_us = median(times[, i]),
+      loglik_error = errors[['loglik_error']],
+      gradient_error = errors[['gradient_error']],
+      same_cutoff_loglik_error = errors[['same_cutoff_loglik_error']],
+      same_cutoff_gradient_error = errors[['same_cutoff_gradient_error']],
+      agrees = errors[['loglik_error']] < 1e-7 && errors[['gradient_error']] < 1e-7)
+  }
+  write.csv(do.call(rbind, recursive_results),
+            file.path(output_dir, 'recursive-results.csv'), row.names = FALSE)
+}
+recursive_results <- do.call(rbind, recursive_results)
+recursive_comparison <- merge(comparison, reshape(
+  recursive_results[c('visits', 'count', 'cutoff_rule', 'recursive_us', 'agrees')],
+  idvar = c('visits', 'count'), timevar = 'cutoff_rule', direction = 'wide'),
+  by = c('visits', 'count'))
+recursive_comparison <- recursive_comparison[
+  order(recursive_comparison$visits, recursive_comparison$count), ]
+recursive_comparison$recursive_fixed_speedup <-
+  recursive_comparison$recursive_us.fixed / recursive_comparison$exact_us
+recursive_comparison$recursive_count_speedup <-
+  recursive_comparison$recursive_us.count / recursive_comparison$exact_us
+write.csv(recursive_comparison, file.path(output_dir, 'recursive-comparison.csv'), row.names = FALSE)
+```
+
+### All methods side by side
+
+```{r recursive-comparison-table}
+knitr::kable(recursive_comparison[c('visits', 'count', 'exact_us',
+  'truncated_direct_us', 'truncated_precomputed_us', 'recursive_us.fixed',
+  'count_cutoff_us', 'recursive_us.count')], digits = 3, row.names = FALSE,
+  col.names = c('Visits', 'Count', 'Exact', 'Direct K=1000',
+                'Optimized K=1000', 'Recursive K=1000', 'Optimized K=10x',
+                'Recursive K=10x'),
+  caption = 'Gradient evaluation in microseconds per unit (10x has a minimum of 10)')
+knitr::kable(recursive_results[c('visits', 'count', 'cutoff_rule',
+  'same_cutoff_loglik_error', 'same_cutoff_gradient_error',
+  'loglik_error', 'gradient_error', 'agrees')], digits = 12, row.names = FALSE,
+  caption = 'Recursion agreement with the optimized sum and error relative to exact evaluation')
+```
+
+The plot compares the exact method's speedup over all four optimized
+truncation settings. Above one favors exact; below one favors truncation.
+Colors distinguish cutoff rules, and line types distinguish vectorized sums
+from recursion. Red crosses flag disagreement with the exact likelihood or
+gradients. Near-one ratios should be treated as ties.
+
+```{r recursive-comparison-plot, fig.width=11, fig.height=4.5}
+local({
+  old_par <- par(mfrow = c(1, 3), mar = c(4, 4, 3, 1))
+  on.exit(par(old_par))
+  columns <- c('optimized_speedup', 'recursive_fixed_speedup',
+               'count_cutoff_speedup', 'recursive_count_speedup')
+  colors <- c('#0072B2', '#0072B2', '#009E73', '#009E73')
+  limits <- range(c(1, as.matrix(recursive_comparison[columns])))
+  for (visits in sort(unique(recursive_comparison$visits))) {
+    panel <- recursive_comparison[recursive_comparison$visits == visits, ]
+    matplot(panel$count, as.matrix(panel[columns]), type = 'o', log = 'y',
+      lty = c(1, 2, 1, 2), pch = c(16, 17, 16, 17), col = colors,
+      ylim = limits, xlab = 'Count per visit', ylab = 'Truncation time / exact time',
+      main = paste(visits, 'visits'))
+    abline(h = 1, lty = 3, col = 'grey50')
+    valid <- list(rep(TRUE, nrow(panel)), panel$agrees.fixed,
+                  panel$agrees, panel$agrees.count)
+    for (i in seq_along(columns)) {
+      bad <- !valid[[i]]
+      points(panel$count[bad], panel[[columns[i]]][bad], pch = 4,
+             col = 'red', cex = 1.6, lwd = 2)
+    }
+    if (visits == min(recursive_comparison$visits)) {
+      legend('topright', c('Sum K=1000', 'Recursion K=1000',
+                          'Sum K=10x', 'Recursion K=10x'),
+             col = colors, lty = c(1, 2, 1, 2), pch = c(16, 17, 16, 17),
+             cex = 0.65, bty = 'n')
+    }
+  }
+})
+```
+
+## Session information
+
+```{r session}
+writeLines(capture.output(sessionInfo()), file.path(output_dir, 'session.txt'))
+sessionInfo()
+```
