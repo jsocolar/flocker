@@ -1,8 +1,10 @@
 // Exact closed-population Poisson abundance / binomial detection likelihood.
 // Haines' falling-factorial expansion, with visit-specific detection.
+// The unit likelihood can also supply the Poisson component of a future ZIP
+// likelihood, but does not itself implement zero inflation or NB abundance.
 // Predictor inputs: mu is LOGIT detection probability; log_abundance is LOG
 // expected abundance. Coefficients and factorial terms are computed once in R.
-real n_mixture_poisson_unit_lpmf(array[] int y, vector mu,
+real n_mixture_poisson_binomial_unit_lpmf(array[] int y, vector mu,
                                 real log_abundance, int max_count,
                                 real log_factorial, vector log_coef,
                                 vector coef_power) {
@@ -29,7 +31,7 @@ real n_mixture_poisson_unit_lpmf(array[] int y, vector mu,
 // visit row; only abund at unit_start is read. Both offset arrays contain a
 // terminal sentinel. Coefficient storage is separate from predictor rows.
 // Predictor inputs: mu is logit detection; abund is log expected abundance.
-real n_mixture_poisson_lpmf(array[] int y, vector mu, vector abund,
+real n_mixture_poisson_binomial_lpmf(array[] int y, vector mu, vector abund,
                            array[] int unit_offsets, array[] int coef_offsets,
                            array[] int max_count, vector log_factorial,
                            vector log_coef, vector coef_power) {
@@ -37,7 +39,7 @@ real n_mixture_poisson_lpmf(array[] int y, vector mu, vector abund,
   for (u in 1:num_elements(max_count)) {
     int unit_start = unit_offsets[u];
     int unit_end = unit_offsets[u + 1] - 1;
-    lp += n_mixture_poisson_unit_lpmf(y[unit_start:unit_end] |
+    lp += n_mixture_poisson_binomial_unit_lpmf(y[unit_start:unit_end] |
       mu[unit_start:unit_end], abund[unit_start], max_count[u], log_factorial[u],
       log_coef[coef_offsets[u]:(coef_offsets[u + 1] - 1)],
       coef_power[coef_offsets[u]:(coef_offsets[u + 1] - 1)]);

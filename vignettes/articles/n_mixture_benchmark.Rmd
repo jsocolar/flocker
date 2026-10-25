@@ -76,9 +76,9 @@ All four methods, including the recursion described below, share the same
 compiled model and parameterization.
 
 ```{r stan-source}
-source_code <- paste(readLines(system.file('stan', 'n_mixture_poisson.stan', package = 'flocker', mustWork = TRUE)), collapse='\n')
+source_code <- paste(readLines(system.file('stan', 'n_mixture_poisson_binomial.stan', package = 'flocker', mustWork = TRUE)), collapse='\n')
 code <- paste0('functions {', source_code, '
- real truncated_lpmf(array[] int y, vector eta, real log_lambda, int K) {
+ real n_mixture_poisson_binomial_truncated_lpmf(array[] int y, vector eta, real log_lambda, int K) {
    int M = max(y);
    vector[K-M+1] terms;
    for (n in M:K) {
@@ -88,7 +88,7 @@ code <- paste0('functions {', source_code, '
    }
    return log_sum_exp(terms);
  }
- real truncated_precomputed_lpmf(array[] int y, vector eta, real log_lambda,
+ real n_mixture_poisson_binomial_truncated_precomputed_lpmf(array[] int y, vector eta, real log_lambda,
                                   int M, vector log_weights, vector excess) {
    real log_q = sum(log1m_inv_logit(eta));
    real base = M * log_lambda - exp(log_lambda);
@@ -99,7 +99,7 @@ code <- paste0('functions {', source_code, '
  // Section 3 recursion generalized to visit-specific binomial detection.
  // log_ratio_factors contains (T-1)*log(N) - sum(log(N-y[t])),
  // for N=M+1,...,K, precomputed in R. Recurse backward on the log scale.
- real truncated_recursive_lpmf(array[] int y, vector eta, real log_lambda,
+ real n_mixture_poisson_binomial_truncated_recursive_lpmf(array[] int y, vector eta, real log_lambda,
                                int M, real log_weight_start, vector log_ratio_factors) {
    real log_theta = log_lambda + sum(log1m_inv_logit(eta));
    real base = M * log_lambda - exp(log_lambda) + log_weight_start;
@@ -125,10 +125,10 @@ data {
 parameters { real log_lambda; vector[T] eta; }
 model {
  for (i in 1:batch) {
-   if (method == 1) target += n_mixture_poisson_unit_lpmf(y | eta, log_lambda, M, lf, lc, coef_power);
-   else if (method == 2) target += truncated_precomputed_lpmf(y | eta, log_lambda, M, log_weights, excess);
-   else if (method == 3) target += truncated_lpmf(y | eta, log_lambda, K);
-   else target += truncated_recursive_lpmf(y | eta, log_lambda, M, log_weights[1], log_ratio_factors);
+   if (method == 1) target += n_mixture_poisson_binomial_unit_lpmf(y | eta, log_lambda, M, lf, lc, coef_power);
+   else if (method == 2) target += n_mixture_poisson_binomial_truncated_precomputed_lpmf(y | eta, log_lambda, M, log_weights, excess);
+   else if (method == 3) target += n_mixture_poisson_binomial_truncated_lpmf(y | eta, log_lambda, K);
+   else target += n_mixture_poisson_binomial_truncated_recursive_lpmf(y | eta, log_lambda, M, log_weights[1], log_ratio_factors);
  }
 }')
 writeLines(code, file.path(output_dir, 'benchmark.stan'))
@@ -148,7 +148,7 @@ results <- list()
 exact_reference <- list()
 # Parameter-independent factors for successive-term ratios. When K=M the
 # empty vector makes the recursion return the single starting term.
-recursion_factors <- function(y, K) {
+n_mixture_poisson_binomial_recursion_factors <- function(y, K) {
   N <- seq.int(max(y), K)[-1]
   as.array((length(y) - 1) * log(N) -
     vapply(N, function(n) sum(log(n - y)), numeric(1)))
@@ -165,8 +165,8 @@ for (T in c(2L,5L,10L)) for (count in seq.int(0L,100L,10L)) {
   eta <- rep(0,T)
   pars <- c(log(lambda),eta)
   pre_calls <- 20L
-  prep_ms <- 1000*timed(function() n_mixture_log_coefficients(y),pre_calls)/pre_calls
-  lc <- n_mixture_log_coefficients(y)
+  prep_ms <- 1000*timed(function() n_mixture_binomial_log_coefficients(y),pre_calls)/pre_calls
+  lc <- n_mixture_binomial_log_coefficients(y)
   N <- count:1000L
   weights <- -lgamma(N+1)
   for (n in y) weights <- weights + lchoose(N,n)
@@ -174,7 +174,7 @@ for (T in c(2L,5L,10L)) for (count in seq.int(0L,100L,10L)) {
     coef_power=as.array(as.numeric(seq_along(lc)-1L)),
     lf=sum(lgamma(y+1)),K=1000L,log_weights=as.array(weights),
     excess=as.array(as.numeric(N-count)),batch=batch,
-    log_ratio_factors=recursion_factors(y, 1000L))
+    log_ratio_factors=n_mixture_poisson_binomial_recursion_factors(y, 1000L))
   fits <- lapply(1:3,function(method) sampling(sm,data=c(d,list(method=method)),
     algorithm='Fixed_param',chains=1,iter=1,warmup=0,refresh=0,seed=1,
     init=list(list(log_lambda=log(lambda),eta=as.array(eta)))))
@@ -275,7 +275,7 @@ for (key in names(exact_reference)) {
   for (n in d$y) weights <- weights + lchoose(N, n)
   d$log_weights <- as.array(weights)
   d$excess <- as.array(as.numeric(N - count))
-  d$log_ratio_factors <- recursion_factors(d$y, d$K)
+  d$log_ratio_factors <- n_mixture_poisson_binomial_recursion_factors(d$y, d$K)
   fit <- sampling(sm, data = c(d, list(method = 2L)),
     algorithm = 'Fixed_param', chains = 1, iter = 1, warmup = 0,
     refresh = 0, seed = 1,

@@ -588,6 +588,39 @@ response-dependent default intercept prior should not automatically become a
 detection-logit prior for count responses. Negative-binomial abundance and
 beta-binomial detection are outside this first increment.
 
+### N-mixture function boundaries
+
+Use `n_mixture_<mixing>_<detection>` for a model-specific family, with
+`_unit_lpmf`, `_lpmf`, and `_stanvars` suffixes for its unit likelihood,
+packed likelihood, and Stan integration. The current implementation is
+`n_mixture_poisson_binomial`, stored in `n_mixture_poisson_binomial.stan`.
+
+The currently shared helpers are:
+
+- `n_mixture_binomial_log_coefficients`: the count-only falling-factorial
+  coefficients are the same for Poisson, NB, and ZIP abundance with binomial
+  detection. The mixing distribution determines how those coefficients enter
+  the likelihood, not their construction.
+- `n_mixture_binomial_auxiliary_data`: the coefficient storage, powers, unit
+  and coefficient offsets, maxima, and factorial sums can serve all three
+  binomial-detection models. NB and ZIP will additionally need their own
+  distributional parameters. Although offsets and maxima have broader uses,
+  the complete helper includes a binomial-specific polynomial expansion.
+
+`n_mixture_poisson_binomial_unit_lpmf` remains a Poisson-binomial function even
+though a future ZIP-binomial likelihood can call it for its Poisson component.
+The packed likelihood and family constructor require distinct NB/ZIP versions.
+`n_mixture_poisson_binomial_stanvars` is specific because it installs that
+model's Stan source; its data-declaration block is a candidate for a shared
+binomial helper when a second family is implemented. Do not introduce a
+model-independent loader abstraction until that interface is needed.
+
+All current complete N-mixture likelihood/coefficient helpers assume binomial
+detection. Beta-binomial detection cannot use the same count-only polynomial
+coefficients. Benchmark truncation functions and their successive-term ratio
+helper also explicitly use Poisson-binomial names. General benchmark utilities
+such as the timer do not depend on either distribution.
+
 ### Schema migration sequence
 
 1. Freeze representative 1.1 behavior with characterization tests, especially
