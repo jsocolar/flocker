@@ -555,6 +555,41 @@ results as a side effect of example or documentation maintenance.
 
 ## Recommended implementation sequence
 
+### N-mixture development
+
+The next functionality priority is closed, single-season, one-level N-mixture
+models with Poisson abundance and visit-varying binomial detection. The planned
+public fitting entry point is `n_mix()`, using occupancy-style data inputs with
+nonnegative integer counts. Expected abundance, conditional latent abundance,
+and predicted observed counts must remain distinct in post-processing.
+
+Use the exact finite falling-factorial expansion described in the supplied
+Haines (2016) walkthrough, rather than truncating the abundance distribution.
+For each unit, the polynomial degree is `sum(counts) - max(counts)`. Compute
+its positive coefficients in R on the log scale, once per dataset, using
+`c'_i = c_(i-1) + (i + j) c_i`. This takes quadratic time in the degree;
+likelihood evaluation takes linear time in the number of coefficients and
+visits. Large observed counts therefore remain a performance consideration
+despite avoiding abundance truncation.
+
+Supply flat log-coefficient and exponent vectors, unit/coefficients offsets, maxima, and
+log-factorial sums through `stanvar(..., block = "data")`. Pass these objects
+to the likelihood through `custom_family(vars = ...)`. Arbitrary `data2`
+entries alone do not supply this connection. Coefficients do not become
+predictor rows or dataframe columns, and their lengths are Stan data, not
+constants embedded in generated source. Abundance predictors are log means;
+detection predictors are logits. Retain the visit-level covariate conventions.
+
+The first increment provides internal coefficient helpers, the dedicated Stan
+source, and independent likelihood/gradient and brms integration checks.
+Public formatting, `n_mix()`, prior defaults appropriate to these predictor
+scales, and post-processing are subsequent increments. In particular, brms's
+response-dependent default intercept prior should not automatically become a
+detection-logit prior for count responses. Negative-binomial abundance and
+beta-binomial detection are outside this first increment.
+
+### Schema migration sequence
+
 1. Freeze representative 1.1 behavior with characterization tests, especially
    packing round trips, exact likelihoods, output names and dimensions, and
    dynamic missing-unit behavior.
