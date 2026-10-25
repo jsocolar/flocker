@@ -101,6 +101,19 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
                               type = "single", n_aug = NULL,
                               quiet = FALSE, newdata_checks = FALSE,
                               level2_group = NULL, level2_covs = NULL) {
+  make_flocker_data_(
+    obs = obs, unit_covs = unit_covs, event_covs = event_covs,
+    type = type, n_aug = n_aug, quiet = quiet, newdata_checks = newdata_checks,
+    level2_group = level2_group, level2_covs = level2_covs
+  )
+}
+
+# Internal formatting entry point. This extraction preserves occupancy checks
+# and dispatch; count support will be introduced separately with make_nmix_data.
+make_flocker_data_ <- function(obs, unit_covs = NULL, event_covs = NULL,
+                               type = "single", n_aug = NULL,
+                               quiet = FALSE, newdata_checks = FALSE,
+                               level2_group = NULL, level2_covs = NULL) {
   standard_mfd_checks(obs, unit_covs, event_covs, type, n_aug, quiet, newdata_checks,
                       level2_group, level2_covs)
 
