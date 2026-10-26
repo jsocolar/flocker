@@ -1,5 +1,7 @@
-## code to prepare `example_flocker_model_single`
-library(flocker)
+# Regenerate from the repository root in a fresh R session:
+# Rscript data-raw/example_flocker_model.R
+# Load this checkout so the saved data and fit use its schema and Stan source.
+pkgload::load_all(helpers = FALSE, quiet = TRUE)
 
 set.seed(1)
 
@@ -16,12 +18,17 @@ example_flocker_model_single <- flock(
   flocker_data = mfd_single,
   cores = 2,
   chains = 2,
+  # Retain only four draws in total to keep the source package small.
   iter = 1000,
   warmup = 998,
+  seed = 1,
+  backend = "rstan",
+  # Ship portable draws, not the platform-specific compiled shared library.
+  stan_model_args = list(save_dso = FALSE),
   save_warmup = FALSE
 )
 
-usethis::use_data(mfd_single, overwrite = TRUE)
+save(mfd_single, file = "data/mfd_single.rda", compress = "xz")
 
 dir.create("inst/extdata", recursive = TRUE, showWarnings = FALSE)
 
