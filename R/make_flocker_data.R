@@ -104,21 +104,28 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
   make_flocker_data_(
     obs = obs, unit_covs = unit_covs, event_covs = event_covs,
     type = type, n_aug = n_aug, quiet = quiet, newdata_checks = newdata_checks,
-    level2_group = level2_group, level2_covs = level2_covs
+    level2_group = level2_group, level2_covs = level2_covs, model = "occupancy"
   )
 }
 
-# Internal formatting entry point. This extraction preserves occupancy checks
-# and dispatch; count support will be introduced separately with make_nmix_data.
+# Shared orchestration: public wrappers select the model, which determines
+# response checks and whether single-season visits may be collapsed.
 make_flocker_data_ <- function(obs, unit_covs = NULL, event_covs = NULL,
                                type = "single", n_aug = NULL,
                                quiet = FALSE, newdata_checks = FALSE,
-                               level2_group = NULL, level2_covs = NULL) {
+                               level2_group = NULL, level2_covs = NULL,
+                               model = "occupancy") {
+  model <- match.arg(model, c("occupancy", "n_mix"))
+  if (model == "n_mix" && type != "single") {
+    stop("N-mixture data currently support only single-season, one-level models.")
+  }
   standard_mfd_checks(obs, unit_covs, event_covs, type, n_aug, quiet, newdata_checks,
-                      level2_group, level2_covs)
+                      level2_group, level2_covs, model = model)
 
   if (!quiet) {
-    if (type == "single") {
+    if (model == "n_mix") {
+      message("Formatting data for a single-season N-mixture model.")
+    } else if (type == "single") {
       message(paste0("Formatting data for a single-season occupancy model. For ",
                      "details, see make_flocker_data_static. All warnings and ",
                      "error messages should be interpreted in the context of ",
@@ -143,8 +150,8 @@ make_flocker_data_ <- function(obs, unit_covs = NULL, event_covs = NULL,
   }
   
   if (type == "single") {
-    out <- make_flocker_data_static(
-      obs, unit_covs, event_covs, quiet, newdata_checks
+    out <- make_flocker_data_static_(
+      obs, unit_covs, event_covs, newdata_checks, model
       )
   } else if (type == "multi") {
     out <- make_flocker_data_dynamic(
@@ -193,10 +200,16 @@ make_flocker_data_static <- function(
     quiet = FALSE, newdata_checks = FALSE
     ) {
   standard_mfd_checks(obs, unit_covs, event_covs, "single", NULL, quiet, newdata_checks)
-  
+  make_flocker_data_static_(obs, unit_covs, event_covs, newdata_checks, "occupancy")
+}
+
+# Inputs have been checked by either public occupancy entry point or the shared
+# model dispatcher. Both models execute the same visit-level packing branch.
+make_flocker_data_static_ <- function(obs, unit_covs, event_covs,
+                                      newdata_checks, model) {
   n_rep <- ncol(obs)
 
-  if (is.null(event_covs)) {
+  if (model == "occupancy" && is.null(event_covs)) {
     n_trial <- rowSums(!is.na(obs))
     n_suc <- rowSums(obs, na.rm = T)
     flocker_data <- data.frame(ff_n_suc = n_suc, ff_n_trial = n_trial)
@@ -216,7 +229,7 @@ make_flocker_data_static <- function(
     out <- list(
       data = packed$data,
       metadata = list(
-        type = "single", schema_version = 2L,
+        type = if (model == "n_mix") "n_mix" else "single", schema_version = 2L,
         data_role = if (newdata_checks) "new_data" else "model_data",
         flocker_version = flocker_version(),
         original_dim = dim(obs), original_dimnames = dimnames(obs),
@@ -228,6 +241,12 @@ make_flocker_data_static <- function(
         unit_covs = names(unit_covs), event_covs = names(event_covs)
       )
     )
+    if (model == "n_mix") {
+      # Follow the packed unit order; missing visits are already omitted.
+      counts <- unname(split(packed$data$ff_y,
+                             factor(packed$row_unit, levels = seq_along(packed$n_event))))
+      out$auxiliary <- n_mixture_binomial_auxiliary_data(counts)
+    }
     class(out) <- c("list", "flocker_data")
     return(out)
   }
@@ -469,19 +488,30 @@ make_flocker_data_twolevel_single_ <- function(
 
 ##### mfd input checking #####
 #' input checking for make_flocker_data
+#' @param model Internal model selector: occupancy or n_mix.
 #' @inheritParams make_flocker_data
 standard_mfd_checks <- function(
     obs, unit_covs, event_covs, type, n_aug, quiet, newdata_checks,
-    level2_group = NULL, level2_covs = NULL
+    level2_group = NULL, level2_covs = NULL, model = "occupancy"
 ) {
   
   # unique() on a data.frame returns unique rows, not values; flatten first so
   # matrix-like data.frames pass the same value check as matrices and arrays.
   unique_y <- unique(as.vector(if (is.data.frame(obs)) as.matrix(obs) else obs))
-  assertthat::assert_that(
-    all(unique_y %in% c(0, 1, NA)),
-    msg = "obs may only contain the values 0, 1, or NA"
-  )
+  if (model == "n_mix") {
+    observed <- unique_y[!is.na(unique_y)]
+    assertthat::assert_that(
+      is.numeric(unique_y) && !any(is.nan(unique_y)) &&
+        all(is.finite(observed) & observed >= 0 & observed == floor(observed) &
+              observed <= .Machine$integer.max - 1),
+      msg = "obs must contain finite nonnegative integer counts or NA, within the supported integer range"
+    )
+  } else {
+    assertthat::assert_that(
+      all(unique_y %in% c(0, 1, NA)),
+      msg = "obs may only contain the values 0, 1, or NA"
+    )
+  }
   
   assertthat::assert_that(
     is.null(event_covs) | is_named_list(event_covs),

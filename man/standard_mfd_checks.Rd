@@ -13,7 +13,8 @@ standard_mfd_checks(
   quiet,
   newdata_checks,
   level2_group = NULL,
-  level2_covs = NULL
+  level2_covs = NULL,
+  model = "occupancy"
 )
 }
 \arguments{
@@ -83,6 +84,8 @@ and no unused levels in its grouping factor. Row order is arbitrary;
 factor-level order determines the internal group order, and every group
 must be represented in \code{unit_covs}. Only applicable if
 \code{type = "twolevel_single"}.}
+
+\item{model}{Internal model selector: occupancy or n_mix.}
 }
 \description{
 input checking for make_flocker_data

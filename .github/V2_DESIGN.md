@@ -582,8 +582,16 @@ detection predictors are logits. Retain the visit-level covariate conventions.
 
 The first increment provides internal coefficient helpers, the dedicated Stan
 source, and independent likelihood/gradient and brms integration checks.
-Public formatting, `n_mix()`, prior defaults appropriate to these predictor
-scales, and post-processing are subsequent increments. In particular, brms's
+`make_nmix_data()` now prepares single-season count inputs through the shared
+`make_flocker_data_()` dispatcher. Thin public wrappers fix the model selector;
+model-specific response validation and routing remain internal. A shared
+`make_flocker_data_static_()` executes visit-level packing for both models,
+while occupancy alone may choose the rep-constant representation. N-mixture
+objects have `metadata$type = "n_mix"` and a separate `auxiliary` list; they
+cannot be passed to `flock()`. The existing single-season restrictions on
+trailing missing visits and empty units also apply to count inputs.
+`n_mix()`, prior defaults appropriate to its predictor scales, and
+post-processing are subsequent increments. In particular, brms's
 response-dependent default intercept prior should not automatically become a
 detection-logit prior for count responses. Negative-binomial abundance and
 beta-binomial detection are outside this first increment.
