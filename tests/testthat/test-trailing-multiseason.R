@@ -1,7 +1,7 @@
 test_that("multiseason post-processing retains globally trailing seasons", {
   testthat::skip_on_cran()
 
-  fit <- example_flocker_model_multi_colex_ex
+  fit <- fixture_fit("multi_colex_ex")
   data_base <- format_ragged_multi_fixture()
   data_trailing <- format_ragged_multi_fixture(global_trailing_season = TRUE)
   fixture_trailing <- make_ragged_multi_fixture(global_trailing_season = TRUE)

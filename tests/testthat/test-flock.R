@@ -162,17 +162,17 @@ test_that("flocker_stancode works as expected", {
 test_that("flocker fits retain non-data metadata without duplicating data", {
   testthat::skip_if(windows_cran)
 
-  metadata <- attr(example_flocker_model_single2, "flocker_metadata")
+  metadata <- attr(fixture_fit("single"), "flocker_metadata")
 
   expect_identical(
     metadata,
-    mfd_single$metadata
+    fixture_data("single")$metadata
   )
   expect_false("data" %in% names(metadata))
-  expect_identical(metadata$flocker_version, mfd_single$metadata$flocker_version)
+  expect_identical(metadata$flocker_version, fixture_data("single")$metadata$flocker_version)
   expect_identical(
-    attr(example_flocker_model_single2, "flocker_version"),
+    attr(fixture_fit("single"), "flocker_version"),
     flocker_version()
   )
-  expect_null(attr(example_flocker_model_single2, "flocker_data"))
+  expect_null(attr(fixture_fit("single"), "flocker_data"))
 })

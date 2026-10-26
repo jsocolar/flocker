@@ -1,8 +1,8 @@
 test_that("check log_lik functions work correctly", {
   # single (package data model - 100 units, 4 draws)
-  ll_test <- log_lik_flocker(example_flocker_model_single2)
+  ll_test <- log_lik_flocker(fixture_fit("single"))
   expect_equal(dim(ll_test), c(4, 160))
-  ll_test_sub <- log_lik_flocker(example_flocker_model_single2, draw_ids = 1:2)
+  ll_test_sub <- log_lik_flocker(fixture_fit("single"), draw_ids = 1:2)
   expect_equal(dim(ll_test_sub), c(2, 160))
   expect_equal(class(ll_test), c("matrix", "array"))
   expect_equal(class(as.vector(ll_test)), "numeric")
@@ -11,7 +11,7 @@ test_that("check log_lik functions work correctly", {
   expect_false(any(is.na(ll_test)))
   
   # single_C (100 units, 8 draws)
-  ll_test <- log_lik_flocker(example_flocker_model_single_C)
+  ll_test <- log_lik_flocker(fixture_fit("single_C"))
   expect_equal(dim(ll_test), c(16, 100))
   expect_equal(class(ll_test), c("matrix", "array"))
   expect_lte(max(ll_test), 0)
@@ -21,10 +21,10 @@ test_that("check log_lik functions work correctly", {
   testthat::skip_on_cran()
   
   # augmented (variable observed species plus 10 pseudospecies, 8 draws)
-  ll_test <- log_lik_flocker(example_flocker_model_aug)
-  n_group <- example_flocker_model_aug$data$ff_n_group[1]
-  known_present <- example_flocker_model_aug$data$ff_group_Q[
-    get_flocker_metadata(example_flocker_model_aug)$group_start
+  ll_test <- log_lik_flocker(fixture_fit("aug"))
+  n_group <- fixture_fit("aug")$data$ff_n_group[1]
+  known_present <- fixture_fit("aug")$data$ff_group_Q[
+    get_flocker_metadata(fixture_fit("aug"))$group_start
   ]
   n_observed <- sum(known_present)
   n_aug <- n_group - n_observed
@@ -45,7 +45,7 @@ test_that("check log_lik functions work correctly", {
   expect_false(any(is.na(ll_test)))
   
   # multiseason colex explicit (20 series, 8 draws)
-  ll_test <- log_lik_flocker(example_flocker_model_multi_colex_ex)
+  ll_test <- log_lik_flocker(fixture_fit("multi_colex_ex"))
   expect_equal(dim(ll_test), c(16, 20))
   expect_equal(class(ll_test), c("matrix", "array"))
   expect_lte(max(ll_test), 0)
@@ -53,7 +53,7 @@ test_that("check log_lik functions work correctly", {
   expect_false(any(is.na(ll_test)))
   
   # multiseason colex equilibrium (20 series, 8 draws)
-  ll_test <- log_lik_flocker(example_flocker_model_multi_colex_eq)
+  ll_test <- log_lik_flocker(fixture_fit("multi_colex_eq"))
   expect_equal(dim(ll_test), c(16, 20))
   expect_equal(class(ll_test), c("matrix", "array"))
   expect_lte(max(ll_test), 0)
@@ -61,7 +61,7 @@ test_that("check log_lik functions work correctly", {
   expect_false(any(is.na(ll_test)))
   
   # multiseason autologistic explicit (20 series, 8 draws)
-  ll_test <- log_lik_flocker(example_flocker_model_multi_auto_ex)
+  ll_test <- log_lik_flocker(fixture_fit("multi_auto_ex"))
   expect_equal(dim(ll_test), c(16, 20))
   expect_equal(class(ll_test), c("matrix", "array"))
   expect_lte(max(ll_test), 0)
@@ -69,7 +69,7 @@ test_that("check log_lik functions work correctly", {
   expect_false(any(is.na(ll_test)))
   
   # multiseason autologistic equilibrium (20 series, 8 draws)
-  ll_test <- log_lik_flocker(example_flocker_model_multi_auto_eq)
+  ll_test <- log_lik_flocker(fixture_fit("multi_auto_eq"))
   expect_equal(dim(ll_test), c(16, 20))
   expect_equal(class(ll_test), c("matrix", "array"))
   expect_lte(max(ll_test), 0)
@@ -83,33 +83,33 @@ test_that("log_lik_flocker new_data argument works correctly", {
   
   # non-flocker_data should error
   expect_error(
-    log_lik_flocker(example_flocker_model_single2, new_data = data.frame(x = 1)),
+    log_lik_flocker(fixture_fit("single"), new_data = data.frame(x = 1)),
     "must be a flocker_data object"
   )
   
   # wrong data type should error
   expect_error(
-    log_lik_flocker(example_flocker_model_single2, new_data = mfd_multi_colex_ex),
+    log_lik_flocker(fixture_fit("single"), new_data = fixture_data("multi_colex_ex")),
     "new_data is formatted for a different model type"
   )
   
   # --- equality checks: passing training data as new_data should match default ---
   
   # single (uses current-schema data from setup.R)
-  ll_default <- log_lik_flocker(example_flocker_model_single2)
+  ll_default <- log_lik_flocker(fixture_fit("single"))
   ll_newdata <- log_lik_flocker(
-    example_flocker_model_single2,
-    new_data = mfd_single,
+    fixture_fit("single"),
+    new_data = fixture_data("single"),
     allow_new_levels = FALSE
   )
   expect_equal(dim(ll_newdata), dim(ll_default))
   expect_equal(ll_newdata, ll_default, tolerance = 1e-10)
   
-  # single_C (uses mfd_single_C from setup.R)
-  ll_default <- log_lik_flocker(example_flocker_model_single_C)
+  # single_C (uses fixture_data("single_C") from setup.R)
+  ll_default <- log_lik_flocker(fixture_fit("single_C"))
   ll_newdata <- log_lik_flocker(
-    example_flocker_model_single_C,
-    new_data = mfd_single_C,
+    fixture_fit("single_C"),
+    new_data = fixture_data("single_C"),
     allow_new_levels = FALSE
   )
   expect_equal(dim(ll_newdata), dim(ll_default))
@@ -118,58 +118,58 @@ test_that("log_lik_flocker new_data argument works correctly", {
   testthat::skip_on_cran()
 
   # generic two-level single-season
-  ll_default <- log_lik_flocker(example_flocker_model_twolevel)
+  ll_default <- log_lik_flocker(fixture_fit("twolevel"))
   ll_newdata <- log_lik_flocker(
-    example_flocker_model_twolevel,
-    new_data = mfd_twolevel,
+    fixture_fit("twolevel"),
+    new_data = fixture_data("twolevel"),
     allow_new_levels = FALSE
   )
   expect_equal(ll_newdata, ll_default, tolerance = 1e-10)
 
   # augmented
-  ll_default <- log_lik_flocker(example_flocker_model_aug)
+  ll_default <- log_lik_flocker(fixture_fit("aug"))
   ll_newdata <- log_lik_flocker(
-    example_flocker_model_aug,
-    new_data = mfd_aug,
+    fixture_fit("aug"),
+    new_data = fixture_data("aug"),
     allow_new_levels = FALSE
   )
   expect_equal(ll_newdata, ll_default, tolerance = 1e-10)
   
-  # multiseason colex explicit (uses mfd_multi_colex_ex from setup.R)
-  ll_default <- log_lik_flocker(example_flocker_model_multi_colex_ex)
+  # multiseason colex explicit (uses fixture_data("multi_colex_ex") from setup.R)
+  ll_default <- log_lik_flocker(fixture_fit("multi_colex_ex"))
   ll_newdata <- log_lik_flocker(
-    example_flocker_model_multi_colex_ex,
-    new_data = mfd_multi_colex_ex,
-    allow_new_levels = FALSE
-  )
-  expect_equal(dim(ll_newdata), dim(ll_default))
-  expect_equal(ll_newdata, ll_default, tolerance = 1e-10)
-  
-  # multiseason colex equilibrium (uses mfd_multi_colex_eq from setup.R)
-  ll_default <- log_lik_flocker(example_flocker_model_multi_colex_eq)
-  ll_newdata <- log_lik_flocker(
-    example_flocker_model_multi_colex_eq,
-    new_data = mfd_multi_colex_eq,
+    fixture_fit("multi_colex_ex"),
+    new_data = fixture_data("multi_colex_ex"),
     allow_new_levels = FALSE
   )
   expect_equal(dim(ll_newdata), dim(ll_default))
   expect_equal(ll_newdata, ll_default, tolerance = 1e-10)
   
-  # multiseason autologistic explicit (uses mfd_multi_auto_ex from setup.R)
-  ll_default <- log_lik_flocker(example_flocker_model_multi_auto_ex)
+  # multiseason colex equilibrium (uses fixture_data("multi_colex_eq") from setup.R)
+  ll_default <- log_lik_flocker(fixture_fit("multi_colex_eq"))
   ll_newdata <- log_lik_flocker(
-    example_flocker_model_multi_auto_ex,
-    new_data = mfd_multi_auto_ex,
+    fixture_fit("multi_colex_eq"),
+    new_data = fixture_data("multi_colex_eq"),
     allow_new_levels = FALSE
   )
   expect_equal(dim(ll_newdata), dim(ll_default))
   expect_equal(ll_newdata, ll_default, tolerance = 1e-10)
   
-  # multiseason autologistic equilibrium (uses mfd_multi_auto_eq from setup.R)
-  ll_default <- log_lik_flocker(example_flocker_model_multi_auto_eq)
+  # multiseason autologistic explicit (uses fixture_data("multi_auto_ex") from setup.R)
+  ll_default <- log_lik_flocker(fixture_fit("multi_auto_ex"))
   ll_newdata <- log_lik_flocker(
-    example_flocker_model_multi_auto_eq,
-    new_data = mfd_multi_auto_eq,
+    fixture_fit("multi_auto_ex"),
+    new_data = fixture_data("multi_auto_ex"),
+    allow_new_levels = FALSE
+  )
+  expect_equal(dim(ll_newdata), dim(ll_default))
+  expect_equal(ll_newdata, ll_default, tolerance = 1e-10)
+  
+  # multiseason autologistic equilibrium (uses fixture_data("multi_auto_eq") from setup.R)
+  ll_default <- log_lik_flocker(fixture_fit("multi_auto_eq"))
+  ll_newdata <- log_lik_flocker(
+    fixture_fit("multi_auto_eq"),
+    new_data = fixture_data("multi_auto_eq"),
     allow_new_levels = FALSE
   )
   expect_equal(dim(ll_newdata), dim(ll_default))

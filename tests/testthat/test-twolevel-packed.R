@@ -44,7 +44,7 @@ test_that("two-level prediction handles a single unit and visit", {
   fd <- make_flocker_data(matrix(0, 1, 1), data.frame(group = factor("a")),
                           type = "twolevel_single", level2_group = "group",
                           newdata_checks = TRUE, quiet = TRUE)
-  fit <- example_flocker_model_twolevel
+  fit <- fixture_fit("twolevel")
   for (condition in c(FALSE, TRUE)) {
     z <- get_Z(fit, new_data = fd, draw_ids = 1:2, history_condition = condition)
     expect_identical(dim(z$unit), c(1L, 2L))

@@ -1,13 +1,13 @@
 test_that("loo_flocker works correctly", {
-  suppressWarnings(test_loo <- loo_flocker(example_flocker_model_single2))
-  suppressWarnings(test_loo_thinned <- loo_flocker(example_flocker_model_single2, 2))
-  suppressWarnings(test_loo_list <- loo_flocker(rep(list(example_flocker_model_single2), 2)))
+  suppressWarnings(test_loo <- loo_flocker(fixture_fit("single")))
+  suppressWarnings(test_loo_thinned <- loo_flocker(fixture_fit("single"), 2))
+  suppressWarnings(test_loo_list <- loo_flocker(rep(list(fixture_fit("single")), 2)))
   
   # check error
   expect_error(loo_flocker(), "argument \"x\" is missing, with no default")
   expect_error(loo_flocker(1), "x must be a flocker_fit object or a list of flocker_fit objects")
   expect_error(loo_flocker(list(1)), "x is a list, but x\\[\\[1\\]\\] is not a flocker_fit object.")
-  expect_error(loo_flocker(list(example_flocker_model_single2, 1)), "x is a list, but x\\[\\[2\\]\\] is not a flocker_fit object.")
+  expect_error(loo_flocker(list(fixture_fit("single"), 1)), "x is a list, but x\\[\\[2\\]\\] is not a flocker_fit object.")
   
   # check dims
   expect_equal(attributes(test_loo)$dims, c(4, 160))
@@ -24,9 +24,9 @@ test_that("loo_flocker_onefit works correctly", {
   # check error
   expect_error(loo_flocker_onefit(1), "x must be a flocker_fit object")
   
-  suppressWarnings(test_loo <- loo_flocker_onefit(example_flocker_model_single2, thin = NULL))
-  suppressWarnings(test_loo_alt <- loo_flocker_onefit(example_flocker_model_single2, thin=1))
-  suppressWarnings(test_loo_thinned <- loo_flocker_onefit(example_flocker_model_single2, thin = 2))
+  suppressWarnings(test_loo <- loo_flocker_onefit(fixture_fit("single"), thin = NULL))
+  suppressWarnings(test_loo_alt <- loo_flocker_onefit(fixture_fit("single"), thin=1))
+  suppressWarnings(test_loo_thinned <- loo_flocker_onefit(fixture_fit("single"), thin = 2))
   
   # check dimensions
   expect_equal(attributes(test_loo)$dims, c(4, 160))
@@ -39,17 +39,17 @@ test_that("loo_flocker_onefit works correctly", {
 test_that("loo_flocker names two-level pointwise values by group", {
   testthat::skip_on_cran()
   suppressWarnings(
-    test_loo <- loo_flocker(example_flocker_model_twolevel)
+    test_loo <- loo_flocker(fixture_fit("twolevel"))
   )
   expect_equal(rownames(test_loo$pointwise), letters[1:3])
 })
 
 test_that("loo_compare_flocker works correctly", {
   # check error
-  expect_error(loo_compare_flocker(list(example_flocker_model_single2)), "model_list must contain at least two flocker_fit objects.")
+  expect_error(loo_compare_flocker(list(fixture_fit("single"))), "model_list must contain at least two flocker_fit objects.")
   
   # check model naming
-  suppressWarnings(test_compare <- loo_compare_flocker(list(example_flocker_model_single2, example_flocker_model_single2), 
+  suppressWarnings(test_compare <- loo_compare_flocker(list(fixture_fit("single"), fixture_fit("single")),
                                       model_names = c("m1", "m2"), thin = 2))
   if ("model" %in% colnames(test_compare)) {
     expect_identical(test_compare$model, c("m1", "m2"))
