@@ -13,7 +13,7 @@ pad_packed <- function(x, n_row) {
 # are supplied by the caller independently of the packing order.
 pack_unit_block <- function(obs, unit_covs = NULL, event_covs = NULL,
                             allow_empty = FALSE, placeholder_values = NULL,
-                            unit_order = seq_len(nrow(obs))) {
+                            unit_order = seq_len(nrow(obs)), include_Q = TRUE) {
   n_unit <- nrow(obs)
   n_event <- as.integer(rowSums(!is.na(obs)))[unit_order]
   if (!allow_empty && any(n_event == 0L)) {
@@ -46,7 +46,9 @@ pack_unit_block <- function(obs, unit_covs = NULL, event_covs = NULL,
   rownames(data) <- NULL
   data$ff_n_unit <- pad_packed(n_unit, nrow(data))
   data$ff_unit_start <- pad_packed(unit_start, nrow(data))
-  data$ff_Q <- as.integer(rowSums(obs, na.rm = TRUE) > 0)[unit_order[row_unit]]
+  if (include_Q) {
+    data$ff_Q <- as.integer(rowSums(obs, na.rm = TRUE) > 0)[unit_order[row_unit]]
+  }
   original_to_packed <- matrix(NA_integer_, nrow(obs), ncol(obs), dimnames = dimnames(obs))
   original_to_packed[packed_to_original[!placeholder]] <- which(!placeholder)
   list(data = data, unit_start = unit_start, n_event = n_event, row_unit = row_unit,

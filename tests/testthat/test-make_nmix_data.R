@@ -20,7 +20,8 @@ test_that("N-mixture formatting retains visits and round-trips counts and covari
   # The same formatter branch produces the same row order and real covariates.
   occupancy <- make_flocker_data(1L * (obs > 0), unit, list(w = w), quiet = TRUE)
   expect_identical(fd$data[names(fd$data) != "ff_y"],
-                   occupancy$data[names(occupancy$data) != "ff_y"])
+                   occupancy$data[!names(occupancy$data) %in% c("ff_y", "ff_Q")])
+  expect_false("ff_Q" %in% names(fd$data))
   expect_identical(get_positions(fd), get_positions(occupancy))
   expect_identical(fd$auxiliary,
     n_mixture_binomial_auxiliary_data(list(c(2L, 3L, 0L), c(0L, 1L), 5L)))
