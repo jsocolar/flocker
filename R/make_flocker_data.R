@@ -120,7 +120,9 @@ make_flocker_data_ <- function(obs, unit_covs = NULL, event_covs = NULL,
 
   if (!quiet) {
     if (model == "n_mix") {
-      message("Formatting data for a single-season N-mixture model.")
+      message(paste0("Formatting data for a single-season N-mixture model. ",
+                     "This includes potentially expensive one-time precomputation ",
+                     "for the likelihood."))
     } else if (type == "single") {
       message("Formatting data for a single-season occupancy model.")
     } else if (type == "multi") {
