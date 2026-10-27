@@ -108,7 +108,10 @@ make_flocker_data_ <- function(obs, unit_covs = NULL, event_covs = NULL,
                                quiet = FALSE, newdata_checks = FALSE,
                                level2_group = NULL, level2_covs = NULL,
                                model = "occupancy") {
-  model <- match.arg(model, c("occupancy", "n_mix"))
+  if (!is.character(model) || length(model) != 1L ||
+      !model %in% c("occupancy", "n_mix")) {
+    stop('model must be "occupancy" or "n_mix".')
+  }
   if (model == "n_mix" && type != "single") {
     stop("N-mixture data currently support only single-season, one-level models.")
   }
