@@ -1,5 +1,10 @@
 # flocker 1.1-1
 
+* For 2.0, removed the model-specific public data formatters
+  `make_flocker_data_static()`, `make_flocker_data_dynamic()`,
+  `make_flocker_data_augmented()`, and `make_flocker_data_twolevel_single()`.
+  Use `make_flocker_data()` with the appropriate `type` instead.
+
 * Fixed single-visit event formatting dropping the dimensions of its index table.
 * Added deterministic characterization tests for packing and reconstruction ahead
   of the version 2 schema rewrite.

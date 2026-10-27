@@ -46,9 +46,7 @@ test_that("N-mixtures never collapse visits, including binary and all-zero respo
   }
   obs <- rbind(c(0, 1), c(1, 0))
   expect_identical(make_flocker_data(obs, quiet = TRUE)$metadata$type, "single_C")
-  expect_identical(make_flocker_data_static(obs, quiet = TRUE), make_flocker_data(obs, quiet = TRUE))
   expect_error(make_flocker_data(obs + 2, quiet = TRUE), "0, 1, or NA")
-  expect_error(make_flocker_data_static(obs + 2, quiet = TRUE), "0, 1, or NA")
   expect_error(flocker_standata(~ 1, ~ 1, make_nmix_data(obs, quiet = TRUE)),
                "requires occupancy data")
 })

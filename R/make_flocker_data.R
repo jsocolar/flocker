@@ -1,11 +1,3 @@
-# This file contains the function `make_flocker_data`, which calls one of the
-# following (also contained in this file):
-# make_flocker_data_static for a single-season model,
-# make_flocker_data_dynamic for a multi-season model, or
-# make_flocker_data_augmented for a data-augmented model, or
-# make_flocker_data_twolevel_single for a two-level single-season model.
-
-
 ##### make_flocker_data ####
 #' Format data for occupancy model with \code{flock()}.
 #' @param obs If \code{type = "single"} or \code{type = "twolevel_single"},
@@ -60,7 +52,8 @@
 #' @param level2_covs An optional dataframe with one row per level-two group
 #'    and no unused levels in its grouping factor. Row order is arbitrary;
 #'    factor-level order determines the internal group order, and every group
-#'    must be represented in \code{unit_covs}. Only applicable if
+#'    must be represented in \code{unit_covs}. If omitted, a minimal table is
+#'    constructed from the groups represented in \code{unit_covs}. Only applicable if
 #'    \code{type = "twolevel_single"}.
 #' @param quiet Hide progress bars and informational messages?
 #' @param newdata_checks If TRUE, turn off checks that must pass in order
@@ -126,26 +119,14 @@ make_flocker_data_ <- function(obs, unit_covs = NULL, event_covs = NULL,
     if (model == "n_mix") {
       message("Formatting data for a single-season N-mixture model.")
     } else if (type == "single") {
-      message(paste0("Formatting data for a single-season occupancy model. For ",
-                     "details, see make_flocker_data_static. All warnings and ",
-                     "error messages should be interpreted in the context of ",
-                     "make_flocker_data_static"))
+      message("Formatting data for a single-season occupancy model.")
     } else if (type == "multi") {
-      message(paste0("Formatting data for a multi-season occupancy model. For ",
-                     "details, see make_flocker_data_dynamic.  All warnings and ",
-                     "error messages should be interpreted in the context of ",
-                     "make_flocker_data_dynamic"))
+      message("Formatting data for a multi-season occupancy model.")
     } else if (type == "augmented") {
-      message(paste0("Formatting data for a single-season multispecies occupancy ", 
-                     "model with data augmentation for never-observed species. For ",
-                     "details, see make_flocker_data_augmented.  All warnings and ",
-                     "error messages should be interpreted in the context of ",
-                     "make_flocker_data_augmented"))
+      message(paste0("Formatting data for a single-season multispecies occupancy ",
+                     "model with data augmentation for never-observed species."))
     } else if (type == "twolevel_single") {
-      message(paste0("Formatting data for a two-level single-season occupancy ",
-                     "model. For details, see make_flocker_data_twolevel_single. ",
-                     "All warnings and error messages should be interpreted in ",
-                     "the context of make_flocker_data_twolevel_single"))
+      message("Formatting data for a two-level single-season occupancy model.")
     }
   }
   
@@ -154,57 +135,24 @@ make_flocker_data_ <- function(obs, unit_covs = NULL, event_covs = NULL,
       obs, unit_covs, event_covs, newdata_checks, model
       )
   } else if (type == "multi") {
-    out <- make_flocker_data_dynamic(
-      obs, unit_covs, event_covs, quiet, newdata_checks
+    out <- make_flocker_data_dynamic_(
+      obs, unit_covs, event_covs, newdata_checks
       )
   } else if (type == "augmented") {
-    out <- make_flocker_data_augmented(
-      obs, n_aug, unit_covs, event_covs, quiet, newdata_checks)
+    out <- make_flocker_data_augmented_(
+      obs, n_aug, unit_covs, event_covs, newdata_checks)
   } else if (type == "twolevel_single") {
-    out <- make_flocker_data_twolevel_single(
+    out <- make_flocker_data_twolevel_single_(
       obs, unit_covs, event_covs, level2_group, level2_covs,
-      quiet, newdata_checks)
+      newdata_checks)
   }
   
   out
 }
 
 
-##### make_flocker_data_static #####
-
-#' Format data for single-season occupancy model, to be passed to 
-#'  \code{flock()}.
-#' @param obs An I x J matrix-like object where closure is assumed across rows 
-#'  and columns are repeated sampling events. Allowable values are 1 (detection), 
-#'  0 (no detection), and NA (no sampling event).
-#   The data must be formatted so that all NAs are trailing within their rows.
-#' @param unit_covs A dataframe of covariates for each unit that are constant 
-#'            across repeated sampling events within closure-units.
-#' @param event_covs A named list of I x J matrices, each one corresponding to a covariate
-#' that varies across repeated sampling events within closure-units
-#' @param quiet Hide progress bars and informational messages?
-#' @param newdata_checks If TRUE, turn off checks that must pass in order
-#' to use the data for model fitting, but not in other contexts (e.g. making
-#' predictions or assessing log-likelihoods over new data).
-#' @return A flocker_data list that can be passed as data to \code{flock()}.
-#' @export
-#' @examples
-#' sfd <- simulate_flocker_data()
-#' make_flocker_data_static(
-#'  sfd$obs, 
-#'  sfd$unit_covs,
-#'  sfd$event_covs
-#' )
-make_flocker_data_static <- function(
-    obs, unit_covs = NULL, event_covs = NULL, 
-    quiet = FALSE, newdata_checks = FALSE
-    ) {
-  standard_mfd_checks(obs, unit_covs, event_covs, "single", NULL, quiet, newdata_checks)
-  make_flocker_data_static_(obs, unit_covs, event_covs, newdata_checks, "occupancy")
-}
-
-# Inputs have been checked by either public occupancy entry point or the shared
-# model dispatcher. Both models execute the same visit-level packing branch.
+# Inputs have been checked by the shared model dispatcher.
+# Both models execute the same visit-level packing branch.
 make_flocker_data_static_ <- function(obs, unit_covs, event_covs,
                                       newdata_checks, model) {
   n_rep <- ncol(obs)
@@ -255,33 +203,9 @@ make_flocker_data_static_ <- function(obs, unit_covs, event_covs,
 }
 
 
-##### make_flocker_data_dynamic #####
-
-#' Format data for dynamic (multi-season) occupancy model, to be passed to 
-#'  \code{flock()}.
-#' @param obs An I x J x K array where closure is assumed across rows, columns 
-#'  are repeated sampling events, and slices along the third dimension are 
-#'  seasons. Allowable values are 1 (detection), 0 (no detection), and NA (no 
-#'  sampling event).
-#'  The data must be formatted so that all NAs are trailing within their rows
-#'  across repeat visits, but not necessarily across seasons. 
-#' @param unit_covs  A list of dataframes (one per season) of covariates for 
-#'    each closure-unit that are constant across repeated sampling events within 
-#'    units. All dataframes must have identical column names and types, and all
-#'    dataframes must have I rows.
-#' @param event_covs A named list of I x J x K arrays, each one corresponding to 
-#' a covariate that varies across repeated sampling events within closure-units
-#' @param quiet Hide progress bars and informational messages?
-#' @param newdata_checks If TRUE, turn off checks that must pass in order
-#' to use the data for model fitting, but not in other contexts (e.g. making
-#' predictions or assessing log-likelihoods over new data).
-#' @return A flocker_data list that can be passed as data to \code{flock()}.
-#' @export
-make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
-                                      quiet = FALSE, newdata_checks = FALSE) {
-  
-  standard_mfd_checks(obs, unit_covs, event_covs, "multi", NULL, quiet, newdata_checks)
-  
+# Internal dynamic formatter; inputs are checked by the shared dispatcher.
+make_flocker_data_dynamic_ <- function(obs, unit_covs = NULL, event_covs = NULL,
+                                      newdata_checks = FALSE) {
   n_series <- nrow(obs)
   n_visit <- ncol(obs)
   n_season <- nslice(obs)
@@ -332,34 +256,10 @@ make_flocker_data_dynamic <- function(obs, unit_covs = NULL, event_covs = NULL,
   out
 }
 
-##### make_flocker_data_augmented #####
-
-#' Format data for data-augmented occupancy model, to be passed to 
-#'  \code{flock()}.
-#' @param obs An I x J x K array where rows I are sites, columns J are 
-#'  repeat sampling events, and slices K are species. Allowable values are 1 
-#'  (detection), 0 (no detection), and NA (no sampling event). Every supplied
-#'  species must have at least one detection; never-observed pseudospecies are
-#'  added through \code{n_aug}. Species names may be supplied as names on the
-#'  third dimension. If omitted, observed species are named `species1`,
-#'  `species2`, and so on. Names matching `pseudospecies[digits]` are
-#'  reserved for augmented pseudospecies.
-#'   The data must be formatted so that all NAs are trailing within their rows.
-#' @param n_aug Number of pseudospecies to augment
-#' @param site_covs A dataframe of covariates for each site that are constant 
-#'            across repeated sampling events.
-#' @param event_covs A named list of I x J matrices, each one corresponding to a 
-#' covariate that varies across repeated sampling events within sites
-#' @param quiet Hide progress bars and informational messages?
-#' @param newdata_checks If TRUE, turn off checks that must pass in order
-#' to use the data for model fitting, but not in other contexts (e.g. making
-#' predictions or assessing log-likelihoods over new data).
-#' @return A flocker_data list that can be passed as data to \code{flocker()}.
-#' @export
-make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL, 
-                                        event_covs = NULL, quiet = FALSE, 
+# Internal augmented formatter; inputs are checked by the shared dispatcher.
+make_flocker_data_augmented_ <- function(obs, n_aug, site_covs = NULL,
+                                        event_covs = NULL,
                                         newdata_checks = FALSE) {
-  standard_mfd_checks(obs, site_covs, event_covs, "augmented", n_aug, quiet, newdata_checks)
   n_observed_species <- dim(obs)[3]
   observed_species_names <- dimnames(obs)[[3]]
   if (is.null(observed_species_names)) {
@@ -420,33 +320,7 @@ make_flocker_data_augmented <- function(obs, n_aug, site_covs = NULL,
   out
 }
 
-##### make_flocker_data_twolevel_single #####
-
-#' Format data for two-level single-season occupancy model, to be passed to
-#' \code{flock()}.
-#' @inheritParams make_flocker_data
-#' @param level2_group The name of a factor column in \code{unit_covs} and, if
-#'   supplied, \code{level2_covs}, identifying the level-two group.
-#' @param level2_covs An optional dataframe with one row per level-two group
-#'   and no unused levels in its grouping factor. Row order is arbitrary;
-#'   factor-level order determines the internal group order, and every group
-#'   must be represented in \code{unit_covs}. If omitted, a minimal table is
-#'   constructed from the groups represented in \code{unit_covs}.
-#' @return A flocker_data list that can be passed as data to \code{flock()}.
-#' @export
-make_flocker_data_twolevel_single <- function(
-    obs, unit_covs, event_covs = NULL, level2_group, level2_covs = NULL,
-    quiet = FALSE, newdata_checks = FALSE
-    ) {
-  standard_mfd_checks(obs, unit_covs, event_covs, "twolevel_single", NULL,
-                      quiet, newdata_checks, level2_group, level2_covs)
-
-  make_flocker_data_twolevel_single_(
-    obs, unit_covs, event_covs, level2_group, level2_covs, newdata_checks
-  )
-}
-
-# Shared packing workhorse; each public formatter validates its own inputs.
+# Shared packing workhorse for validated two-level and augmented inputs.
 make_flocker_data_twolevel_single_ <- function(
     obs, unit_covs, event_covs, level2_group, level2_covs,
     newdata_checks = FALSE
