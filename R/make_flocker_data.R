@@ -178,8 +178,7 @@ make_flocker_data_static_ <- function(obs, unit_covs, event_covs,
     ))
   } else {
     obs <- as.matrix(obs)
-    packed <- pack_unit_block(obs, unit_covs, lapply(event_covs, as.matrix),
-                              include_Q = model == "occupancy")
+    packed <- pack_unit_block(obs, unit_covs, lapply(event_covs, as.matrix))
     out <- list(
       data = packed$data,
       metadata = list(
