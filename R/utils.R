@@ -329,7 +329,7 @@ get_positions <- function(data_object, unit_level = FALSE) {
   data_type <- metadata$type
   the_data <- data_object$data
 
-  if (data_type == "single") {
+  if (data_type %in% c("single", "n_mix")) {
     if (unit_level) {
       return(stats::setNames(metadata$unit_start, metadata$original_dimnames[[1]]))
     }
@@ -522,8 +522,12 @@ validate_params_individually <- function(f_occ, f_det, flocker_data,
   )
   
   # Check that flocker_data is valid
+  data_type <- get_flocker_metadata(flocker_data)$type
+  if (identical(data_type, "n_mix")) {
+    stop("flock() requires occupancy data; N-mixture data are not supported.")
+  }
   assertthat::assert_that(
-    get_flocker_metadata(flocker_data)$type %in% flocker_data_output_types(),
+    data_type %in% flocker_data_output_types(),
     msg = paste0("unrecognized data type; flocker_data is corrupt. ",
                  "If this error persists on newly formatted objects produced ",
                  "without errors by `make_flocker_data`, please report a bug.")

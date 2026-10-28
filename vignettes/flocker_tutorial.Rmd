@@ -132,7 +132,7 @@ fd_rep_varying <- make_flocker_data(
   unit_covs = d$unit_covs, 
   event_covs = d$event_covs
   )
-#> Formatting data for a single-season occupancy model. For details, see make_flocker_data_static. All warnings and error messages should be interpreted in the context of make_flocker_data_static
+#> Formatting data for a single-season occupancy model.
 ```
 
 The function `make_flocker_data()` outputs an object of class `flocker_data` 
@@ -188,7 +188,7 @@ fd_rep_constant <- make_flocker_data(
   obs = d$obs, 
   unit_covs = d$unit_covs
   )
-#> Formatting data for a single-season occupancy model. For details, see make_flocker_data_static. All warnings and error messages should be interpreted in the context of make_flocker_data_static
+#> Formatting data for a single-season occupancy model.
 rep_constant <- flock(
   f_occ = ~ uc1 + (1 + uc1 | species),
   f_det = ~ uc1 + (1 + uc1 | species),
