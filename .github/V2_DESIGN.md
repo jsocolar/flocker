@@ -45,7 +45,7 @@ dimension of returned arrays.
 
 Keep `flock()` as the fitting function for occupancy models it naturally
 supports. Give other ecological model classes clear literal names, beginning
-with `fit_nmixture()` and potentially including `fit_cjs()`.
+with `n_mix()` and potentially including `fit_cjs()`.
 
 Do not invent parallel acronym puns for every model class. The connection
 between names such as `flam()` and N-mixture models would impose unnecessary
@@ -95,7 +95,7 @@ forcing abundance parameters into occupancy terminology.
 ## Public data formatters
 
 Keep `make_flocker_data()` as the occupancy formatter. Add separate ecological
-formatters such as `make_nmixture_data()` and potentially `make_cjs_data()`.
+formatters such as `make_nmix_data()` and potentially `make_cjs_data()`.
 Keep analogous shared arguments parallel across these functions and add only
 genuinely model-specific arguments.
 
@@ -590,11 +590,27 @@ while occupancy alone may choose the rep-constant representation. N-mixture
 objects have `metadata$type = "n_mix"` and a separate `auxiliary` list; they
 cannot be passed to `flock()`. The existing single-season restrictions on
 trailing missing visits and empty units also apply to count inputs.
-`n_mix()`, prior defaults appropriate to its predictor scales, and
-post-processing are subsequent increments. In particular, brms's
-response-dependent default intercept prior should not automatically become a
-detection-logit prior for count responses. Negative-binomial abundance and
-beta-binomial detection are outside this first increment.
+`n_mix(f_abund, f_det, data, ...)` fits the Poisson-binomial model with
+one-sided formulas; `nmix_stancode()`, `nmix_standata()`, and
+`get_nmix_prior()` expose the same specification before sampling. Combined
+brmsformula objects are deferred. Abundance predictors use unit covariates.
+Preserve formula environments, reject time-series terms and threading, and
+check that brms has not removed packed visits before fitting. Returned objects
+remain brmsfit objects, with an additional n_mix_fit class and unchanged
+formatter metadata; occupancy post-processing does not accept them.
+
+For now, use brms's ordinary binomial-scale student_t(3, 0, 2.5) defaults for
+detection intercepts and group/spline standard deviations, independently of
+counts. Other priors remain brms defaults, including a flat abundance
+intercept prior. User priors override these defaults. This is provisional:
+review priors across **all** model families before settling the final API,
+including intercepts, slopes, hierarchical scales, and effects of the internal
+identity links. Count-derived default priors must not silently become
+detection-logit priors.
+
+N-mixture post-processing, negative-binomial and ZIP abundance, and
+beta-binomial detection remain subsequent increments. Retain ff_Q in N-mixture
+data to support future ZIP abundance.
 
 ### N-mixture function boundaries
 
@@ -650,8 +666,8 @@ such as the timer do not depend on either distribution.
    replicated-output branches rather than carrying them forward.
 7. Run the full verification matrix and deliberately test rejection of 1.x
    formatted objects and fits.
-8. Once the 2.0 foundation is stable, introduce `make_nmixture_data()` and
-   `fit_nmixture()` using the same schema, metadata, naming, and testing
+8. Once the 2.0 foundation is stable, introduce `make_nmix_data()` and
+   `n_mix()` using the same schema, metadata, naming, and testing
    contracts.
 
 Do not treat this sequence as a requirement to implement all steps in one pull

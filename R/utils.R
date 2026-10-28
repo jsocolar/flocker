@@ -210,8 +210,8 @@ get_flocker_metadata <- function(x) {
     return(x$metadata)
   }
   assertthat::assert_that(
-    is_flocker_fit(x),
-    msg = "x must be a flocker_data or flocker_fit object"
+    is_flocker_fit(x) || inherits(x, "n_mix_fit"),
+    msg = "x must be a flocker_data, flocker_fit, or n_mix_fit object"
   )
   metadata <- attr(x, "flocker_metadata")
   assertthat::assert_that(
@@ -247,7 +247,7 @@ validate_packed_schema <- function(x) {
     type <- metadata$type
   }
   if (!identical(metadata$schema_version, 2L)) {
-    stop(paste0("Incompatible ", switch(type, single = "single-season", single_C = "rep-constant single-season", multi = "multiseason", twolevel_single = "two-level", augmented = "augmented"),
+    stop(paste0("Incompatible ", switch(type, single = "single-season", single_C = "rep-constant single-season", multi = "multiseason", twolevel_single = "two-level", augmented = "augmented", n_mix = "N-mixture"),
                 " packing schema. Pre-2.0 objects require a compatible 1.x installation or reformatting and refitting."))
   }
   invisible(NULL)
