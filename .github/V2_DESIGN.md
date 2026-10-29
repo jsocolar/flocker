@@ -608,8 +608,12 @@ including intercepts, slopes, hierarchical scales, and effects of the internal
 identity links. Count-derived default priors must not silently become
 detection-logit priors.
 
-N-mixture post-processing, negative-binomial and ZIP abundance, and
-beta-binomial detection remain subsequent increments. Retain ff_Q in N-mixture
+`fitted_nmix()` returns expected abundance by unit and detection probabilities
+by visit, with posterior draws in the final dimension. It also supports
+log/logit output, summaries, and formatted new data. Missing visits remain NA.
+Latent abundance, count prediction, marginal log likelihoods, LOO,
+negative-binomial and ZIP abundance, and beta-binomial detection remain
+subsequent increments. Retain ff_Q in N-mixture
 data to support future ZIP abundance.
 
 ### N-mixture function boundaries

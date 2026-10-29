@@ -85,6 +85,33 @@ test_that("Poisson-binomial N-mixture models fit through the public interface", 
   expect_true(all(is.finite(draws$b_abund_Intercept)))
   expect_lt(abs(mean(draws$b_Intercept) - qlogis(0.6)), 0.7)
   expect_lt(abs(mean(draws$b_abund_Intercept) - log(5)), 0.6)
+  # Check the fitted-value adapter against native brms predictors using the
+  # same small fit, avoiding a second compilation or a packaged fit fixture.
+  ids <- c(3L, 1L)
+  fitted <- fitted_nmix(fit, draw_ids = ids)
+  expect_identical(dim(fitted$abund), c(60L, 2L))
+  expect_identical(dim(fitted$det), c(60L, 3L, 2L))
+  expected <- t(brms::posterior_linpred(fit, dpar = "abund", draw_ids = ids))
+  expect_equal(unname(fitted$abund), exp(expected[d$metadata$unit_start, , drop = FALSE]))
+  expected <- t(brms::posterior_linpred(fit, dpar = "mu", draw_ids = ids))
+  expect_equal(as.vector(fitted$det[, , 1]), stats::plogis(expected[d$metadata$original_to_packed, 1]))
+  expect_identical(names(fitted_nmix(fit, components = "det", draw_ids = 1)), "det")
+  nd <- make_nmix_data(matrix(c(1, NA, 2, 0), 2, byrow = TRUE,
+                              dimnames = list(c("a", "b"), c("am", "pm"))),
+                       newdata_checks = TRUE, quiet = TRUE)
+  new <- fitted_nmix(fit, new_data = nd, draw_ids = 1, response = FALSE)
+  expect_identical(dim(new$abund), c(2L, 1L))
+  expect_identical(dim(new$det), c(2L, 2L, 1L))
+  expect_equal(unname(new$abund[, 1]), rep(draws$b_abund_Intercept[1], 2))
+  expect_true(is.na(new$det[1, 2, 1]))
+  expect_identical(rownames(new$abund), c("a", "b"))
+  expect_error(fitted_nmix(fit, draw_ids = 0), "draw_ids")
+  expect_error(fitted_nmix(fit, new_data = d$data), "formatted")
+  bad <- nd
+  bad$metadata$schema_version <- 1L
+  expect_error(fitted_nmix(fit, new_data = bad), "Incompatible")
+  expect_error(fitted_nmix(fit, new_data = make_flocker_data(matrix(0, 2, 2), quiet = TRUE)),
+               "different model type")
 })
 
 test_that("detection defaults are independent of counts and user priors override them", {

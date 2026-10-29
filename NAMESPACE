@@ -2,6 +2,7 @@
 
 export(example_flocker_model_single)
 export(fitted_flocker)
+export(fitted_nmix)
 export(flock)
 export(flocker_stancode)
 export(flocker_standata)

@@ -1,5 +1,8 @@
 # flocker 1.1-1
 
+* Added `fitted_nmix()` for unit-level expected abundance and visit-level
+  detection probabilities, including formatted new data and posterior summaries.
+
 * Added `n_mix()` for exact Poisson-binomial N-mixture fitting, with
   `nmix_stancode()`, `nmix_standata()`, and `get_nmix_prior()` inspection helpers.
 
