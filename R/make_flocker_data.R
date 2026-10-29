@@ -117,7 +117,7 @@ make_flocker_data <- function(obs, unit_covs = NULL, event_covs = NULL,
 #' @param newdata_checks Allow a single visit column and mark the result as
 #'   new data rather than fitting data. All other input checks still apply.
 #' @return A \code{flocker_data} list containing \code{data}, \code{metadata},
-#'   and \code{auxiliary}. Metadata identify the model as \code{n_mix}.
+#'   and \code{auxiliary}. Metadata identify the model as \code{nmix}.
 #' @details Observed visits remain separate even without event covariates.
 #'   Unit covariates repeat at their actual values on every retained visit;
 #'   centering and spline construction therefore use visit-expanded data.
@@ -133,7 +133,7 @@ make_nmix_data <- function(obs, unit_covs = NULL, event_covs = NULL,
                            quiet = FALSE, newdata_checks = FALSE) {
   make_flocker_data_(obs = obs, unit_covs = unit_covs, event_covs = event_covs,
                     quiet = quiet, newdata_checks = newdata_checks,
-                    type = "single", model = "n_mix")
+                    type = "single", model = "nmix")
 }
 
 # Shared orchestration: public wrappers select the model, which determines
@@ -144,17 +144,17 @@ make_flocker_data_ <- function(obs, unit_covs = NULL, event_covs = NULL,
                                level2_group = NULL, level2_covs = NULL,
                                model = "occupancy") {
   if (!is.character(model) || length(model) != 1L ||
-      !model %in% c("occupancy", "n_mix")) {
-    stop('model must be "occupancy" or "n_mix".')
+      !model %in% c("occupancy", "nmix")) {
+    stop('model must be "occupancy" or "nmix".')
   }
-  if (model == "n_mix" && type != "single") {
+  if (model == "nmix" && type != "single") {
     stop("N-mixture data currently support only single-season, one-level models.")
   }
   standard_mfd_checks(obs, unit_covs, event_covs, type, n_aug, quiet, newdata_checks,
                       level2_group, level2_covs, model = model)
 
   if (!quiet) {
-    if (model == "n_mix") {
+    if (model == "nmix") {
       message(paste0("Formatting data for a single-season N-mixture model. ",
                      "This includes potentially expensive one-time precomputation ",
                      "for the likelihood."))
@@ -217,7 +217,7 @@ make_flocker_data_static_ <- function(obs, unit_covs, event_covs,
     out <- list(
       data = packed$data,
       metadata = list(
-        type = if (model == "n_mix") "n_mix" else "single", schema_version = 2L,
+        type = if (model == "nmix") "nmix" else "single", schema_version = 2L,
         data_role = if (newdata_checks) "new_data" else "model_data",
         flocker_version = flocker_version(),
         original_dim = dim(obs), original_dimnames = dimnames(obs),
@@ -229,11 +229,11 @@ make_flocker_data_static_ <- function(obs, unit_covs, event_covs,
         unit_covs = names(unit_covs), event_covs = names(event_covs)
       )
     )
-    if (model == "n_mix") {
+    if (model == "nmix") {
       # Follow the packed unit order; missing visits are already omitted.
       counts <- unname(split(packed$data$ff_y,
                              factor(packed$row_unit, levels = seq_along(packed$n_event))))
-      out$auxiliary <- n_mixture_binomial_auxiliary_data(counts)
+      out$auxiliary <- nmix_binomial_auxiliary_data(counts)
     }
     class(out) <- c("list", "flocker_data")
     return(out)
@@ -402,7 +402,7 @@ make_flocker_data_twolevel_single_ <- function(
 
 ##### mfd input checking #####
 #' input checking for make_flocker_data
-#' @param model Internal model selector: occupancy or n_mix.
+#' @param model Internal model selector: occupancy or nmix.
 #' @inheritParams make_flocker_data
 standard_mfd_checks <- function(
     obs, unit_covs, event_covs, type, n_aug, quiet, newdata_checks,
@@ -412,7 +412,7 @@ standard_mfd_checks <- function(
   # unique() on a data.frame returns unique rows, not values; flatten first so
   # matrix-like data.frames pass the same value check as matrices and arrays.
   unique_y <- unique(as.vector(if (is.data.frame(obs)) as.matrix(obs) else obs))
-  if (model == "n_mix") {
+  if (model == "nmix") {
     observed <- unique_y[!is.na(unique_y)]
     assertthat::assert_that(
       is.numeric(unique_y) && !any(is.nan(unique_y)) &&

@@ -34,5 +34,5 @@ test_that("singleton dimensions and summary dimensions are retained", {
     expect_equal(as.vector(summary), rep(if (component == "abund") 2 else 2 / 3, 3))
     expect_identical(dim(summary), if (component == "abund") c(1L, 3L) else c(1L, 1L, 3L))
   }
-  expect_error(fitted_nmix(d), "returned by n_mix")
+  expect_error(fitted_nmix(d), "returned by nmix")
 })

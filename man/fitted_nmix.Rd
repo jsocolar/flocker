@@ -18,7 +18,7 @@ fitted_nmix(
 )
 }
 \arguments{
-\item{nmix_fit}{A fitted model returned by \code{n_mix()}.}
+\item{nmix_fit}{A fitted model returned by \code{nmix()}.}
 
 \item{components}{Components to return: \code{"abund"} and/or \code{"det"}.}
 

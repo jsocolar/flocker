@@ -4,7 +4,7 @@
 #' Poisson-binomial N-mixture model. These are model parameters, not draws of
 #' latent abundance or predicted counts, and do not condition latent abundance
 #' on the observed visit history.
-#' @param nmix_fit A fitted model returned by \code{n_mix()}.
+#' @param nmix_fit A fitted model returned by \code{nmix()}.
 #' @param components Components to return: \code{"abund"} and/or \code{"det"}.
 #' @param new_data Optional formatted data from \code{make_nmix_data()}.
 #'   Both model data and data made with \code{newdata_checks = TRUE} are accepted.
@@ -31,8 +31,8 @@ fitted_nmix <- function(nmix_fit, components = c("abund", "det"),
                          CI = c(0.05, 0.95), draw_ids = NULL,
                          re_formula = NULL, allow_new_levels = FALSE,
                          sample_new_levels = "uncertainty") {
-  if (!inherits(nmix_fit, "n_mix_fit") || !inherits(nmix_fit, "brmsfit")) {
-    stop("nmix_fit must be a fitted model returned by n_mix().")
+  if (!inherits(nmix_fit, "nmix_fit") || !inherits(nmix_fit, "brmsfit")) {
+    stop("nmix_fit must be a fitted model returned by nmix().")
   }
   components <- match.arg(components, c("abund", "det"), several.ok = TRUE)
   if (!is.logical(response) || length(response) != 1L || is.na(response) ||
@@ -49,7 +49,7 @@ fitted_nmix <- function(nmix_fit, components = c("abund", "det"),
   validate_postprocessing_data(nmix_fit, new_data)
   object <- if (is.null(new_data)) nmix_fit else new_data
   metadata <- get_flocker_metadata(object)
-  if (!identical(metadata$type, "n_mix")) stop("Expected N-mixture data.")
+  if (!identical(metadata$type, "nmix")) stop("Expected N-mixture data.")
   if (is.null(draw_ids)) draw_ids <- seq_len(brms::ndraws(nmix_fit))
   if (!is.numeric(draw_ids) || !length(draw_ids) || anyNA(draw_ids) ||
       any(!is.finite(draw_ids) | draw_ids < 1 | draw_ids != floor(draw_ids) |

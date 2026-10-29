@@ -210,8 +210,8 @@ get_flocker_metadata <- function(x) {
     return(x$metadata)
   }
   assertthat::assert_that(
-    is_flocker_fit(x) || inherits(x, "n_mix_fit"),
-    msg = "x must be a flocker_data, flocker_fit, or n_mix_fit object"
+    is_flocker_fit(x) || inherits(x, "nmix_fit"),
+    msg = "x must be a flocker_data, flocker_fit, or nmix_fit object"
   )
   metadata <- attr(x, "flocker_metadata")
   assertthat::assert_that(
@@ -247,7 +247,7 @@ validate_packed_schema <- function(x) {
     type <- metadata$type
   }
   if (!identical(metadata$schema_version, 2L)) {
-    stop(paste0("Incompatible ", switch(type, single = "single-season", single_C = "rep-constant single-season", multi = "multiseason", twolevel_single = "two-level", augmented = "augmented", n_mix = "N-mixture"),
+    stop(paste0("Incompatible ", switch(type, single = "single-season", single_C = "rep-constant single-season", multi = "multiseason", twolevel_single = "two-level", augmented = "augmented", nmix = "N-mixture"),
                 " packing schema. Pre-2.0 objects require a compatible 1.x installation or reformatting and refitting."))
   }
   invisible(NULL)
@@ -329,7 +329,7 @@ get_positions <- function(data_object, unit_level = FALSE) {
   data_type <- metadata$type
   the_data <- data_object$data
 
-  if (data_type %in% c("single", "n_mix")) {
+  if (data_type %in% c("single", "nmix")) {
     if (unit_level) {
       return(stats::setNames(metadata$unit_start, metadata$original_dimnames[[1]]))
     }
@@ -523,7 +523,7 @@ validate_params_individually <- function(f_occ, f_det, flocker_data,
   
   # Check that flocker_data is valid
   data_type <- get_flocker_metadata(flocker_data)$type
-  if (identical(data_type, "n_mix")) {
+  if (identical(data_type, "nmix")) {
     stop("flock() requires occupancy data; N-mixture data are not supported.")
   }
   assertthat::assert_that(
