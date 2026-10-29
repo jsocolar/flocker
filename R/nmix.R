@@ -117,10 +117,8 @@ nmix_ <- function(output, f_abund, f_det, data, data2, prior, threads, ...) {
   }
 
   # Construct calls rather than deparsing, preserving each formula's environment.
-  det <- stats::as.formula(call("~", quote(ff_y), f_det[[2L]]),
-                           env = environment(f_det))
-  abund <- stats::as.formula(call("~", quote(abund), f_abund[[2L]]),
-                             env = environment(f_abund))
+  det <- set_formula_response(f_det, quote(ff_y))
+  abund <- set_formula_response(f_abund, quote(abund))
   formula <- brms::bf(det, abund)
   family <- nmix_poisson_binomial()
   stanvars <- nmix_poisson_binomial_stanvars(auxiliary)

@@ -219,48 +219,38 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
   }
   ### create final formulas
   if (!is.null(f_occ)) {
-    f_occ_txt <- paste0(deparse(f_occ), collapse = "")
-    f_occ_use <- stats::as.formula(paste0("occ ", f_occ_txt))
+    f_occ_use <- set_formula_response(f_occ, quote(occ))
   }
   if (!is.null(f_col)) {
-    f_col_txt <- paste0(deparse(f_col), collapse = "")
-    f_col_use <- stats::as.formula(paste0("colo ", f_col_txt))
+    f_col_use <- set_formula_response(f_col, quote(colo))
   }
   if (!is.null(f_ex)) {
-    f_ex_txt <- paste0(deparse(f_ex), collapse = "")
-    f_ex_use <- stats::as.formula(paste0("ex ", f_ex_txt))
+    f_ex_use <- set_formula_response(f_ex, quote(ex))
   }
   if (!is.null(f_auto)) {
-    f_auto_txt <- paste0(deparse(f_auto), collapse = "")
-    f_auto_use <- stats::as.formula(paste0("autologistic ", f_auto_txt))
+    f_auto_use <- set_formula_response(f_auto, quote(autologistic))
   }
   if (!is.null(f_meta)) {
-    f_meta_txt <- paste0(deparse(f_meta), collapse = "")
-    f_meta_use <- stats::as.formula(paste0("Omega ", f_meta_txt))
+    f_meta_use <- set_formula_response(f_meta, quote(Omega))
   }
   
-  if(brms::is.brmsformula(f_det)){
-    f_det_txt1 <- format(f_det$formula)
-    is_valid <- grepl("^det[[:blank:]]*~", f_det_txt1)
+  if (brms::is.brmsformula(f_det)) {
+    detection_formula <- f_det$formula
     assertthat::assert_that(
-      is_one_logical(is_valid),
-      msg = "Error in formula checking. This should not happen; please report a bug."
+      length(detection_formula) == 3L &&
+        identical(detection_formula[[2L]], quote(det)),
+      msg = paste0("When f_det is a brmsformula, the $formula element ",
+                   "must be a detection formula beginning with `det ~`")
     )
-    assertthat::assert_that(
-      is_valid,
-      msg = paste0("When f_det is a brmsformula, the $formula element ", 
-                   "must be a detection formula beginning with `det ~`"
-      )
-    )
-    f_det_txt <- paste0("~", strsplit(f_det_txt1, "~")[[1]][2])
   } else {
-    f_det_txt <- paste0(deparse(f_det), collapse = "")
+    detection_formula <- f_det
   }
-  
+
   # f_det_use is type specific and is handled below
   
   if (metadata$type == "single") {
-    f_det_use <- stats::as.formula(paste0("ff_y | vint(ff_n_unit, ff_unit_start, ff_Q) ", f_det_txt))
+    f_det_use <- set_formula_response(
+      detection_formula, quote(ff_y | vint(ff_n_unit, ff_unit_start, ff_Q)))
     if(brms::is.brmsformula(f_det)) {
       f_use <- f_det
       f_use$formula <- f_det_use
@@ -276,7 +266,8 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     )
 
   } else if (metadata$type == "single_C") {
-    f_det_use <- stats::as.formula(paste0("ff_n_suc | vint(ff_n_trial) ", f_det_txt))
+    f_det_use <- set_formula_response(
+      detection_formula, quote(ff_n_suc | vint(ff_n_trial)))
     if(brms::is.brmsformula(f_det)){
       f_use <- f_det
       f_use$formula <- f_det_use
@@ -295,9 +286,9 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  threads = threads,
                                  ...)
   } else if (metadata$type %in% c("twolevel_single", "augmented")) {
-    f_det_use <- stats::as.formula(paste0(
-      "ff_y | vint(ff_n_group, ff_group_start, ff_n_unit, ff_unit_start, ff_Q, ff_group_Q) ",
-      f_det_txt))
+    f_det_use <- set_formula_response(
+      detection_formula,
+      quote(ff_y | vint(ff_n_group, ff_group_start, ff_n_unit, ff_unit_start, ff_Q, ff_group_Q)))
     if (brms::is.brmsformula(f_det)) {
       f_use <- f_det
       f_use$formula <- f_det_use
@@ -312,9 +303,9 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
       data2 = data2, family = family,
       stanvars = brms::stanvar(scode = code, block = "functions"), ...)
   } else if (metadata$type == "multi") {
-    f_det_use <- stats::as.formula(paste0(
-      "ff_y | vint(ff_n_series, ff_series_start, ff_n_unit, ff_unit_start, ff_Q) ",
-      f_det_txt))
+    f_det_use <- set_formula_response(
+      detection_formula,
+      quote(ff_y | vint(ff_n_series, ff_series_start, ff_n_unit, ff_unit_start, ff_Q)))
     if (brms::is.brmsformula(f_det)) {
       f_use <- f_det
       f_use$formula <- f_det_use
@@ -439,5 +430,16 @@ flocker_fit_code_util <- function (
       )
     }
   }
+  out
+}
+
+
+# Add or replace the response without parsing text or changing the environment.
+# Accepts validated one-sided component formulas and two-sided brms formulas.
+set_formula_response <- function(formula, response) {
+  out <- stats::as.formula(call("~", response, formula[[length(formula)]]),
+                           env = environment(formula))
+  # Keep brms settings attached to the formula, including nl and loop.
+  attributes(out) <- attributes(formula)
   out
 }

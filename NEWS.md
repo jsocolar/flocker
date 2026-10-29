@@ -1,5 +1,8 @@
 # flocker 1.1-1
 
+* Construct occupancy and N-mixture formulas directly from R expressions,
+  preserving formula environments, nested formulas, and brms formula settings.
+
 * Added `fitted_nmix()` for unit-level expected abundance and visit-level
   detection probabilities, including formatted new data and posterior summaries.
 
