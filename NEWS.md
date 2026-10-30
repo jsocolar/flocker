@@ -1,5 +1,22 @@
 # flocker 1.1-1
 
+* Added `get_N()` for exact conditional mean abundance or latent abundance draws
+  from Poisson-binomial N-mixture models, including formatted new data.
+
+* Construct occupancy and N-mixture formulas directly from R expressions,
+  preserving formula environments, nested formulas, and brms formula settings.
+
+* Added `fitted_nmix()` for unit-level expected abundance and visit-level
+  detection probabilities, including formatted new data and posterior summaries.
+
+* Added `nmix()` for exact Poisson-binomial N-mixture fitting, with
+  `nmix_stancode()`, `nmix_standata()`, and `get_nmix_prior()` inspection helpers.
+
+* For 2.0, removed the model-specific public data formatters
+  `make_flocker_data_static()`, `make_flocker_data_dynamic()`,
+  `make_flocker_data_augmented()`, and `make_flocker_data_twolevel_single()`.
+  Use `make_flocker_data()` with the appropriate `type` instead.
+
 * Fixed single-visit event formatting dropping the dimensions of its index table.
 * Added deterministic characterization tests for packing and reconstruction ahead
   of the version 2 schema rewrite.
