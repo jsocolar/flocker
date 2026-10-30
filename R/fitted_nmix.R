@@ -35,9 +35,11 @@ fitted_nmix <- function(nmix_fit, components = c("abund", "det"),
     stop("nmix_fit must be a fitted model returned by nmix().")
   }
   components <- match.arg(components, c("abund", "det"), several.ok = TRUE)
-  if (!is.logical(response) || length(response) != 1L || is.na(response) ||
-      !is.logical(summarise) || length(summarise) != 1L || is.na(summarise)) {
-    stop("response and summarise must each be TRUE or FALSE.")
+  if (!is.logical(response) || length(response) != 1L || is.na(response)) {
+    stop("response must be TRUE or FALSE.")
+  }
+  if (!is.logical(summarise) || length(summarise) != 1L || is.na(summarise)) {
+    stop("summarise must be TRUE or FALSE.")
   }
   if (!is.numeric(CI) || length(CI) != 2L || anyNA(CI) ||
       any(CI < 0 | CI > 1) || CI[1] >= CI[2]) {
