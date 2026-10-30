@@ -70,7 +70,7 @@ nmix_poisson_binomial_abundance <- function(
     log_coef = nmix_binomial_log_coefficients(y)) {
   power <- seq_along(log_coef) - 1L
   # Stable log(1 - inv_logit(eta)), even for very large positive eta.
-  log_q <- colSums(-pmax(det_lp, 0) - log1p(exp(-abs(det_lp))))
+  log_q <- colSums(log1m_inv_logit(det_lp))
   log_x <- log_abundance + log_q
   vapply(log_x, function(lx) {
     log_weight <- log_coef
