@@ -611,10 +611,16 @@ detection-logit priors.
 `fitted_nmix()` returns expected abundance by unit and detection probabilities
 by visit, with posterior draws in the final dimension. It also supports
 log/logit output, summaries, and formatted new data. Missing visits remain NA.
-Latent abundance, count prediction, marginal log likelihoods, LOO,
-negative-binomial and ZIP abundance, and beta-binomial detection remain
-subsequent increments. Retain ff_Q in N-mixture
-data to support future ZIP abundance.
+`get_N()` returns conditional mean abundance per posterior draw, or integer
+latent abundance draws with `sample = TRUE`. With history conditioning,
+write M = max(counts), q = prod(1-p), and x = lambda*q. The exact expansion gives
+N = M + I + Poisson(x), with mixture weights proportional to c_i*x^i.
+Reuse the precomputed coefficients from the fit's Stan data or formatted new
+data. With `history_condition = FALSE`, return lambda or Poisson(lambda) draws;
+parameters still come from the fitted posterior. Keep units and posterior
+draws as the two matrix dimensions. Count prediction, marginal log likelihoods,
+LOO, negative-binomial and ZIP abundance, and beta-binomial detection remain
+subsequent increments. Retain ff_Q in N-mixture data to support future ZIP abundance.
 
 ### N-mixture function boundaries
 
