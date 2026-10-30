@@ -1,5 +1,8 @@
 # flocker 1.1-1
 
+* Added `get_N()` for exact conditional mean abundance or latent abundance draws
+  from Poisson-binomial N-mixture models, including formatted new data.
+
 * Construct occupancy and N-mixture formulas directly from R expressions,
   preserving formula environments, nested formulas, and brms formula settings.
 

@@ -84,9 +84,9 @@ Abundance covariates are repeated across visits for brms
 
   The custom family uses identity links internally: its predictors already
   represent logit detection and log abundance. Native brms linear-predictor
-  output therefore remains on those scales. N-mixture prediction,
-  pointwise log likelihoods, and latent abundance reconstruction are not yet
-  implemented.
+  output therefore remains on those scales. Use \code{fitted_nmix()} for
+  fitted parameters and \code{get_N()} for latent abundance. N-mixture
+  prediction and pointwise log likelihoods are not yet implemented.
 }
 \examples{
 counts <- rbind(c(2, 3, 0), c(0, 1, NA))

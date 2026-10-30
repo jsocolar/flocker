@@ -6,13 +6,15 @@ test_that("N-mixture predicates distinguish data and fit objects", {
   expect_false(is_nmix_data(list(metadata = list(type = "nmix"))))
   expect_false(is_nmix_data(NULL))
   expect_false(is_nmix_fit(counts))
-  expect_false(is_nmix_fit(example_flocker_model_single))
+  expect_false(is_nmix_fit(structure(list(), class = c("brmsfit", "flocker_fit"))))
   expect_false(is_nmix_fit(structure(list(), class = "nmix_fit")))
   expect_true(is_nmix_fit(structure(list(), class = c("brmsfit", "nmix_fit"))))
 })
 
 test_that("fitted-value checks validate flags, intervals, data, and draw indices", {
-  fit <- example_flocker_model_single
+  # The public example becomes a placeholder during R CMD check. Use the
+  # existing test fixture instead, including under check-like environments.
+  fit <- example_flocker_model_single2
   check <- function(...) {
     args <- list(fit = fit, new_data = NULL, response = TRUE, summarise = FALSE,
                   CI = c(0.05, 0.95), draw_ids = NULL)

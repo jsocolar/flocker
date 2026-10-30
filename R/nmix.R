@@ -29,9 +29,9 @@
 #'
 #'   The custom family uses identity links internally: its predictors already
 #'   represent logit detection and log abundance. Native brms linear-predictor
-#'   output therefore remains on those scales. N-mixture prediction,
-#'   pointwise log likelihoods, and latent abundance reconstruction are not yet
-#'   implemented.
+#'   output therefore remains on those scales. Use \code{fitted_nmix()} for
+#'   fitted parameters and \code{get_N()} for latent abundance. N-mixture
+#'   prediction and pointwise log likelihoods are not yet implemented.
 #' @return \code{nmix()} returns a \code{brmsfit} with additional class
 #'   \code{nmix_fit} and flocker metadata.
 #'   The inspection helpers return Stan code, Stan data, or a prior table.
