@@ -33,7 +33,7 @@ new data rather than fitting data. All other input checks still apply.}
 }
 \value{
 A \code{flocker_data} list containing \code{data}, \code{metadata},
-  and \code{auxiliary}. Metadata identify the model as \code{n_mix}.
+  and \code{auxiliary}. Metadata identify the model as \code{nmix}.
 }
 \description{
 Format single-season N-mixture count data

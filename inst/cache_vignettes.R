@@ -1,11 +1,11 @@
 # Source this file, then explicitly choose which caches to refresh:
 # source("inst/cache_vignettes.R")
-# cache_vignettes("n_mixture_benchmark", render_html = TRUE)
+# cache_vignettes("nmix_benchmark", render_html = TRUE)
 # cache_vignettes(c("flocker_tutorial", "nonlinear_models"))
 # cache_vignettes() # all registered vignettes, including long-running SBC
 #
 # Names: augmented_models, flocker_tutorial, nonlinear_models, sbc, sbc_multi,
-#        sbc_aug, sbc_twolevel, n_mixture_benchmark.
+#        sbc_aug, sbc_twolevel, nmix_benchmark.
 # HTML is rendered from the newly cached Rmd, not from the executable source.
 # Returns cached Rmd paths and, when requested, rendered HTML paths invisibly.
 cache_vignettes <- function(vignettes = NULL, render_html = FALSE, pkg_root = getwd()) {
@@ -17,7 +17,7 @@ cache_vignettes <- function(vignettes = NULL, render_html = FALSE, pkg_root = ge
     sbc_multi = "vignettes/articles/sbc_multi.Rmd.orig",
     sbc_aug = "vignettes/articles/sbc_aug.Rmd.orig",
     sbc_twolevel = "vignettes/articles/sbc_twolevel.Rmd.orig",
-    n_mixture_benchmark = "vignettes/articles/n_mixture_benchmark.Rmd.orig"
+    nmix_benchmark = "vignettes/articles/nmix_benchmark.Rmd.orig"
   )
   if (is.null(vignettes)) vignettes <- names(sources)
   if (!is.character(vignettes) || anyNA(vignettes) ||
@@ -56,7 +56,7 @@ cache_vignettes <- function(vignettes = NULL, render_html = FALSE, pkg_root = ge
     on.exit(knitr::opts_knit$restore(old_knit), add = TRUE)
     on.exit(knitr::opts_chunk$restore(old_chunk), add = TRUE)
     is_sbc <- startsWith(name, "sbc")
-    root <- if (name == "n_mixture_benchmark") dirname(infile) else pkg_root
+    root <- if (name == "nmix_benchmark") dirname(infile) else pkg_root
     knitr::opts_knit$set(root.dir = root)
     if (is_sbc) {
       dir.create(file.path(pkg_root, "man/figures/sbc_vignette"),

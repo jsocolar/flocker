@@ -198,6 +198,17 @@ is_flocker_fit <- function(x) {
   inherits(x, "flocker_fit")
 }
 
+# Test for the brms-backed fit returned by nmix().
+is_nmix_fit <- function(x) {
+  inherits(x, "nmix_fit") && inherits(x, "brmsfit")
+}
+
+# N-mixture data share the flocker_data class; metadata identify the model.
+is_nmix_data <- function(x) {
+  is_flocker_data(x) && is.list(x) && is.list(x$metadata) &&
+    identical(x$metadata$type, "nmix")
+}
+
 #' Extract non-data metadata from a flocker data or fit object
 #' @param x a flocker_data or flocker_fit object
 #' @return a list of metadata
@@ -210,8 +221,8 @@ get_flocker_metadata <- function(x) {
     return(x$metadata)
   }
   assertthat::assert_that(
-    is_flocker_fit(x),
-    msg = "x must be a flocker_data or flocker_fit object"
+    is_flocker_fit(x) || is_nmix_fit(x),
+    msg = "x must be a flocker_data, flocker_fit, or nmix_fit object"
   )
   metadata <- attr(x, "flocker_metadata")
   assertthat::assert_that(
@@ -222,6 +233,37 @@ get_flocker_metadata <- function(x) {
     )
   )
   metadata
+}
+
+# Common fitted-value validation; return the requested or default draw indices.
+# Occupancy also accepts unformatted prediction data frames.
+validate_fitted_params <- function(fit, new_data, response, summarise, CI,
+                                    draw_ids, allow_dataframe = FALSE) {
+  if (!is_one_logical(response)) stop("response must be TRUE or FALSE.")
+  if (!is_one_logical(summarise)) stop("summarise must be TRUE or FALSE.")
+  if (!is.numeric(CI)) stop("CI must be numeric")
+  if (length(CI) != 2L) stop("CI must be of length 2")
+  if (anyNA(CI) || any(CI < 0 | CI > 1)) {
+    stop("CI must be between zero and one inclusive")
+  }
+  if (CI[1] >= CI[2]) stop("CI must contain two increasing probabilities.")
+  if (!is.null(new_data) && !is_flocker_data(new_data) &&
+      !(allow_dataframe && is.data.frame(new_data))) {
+    stop(if (allow_dataframe) {
+      "new_data must be NULL, a dataframe, or a formatted data object."
+    } else {
+      "new_data must be NULL or a formatted data object."
+    })
+  }
+  validate_postprocessing_data(fit, new_data)
+  n_draw <- brms::ndraws(fit)
+  if (is.null(draw_ids)) return(seq_len(n_draw))
+  if (!is.numeric(draw_ids) || !length(draw_ids) || anyNA(draw_ids) ||
+      any(!is.finite(draw_ids) | draw_ids < 1 | draw_ids != floor(draw_ids) |
+            draw_ids > n_draw)) {
+    stop("draw_ids must identify posterior draws in the fitted model.")
+  }
+  draw_ids
 }
 
 # Check the schema even when prediction bypasses get_positions (e.g. a
@@ -247,7 +289,7 @@ validate_packed_schema <- function(x) {
     type <- metadata$type
   }
   if (!identical(metadata$schema_version, 2L)) {
-    stop(paste0("Incompatible ", switch(type, single = "single-season", single_C = "rep-constant single-season", multi = "multiseason", twolevel_single = "two-level", augmented = "augmented"),
+    stop(paste0("Incompatible ", switch(type, single = "single-season", single_C = "rep-constant single-season", multi = "multiseason", twolevel_single = "two-level", augmented = "augmented", nmix = "N-mixture"),
                 " packing schema. Pre-2.0 objects require a compatible 1.x installation or reformatting and refitting."))
   }
   invisible(NULL)
@@ -329,7 +371,7 @@ get_positions <- function(data_object, unit_level = FALSE) {
   data_type <- metadata$type
   the_data <- data_object$data
 
-  if (data_type %in% c("single", "n_mix")) {
+  if (data_type %in% c("single", "nmix")) {
     if (unit_level) {
       return(stats::setNames(metadata$unit_start, metadata$original_dimnames[[1]]))
     }
@@ -523,7 +565,7 @@ validate_params_individually <- function(f_occ, f_det, flocker_data,
   
   # Check that flocker_data is valid
   data_type <- get_flocker_metadata(flocker_data)$type
-  if (identical(data_type, "n_mix")) {
+  if (is_nmix_data(flocker_data)) {
     stop("flock() requires occupancy data; N-mixture data are not supported.")
   }
   assertthat::assert_that(
@@ -852,6 +894,16 @@ is_formula <- function (x) {
 #' @noRd
 is_flocker_formula <- function (x) {
   is_formula(x) & as.character(x)[1] == "~" & length(x) == 2
+}
+
+# Add or replace the response without parsing text or changing the environment.
+# Accepts validated one-sided component formulas and two-sided brms formulas.
+set_formula_response <- function(formula, response) {
+  out <- stats::as.formula(call("~", response, formula[[length(formula)]]),
+                           env = environment(formula))
+  # Keep brms settings attached to the formula, including nl and loop.
+  attributes(out) <- attributes(formula)
+  out
 }
 
 #' check that object is a flocker data object
