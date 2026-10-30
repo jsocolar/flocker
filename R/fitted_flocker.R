@@ -70,42 +70,11 @@ fitted_flocker <- function(
     is_one_logical(unit_level),
     msg = "unit_level must be a single logical value"
   )
-  assertthat::assert_that(
-    is_one_logical(summarise),
-    msg = "summarise must be a single logical value"
+  draw_ids <- validate_fitted_params(
+    flocker_fit, new_data, response, summarise, CI, draw_ids,
+    allow_dataframe = TRUE
   )
-  if(summarise){
-    assertthat::assert_that(
-      is.numeric(CI),
-      msg = "CI must be numeric"
-    )
-    assertthat::assert_that(
-      length(CI) == 2,
-      msg = "CI must be of length 2"
-    )
-    assertthat::assert_that(
-      all(CI >= 0) & all(CI <= 1),
-      msg = "CI must be between zero and one inclusive"
-    )
-  }
-  validate_postprocessing_data(flocker_fit, new_data)
-  ndraws_total <- brms::ndraws(flocker_fit)
-  if(!is.null(draw_ids)) {
-    assertthat::assert_that(
-      max(draw_ids) <= ndraws_total,
-      msg = "A requested draw id is greater than the number of draws contained in flocker_fit"
-    )
-  } else {
-    draw_ids <- seq_len(brms::ndraws(flocker_fit))
-  }
-  
-  if(!is.null(new_data)) {
-    assertthat::assert_that(
-      isTRUE(class(new_data) == "data.frame") | isTRUE(is_flocker_data(new_data)),
-      msg = "new_data must be NULL, a dataframe, or a flocker_data object"
-    )
-  }
-  
+
   model_type <- type_flocker_fit(flocker_fit)
   dt <- attributes(flocker_fit)$data_type
   relevant_components <- params_by_type[[model_type]]

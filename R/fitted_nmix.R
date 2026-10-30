@@ -31,33 +31,15 @@ fitted_nmix <- function(nmix_fit, components = c("abund", "det"),
                          CI = c(0.05, 0.95), draw_ids = NULL,
                          re_formula = NULL, allow_new_levels = FALSE,
                          sample_new_levels = "uncertainty") {
-  if (!inherits(nmix_fit, "nmix_fit") || !inherits(nmix_fit, "brmsfit")) {
+  if (!is_nmix_fit(nmix_fit)) {
     stop("nmix_fit must be a fitted model returned by nmix().")
   }
   components <- match.arg(components, c("abund", "det"), several.ok = TRUE)
-  if (!is.logical(response) || length(response) != 1L || is.na(response)) {
-    stop("response must be TRUE or FALSE.")
-  }
-  if (!is.logical(summarise) || length(summarise) != 1L || is.na(summarise)) {
-    stop("summarise must be TRUE or FALSE.")
-  }
-  if (!is.numeric(CI) || length(CI) != 2L || anyNA(CI) ||
-      any(CI < 0 | CI > 1) || CI[1] >= CI[2]) {
-    stop("CI must contain two increasing probabilities between zero and one.")
-  }
-  if (!is.null(new_data) && !is_flocker_data(new_data)) {
-    stop("new_data must be formatted by make_nmix_data().")
-  }
-  validate_postprocessing_data(nmix_fit, new_data)
+  draw_ids <- validate_fitted_params(
+    nmix_fit, new_data, response, summarise, CI, draw_ids
+  )
   object <- if (is.null(new_data)) nmix_fit else new_data
   metadata <- get_flocker_metadata(object)
-  if (!identical(metadata$type, "nmix")) stop("Expected N-mixture data.")
-  if (is.null(draw_ids)) draw_ids <- seq_len(brms::ndraws(nmix_fit))
-  if (!is.numeric(draw_ids) || !length(draw_ids) || anyNA(draw_ids) ||
-      any(!is.finite(draw_ids) | draw_ids < 1 | draw_ids != floor(draw_ids) |
-            draw_ids > brms::ndraws(nmix_fit))) {
-    stop("draw_ids must identify posterior draws in the fitted model.")
-  }
   prediction_data <- object$data
   if ("Intercept" %in% names(nmix_fit$data) &&
       !"Intercept" %in% names(prediction_data)) prediction_data$Intercept <- 1

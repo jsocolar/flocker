@@ -432,14 +432,3 @@ flocker_fit_code_util <- function (
   }
   out
 }
-
-
-# Add or replace the response without parsing text or changing the environment.
-# Accepts validated one-sided component formulas and two-sided brms formulas.
-set_formula_response <- function(formula, response) {
-  out <- stats::as.formula(call("~", response, formula[[length(formula)]]),
-                           env = environment(formula))
-  # Keep brms settings attached to the formula, including nl and loop.
-  attributes(out) <- attributes(formula)
-  out
-}

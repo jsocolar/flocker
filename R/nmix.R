@@ -81,11 +81,10 @@ nmix_ <- function(output, f_abund, f_det, data, data2, prior, threads, ...) {
       stop(name, " must be a one-sided formula beginning with ~.")
     }
   }
-  if (!is_flocker_data(data)) stop("data must be produced by make_nmix_data().")
-  metadata <- get_flocker_metadata(data)
-  if (!identical(metadata$type, "nmix")) {
+  if (!is_nmix_data(data)) {
     stop("nmix() requires N-mixture data from make_nmix_data().")
   }
+  metadata <- get_flocker_metadata(data)
   validate_packed_schema(data)
   if (!identical(metadata$data_role, "model_data")) {
     stop("Fitting requires model_data; new_data cannot be used for fitting.")
