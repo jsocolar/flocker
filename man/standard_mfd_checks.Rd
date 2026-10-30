@@ -86,7 +86,7 @@ must be represented in \code{unit_covs}. If omitted, a minimal table is
 constructed from the groups represented in \code{unit_covs}. Only applicable if
 \code{type = "twolevel_single"}.}
 
-\item{model}{Internal model selector: occupancy or n_mix.}
+\item{model}{Internal model selector: occupancy or nmix.}
 }
 \description{
 input checking for make_flocker_data

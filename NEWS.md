@@ -1,6 +1,12 @@
 # flocker 1.1-1
 
-* Added `n_mix()` for exact Poisson-binomial N-mixture fitting, with
+* Construct occupancy and N-mixture formulas directly from R expressions,
+  preserving formula environments, nested formulas, and brms formula settings.
+
+* Added `fitted_nmix()` for unit-level expected abundance and visit-level
+  detection probabilities, including formatted new data and posterior summaries.
+
+* Added `nmix()` for exact Poisson-binomial N-mixture fitting, with
   `nmix_stancode()`, `nmix_standata()`, and `get_nmix_prior()` inspection helpers.
 
 * For 2.0, removed the model-specific public data formatters

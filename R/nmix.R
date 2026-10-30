@@ -32,8 +32,8 @@
 #'   output therefore remains on those scales. N-mixture prediction,
 #'   pointwise log likelihoods, and latent abundance reconstruction are not yet
 #'   implemented.
-#' @return \code{n_mix()} returns a \code{brmsfit} with additional class
-#'   \code{n_mix_fit} and flocker metadata.
+#' @return \code{nmix()} returns a \code{brmsfit} with additional class
+#'   \code{nmix_fit} and flocker metadata.
 #'   The inspection helpers return Stan code, Stan data, or a prior table.
 #' @export
 #' @examples
@@ -41,35 +41,35 @@
 #' nd <- make_nmix_data(counts, quiet = TRUE)
 #' get_nmix_prior(~ 1, ~ 1, nd)
 #' \dontrun{
-#' n_mix(~ 1, ~ 1, nd, chains = 4)
+#' nmix(~ 1, ~ 1, nd, chains = 4)
 #' }
-n_mix <- function(f_abund, f_det, data, data2 = NULL, prior = NULL,
+nmix <- function(f_abund, f_det, data, data2 = NULL, prior = NULL,
                    threads = NULL, ...) {
-  n_mix_("model", f_abund, f_det, data, data2, prior, threads, ...)
+  nmix_("model", f_abund, f_det, data, data2, prior, threads, ...)
 }
 
-#' @rdname n_mix
+#' @rdname nmix
 #' @export
 nmix_stancode <- function(f_abund, f_det, data, data2 = NULL, prior = NULL,
                            threads = NULL, ...) {
-  n_mix_("code", f_abund, f_det, data, data2, prior, threads, ...)
+  nmix_("code", f_abund, f_det, data, data2, prior, threads, ...)
 }
 
-#' @rdname n_mix
+#' @rdname nmix
 #' @export
 nmix_standata <- function(f_abund, f_det, data, data2 = NULL, prior = NULL,
                            threads = NULL, ...) {
-  n_mix_("data", f_abund, f_det, data, data2, prior, threads, ...)
+  nmix_("data", f_abund, f_det, data, data2, prior, threads, ...)
 }
 
-#' @rdname n_mix
+#' @rdname nmix
 #' @export
 get_nmix_prior <- function(f_abund, f_det, data, data2 = NULL, prior = NULL,
                             threads = NULL, ...) {
-  n_mix_("prior", f_abund, f_det, data, data2, prior, threads, ...)
+  nmix_("prior", f_abund, f_det, data, data2, prior, threads, ...)
 }
 
-n_mix_ <- function(output, f_abund, f_det, data, data2, prior, threads, ...) {
+nmix_ <- function(output, f_abund, f_det, data, data2, prior, threads, ...) {
   dots <- list(...)
   validate_no_time_series_terms(list(f_abund, f_det, dots$autocor))
   if (!is.null(threads)) {
@@ -81,11 +81,10 @@ n_mix_ <- function(output, f_abund, f_det, data, data2, prior, threads, ...) {
       stop(name, " must be a one-sided formula beginning with ~.")
     }
   }
-  if (!is_flocker_data(data)) stop("data must be produced by make_nmix_data().")
-  metadata <- get_flocker_metadata(data)
-  if (!identical(metadata$type, "n_mix")) {
-    stop("n_mix() requires N-mixture data from make_nmix_data().")
+  if (!is_nmix_data(data)) {
+    stop("nmix() requires N-mixture data from make_nmix_data().")
   }
+  metadata <- get_flocker_metadata(data)
   validate_packed_schema(data)
   if (!identical(metadata$data_role, "model_data")) {
     stop("Fitting requires model_data; new_data cannot be used for fitting.")
@@ -100,7 +99,7 @@ n_mix_ <- function(output, f_abund, f_det, data, data2, prior, threads, ...) {
     stop("List detection covariates explicitly; ~ . would include auxiliary columns.")
   }
   if (any(c("formula", "family", "stanvars") %in% names(dots))) {
-    stop("n_mix() supplies formula, family, and stanvars internally.")
+    stop("nmix() supplies formula, family, and stanvars internally.")
   }
   if (!is.null(prior) && !inherits(prior, "brmsprior")) {
     stop("prior must be a brmsprior object.")
@@ -117,13 +116,11 @@ n_mix_ <- function(output, f_abund, f_det, data, data2, prior, threads, ...) {
   }
 
   # Construct calls rather than deparsing, preserving each formula's environment.
-  det <- stats::as.formula(call("~", quote(ff_y), f_det[[2L]]),
-                           env = environment(f_det))
-  abund <- stats::as.formula(call("~", quote(abund), f_abund[[2L]]),
-                             env = environment(f_abund))
+  det <- set_formula_response(f_det, quote(ff_y))
+  abund <- set_formula_response(f_abund, quote(abund))
   formula <- brms::bf(det, abund)
-  family <- n_mixture_poisson_binomial()
-  stanvars <- n_mixture_poisson_binomial_stanvars(auxiliary)
+  family <- nmix_poisson_binomial()
+  stanvars <- nmix_poisson_binomial_stanvars(auxiliary)
   available <- brms::get_prior(formula, data = data$data, data2 = data2,
                                family = family, ...)
   # Provisional defaults pending a package-wide prior review. The identity
@@ -157,7 +154,7 @@ n_mix_ <- function(output, f_abund, f_det, data, data2, prior, threads, ...) {
   }
   out <- do.call(flocker_fit_code_util, c(list(output = output), args))
   if (output == "model") {
-    class(out) <- c(class(out), "n_mix_fit")
+    class(out) <- c(class(out), "nmix_fit")
     attr(out, "flocker_metadata") <- metadata
     attr(out, "data_type") <- metadata$type
     attr(out, "flocker_version") <- flocker_version()

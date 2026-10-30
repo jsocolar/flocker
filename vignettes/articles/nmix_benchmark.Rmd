@@ -9,7 +9,7 @@ params:
 
 ## Refreshing this cached article
 
-The executable source is `n_mixture_benchmark.Rmd.orig`; the `.Rmd` is a
+The executable source is `nmix_benchmark.Rmd.orig`; the `.Rmd` is a
 static snapshot for rendering without rerunning Stan or timings. Both live
 under `vignettes/articles`, which is excluded from the CRAN source package.
 Edit the `.orig` and regenerate the `.Rmd` only when new timings are wanted.
@@ -18,7 +18,7 @@ To refresh this article alone and render its cached HTML, run from the package r
 
 ```r
 source("inst/cache_vignettes.R")
-cache_vignettes("n_mixture_benchmark", render_html = TRUE)
+cache_vignettes("nmix_benchmark", render_html = TRUE)
 ```
 
 Omit `render_html = TRUE` to update only the cached `.Rmd`. Pass a vector of
@@ -74,7 +74,7 @@ to retain them elsewhere. No fitted-model objects are saved.
 
 ``` r
 # Keep plots with the excluded development article, not in the CRAN package.
-knitr::opts_chunk$set(fig.path = 'figures/n_mixture_benchmark/', fig.retina = 2)
+knitr::opts_chunk$set(fig.path = 'figures/nmix_benchmark/', fig.retina = 2)
 # Find the checkout from the document directory or another directory within it.
 package_root <- normalizePath(getwd())
 while (!file.exists(file.path(package_root, 'DESCRIPTION'))) {
@@ -99,9 +99,9 @@ compiled model and parameterization.
 
 
 ``` r
-source_code <- paste(readLines(system.file('stan', 'n_mixture_poisson_binomial.stan', package = 'flocker', mustWork = TRUE)), collapse='\n')
+source_code <- paste(readLines(system.file('stan', 'nmix_poisson_binomial.stan', package = 'flocker', mustWork = TRUE)), collapse='\n')
 code <- paste0('functions {', source_code, '
- real n_mixture_poisson_binomial_truncated_lpmf(array[] int y, vector eta, real log_lambda, int K) {
+ real nmix_poisson_binomial_truncated_lpmf(array[] int y, vector eta, real log_lambda, int K) {
    int M = max(y);
    vector[K-M+1] terms;
    for (n in M:K) {
@@ -111,7 +111,7 @@ code <- paste0('functions {', source_code, '
    }
    return log_sum_exp(terms);
  }
- real n_mixture_poisson_binomial_truncated_precomputed_lpmf(array[] int y, vector eta, real log_lambda,
+ real nmix_poisson_binomial_truncated_precomputed_lpmf(array[] int y, vector eta, real log_lambda,
                                   int M, vector log_weights, vector excess) {
    real log_q = sum(log1m_inv_logit(eta));
    real base = M * log_lambda - exp(log_lambda);
@@ -122,7 +122,7 @@ code <- paste0('functions {', source_code, '
  // Section 3 recursion generalized to visit-specific binomial detection.
  // log_ratio_factors contains (T-1)*log(N) - sum(log(N-y[t])),
  // for N=M+1,...,K, precomputed in R. Recurse backward on the log scale.
- real n_mixture_poisson_binomial_truncated_recursive_lpmf(array[] int y, vector eta, real log_lambda,
+ real nmix_poisson_binomial_truncated_recursive_lpmf(array[] int y, vector eta, real log_lambda,
                                int M, real log_weight_start, vector log_ratio_factors) {
    real log_theta = log_lambda + sum(log1m_inv_logit(eta));
    real base = M * log_lambda - exp(log_lambda) + log_weight_start;
@@ -148,10 +148,10 @@ data {
 parameters { real log_lambda; vector[T] eta; }
 model {
  for (i in 1:batch) {
-   if (method == 1) target += n_mixture_poisson_binomial_unit_lpmf(y | eta, log_lambda, M, lf, lc, coef_power);
-   else if (method == 2) target += n_mixture_poisson_binomial_truncated_precomputed_lpmf(y | eta, log_lambda, M, log_weights, excess);
-   else if (method == 3) target += n_mixture_poisson_binomial_truncated_lpmf(y | eta, log_lambda, K);
-   else target += n_mixture_poisson_binomial_truncated_recursive_lpmf(y | eta, log_lambda, M, log_weights[1], log_ratio_factors);
+   if (method == 1) target += nmix_poisson_binomial_unit_lpmf(y | eta, log_lambda, M, lf, lc, coef_power);
+   else if (method == 2) target += nmix_poisson_binomial_truncated_precomputed_lpmf(y | eta, log_lambda, M, log_weights, excess);
+   else if (method == 3) target += nmix_poisson_binomial_truncated_lpmf(y | eta, log_lambda, K);
+   else target += nmix_poisson_binomial_truncated_recursive_lpmf(y | eta, log_lambda, M, log_weights[1], log_ratio_factors);
  }
 }')
 writeLines(code, file.path(output_dir, 'benchmark.stan'))
@@ -173,7 +173,7 @@ results <- list()
 exact_reference <- list()
 # Parameter-independent factors for successive-term ratios. When K=M the
 # empty vector makes the recursion return the single starting term.
-n_mixture_poisson_binomial_recursion_factors <- function(y, K) {
+nmix_poisson_binomial_recursion_factors <- function(y, K) {
   N <- seq.int(max(y), K)[-1]
   as.array((length(y) - 1) * log(N) -
     vapply(N, function(n) sum(log(n - y)), numeric(1)))
@@ -190,8 +190,8 @@ for (T in c(2L,5L,10L)) for (count in seq.int(0L,100L,10L)) {
   eta <- rep(0,T)
   pars <- c(log(lambda),eta)
   pre_calls <- 20L
-  prep_ms <- 1000*timed(function() n_mixture_binomial_log_coefficients(y),pre_calls)/pre_calls
-  lc <- n_mixture_binomial_log_coefficients(y)
+  prep_ms <- 1000*timed(function() nmix_binomial_log_coefficients(y),pre_calls)/pre_calls
+  lc <- nmix_binomial_log_coefficients(y)
   N <- count:1000L
   weights <- -lgamma(N+1)
   for (n in y) weights <- weights + lchoose(N,n)
@@ -199,7 +199,7 @@ for (T in c(2L,5L,10L)) for (count in seq.int(0L,100L,10L)) {
     coef_power=as.array(as.numeric(seq_along(lc)-1L)),
     lf=sum(lgamma(y+1)),K=1000L,log_weights=as.array(weights),
     excess=as.array(as.numeric(N-count)),batch=batch,
-    log_ratio_factors=n_mixture_poisson_binomial_recursion_factors(y, 1000L))
+    log_ratio_factors=nmix_poisson_binomial_recursion_factors(y, 1000L))
   fits <- lapply(1:3,function(method) sampling(sm,data=c(d,list(method=method)),
     algorithm='Fixed_param',chains=1,iter=1,warmup=0,refresh=0,seed=1,
     init=list(list(log_lambda=log(lambda),eta=as.array(eta)))))
@@ -410,7 +410,7 @@ for (key in names(exact_reference)) {
   for (n in d$y) weights <- weights + lchoose(N, n)
   d$log_weights <- as.array(weights)
   d$excess <- as.array(as.numeric(N - count))
-  d$log_ratio_factors <- n_mixture_poisson_binomial_recursion_factors(d$y, d$K)
+  d$log_ratio_factors <- nmix_poisson_binomial_recursion_factors(d$y, d$K)
   fit <- sampling(sm, data = c(d, list(method = 2L)),
     algorithm = 'Fixed_param', chains = 1, iter = 1, warmup = 0,
     refresh = 0, seed = 1,
@@ -581,7 +581,7 @@ local({
 ```
 
 <div class="figure">
-<img src="figures/n_mixture_benchmark/cutoff-comparison-plot-1.png" alt="plot of chunk cutoff-comparison-plot" width="792" />
+<img src="figures/nmix_benchmark/cutoff-comparison-plot-1.png" alt="plot of chunk cutoff-comparison-plot" width="792" />
 <p class="caption">plot of chunk cutoff-comparison-plot</p>
 </div>
 
@@ -865,7 +865,7 @@ local({
 ```
 
 <div class="figure">
-<img src="figures/n_mixture_benchmark/recursive-comparison-plot-1.png" alt="plot of chunk recursive-comparison-plot" width="792" />
+<img src="figures/nmix_benchmark/recursive-comparison-plot-1.png" alt="plot of chunk recursive-comparison-plot" width="792" />
 <p class="caption">plot of chunk recursive-comparison-plot</p>
 </div>
 

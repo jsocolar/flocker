@@ -45,7 +45,7 @@ dimension of returned arrays.
 
 Keep `flock()` as the fitting function for occupancy models it naturally
 supports. Give other ecological model classes clear literal names, beginning
-with `n_mix()` and potentially including `fit_cjs()`.
+with `nmix()` and potentially including `fit_cjs()`.
 
 Do not invent parallel acronym puns for every model class. The connection
 between names such as `flam()` and N-mixture models would impose unnecessary
@@ -559,7 +559,7 @@ results as a side effect of example or documentation maintenance.
 
 The next functionality priority is closed, single-season, one-level N-mixture
 models with Poisson abundance and visit-varying binomial detection. The planned
-public fitting entry point is `n_mix()`, using occupancy-style data inputs with
+public fitting entry point is `nmix()`, using occupancy-style data inputs with
 nonnegative integer counts. Expected abundance, conditional latent abundance,
 and predicted observed counts must remain distinct in post-processing.
 
@@ -587,16 +587,16 @@ source, and independent likelihood/gradient and brms integration checks.
 model-specific response validation and routing remain internal. A shared
 `make_flocker_data_static_()` executes visit-level packing for both models,
 while occupancy alone may choose the rep-constant representation. N-mixture
-objects have `metadata$type = "n_mix"` and a separate `auxiliary` list; they
+objects have `metadata$type = "nmix"` and a separate `auxiliary` list; they
 cannot be passed to `flock()`. The existing single-season restrictions on
 trailing missing visits and empty units also apply to count inputs.
-`n_mix(f_abund, f_det, data, ...)` fits the Poisson-binomial model with
+`nmix(f_abund, f_det, data, ...)` fits the Poisson-binomial model with
 one-sided formulas; `nmix_stancode()`, `nmix_standata()`, and
 `get_nmix_prior()` expose the same specification before sampling. Combined
 brmsformula objects are deferred. Abundance predictors use unit covariates.
 Preserve formula environments, reject time-series terms and threading, and
 check that brms has not removed packed visits before fitting. Returned objects
-remain brmsfit objects, with an additional n_mix_fit class and unchanged
+remain brmsfit objects, with an additional nmix_fit class and unchanged
 formatter metadata; occupancy post-processing does not accept them.
 
 For now, use brms's ordinary binomial-scale student_t(3, 0, 2.5) defaults for
@@ -608,33 +608,37 @@ including intercepts, slopes, hierarchical scales, and effects of the internal
 identity links. Count-derived default priors must not silently become
 detection-logit priors.
 
-N-mixture post-processing, negative-binomial and ZIP abundance, and
-beta-binomial detection remain subsequent increments. Retain ff_Q in N-mixture
+`fitted_nmix()` returns expected abundance by unit and detection probabilities
+by visit, with posterior draws in the final dimension. It also supports
+log/logit output, summaries, and formatted new data. Missing visits remain NA.
+Latent abundance, count prediction, marginal log likelihoods, LOO,
+negative-binomial and ZIP abundance, and beta-binomial detection remain
+subsequent increments. Retain ff_Q in N-mixture
 data to support future ZIP abundance.
 
 ### N-mixture function boundaries
 
-Use `n_mixture_<mixing>_<detection>` for a model-specific family, with
+Use `nmix_<mixing>_<detection>` for a model-specific family, with
 `_unit_lpmf`, `_lpmf`, and `_stanvars` suffixes for its unit likelihood,
 packed likelihood, and Stan integration. The current implementation is
-`n_mixture_poisson_binomial`, stored in `n_mixture_poisson_binomial.stan`.
+`nmix_poisson_binomial`, stored in `nmix_poisson_binomial.stan`.
 
 The currently shared helpers are:
 
-- `n_mixture_binomial_log_coefficients`: the count-only falling-factorial
+- `nmix_binomial_log_coefficients`: the count-only falling-factorial
   coefficients are the same for Poisson, NB, and ZIP abundance with binomial
   detection. The mixing distribution determines how those coefficients enter
   the likelihood, not their construction.
-- `n_mixture_binomial_auxiliary_data`: the coefficient storage, powers, unit
+- `nmix_binomial_auxiliary_data`: the coefficient storage, powers, unit
   and coefficient offsets, maxima, and factorial sums can serve all three
   binomial-detection models. NB and ZIP will additionally need their own
   distributional parameters. Although offsets and maxima have broader uses,
   the complete helper includes a binomial-specific polynomial expansion.
 
-`n_mixture_poisson_binomial_unit_lpmf` remains a Poisson-binomial function even
+`nmix_poisson_binomial_unit_lpmf` remains a Poisson-binomial function even
 though a future ZIP-binomial likelihood can call it for its Poisson component.
 The packed likelihood and family constructor require distinct NB/ZIP versions.
-`n_mixture_poisson_binomial_stanvars` is specific because it installs that
+`nmix_poisson_binomial_stanvars` is specific because it installs that
 model's Stan source; its data-declaration block is a candidate for a shared
 binomial helper when a second family is implemented. Do not introduce a
 model-independent loader abstraction until that interface is needed.
@@ -667,7 +671,7 @@ such as the timer do not depend on either distribution.
 7. Run the full verification matrix and deliberately test rejection of 1.x
    formatted objects and fits.
 8. Once the 2.0 foundation is stable, introduce `make_nmix_data()` and
-   `n_mix()` using the same schema, metadata, naming, and testing
+   `nmix()` using the same schema, metadata, naming, and testing
    contracts.
 
 Do not treat this sequence as a requirement to implement all steps in one pull

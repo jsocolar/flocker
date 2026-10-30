@@ -3,7 +3,7 @@
 # the falling-factorial polynomial depends only on counts, not the mixing law.
 # Expand prod(k + j) in falling factorials using
 # c'_i = c_(i-1) + (i + j) c_i. Store logs to avoid overflow.
-n_mixture_binomial_log_coefficients <- function(y) {
+nmix_binomial_log_coefficients <- function(y) {
   if (!is.numeric(y) || !length(y) || anyNA(y) ||
       any(!is.finite(y) | y < 0 | y != floor(y)) ||
       sum(y) > .Machine$integer.max - 1) {
@@ -29,9 +29,9 @@ n_mixture_binomial_log_coefficients <- function(y) {
 # Input is a list of observed count vectors, in packed unit order. Missing
 # visits must already have been removed; empty units are not supported here.
 # Offsets include a terminal sentinel, permitting slices for singleton units.
-n_mixture_binomial_auxiliary_data <- function(counts) {
+nmix_binomial_auxiliary_data <- function(counts) {
   if (!is.list(counts) || !length(counts)) stop("Supply a nonempty list of count vectors.")
-  coefficients <- lapply(counts, n_mixture_binomial_log_coefficients)
+  coefficients <- lapply(counts, nmix_binomial_log_coefficients)
   list(
     ff_nunit = as.integer(length(counts)),
     ff_ncoef = as.integer(sum(lengths(coefficients))),
@@ -45,8 +45,8 @@ n_mixture_binomial_auxiliary_data <- function(counts) {
   )
 }
 
-n_mixture_poisson_binomial <- function() {
-  brms::custom_family("n_mixture_poisson_binomial", dpars = c("mu", "abund"),
+nmix_poisson_binomial <- function() {
+  brms::custom_family("nmix_poisson_binomial", dpars = c("mu", "abund"),
     links = c("identity", "identity"), type = "int", loop = FALSE,
     vars = c("ff_unit_offsets", "ff_coef_offsets", "ff_max_count",
              "ff_log_factorial", "ff_log_coef", "ff_coef_power"))
@@ -54,8 +54,8 @@ n_mixture_poisson_binomial <- function() {
 
 # The data declarations can be shared with future NB/ZIP binomial families,
 # but this function also installs Poisson-binomial Stan source, so is specific.
-n_mixture_poisson_binomial_stanvars <- function(auxiliary) {
-  source <- paste(readLines(system.file("stan", "n_mixture_poisson_binomial.stan",
+nmix_poisson_binomial_stanvars <- function(auxiliary) {
+  source <- paste(readLines(system.file("stan", "nmix_poisson_binomial.stan",
     package = "flocker", mustWork = TRUE)), collapse = "\n")
   declarations <- c(
     ff_nunit = "int<lower=1> ff_nunit;",
