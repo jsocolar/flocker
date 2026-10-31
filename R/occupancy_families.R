@@ -61,6 +61,15 @@ occupancy_multi_colex <- function() {
     loop = FALSE)
 }
 
+# Same ecological model and packing as occupancy_multi_colex; only evaluation
+# of the likelihood differs. Post-processing dispatches on model metadata.
+occupancy_multi_colex_threaded <- function() {
+  brms::custom_family(
+    "occupancy_multi_colex_threaded", dpars = c("mu", "occ", "colo", "ex"),
+    links = rep("identity", 4), type = "int",
+    vars = paste0("vint", seq_len(5)), loop = FALSE)
+}
+
 #' Define the colonization-extinction equilibrium family
 #' @return a "customfamily" "brmsfamily" object from brms
 #' @noRd

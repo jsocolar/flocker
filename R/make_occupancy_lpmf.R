@@ -47,7 +47,13 @@ make_occupancy_augmented_lpmf <- function() {
 }
 
 # All four multiseason families share one stable forward likelihood source.
-make_occupancy_multi_lpmf <- function() {
+make_occupancy_multi_lpmf <- function(threaded = FALSE) {
   path <- system.file("stan", "occupancy_multi.stan", package = "flocker", mustWork = TRUE)
-  paste(readLines(path), collapse = "\n")
+  code <- paste(readLines(path), collapse = "\n")
+  if (threaded) {
+    path <- system.file("stan", "occupancy_multi_colex_threaded.stan",
+                        package = "flocker", mustWork = TRUE)
+    code <- paste(code, paste(readLines(path), collapse = "\n"), sep = "\n")
+  }
+  code
 }

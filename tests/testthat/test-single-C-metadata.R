@@ -9,8 +9,9 @@ test_that("rep-constant data use the common metadata contract", {
   expect_equal(fd$data$ff_n_trial, c(2, 1, 2))
   expect_equal(fd$data$ff_n_suc, c(1, 0, 1))
   expect_no_error(flocker_standata(f_occ = ~ x, f_det = ~ 1, flocker_data = fd))
-  expect_no_error(flocker_stancode(f_occ = ~ x, f_det = ~ 1,
-                                  flocker_data = fd, threads = 2))
+  expect_error(flocker_stancode(f_occ = ~ x, f_det = ~ 1,
+                                  flocker_data = fd, threads_per_chain = 2),
+               "Threading is only supported")
   nd <- make_flocker_data(obs, data.frame(x = 1:3), newdata_checks = TRUE, quiet = TRUE)
   expect_identical(nd$metadata$data_role, "new_data")
   expect_error(flocker_standata(f_occ = ~ x, f_det = ~ 1, flocker_data = nd),

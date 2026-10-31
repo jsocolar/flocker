@@ -15,7 +15,7 @@ flocker_standata(
   multi_init = NULL,
   f_auto = NULL,
   augmented = FALSE,
-  threads = NULL,
+  threads_per_chain = 1,
   f_meta = NULL,
   ...
 )
@@ -65,9 +65,10 @@ begin with "~".}
 \item{augmented}{Logical. Must be TRUE if data are formatted for a 
 data-augmented multi-species model, and FALSE otherwise.}
 
-\item{threads}{NULL or positive integer. If integer, the number of threads
-to use per chain in within chain parallelization. Currently available only
-with single-season rep-constant models, and must be set to NULL otherwise.}
+\item{threads_per_chain}{Positive integer giving threads per chain (default 1).
+Values greater than 1 are supported only for colonization-extinction models
+with explicit initial occupancy. Threaded compilation is enabled automatically.
+Total CPU demand is approximately cores times threads_per_chain.}
 
 \item{f_meta}{A brms-type model formula for level-two, or meta-occupancy.
 Required for \code{twolevel_single} models and must be \code{NULL} for all

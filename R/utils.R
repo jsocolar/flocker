@@ -257,6 +257,8 @@ validate_packed_schema <- function(x) {
 #' @param x flocker_fit object
 #' @return string giving model type
 #' @noRd
+# Dispatch on the ecological model, so threaded and serial Stan families
+# share all post-processing paths.
 type_flocker_fit <- function(x) {
   assertthat::assert_that(
     is_flocker_fit(x),

@@ -36,9 +36,10 @@
 #'   other model types. Must begin with "~".
 #' @param augmented Logical. Must be TRUE if data are formatted for a 
 #'  data-augmented multi-species model, and FALSE otherwise.
-#' @param threads NULL or positive integer. If integer, the number of threads
-#'  to use per chain in within chain parallelization. Currently available only
-#'  with single-season rep-constant models, and must be set to NULL otherwise.
+#' @param threads_per_chain Positive integer giving threads per chain (default 1).
+#'   Values greater than 1 are supported only for colonization-extinction models
+#'   with explicit initial occupancy. Threaded compilation is enabled automatically.
+#'   Total CPU demand is approximately cores times threads_per_chain.
 #' @param ... additional arguments passed to \code{brms::brm()}
 #' @return a \code{brmsfit} containing the fitted occupancy model. 
 #' @examples
@@ -62,13 +63,13 @@
 flock <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL, 
                   multiseason = NULL, f_col = NULL, f_ex = NULL, 
                   multi_init = NULL, f_auto = NULL,
-                  augmented = FALSE, threads = NULL, f_meta = NULL,
+                  augmented = FALSE, threads_per_chain = 1, f_meta = NULL,
                   ...) {
   flock_(output = "model", f_occ = f_occ, f_det = f_det, 
          flocker_data = flocker_data, data2 = data2,
          multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
          multi_init = multi_init, f_auto = f_auto,
-         augmented = augmented, threads = threads, f_meta = f_meta, ...)
+         augmented = augmented, threads_per_chain = threads_per_chain, f_meta = f_meta, ...)
 }
 
 #' Generate stan code for an occupancy model
@@ -92,13 +93,13 @@ flock <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL,
 #'   )
 flocker_stancode <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL, 
                   multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
-                  augmented = FALSE, threads = NULL, f_meta = NULL,
+                  augmented = FALSE, threads_per_chain = 1, f_meta = NULL,
                   ...) {
   flock_(output = "code", f_occ = f_occ, f_det = f_det, 
          flocker_data = flocker_data, data2 = data2,
          multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
          multi_init = multi_init, f_auto = f_auto,
-         augmented = augmented, threads = threads, f_meta = f_meta, ...)
+         augmented = augmented, threads_per_chain = threads_per_chain, f_meta = f_meta, ...)
 }
 
 #' Generate stan data for an occupancy model
@@ -122,13 +123,13 @@ flocker_stancode <- function(f_occ = NULL, f_det, flocker_data, data2 = NULL,
 #'   )
 flocker_standata <- function(f_occ=NULL, f_det, flocker_data, data2 = NULL, 
                              multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
-                             augmented = FALSE, threads = NULL, f_meta = NULL,
+                             augmented = FALSE, threads_per_chain = 1, f_meta = NULL,
                              ...) {
   flock_(output = "data", f_occ = f_occ, f_det = f_det, 
          flocker_data = flocker_data, data2 = data2,
          multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
          multi_init = multi_init, f_auto = f_auto,
-         augmented = augmented, threads = threads, f_meta = f_meta, ...)
+         augmented = augmented, threads_per_chain = threads_per_chain, f_meta = f_meta, ...)
 }
 
 #' Get prior for occupancy model
@@ -151,13 +152,13 @@ flocker_standata <- function(f_occ=NULL, f_det, flocker_data, data2 = NULL,
 #' )
 get_flocker_prior <- function(f_occ=NULL, f_det, flocker_data, data2 = NULL, 
                              multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
-                             augmented = FALSE, threads = NULL, f_meta = NULL,
+                             augmented = FALSE, threads_per_chain = 1, f_meta = NULL,
                              ...) {
   flock_(output = "prior", f_occ = f_occ, f_det = f_det, 
          flocker_data = flocker_data, data2 = data2,
          multiseason = multiseason, f_col = f_col, f_ex = f_ex, 
          multi_init = multi_init, f_auto = f_auto,
-         augmented = augmented, threads = threads, f_meta = f_meta, ...)
+         augmented = augmented, threads_per_chain = threads_per_chain, f_meta = f_meta, ...)
 }
 
 #' Fit an occupancy model, or generate Stan code/data for a model, or get the prior
@@ -191,29 +192,41 @@ get_flocker_prior <- function(f_occ=NULL, f_det, flocker_data, data2 = NULL,
 #'  parameter (theta). If provided, must begin with "~".
 #' @param augmented Logical. Must be TRUE if data are formatted for a 
 #'  data-augmented multi-species model, and FALSE otherwise.
-#' @param threads NULL or positive integer. If integer, the number of threads
-#'  to use per chain in within chain parallelization.
+#' @param threads_per_chain Positive integer giving threads per chain (default 1).
+#'   Values greater than 1 are supported only for colonization-extinction models
+#'   with explicit initial occupancy. Threaded compilation is enabled automatically.
+#'   Total CPU demand is approximately cores times threads_per_chain.
 #' @param ... additional arguments passed to \code{brms::brm()}
 #' @return stan code for brms model or a \code{brmsfit} containing the fitted occupancy model.
 #' @noRd
 flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL, 
                   multiseason = NULL, f_col = NULL, f_ex = NULL, multi_init = NULL, f_auto = NULL,
-                  augmented = FALSE, threads = NULL, f_meta = NULL,
+                  augmented = FALSE, threads_per_chain = 1, f_meta = NULL,
                   ...) {
+  if ("threads" %in% names(list(...))) {
+    stop("Use threads_per_chain to configure threading.")
+  }
   validate_no_time_series_terms(list(...)$autocor)
   metadata <- get_flocker_metadata(flocker_data)
   validate_packed_schema(flocker_data)
   if (!identical(metadata$data_role, "model_data")) {
     stop("Fitting requires model_data; new_data cannot be used for fitting.")
   }
-  if (identical(metadata$type, "single")) {
-    if (!is.null(threads)) {
-      stop("Threading is not currently supported for rep-varying single-season models.")
-    }
+  if (!is.numeric(threads_per_chain) || length(threads_per_chain) != 1L ||
+      is.na(threads_per_chain) || !is.finite(threads_per_chain) ||
+      threads_per_chain < 1 || threads_per_chain != floor(threads_per_chain) ||
+      threads_per_chain > .Machine$integer.max) {
+    stop("threads_per_chain must be a positive integer.")
+  }
+  threaded <- threads_per_chain > 1
+  if (threaded && !(identical(metadata$type, "multi") &&
+                    identical(multiseason, "colex") &&
+                    identical(multi_init, "explicit"))) {
+    stop("Threading is only supported for colonization-extinction models with explicit initial occupancy.")
   }
   ### validate parameters
   validate_flock_params(f_occ, f_det, flocker_data, multiseason, f_col, 
-                        f_ex, multi_init, f_auto, augmented, threads, f_meta)
+                        f_ex, multi_init, f_auto, augmented, NULL, f_meta)
   if (isTRUE(augmented)) {
     f_meta <- ~ 1
   }
@@ -292,7 +305,6 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  data2 = data2,
                                  family = occupancy_single_C(), 
                                  stanvars = stanvars,
-                                 threads = threads,
                                  ...)
   } else if (metadata$type %in% c("twolevel_single", "augmented")) {
     f_det_use <- stats::as.formula(paste0(
@@ -330,9 +342,13 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
     } else {
       if (multi_init == "explicit") occupancy_multi_autologistic() else occupancy_multi_autologistic_eq()
     }
-    stanvars <- brms::stanvar(scode = make_occupancy_multi_lpmf(), block = "functions")
+    if (threaded) family <- occupancy_multi_colex_threaded()
+    stanvars <- brms::stanvar(
+      scode = make_occupancy_multi_lpmf(threaded = threaded), block = "functions")
     out <- flocker_fit_code_util(output, f_use, data = flocker_data$data,
-                                 data2 = data2, family = family, stanvars = stanvars, ...)
+                                 data2 = data2, family = family, stanvars = stanvars,
+                                 threads = if (threaded) brms::threading(threads_per_chain, force = TRUE) else NULL,
+                                 ...)
   } else {
     stop("Error: unhandled type. This should not happen; please report a bug.")
   }
@@ -361,8 +377,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
 flocker_fit_code_util <- function (
   output, f_use, data, data2, family, stanvars, threads = NULL, ...
  ) {
-  if (!is.null(threads)){ # this covers the rep-constant case where
-    # native brms threading is available
+  if (!is.null(threads)){ # Force compilation/runtime threads for our custom reducer.
     if (output == "code") {
       out <- brms::make_stancode(f_use, 
                                  data = data,
@@ -408,6 +423,7 @@ flocker_fit_code_util <- function (
         data2 = data2,
         family = family, 
         stanvars = stanvars,
+        threads = threads,
         ...
       )
     } else if (output == "data") {
@@ -417,6 +433,7 @@ flocker_fit_code_util <- function (
         data2 = data2,
         family = family, 
         stanvars = stanvars,
+        threads = threads,
         ...
       )
     } else if (output == "model") {
@@ -426,6 +443,7 @@ flocker_fit_code_util <- function (
         data2 = data2,
         family = family,
         stanvars = stanvars,
+        threads = threads,
         ...
       )
     } else if (output == "prior") {
@@ -435,6 +453,7 @@ flocker_fit_code_util <- function (
         data2 = data2,
         family = family,
         stanvars = stanvars,
+        threads = threads,
         ...
       )
     }

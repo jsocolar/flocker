@@ -198,20 +198,10 @@ rep_constant <- flock(
   )
 ```
 
-Note that within-chain parallelization is available (uniquely so) for the 
-rep-constant mode:
-```{r rep-constant-parallel, eval = FALSE}
-rep_constant <- flock(
-  f_occ = ~ uc1 + (1 + uc1 | species),
-  f_det = ~ uc1 + (1 + uc1 | species),
-  flocker_data = fd_rep_constant,
-  silent = 2,
-  refresh = 0,
-  chains = 2,
-  cores = 2,
-  threads = 2
-  )
-```
+Within-chain parallelization is currently available only for colonization-extinction
+models with explicit initial occupancy, using `threads_per_chain > 1`. All other
+models, including this rep-constant model, require the default
+`threads_per_chain = 1`.
 
 ### Multi-season models
 Here we provide code examples to complement the [companion publication](https://www.biorxiv.org/content/10.1101/2023.10.26.564080v1).

@@ -266,8 +266,9 @@ level-two group. Do not initially allow groups to cut across series: although
 an ID mapping could represent that structure, the joint latent likelihood
 generally would not factorize cleanly by either series or group.
 
-Keep outer blocks clean enough that they could later be used as `reduce_sum`
-slices, but do not implement or prototype threading during the 2.0 rewrite.
+Keep outer blocks usable as `reduce_sum` slices. The dedicated threading
+branch now uses complete series as slices for explicit-initialization colex
+models; other model classes remain serial.
 
 ## Compatibility boundary
 
@@ -423,22 +424,27 @@ assumptions behind external presence information. Dynamic models can enforce a
 known state by excluding the contradictory state from marginalization in both
 the forward likelihood and forward-backward state reconstruction.
 
-## Threading: explicitly deferred
+## Threading: explicit-initialization colex branch
 
-Do not expose or implement threading in version 2.0.
+The dedicated threading branch supports `threads_per_chain`, defaulting to 1,
+in `flock()` and its code/data/prior inspection helpers. Values greater than 1
+are accepted only for colonization-extinction models with explicit initial
+occupancy. Other families remain serial on this branch, including single_C.
 
-Useful flocker threading would slice complete ecological likelihood blocks.
-Simply asking brms to compile or run its ordinary threaded path is not
-obviously correct because brms also slices linear-predictor/design-matrix
-work. A possible future implementation could use the cmdstanr backend, enable
-threading at C++ compilation (for example through `make/local`), and call a
-threaded custom likelihood while leaving brms's own slicing disabled. A cleaner
-supported brms mechanism, potentially an upstream option for custom families,
-would be preferable.
+The `occupancy_multi_colex_threaded` custom family retains `loop = FALSE` and
+reduces over complete series. Its partial-sum function and the serial family
+call the same per-series forward likelihood. Predictors are logits in both
+paths. Packing and post-processing metadata remain unchanged; post-processing
+dispatches on the ecological model rather than the threaded Stan family name.
 
-Preserving contiguous outer blocks makes later threading an additive
-optimization rather than a public API or schema break. If implemented, serial
-and threaded likelihoods must have dedicated numerical-equivalence tests.
+Pass `brms::threading(threads_per_chain, force = TRUE)` internally to enable
+compilation and runtime threads without brms slicing the packed rows. No
+manual make/local flags are needed. Linear-predictor construction remains
+outside the reducer. The dynamic reducer uses a minimum grainsize of one
+series; performance gains must be measured rather than assumed. Serial and
+threaded likelihoods must agree in values and gradients, including ragged
+series, placeholders, and singleton blocks. Dynamic scheduling can introduce
+floating-point differences even with the same random seed.
 
 ## Required verification
 

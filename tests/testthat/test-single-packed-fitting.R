@@ -70,7 +70,7 @@ test_that("single-season fitting rejects incompatible packing and roles early", 
   expect_identical(prediction$metadata$data_role, "new_data")
   expect_identical(get_positions(prediction), get_positions(fd))
   expect_error(flock(~ 1, ~ w, prediction), "new_data cannot")
-  expect_error(flock(~ 1, ~ w, fd, threads = 2), "Threading is not currently supported")
+  expect_error(flock(~ 1, ~ w, fd, threads_per_chain = 2), "Threading is only supported")
 
 })
 

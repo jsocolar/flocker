@@ -1,5 +1,10 @@
 # flocker 1.1-1
 
+* Added `threads_per_chain` (default 1) for within-chain parallel evaluation
+  of explicit-initialization colonization-extinction models. Other families
+  require `threads_per_chain = 1` on this branch. Requires brms >= 2.22.0
+  for forced threaded compilation without brms row slicing.
+
 * Fixed single-visit event formatting dropping the dimensions of its index table.
 * Added deterministic characterization tests for packing and reconstruction ahead
   of the version 2 schema rewrite.

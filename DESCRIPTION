@@ -29,7 +29,7 @@ Imports:
     abind,
     assertthat,
     boot,
-    brms (>= 2.20.3),
+    brms (>= 2.22.0),
     loo (>= 2.0.0),
     MASS,
     matrixStats,
