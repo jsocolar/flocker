@@ -31,6 +31,7 @@ log_lik_flocker <- function(
     sample_new_levels = "uncertainty", draw_ids = NULL
     ) {
   assertthat::assert_that(is_flocker_fit(flocker_fit))
+  validate_postprocessing_data(flocker_fit, new_data)
   ndraws <- brms::ndraws(flocker_fit)
   if(!is.null(draw_ids)){
     assertthat::assert_that(
@@ -47,12 +48,6 @@ log_lik_flocker <- function(
         "new_data, if provided, must be a flocker_data object formatted ",
         "by `make_flocker_data`"
       )
-    )
-    a <- attributes(flocker_fit)
-    fit_datatype <- a$data_type
-    assertthat::assert_that(
-      new_data$type == fit_datatype,
-      msg = "the data type in new_data does not match the data type in flocker_fit"
     )
   }
   
@@ -82,14 +77,17 @@ log_lik_flocker <- function(
     el_0 <- el_1 <- matrix(nrow = nrow(psi_all), ncol = ncol(psi_all))
     
     for(i in seq_len(ncol(psi_all))){
-      el_0[ , i] <- emission_likelihood(0, obs, theta_all[,,i])
-      el_1[ , i] <- emission_likelihood(1, obs, theta_all[,,i])
+      det <- matrix(theta_all[, , i, drop = FALSE],
+                    nrow = nrow(obs), ncol = ncol(obs))
+      el_0[ , i] <- emission_likelihood(0, obs, det)
+      el_1[ , i] <- emission_likelihood(1, obs, det)
     }
       
     assertthat::assert_that(identical(dim(psi_all), dim(el_0)))
       
     ll <- log((psi_all * el_1) + (1 - psi_all) * el_0) |>
       t()
+    dimnames(ll) <- dimnames(lps$linpred_occ)[c(3, 1)]
   } else if (lik_type == "single_C") {
     ll <- brms::log_lik(
       flocker_fit, newdata = new_data$data, draw_ids = draw_ids, #note that if new_data is NULL, new_data$data is also NULL
@@ -227,6 +225,7 @@ log_lik_flocker <- function(
     ll <- log_lik_dynamic(init, colo, ex, obs, det) |>
       t()
   }
+  if (startsWith(lik_type, "multi")) dimnames(ll) <- dimnames(colo)[c(3, 1)]
   ll
 }
 
@@ -400,8 +399,10 @@ log_lik_dynamic <- function(init, colo, ex, obs, det){
   
   for(i in 1:nsite){
     for(j in 1:ndraw){
-      el0 <- emission_likelihood(0, t(obs[i,,]), t(det[i,,,j]))
-      el1 <- emission_likelihood(1, t(obs[i,,]), t(det[i,,,j]))
+      obs_series <- t(matrix(obs[i, , , drop = FALSE], nrow = dim(obs)[2]))
+      det_series <- t(matrix(det[i, , , j, drop = FALSE], nrow = dim(obs)[2]))
+      el0 <- emission_likelihood(0, obs_series, det_series)
+      el1 <- emission_likelihood(1, obs_series, det_series)
       forward_output <- forward_algorithm(el0, el1, init[i,j], colo[i,,j], ex[i,,j]) |>
         rowSums()
       # forward_output should be strictly decreasing except when there is a season

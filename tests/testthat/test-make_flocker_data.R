@@ -5,38 +5,26 @@ test_that("make_flocker_data works correctly", {
   event_covs <- example_data$event_covs
   
   fd <- make_flocker_data(obs, unit_covs, event_covs, quiet = TRUE)
-  expect_equal(fd$type, "single")
+  expect_equal(fd$metadata$type, "single")
   expect_equal(class(fd), c("list", "flocker_data"))
-  expect_equal(
-    names(fd),
-    c("data", "n_rep", "type", "flocker_version", "unit_covs", "event_covs")
-  )
-  expect_identical(fd$flocker_version, flocker_version())
-  expect_true(
-    all(fd$data[1:1500, c("ff_rep_index1", "ff_rep_index2", 
-                          "ff_rep_index3", "ff_rep_index4")] == 
-          matrix(1:6000, ncol = 4))
-    )  
-  expect_equal(names(fd$data), c("ff_y", "uc1", "species", "ec1",
-                                 "ff_n_unit", "ff_n_rep", "ff_Q", "ff_unit", "ff_rep_index1", 
-                                 "ff_rep_index2", "ff_rep_index3", "ff_rep_index4"))
-  expect_true(all(fd$data$y %in% c(0,1,-99)))
-  
-  event_covs[[1]] <- matrix(1:6000, ncol = 4)
+  expect_named(fd, c("data", "metadata"))
+  expect_identical(fd$metadata$flocker_version, flocker_version())
+  expect_equal(names(fd$data), c("ff_y", "uc1", "species", "ec1", "ff_n_unit", "ff_unit_start", "ff_Q"))
+  expect_true(all(fd$data$ff_y %in% c(0, 1)))
+  expect_equal(fd$data$ff_n_unit, c(nrow(obs), rep(-99L, length(obs) - 1L)))
+  expect_equal(fd$data$ff_unit_start[seq_len(nrow(obs))], seq(1L, length(obs), by = 4L))
+
+  event_covs[[1]] <- matrix(seq_along(obs), nrow(obs))
+  obs[2, 4] <- NA
   fd <- make_flocker_data(obs, unit_covs, event_covs, quiet = TRUE)
-  expect_equal(fd$data$ec1, 1:6000)
-  
-  
-  obs[2,4] <- NA
-  fd <- make_flocker_data(obs, unit_covs, event_covs, quiet = TRUE)
-  expect_equal(
-    sum(fd$data[1:1500, c("ff_rep_index1", "ff_rep_index2", "ff_rep_index3")] - 
-          matrix(1:4500, ncol = 3)), 0)
-  expect_equal(fd$data$ff_rep_index4[1:1500], c(4501, -99, 4502:5999))
-  expect_true(all(fd$data$ff_y %in% c(0,1)))
-  expect_equal(fd$data$ec1[1:4500], 1:4500)
-  expect_equal(fd$data$ec1[4501:5999], c(4501, 4503:6000))
-  
+  expected_ids <- as.vector(t(matrix(seq_along(obs), nrow(obs))))
+  expected_ids <- expected_ids[!is.na(obs[expected_ids])]
+  expect_equal(fd$data$ec1, expected_ids)
+  expect_equal(fd$data$ff_y, as.integer(obs[expected_ids]))
+  counts <- c(4L, 3L, rep(4L, nrow(obs) - 2L))
+  expect_equal(fd$data$ff_unit_start,
+               c(cumsum(c(1L, head(counts, -1L))), rep(-99L, sum(counts) - length(counts))))
+
   obs[,4] <- NA
   expect_error(fd <- make_flocker_data(obs, quiet = TRUE),
                  "The final column of obs contains only NAs.")
@@ -122,42 +110,28 @@ test_that("make_flocker_data handles two-level single-season data", {
     level2_covs = level2_covs, level2_group = "group", quiet = TRUE
   )
   
-  expect_equal(fd$type, "twolevel_single")
-  expect_equal(fd$level2_group, "group")
-  expect_equal(fd$level2_group_names, c("a", "b"))
-  expect_false("max_unit_group" %in% names(fd))
-  expect_equal(fd$level2_covs, "group_x")
-  expect_equal(
-    as.character(fd$data$group[seq_len(fd$data$ff_n_group[1])]),
-    c("a", "b")
-  )
-  expect_equal(fd$data$group_x[seq_len(fd$data$ff_n_group[1])], c(10, 20))
-  expect_equal(fd$data$ff_group_known_present[seq_len(fd$data$ff_n_group[1])], c(0, 1))
-  expect_equal(fd$data$ff_n_unit_group[seq_len(fd$data$ff_n_group[1])], c(2, 2))
-  expect_equal(
-    fd$data$ff_group_index[seq_len(fd$data$ff_n_unit[1])],
-    c(1, 4, 2, 3)
-  )
-  expect_equal(fd$unit_order, c(2, 1, 3, 4))
-  expect_equal(get_unit_group(fd$data), c(1, 2, 2, 1))
-  expect_false("unit_group" %in% names(fd))
-  expect_false(any(c("ff_orig_unit", "ff_group") %in% names(fd$data)))
-  expect_equal(
-    fd$data$group_x[seq_len(fd$data$ff_n_unit[1])],
-    c(10, 20, 20, 10)
-  )
+  metadata <- get_flocker_metadata(fd)
+  starts <- metadata$group_start
+  expect_equal(metadata$type, "twolevel_single")
+  expect_equal(metadata$level2_group, "group")
+  expect_equal(metadata$level2_group_names, c("a", "b"))
+  expect_equal(metadata$level2_covs, "group_x")
+  expect_equal(as.character(fd$data$group[starts]), c("a", "b"))
+  expect_equal(fd$data$group_x[starts], c(10, 20))
+  expect_equal(fd$data$ff_group_Q[starts], c(0, 1))
+  expect_equal(fd$data$ff_n_unit[starts], c(2, 2))
+  expect_equal(metadata$unit_order, c(2, 4, 1, 3))
+  expect_equal(get_unit_group(fd$data), c(1, 1, 2, 2))
+  expect_equal(fd$data$group_x[get_positions(fd, TRUE)], c(20, 10, 20, 10))
 
   fd_minimal <- make_flocker_data(
     obs, unit_covs, event_covs, type = "twolevel_single",
     level2_group = "group", quiet = TRUE
   )
   expect_equal(fd_minimal$data$ff_n_group[1], 2)
-  expect_equal(fd_minimal$level2_covs, character(0))
-  expect_equal(
-    as.character(fd_minimal$data$group[seq_len(fd_minimal$data$ff_n_group[1])]),
-    c("a", "b")
-  )
-  
+  expect_equal(get_flocker_metadata(fd_minimal)$level2_covs, character(0))
+  expect_equal(as.character(fd_minimal$data$group[fd_minimal$metadata$group_start]), c("a", "b"))
+
   unit_covs_bad <- unit_covs
   unit_covs_bad$group <- as.character(unit_covs_bad$group)
   expect_error(
@@ -230,7 +204,7 @@ test_that("augmented data preserve and validate species names", {
     named_obs, type = "augmented", n_aug = 2, quiet = TRUE
   )
   expect_equal(
-    named_fd$level2_group_names,
+    get_flocker_metadata(named_fd)$level2_group_names,
     c("warbler", "thrush", "pseudospecies1", "pseudospecies2")
   )
 
@@ -238,7 +212,7 @@ test_that("augmented data preserve and validate species names", {
     obs, type = "augmented", n_aug = 2, quiet = TRUE
   )
   expect_equal(
-    unnamed_fd$level2_group_names,
+    get_flocker_metadata(unnamed_fd)$level2_group_names,
     c("species1", "species2", "pseudospecies1", "pseudospecies2")
   )
 
@@ -280,7 +254,7 @@ test_that("augmented internal identifiers use reserved ff_ names", {
   expect_false(any(c("ff_orig_unit", "ff_group", "ff_site") %in% names(fd$data)))
   expect_false(any(c("ff_n_sp", "ff_superQ", "ff_known_present") %in% names(fd$data)))
   expect_equal(
-    fd$data$ff_group_known_present[seq_len(fd$data$ff_n_group[1])],
+    fd$data$ff_group_Q[get_flocker_metadata(fd)$group_start],
     c(1, 1, 0)
   )
   for (sp in seq_len(dim(gp)[3])) {
@@ -293,9 +267,9 @@ test_that("augmented internal identifiers use reserved ff_ names", {
       matrix(site_covs$species, nrow = 2, ncol = 2)
     )
   }
-  unit_rows <- seq_len(fd$data$ff_n_unit[1])
-  orig_unit <- fd$unit_order
-  expect_equal(fd$unit_site, rep(1:2, 3)[orig_unit])
+  unit_rows <- get_flocker_metadata(fd)$unit_start
+  orig_unit <- get_flocker_metadata(fd)$unit_order
+  expect_equal(get_flocker_metadata(fd)$unit_site, rep(1:2, 3)[orig_unit])
   expect_equal(get_unit_group(fd$data), rep(1:3, each = 2)[orig_unit])
   expect_equal(
     as.integer(fd$data$ff_species[unit_rows]),
