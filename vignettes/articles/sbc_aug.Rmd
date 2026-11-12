@@ -1,7 +1,7 @@
 ---
 title: "SBC for data-augmented flocker models"
 author: "Jacob Socolar"
-date: "2026-10-14"
+date: "2026-11-11"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{SBC for data-augmented flocker models}
@@ -222,7 +222,7 @@ aug_results <- compute_SBC(aug_dataset, aug_backend)
 ```
 
 ```
-##  - 2 (1%) fits had divergences. Maximum number of divergences was 10.
+##  - 2 (1%) fits had divergences. Maximum number of divergences was 1.
 ```
 
 ```
@@ -230,7 +230,7 @@ aug_results <- compute_SBC(aug_dataset, aug_backend)
 ```
 
 ```
-##  - 1 (0%) fits had maximum Rhat > 1.01. Maximum Rhat was 1.014.
+##  - 1 (0%) fits had maximum Rhat > 1.01. Maximum Rhat was 1.013.
 ```
 
 ```
