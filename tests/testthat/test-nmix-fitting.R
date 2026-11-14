@@ -135,6 +135,26 @@ test_that("Poisson-binomial N-mixture models fit through the public interface", 
   }
   expect_error(predict_nmix(fit, draw_ids = 0), "draw_ids")
   expect_error(predict_nmix(fit, new_data = d$data), "formatted")
+  ll <- log_lik_nmix(fit, draw_ids = ids)
+  expect_identical(dim(ll), c(2L, 60L))
+  expect_true(all(is.finite(ll)))
+  ll_new <- log_lik_nmix(fit, new_data = nd, draw_ids = 1)
+  expect_identical(dim(ll_new), c(1L, 2L))
+  expect_identical(colnames(ll_new), c("a", "b"))
+  expect_equal(unname(ll_new[1, 1]), dpois(1,
+    exp(new$abund[1, 1]) * plogis(new$det[1, 1, 1]), log = TRUE))
+  expect_identical(dim(log_lik_nmix(fit, new_data = singleton, draw_ids = 1)), c(1L, 1L))
+  cv <- suppressWarnings(loo_nmix(fit, thin = 4))
+  expect_s3_class(cv, "loo")
+  expect_identical(nrow(cv$pointwise), 60L)
+  comparison <- suppressWarnings(loo_compare_nmix(list(fit, fit), c("first", "second"), thin = 4))
+  expect_equal(as.numeric(comparison[, "elpd_diff"]), c(0, 0))
+  expect_error(loo_compare_nmix(list(fit, fit), c("same", "same")), "model_names")
+  changed <- fit
+  changed$data$ff_y[1] <- changed$data$ff_y[1] + 1
+  expect_error(loo_compare_nmix(list(fit, changed)), "same counts")
+  expect_error(log_lik_nmix(fit, draw_ids = 0), "draw_ids")
+  expect_error(log_lik_nmix(fit, new_data = d$data), "formatted")
   expect_error(get_N(fit, draw_ids = 0), "draw_ids")
   expect_error(get_N(fit, new_data = d$data), "formatted")
   expect_error(fitted_nmix(fit, draw_ids = 0), "draw_ids")
