@@ -111,8 +111,8 @@ test_that("multiseason linear indexing handles three visits and singleton dimens
 
 test_that("multiseason post-processing preserves singleton axes and input names", {
   skip_on_cran()
-  fits <- list(example_flocker_model_multi_colex_ex, example_flocker_model_multi_colex_eq,
-               example_flocker_model_multi_auto_ex, example_flocker_model_multi_auto_eq)
+  fits <- list(fixture_fit("multi_colex_ex"), fixture_fit("multi_colex_eq"),
+               fixture_fit("multi_auto_ex"), fixture_fit("multi_auto_eq"))
   for (n_season in 1:2) {
     obs <- array(0, c(1, 1, n_season),
                  dimnames = list("site", "visit", paste0("season", seq_len(n_season))))

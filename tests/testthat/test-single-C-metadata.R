@@ -24,7 +24,7 @@ test_that("rep-constant data use the common metadata contract", {
 
 test_that("rep-constant prediction uses nested metadata and rejects old fits", {
   testthat::skip_if(windows_cran)
-  fit <- example_flocker_model_single_C
+  fit <- fixture_fit("single_C")
   expect_no_error(predict_flocker(fit, draw_ids = 1:2, mixed = TRUE,
                      allow_new_levels = TRUE, sample_new_levels = "gaussian"))
   attr(fit, "flocker_metadata") <- NULL

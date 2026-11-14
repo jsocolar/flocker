@@ -51,7 +51,7 @@ test_that("augmented formatting is a two-level packing adapter", {
 test_that("augmented post-processing preserves masks and both occupancy levels", {
   skip_on_cran()
   fd <- make_augmented_packing_fixture()$data
-  fit <- example_flocker_model_aug
+  fit <- fixture_fit("aug")
   for (condition in c(FALSE, TRUE)) {
     z <- get_Z(fit, new_data = fd, draw_ids = 1:2, history_condition = condition)
     expect_identical(dim(z$unit), c(3L, 4L, 2L))
