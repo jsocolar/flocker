@@ -90,7 +90,7 @@ nmix_ <- function(output, f_abund, f_det, data, data2, prior, threads, ...) {
   if (!identical(metadata$data_role, "model_data")) {
     stop("Fitting requires model_data; new_data cannot be used for fitting.")
   }
-  if (any(!all.vars(f_abund) %in% c(metadata$unit_covs, names(data2)))) {
+  if (any(!all.vars(f_abund) %in% c("Intercept", metadata$unit_covs, names(data2)))) {
     stop("f_abund may use only unit covariates supplied to make_nmix_data().")
   }
   if (any(grepl("^ff_", all.vars(f_det)))) {

@@ -1,0 +1,100 @@
+---
+title: "SBC for Poisson-binomial N-mixture models"
+author: "Jacob Socolar"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{SBC for Poisson-binomial N-mixture models}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+params:
+  n_sims: 1000
+  n_sites: 200
+  n_rep: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.path = "man/figures/sbc_vignette/", fig.retina = 2)
+dir.create("man/figures/sbc_vignette", recursive = TRUE, showWarnings = FALSE)
+library(flocker)
+library(brms)
+library(SBC)
+set.seed(1)
+```
+
+## Scope
+
+This exercise checks the Poisson-binomial model's simulation, visit packing,
+coefficient precomputation, and exact marginalized Stan likelihood. It includes
+unit covariates for abundance and detection, a visit covariate for detection,
+and variable numbers of visits. It does not validate every post-processing
+function or hierarchical model structure.
+
+The five coefficients are independent normal draws. Abundance has a
+`normal(log(5), 0.5)` intercept and a `normal(0, 0.5)` slope on the log scale;
+all detection coefficients have `normal(0, 0.5)` priors on the logit scale.
+These explicit priors keep the exercise computationally tractable and match
+simulation exactly. They are not a test or recommendation of default priors.
+The `0 + Intercept` formulas avoid intercept-centering transformations.
+
+```{r nmix-specification}
+priors <- c(
+  set_prior("normal(0, 0.5)", class = "b"),
+  set_prior("normal(0, 0.5)", class = "b", dpar = "abund"),
+  set_prior(sprintf("normal(%.17g, 0.5)", log(5)), class = "b",
+            coef = "Intercept", dpar = "abund")
+)
+f_abund <- ~ 0 + Intercept + uc1
+f_det <- ~ 0 + Intercept + uc1 + ec1
+
+nmix_generator <- function(n_sites, n_rep) {
+  coefficients <- c(abund_intercept = rnorm(1, log(5), .5),
+                    abund_slope_unit = rnorm(1, 0, .5),
+                    det_intercept = rnorm(1, 0, .5),
+                    det_slope_unit = rnorm(1, 0, .5),
+                    det_slope_visit = rnorm(1, 0, .5))
+  sim <- simulate_nmix_data(n_pt = n_sites, n_rep = n_rep,
+    params = coefficients, ragged_rep = TRUE, seed = NULL)
+  data <- make_nmix_data(sim$obs, sim$unit_covs, sim$event_covs, quiet = TRUE)
+  list(variables = list(
+    `b[1]` = coefficients[["det_intercept"]],
+    `b[2]` = coefficients[["det_slope_unit"]],
+    `b[3]` = coefficients[["det_slope_visit"]],
+    `b_abund[1]` = coefficients[["abund_intercept"]],
+    `b_abund[2]` = coefficients[["abund_slope_unit"]]),
+    generated = nmix_standata(f_abund, f_det, data, prior = priors))
+}
+
+example <- simulate_nmix_data(n_pt = params$n_sites, n_rep = params$n_rep)
+example_data <- make_nmix_data(example$obs, example$unit_covs,
+                               example$event_covs, quiet = TRUE)
+model_name <- file.path(tempdir(), "sbc_nmix_poisson_binomial.stan")
+writeLines(nmix_stancode(f_abund, f_det, example_data, prior = priors,
+                         backend = "cmdstanr"), model_name)
+```
+
+```{r nmix-calibration}
+generator <- SBC_generator_function(nmix_generator,
+  n_sites = params$n_sites, n_rep = params$n_rep)
+datasets <- generate_datasets(generator, params$n_sims)
+backend <- SBC_backend_cmdstan_sample(cmdstanr::cmdstan_model(model_name))
+# Cache plots and diagnostics, not thousands of posterior draws.
+results <- compute_SBC(datasets, backend, keep_fits = FALSE)
+plot_ecdf(results)
+plot_rank_hist(results)
+plot_ecdf_diff(results)
+```
+
+Inspect sampling diagnostics alongside the rank plots. A small smoke run checks
+execution only; it cannot establish calibration.
+
+The full article is refreshed from package root, after installing this checkout:
+
+```{r refresh-instructions, eval=FALSE}
+source("inst/cache_vignettes.R")
+cache_vignettes("sbc_nmix", render_html = TRUE)
+```
+
+The `.Rmd.orig` source runs SBC only when explicitly cached. The resulting `.Rmd`
+and figures can then be committed; ordinary vignette builds use those cached
+results without repeating sampling.

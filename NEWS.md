@@ -1,5 +1,8 @@
 # flocker 2.0 (development)
 
+* Added `simulate_nmix_data()` and an explicitly cached N-mixture SBC article
+  source (`sbc_nmix`) with visit-varying detection and ragged visit histories.
+
 * Added `log_lik_nmix()`, `loo_nmix()`, and `loo_compare_nmix()` for exact
   marginal unit likelihoods and leave-one-unit-out model comparison.
 
