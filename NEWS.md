@@ -1,5 +1,8 @@
 # flocker 2.0 (development)
 
+* Added `log_lik_nmix()`, `loo_nmix()`, and `loo_compare_nmix()` for exact
+  marginal unit likelihoods and leave-one-unit-out model comparison.
+
 * Added `predict_nmix()` for replicated visit counts, sharing latent abundance
   within units and optionally conditioning abundance on observed histories.
 

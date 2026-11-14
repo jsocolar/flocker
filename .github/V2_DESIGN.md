@@ -624,8 +624,12 @@ binomial visit counts conditional on that shared abundance. It defaults to
 unconditioned abundance; history conditioning uses the same exact reconstruction
 as `get_N()`. Prepare predictors once so new group effects remain consistent
 between abundance reconstruction and count generation. Return unit-by-visit-by-draw
-arrays, preserving names and missing visits. Marginal log likelihoods,
-LOO, negative-binomial and ZIP abundance, and beta-binomial detection remain
+arrays, preserving names and missing visits. `log_lik_nmix()` returns exact
+marginal likelihoods as a draw-by-unit matrix. `loo_nmix()` leaves out complete
+unit histories, retaining chain membership when thinning and computing relative
+ESS on likelihoods scaled within each unit. `loo_compare_nmix()` requires the
+same ordered counts and missing visits across models. Negative-binomial and ZIP
+abundance, and beta-binomial detection remain
 subsequent increments. Retain ff_Q in N-mixture data to support future ZIP abundance.
 
 ### N-mixture function boundaries

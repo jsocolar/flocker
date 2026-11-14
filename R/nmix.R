@@ -31,8 +31,8 @@
 #'   represent logit detection and log abundance. Native brms linear-predictor
 #'   output therefore remains on those scales. Use \code{fitted_nmix()} for
 #'   fitted parameters, \code{get_N()} for latent abundance, and
-#'   \code{predict_nmix()} for replicated visit counts. Pointwise log likelihoods
-#'   are not yet implemented.
+#'   \code{predict_nmix()} for replicated visit counts. Use \code{log_lik_nmix()}
+#'   and \code{loo_nmix()} for marginal unit likelihoods and cross-validation.
 #' @return \code{nmix()} returns a \code{brmsfit} with additional class
 #'   \code{nmix_fit} and flocker metadata.
 #'   The inspection helpers return Stan code, Stan data, or a prior table.
