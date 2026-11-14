@@ -58,7 +58,7 @@ cat(flocker:::make_occupancy_single_lpmf())
 
 ```
 
-In addition to this custom `Stan` code, the main workhorses in `flocker` are functions to pack and unpack data and linear predictors from the shape of the observational data to the `flocker_data` format (and back). For further details, check out `flocker:::make_flocker_data_static` (for packing) and `flocker:::get_positions` (for unpacking).
+In addition to this custom `Stan` code, the main workhorses in `flocker` are functions to pack and unpack data and linear predictors from the shape of the observational data to the `flocker_data` format (and back). For further details, check out `flocker:::make_flocker_data_static_` (for packing) and `flocker:::get_positions` (for unpacking).
 
 The formatted object has two parts. `flocker_data$data` is the dataframe consumed by `brms`, containing covariates, outcomes, and auxiliary columns. `flocker_data$metadata` records the original dimensions and names, reconstruction mappings, schema version, and whether the object was formatted for fitting or prediction. For visit-level families, `get_positions()` uses those mappings to restore the original observation layout; it does not infer that layout from the packed values.
 

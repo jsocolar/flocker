@@ -1,6 +1,6 @@
 # Starts and padding are shared by each level of the nested packing layout.
 block_starts <- function(counts) {
-  as.integer(cumsum(c(1L, head(counts, -1L))))
+  as.integer(cumsum(c(1L, utils::head(counts, -1L))))
 }
 
 pad_packed <- function(x, n_row) {
