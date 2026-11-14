@@ -1,5 +1,8 @@
 # flocker 2.0 (development)
 
+* Added `predict_nmix()` for replicated visit counts, sharing latent abundance
+  within units and optionally conditioning abundance on observed histories.
+
 * Anecdotal results suggest significant efficiency gains for multiseason and
   data-augmented models under the new data format and likelihood implementations.
   The full SBC workflow completed in approximately half its previous wall time;

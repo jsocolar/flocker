@@ -34,6 +34,13 @@ get_N <- function(nmix_fit, draw_ids = NULL, history_condition = TRUE,
     re_formula = re_formula, allow_new_levels = allow_new_levels,
     sample_new_levels = sample_new_levels
   )
+  nmix_abundance_from_predictors(nmix_fit, lps, history_condition, sample, new_data)
+}
+
+# Reuse a single joint set of predictors when predicting counts, including
+# random effects sampled for previously unseen group levels.
+nmix_abundance_from_predictors <- function(nmix_fit, lps, history_condition,
+                                           sample, new_data) {
   out <- lps$abund
   if (!history_condition) {
     out[] <- if (sample) stats::rpois(length(out), exp(out)) else exp(out)

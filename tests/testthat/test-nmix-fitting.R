@@ -122,6 +122,19 @@ test_that("Poisson-binomial N-mixture models fit through the public interface", 
                1 + exp(new$abund[1, 1]) * plogis(-new$det[1, 1, 1]))
   singleton <- make_nmix_data(matrix(0, 1, 1), newdata_checks = TRUE, quiet = TRUE)
   expect_identical(dim(get_N(fit, new_data = singleton, draw_ids = 1)), c(1L, 1L))
+  for (condition in c(FALSE, TRUE)) {
+    predicted <- predict_nmix(fit, draw_ids = ids, history_condition = condition)
+    expect_identical(dimnames(predicted), dimnames(fitted$det))
+    expect_true(all(predicted >= 0 & predicted == floor(predicted)))
+    predicted_new <- predict_nmix(fit, new_data = nd, draw_ids = 1,
+                                   history_condition = condition)
+    expect_identical(dimnames(predicted_new), dimnames(new$det))
+    expect_true(is.na(predicted_new[1, 2, 1]))
+    expect_identical(dim(predict_nmix(fit, new_data = singleton, draw_ids = 1,
+                                     history_condition = condition)), c(1L, 1L, 1L))
+  }
+  expect_error(predict_nmix(fit, draw_ids = 0), "draw_ids")
+  expect_error(predict_nmix(fit, new_data = d$data), "formatted")
   expect_error(get_N(fit, draw_ids = 0), "draw_ids")
   expect_error(get_N(fit, new_data = d$data), "formatted")
   expect_error(fitted_nmix(fit, draw_ids = 0), "draw_ids")

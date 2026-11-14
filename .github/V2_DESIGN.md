@@ -618,7 +618,13 @@ N = M + I + Poisson(x), with mixture weights proportional to c_i*x^i.
 Reuse the precomputed coefficients from the fit's Stan data or formatted new
 data. With `history_condition = FALSE`, return lambda or Poisson(lambda) draws;
 parameters still come from the fitted posterior. Keep units and posterior
-draws as the two matrix dimensions. Count prediction, marginal log likelihoods,
+draws as the two matrix dimensions.
+`predict_nmix()` draws one abundance per unit and posterior draw, then independent
+binomial visit counts conditional on that shared abundance. It defaults to
+unconditioned abundance; history conditioning uses the same exact reconstruction
+as `get_N()`. Prepare predictors once so new group effects remain consistent
+between abundance reconstruction and count generation. Return unit-by-visit-by-draw
+arrays, preserving names and missing visits. Marginal log likelihoods,
 LOO, negative-binomial and ZIP abundance, and beta-binomial detection remain
 subsequent increments. Retain ff_Q in N-mixture data to support future ZIP abundance.
 
