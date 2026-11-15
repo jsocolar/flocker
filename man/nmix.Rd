@@ -86,8 +86,8 @@ Abundance covariates are repeated across visits for brms
   represent logit detection and log abundance. Native brms linear-predictor
   output therefore remains on those scales. Use \code{fitted_nmix()} for
   fitted parameters, \code{get_N()} for latent abundance, and
-  \code{predict_nmix()} for replicated visit counts. Pointwise log likelihoods
-  are not yet implemented.
+  \code{predict_nmix()} for replicated visit counts. Use \code{log_lik_nmix()}
+  and \code{loo_nmix()} for marginal unit likelihoods and cross-validation.
 }
 \examples{
 counts <- rbind(c(2, 3, 0), c(0, 1, NA))

@@ -1054,6 +1054,12 @@ test_that("is_one_pos_int returns FALSE for a vector of integers", {
   expect_false(is_one_pos_int(integer_vector, m))
 })
 
+test_that("is_one_pos_int rejects nonfinite values", {
+  for (x in c(Inf, -Inf, NA_real_, NaN)) {
+    expect_false(is_one_pos_int(x))
+  }
+})
+
 test_that("is_one_pos_int returns FALSE for a NULL value", {
   null_value <- NULL
   m <- 0
