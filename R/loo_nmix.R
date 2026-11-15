@@ -10,8 +10,7 @@
 #' @export
 loo_nmix <- function(x, thin = NULL) {
   if (is.null(thin)) thin <- 1L
-  if (!is.numeric(thin) || length(thin) != 1L || is.na(thin) ||
-      !is.finite(thin) || thin < 1 || thin != floor(thin)) {
+  if (!is_one_pos_int(thin)) {
     stop("thin must be a positive integer or NULL.")
   }
   if (is_nmix_fit(x)) return(loo_nmix_onefit(x, thin))
