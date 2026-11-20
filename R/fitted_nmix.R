@@ -1,9 +1,7 @@
 #' Fitted abundance and detection parameters
 #'
 #' Extract expected abundance and detection probabilities from a fitted
-#' Poisson-binomial N-mixture model. These are model parameters, not draws of
-#' latent abundance or predicted counts, and do not condition latent abundance
-#' on the observed visit history.
+#' Poisson-binomial N-mixture model.
 #' @param nmix_fit A fitted model returned by \code{nmix()}.
 #' @param components Components to return: \code{"abund"} and/or \code{"det"}.
 #' @param new_data Optional formatted data from \code{make_nmix_data()}.
@@ -21,10 +19,9 @@
 #' @param sample_new_levels How to sample effects for new group levels; passed
 #'   to \code{brms::prepare_predictions()}.
 #' @return A named list. \code{abund} is a unit-by-draw matrix; \code{det} is a
-#'   unit-by-visit-by-draw array, with NA at unsampled visits. Original unit and
-#'   visit names are preserved. With \code{summarise = TRUE}, the final dimension
-#'   instead contains \code{mean} and the requested quantiles. Dimensions are
-#'   retained for single units, visits, and draws.
+#'   unit-by-visit-by-draw array, with NA at unsampled visits. With 
+#'   \code{summarise = TRUE}, the final dimension instead contains \code{mean} and 
+#'   the requested quantiles.
 #' @export
 fitted_nmix <- function(nmix_fit, components = c("abund", "det"),
                          new_data = NULL, response = TRUE, summarise = FALSE,
