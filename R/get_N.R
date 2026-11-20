@@ -9,16 +9,7 @@
 #'   posterior, including when this argument is FALSE.
 #' @param sample Return integer abundance draws (TRUE), or the conditional mean
 #'   abundance for each parameter draw (FALSE).
-#' @return A unit-by-draw matrix, retaining unit names and singleton dimensions.
-#'   With \code{sample = FALSE}, variation across columns reflects parameter
-#'   uncertainty only; intervals over those means are not intervals for latent
-#'   abundance. Use \code{sample = TRUE} to include latent abundance uncertainty.
-#' @details With history conditioning, abundance is sampled exactly as a finite
-#'   mixture of shifted Poisson distributions, using the same falling-factorial
-#'   expansion as the likelihood. No abundance truncation is required. Missing
-#'   visits are omitted. For \code{new_data}, counts supplied to
-#'   \code{make_nmix_data()} are treated as observed histories when
-#'   \code{history_condition = TRUE}; with FALSE their values are ignored.
+#' @return A unit-by-draw matrix.
 #' @export
 get_N <- function(nmix_fit, draw_ids = NULL, history_condition = TRUE,
                   sample = FALSE, new_data = NULL, re_formula = NULL,
