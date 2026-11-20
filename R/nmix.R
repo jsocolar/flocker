@@ -7,18 +7,14 @@
 #' @param f_det A one-sided formula for logit detection probability. Both unit
 #'   and event covariates may be used. Combined \code{brmsformula} objects are
 #'   not currently supported.
-#' @param data A model-data object returned by \code{make_nmix_data()}.
+#' @param data A data object returned by \code{make_nmix_data()}.
 #' @param data2 Additional data passed to brms, such as covariance matrices.
 #' @param prior A \code{brmsprior} object. Detection uses the main brms
 #'   parameter (omit \code{dpar}); abundance uses \code{dpar = "abund"}.
 #' @param threads Must be NULL; threading is not currently supported.
 #' @param ... Additional arguments passed to \code{brms::brm()}, or the
 #'   corresponding brms function for code, data, or prior inspection.
-#' @details Abundance covariates are repeated across visits for brms
-#'   preprocessing, but the likelihood reads abundance only at each unit's
-#'   first visit. Autoregressive terms are not supported.
-#'   As in brms, custom transformations used by either formula must be visible
-#'   from the detection formula's environment.
+#' @details Autoregressive terms are not supported.
 #'
 #'   Detection intercepts and group/spline standard deviations default to
 #'   \code{student_t(3, 0, 2.5)}, independently of observed counts, matching
@@ -30,8 +26,7 @@
 #'   The custom family uses identity links internally: its predictors already
 #'   represent logit detection and log abundance. Native brms linear-predictor
 #'   output therefore remains on those scales. Use \code{fitted_nmix()} for
-#'   fitted parameters and \code{get_N()} for latent abundance. N-mixture
-#'   prediction and pointwise log likelihoods are not yet implemented.
+#'   fitted parameters and \code{get_N()} for latent abundance.
 #' @return \code{nmix()} returns a \code{brmsfit} with additional class
 #'   \code{nmix_fit} and flocker metadata.
 #'   The inspection helpers return Stan code, Stan data, or a prior table.
