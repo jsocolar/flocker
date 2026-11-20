@@ -81,7 +81,8 @@ applicable if \code{type = "twolevel_single"}.}
 \item{level2_covs}{An optional dataframe with one row per level-two group
 and no unused levels in its grouping factor. Row order is arbitrary;
 factor-level order determines the internal group order, and every group
-must be represented in \code{unit_covs}. Only applicable if
+must be represented in \code{unit_covs}. If omitted, a minimal table is
+constructed from the groups represented in \code{unit_covs}. Only applicable if
 \code{type = "twolevel_single"}.}
 }
 \value{

@@ -45,7 +45,7 @@ dimension of returned arrays.
 
 Keep `flock()` as the fitting function for occupancy models it naturally
 supports. Give other ecological model classes clear literal names, beginning
-with `fit_nmixture()` and potentially including `fit_cjs()`.
+with `nmix()` and potentially including `fit_cjs()`.
 
 Do not invent parallel acronym puns for every model class. The connection
 between names such as `flam()` and N-mixture models would impose unnecessary
@@ -95,7 +95,7 @@ forcing abundance parameters into occupancy terminology.
 ## Public data formatters
 
 Keep `make_flocker_data()` as the occupancy formatter. Add separate ecological
-formatters such as `make_nmixture_data()` and potentially `make_cjs_data()`.
+formatters such as `make_nmix_data()` and potentially `make_cjs_data()`.
 Keep analogous shared arguments parallel across these functions and add only
 genuinely model-specific arguments.
 
@@ -555,6 +555,108 @@ results as a side effect of example or documentation maintenance.
 
 ## Recommended implementation sequence
 
+### N-mixture development
+
+The next functionality priority is closed, single-season, one-level N-mixture
+models with Poisson abundance and visit-varying binomial detection. The planned
+public fitting entry point is `nmix()`, using occupancy-style data inputs with
+nonnegative integer counts. Expected abundance, conditional latent abundance,
+and predicted observed counts must remain distinct in post-processing.
+
+Use the exact finite falling-factorial expansion described in the supplied
+Haines (2016) walkthrough, rather than truncating the abundance distribution.
+For each unit, the polynomial degree is `sum(counts) - max(counts)`. Compute
+its positive coefficients in R on the log scale, once per dataset, using
+`c'_i = c_(i-1) + (i + j) c_i`. This takes quadratic time in the degree;
+likelihood evaluation takes linear time in the number of coefficients and
+visits. Large observed counts therefore remain a performance consideration
+despite avoiding abundance truncation.
+
+Supply flat log-coefficient and exponent vectors, unit/coefficients offsets, maxima, and
+log-factorial sums through `stanvar(..., block = "data")`. Pass these objects
+to the likelihood through `custom_family(vars = ...)`. Arbitrary `data2`
+entries alone do not supply this connection. Coefficients do not become
+predictor rows or dataframe columns, and their lengths are Stan data, not
+constants embedded in generated source. Abundance predictors are log means;
+detection predictors are logits. Retain the visit-level covariate conventions.
+
+The first increment provides internal coefficient helpers, the dedicated Stan
+source, and independent likelihood/gradient and brms integration checks.
+`make_nmix_data()` now prepares single-season count inputs through the shared
+`make_flocker_data_()` dispatcher. Thin public wrappers fix the model selector;
+model-specific response validation and routing remain internal. A shared
+`make_flocker_data_static_()` executes visit-level packing for both models,
+while occupancy alone may choose the rep-constant representation. N-mixture
+objects have `metadata$type = "nmix"` and a separate `auxiliary` list; they
+cannot be passed to `flock()`. The existing single-season restrictions on
+trailing missing visits and empty units also apply to count inputs.
+`nmix(f_abund, f_det, data, ...)` fits the Poisson-binomial model with
+one-sided formulas; `nmix_stancode()`, `nmix_standata()`, and
+`get_nmix_prior()` expose the same specification before sampling. Combined
+brmsformula objects are deferred. Abundance predictors use unit covariates.
+Preserve formula environments, reject time-series terms and threading, and
+check that brms has not removed packed visits before fitting. Returned objects
+remain brmsfit objects, with an additional nmix_fit class and unchanged
+formatter metadata; occupancy post-processing does not accept them.
+
+For now, use brms's ordinary binomial-scale student_t(3, 0, 2.5) defaults for
+detection intercepts and group/spline standard deviations, independently of
+counts. Other priors remain brms defaults, including a flat abundance
+intercept prior. User priors override these defaults. This is provisional:
+review priors across **all** model families before settling the final API,
+including intercepts, slopes, hierarchical scales, and effects of the internal
+identity links. Count-derived default priors must not silently become
+detection-logit priors.
+
+`fitted_nmix()` returns expected abundance by unit and detection probabilities
+by visit, with posterior draws in the final dimension. It also supports
+log/logit output, summaries, and formatted new data. Missing visits remain NA.
+`get_N()` returns conditional mean abundance per posterior draw, or integer
+latent abundance draws with `sample = TRUE`. With history conditioning,
+write M = max(counts), q = prod(1-p), and x = lambda*q. The exact expansion gives
+N = M + I + Poisson(x), with mixture weights proportional to c_i*x^i.
+Reuse the precomputed coefficients from the fit's Stan data or formatted new
+data. With `history_condition = FALSE`, return lambda or Poisson(lambda) draws;
+parameters still come from the fitted posterior. Keep units and posterior
+draws as the two matrix dimensions. Count prediction, marginal log likelihoods,
+LOO, negative-binomial and ZIP abundance, and beta-binomial detection remain
+subsequent increments. Retain ff_Q in N-mixture data to support future ZIP abundance.
+
+### N-mixture function boundaries
+
+Use `nmix_<mixing>_<detection>` for a model-specific family, with
+`_unit_lpmf`, `_lpmf`, and `_stanvars` suffixes for its unit likelihood,
+packed likelihood, and Stan integration. The current implementation is
+`nmix_poisson_binomial`, stored in `nmix_poisson_binomial.stan`.
+
+The currently shared helpers are:
+
+- `nmix_binomial_log_coefficients`: the count-only falling-factorial
+  coefficients are the same for Poisson, NB, and ZIP abundance with binomial
+  detection. The mixing distribution determines how those coefficients enter
+  the likelihood, not their construction.
+- `nmix_binomial_auxiliary_data`: the coefficient storage, powers, unit
+  and coefficient offsets, maxima, and factorial sums can serve all three
+  binomial-detection models. NB and ZIP will additionally need their own
+  distributional parameters. Although offsets and maxima have broader uses,
+  the complete helper includes a binomial-specific polynomial expansion.
+
+`nmix_poisson_binomial_unit_lpmf` remains a Poisson-binomial function even
+though a future ZIP-binomial likelihood can call it for its Poisson component.
+The packed likelihood and family constructor require distinct NB/ZIP versions.
+`nmix_poisson_binomial_stanvars` is specific because it installs that
+model's Stan source; its data-declaration block is a candidate for a shared
+binomial helper when a second family is implemented. Do not introduce a
+model-independent loader abstraction until that interface is needed.
+
+All current complete N-mixture likelihood/coefficient helpers assume binomial
+detection. Beta-binomial detection cannot use the same count-only polynomial
+coefficients. Benchmark truncation functions and their successive-term ratio
+helper also explicitly use Poisson-binomial names. General benchmark utilities
+such as the timer do not depend on either distribution.
+
+### Schema migration sequence
+
 1. Freeze representative 1.1 behavior with characterization tests, especially
    packing round trips, exact likelihoods, output names and dimensions, and
    dynamic missing-unit behavior.
@@ -574,8 +676,8 @@ results as a side effect of example or documentation maintenance.
    replicated-output branches rather than carrying them forward.
 7. Run the full verification matrix and deliberately test rejection of 1.x
    formatted objects and fits.
-8. Once the 2.0 foundation is stable, introduce `make_nmixture_data()` and
-   `fit_nmixture()` using the same schema, metadata, naming, and testing
+8. Once the 2.0 foundation is stable, introduce `make_nmix_data()` and
+   `nmix()` using the same schema, metadata, naming, and testing
    contracts.
 
 Do not treat this sequence as a requirement to implement all steps in one pull
