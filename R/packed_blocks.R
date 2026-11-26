@@ -1,10 +1,6 @@
-# Starts and padding are shared by each level of the nested packing layout.
+# Row starts used by formatter metadata; likelihood columns store lengths.
 block_starts <- function(counts) {
-  as.integer(cumsum(c(1L, head(counts, -1L))))
-}
-
-pad_packed <- function(x, n_row) {
-  c(as.integer(x), rep(-99L, n_row - length(x)))
+  as.integer(cumsum(c(1L, utils::head(counts, -1L))))
 }
 
 # Pack visits in unit_order, retaining mappings to the original input order.
@@ -44,8 +40,8 @@ pack_unit_block <- function(obs, unit_covs = NULL, event_covs = NULL,
     data[[name]] <- values
   }
   rownames(data) <- NULL
-  data$ff_n_unit <- pad_packed(n_unit, nrow(data))
-  data$ff_unit_start <- pad_packed(unit_start, nrow(data))
+  data$ff_unit_size <- rep(-99L, nrow(data))
+  data$ff_unit_size[unit_start] <- n_row_unit
   data$ff_Q <- as.integer(rowSums(obs, na.rm = TRUE) > 0)[unit_order[row_unit]]
   original_to_packed <- matrix(NA_integer_, nrow(obs), ncol(obs), dimnames = dimnames(obs))
   original_to_packed[packed_to_original[!placeholder]] <- which(!placeholder)
@@ -67,8 +63,8 @@ placeholder_covariate_values <- function(obs, event_covs) {
   })
 }
 
-# Use pack_unit_block to pack all units once, then replace the single directory 
-# with directories local to each outer block (group or series). Inputs contain 
+# Pack all units once and add lengths at the first row of each outer block.
+# Both levels remain self-contained under slicing. Inputs contain
 # retained units only. Input order within each group or series is preserved.
 pack_nested_blocks <- function(obs, unit_covs, event_covs, unit_group,
                                outer = c("group", "series"), allow_empty = FALSE,
@@ -80,21 +76,13 @@ pack_nested_blocks <- function(obs, unit_covs, event_covs, unit_group,
   packed <- pack_unit_block(obs, unit_covs, event_covs, allow_empty,
                              placeholder_values, unit_order)
   group_unit_start <- which(!duplicated(unit_group[unit_order]))
-  group_unit_end <- c(group_unit_start[-1L] - 1L, length(unit_order))
   group_start <- packed$unit_start[group_unit_start]
   data <- packed$data
-  data$ff_n_unit <- data$ff_unit_start <- rep(-99L, nrow(data))
-  for (g in seq_along(group_start)) {
-    units <- seq.int(group_unit_start[g], group_unit_end[g])
-    directory <- group_start[g] + seq_along(units) - 1L
-    data$ff_n_unit[group_start[g]] <- length(units)
-    data$ff_unit_start[directory] <- packed$unit_start[units] - group_start[g] + 1L
-  }
-  data[[paste0("ff_n_", outer)]] <- pad_packed(length(group_start), nrow(data))
-  data[[paste0("ff_", outer, "_start")]] <- pad_packed(group_start, nrow(data))
-  # Preserve the public column order: outer directory precedes unit directory.
-  directory <- c("ff_n_unit", "ff_unit_start", "ff_Q")
-  packed$data <- data[c(setdiff(names(data), directory), directory)]
+  data[[paste0("ff_", outer, "_size")]] <- rep(-99L, nrow(data))
+  data[[paste0("ff_", outer, "_size")]][group_start] <-
+    as.integer(diff(c(group_start, nrow(data) + 1L)))
+  unit_columns <- c("ff_unit_size", "ff_Q")
+  packed$data <- data[c(setdiff(names(data), unit_columns), unit_columns)]
   packed$unit_order <- unit_order
   packed$group_start <- group_start
   packed$unit_to_packed <- integer(nrow(obs))

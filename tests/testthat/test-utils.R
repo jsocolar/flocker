@@ -119,7 +119,7 @@ test_that("array utils work properly", {
 
 test_that("bookkeeping works properly", {
   # flocker_reserved
-  expect_true(all(grepl(flocker_reserved()[1], c("ff_y", "ff_unit_start"))))
+  expect_true(all(grepl(flocker_reserved()[1], c("ff_y", "ff_unit_size"))))
   expect_true(all(grepl(flocker_reserved()[2], paste0(".", c(".", "foo", 1:2)))))
   expect_true(grepl(flocker_reserved()[3], "Intercept"))
   expect_false(grepl(flocker_reserved()[3], "Intercept_covariate"))
@@ -170,8 +170,7 @@ test_that("group_level_Omega recovers canonical group values", {
     c(0.9, 0.9, 0.4, 0.4)
   )
   twolevel_data <- data.frame(
-    ff_n_group = c(2, -99, -99, -99),
-    ff_n_unit = c(4, -99, -99, -99)
+    ff_group_size = c(2, -99, 2, -99)
   )
   twolevel_metadata <- list(original_dim = c(4L, 2L), group_representatives = c(3L, 1L))
   expect_equal(
@@ -210,7 +209,7 @@ test_that("group_level_Omega recovers canonical group values", {
   augmented_Omega[, , , 2] <- array(
     rep(c(0.3, 0.6, 0.8), each = 4), dim = c(2, 2, 3)
   )
-  augmented_data <- data.frame(ff_n_group = c(3, rep(-99, 11)))
+  augmented_data <- data.frame(ff_group_size = rep(c(4, -99, -99, -99), 3))
   expect_equal(
     group_level_Omega(
       fitted_Omega(augmented_Omega, FALSE), "augmented", augmented_data, list()

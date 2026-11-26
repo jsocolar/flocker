@@ -260,7 +260,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
   # f_det_use is type specific and is handled below
   
   if (metadata$type == "single") {
-    f_det_use <- stats::as.formula(paste0("ff_y | vint(ff_n_unit, ff_unit_start, ff_Q) ", f_det_txt))
+    f_det_use <- stats::as.formula(paste0("ff_y | vint(ff_unit_size, ff_Q) ", f_det_txt))
     if(brms::is.brmsformula(f_det)) {
       f_use <- f_det
       f_use$formula <- f_det_use
@@ -296,7 +296,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
                                  ...)
   } else if (metadata$type %in% c("twolevel_single", "augmented")) {
     f_det_use <- stats::as.formula(paste0(
-      "ff_y | vint(ff_n_group, ff_group_start, ff_n_unit, ff_unit_start, ff_Q, ff_group_Q) ",
+      "ff_y | vint(ff_group_size, ff_unit_size, ff_Q, ff_group_Q) ",
       f_det_txt))
     if (brms::is.brmsformula(f_det)) {
       f_use <- f_det
@@ -313,7 +313,7 @@ flock_ <- function(output, f_occ, f_det, flocker_data, data2 = NULL,
       stanvars = brms::stanvar(scode = code, block = "functions"), ...)
   } else if (metadata$type == "multi") {
     f_det_use <- stats::as.formula(paste0(
-      "ff_y | vint(ff_n_series, ff_series_start, ff_n_unit, ff_unit_start, ff_Q) ",
+      "ff_y | vint(ff_series_size, ff_unit_size, ff_Q) ",
       f_det_txt))
     if (brms::is.brmsformula(f_det)) {
       f_use <- f_det

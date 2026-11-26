@@ -125,12 +125,12 @@ occupancy_emission_components <- function(psi, theta, obs) {
 get_level2_group_names <- function(flocker_data_data, flocker_metadata,
                                    data_type) {
   group_names <- flocker_metadata$level2_group_names
-  n_group <- flocker_data_data$ff_n_group[1]
+  n_group <- sum(flocker_data_data$ff_group_size > 0L)
 
   if (is.null(group_names)) {
     if (data_type == "twolevel_single") {
       group_names <- as.character(
-        flocker_data_data[[flocker_metadata$level2_group]][seq_len(n_group)]
+        flocker_data_data[[flocker_metadata$level2_group]][flocker_data_data$ff_group_size > 0L]
       )
     } else {
       assertthat::assert_that(data_type == "augmented")
@@ -150,7 +150,7 @@ group_level_Omega <- function(fitted_output, data_type, flocker_data_data,
   unit_level <- attr(fitted_output, "unit_level")
   assertthat::assert_that(is_one_logical(unit_level))
   Omega <- fitted_output$linpred_Omega
-  n_group <- flocker_data_data$ff_n_group[1]
+  n_group <- sum(flocker_data_data$ff_group_size > 0L)
   if(data_type == "twolevel_single") {
     n_unit <- flocker_metadata$original_dim[1]
     if(unit_level) {

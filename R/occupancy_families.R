@@ -6,8 +6,8 @@ occupancy_single <- function() {
     "occupancy_single", dpars = c("mu", "occ"),
     links = c("identity", "identity"),
     type = "int", 
-    # Unit count, event-block starts, and detection indicators, padded to event rows.
-    vars = c("vint1", "vint2", "vint3"),
+    # Unit lengths at block starts and row-level detection indicators.
+    vars = c("vint1", "vint2"),
     loop = FALSE)
 }
 
@@ -32,7 +32,7 @@ occupancy_twolevel_single <- function() {
     "occupancy_twolevel_single", dpars = c("mu", "occ", "Omega"),
     links = c("identity", "identity", "identity"),
     type = "int", 
-    vars = paste0("vint", seq_len(6)),
+    vars = paste0("vint", seq_len(4)),
     loop = FALSE)
 }
 
@@ -44,7 +44,7 @@ occupancy_augmented <- function() {
     "occupancy_augmented", dpars = c("mu", "occ", "Omega"),
     links = c("identity", "identity", "identity"),
     type = "int", 
-    vars = paste0("vint", seq_len(6)),
+    vars = paste0("vint", seq_len(4)),
     loop = FALSE)
 }
 
@@ -56,8 +56,8 @@ occupancy_multi_colex <- function() {
     "occupancy_multi_colex", dpars = c("mu", "occ", "colo", "ex"),
     links = c("identity", "identity", "identity", "identity"),
     type = "int", 
-    # Series count/start, unit count/start, and unit detection indicators.
-    vars = paste0("vint", seq_len(5)),
+    # Series lengths, unit lengths, and unit detection indicators.
+    vars = paste0("vint", seq_len(3)),
     loop = FALSE)
 }
 
@@ -69,8 +69,8 @@ occupancy_multi_colex_eq <- function() {
     "occupancy_multi_colex_eq", dpars = c("mu", "colo", "ex"),
     links = c("identity", "identity", "identity"),
     type = "int", 
-    # Series count/start, unit count/start, and unit detection indicators.
-    vars = paste0("vint", seq_len(5)),
+    # Series lengths, unit lengths, and unit detection indicators.
+    vars = paste0("vint", seq_len(3)),
     loop = FALSE)
 }
 
@@ -82,8 +82,8 @@ occupancy_multi_autologistic <- function() {
     "occupancy_multi_autologistic", dpars = c("mu", "occ", "colo", "autologistic"),
     links = c("identity", "identity", "identity", "identity"),
     type = "int", 
-    # Series count/start, unit count/start, and unit detection indicators.
-    vars = paste0("vint", seq_len(5)),
+    # Series lengths, unit lengths, and unit detection indicators.
+    vars = paste0("vint", seq_len(3)),
     loop = FALSE)
 }
 
@@ -95,7 +95,7 @@ occupancy_multi_autologistic_eq <- function() {
     "occupancy_multi_autologistic_eq", dpars = c("mu", "colo", "autologistic"),
     links = c("identity", "identity", "identity"),
     type = "int", 
-    # Series count/start, unit count/start, and unit detection indicators.
-    vars = paste0("vint", seq_len(5)),
+    # Series lengths, unit lengths, and unit detection indicators.
+    vars = paste0("vint", seq_len(3)),
     loop = FALSE)
 }

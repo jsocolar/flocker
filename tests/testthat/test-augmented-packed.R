@@ -31,15 +31,15 @@ test_that("augmented formatting is a two-level packing adapter", {
                    c("wren", "thrush", "pseudospecies1", "pseudospecies2"))
   starts <- fd$metadata$group_start
   expect_identical(fd$data$ff_group_Q[starts], c(1L, 1L, 0L, 0L))
-  expect_identical(fd$data$ff_group_start[1:4], c(1L, 7L, 13L, 19L))
-  expect_equal(fd$data$ff_n_unit[starts], rep(3L, 4))
+  expect_identical(which(fd$data$ff_group_size > 0L), c(1L, 7L, 13L, 19L))
+  expect_equal(as.vector(table(get_unit_group(fd$data))), rep(3L, 4))
   args <- list(f_occ = ~ uc1 + (1 | ff_species), f_det = ~ ec1,
                flocker_data = fd, augmented = TRUE)
   code <- do.call(flocker_stancode, args)
   expect_true(rstan::stanc(model_code = code)$status)
   sd <- do.call(flocker_standata, args)
-  columns <- c("ff_n_group", "ff_group_start", "ff_n_unit", "ff_unit_start", "ff_Q", "ff_group_Q")
-  for (i in 1:6) expect_equal(as.vector(sd[[paste0("vint", i)]]), fd$data[[columns[i]]])
+  columns <- c("ff_group_size", "ff_unit_size", "ff_Q", "ff_group_Q")
+  for (i in 1:4) expect_equal(as.vector(sd[[paste0("vint", i)]]), fd$data[[columns[i]]])
   args$flocker_data <- make_augmented_packing_fixture(4)$data
   expect_identical(do.call(flocker_stancode, args), code)
   args$flocker_data$metadata$data_role <- "new_data"
