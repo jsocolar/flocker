@@ -43,7 +43,7 @@ interfaces to [Stan](https://mc-stan.org/), a state-of-the-art the
 probabilistic programming language. We recommend using `cmdstan` if possible.
 To do so, first install R package `cmdstanr` with
 ```
-install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+install.packages("cmdstanr", repos = c("https://stan-dev.r-universe.dev/", getOption("repos")))
 ```
 You must additionally install `cmdstan` itself. We strongly recommend using
 `cmdstanr` to manage the cmdstan installation:
