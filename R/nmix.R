@@ -26,7 +26,9 @@
 #'   The custom family uses identity links internally: its predictors already
 #'   represent logit detection and log abundance. Native brms linear-predictor
 #'   output therefore remains on those scales. Use \code{fitted_nmix()} for
-#'   fitted parameters and \code{get_N()} for latent abundance.
+#'   fitted parameters, \code{get_N()} for latent abundance, and
+#'   \code{predict_nmix()} for replicated visit counts. Use \code{log_lik_nmix()}
+#'   and \code{loo_nmix()} for marginal unit likelihoods and cross-validation.
 #' @return \code{nmix()} returns a \code{brmsfit} with additional class
 #'   \code{nmix_fit} and flocker metadata.
 #'   The inspection helpers return Stan code, Stan data, or a prior table.
@@ -84,7 +86,7 @@ nmix_ <- function(output, f_abund, f_det, data, data2, prior, threads, ...) {
   if (!identical(metadata$data_role, "model_data")) {
     stop("Fitting requires model_data; new_data cannot be used for fitting.")
   }
-  if (any(!all.vars(f_abund) %in% c(metadata$unit_covs, names(data2)))) {
+  if (any(!all.vars(f_abund) %in% c("Intercept", metadata$unit_covs, names(data2)))) {
     stop("f_abund may use only unit covariates supplied to make_nmix_data().")
   }
   if (any(grepl("^ff_", all.vars(f_det)))) {
