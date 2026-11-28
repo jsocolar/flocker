@@ -944,7 +944,7 @@ is_one_logical <- function (x) {
 is_one_pos_int <- function(x, m = 0) {
   if(!is.numeric(x)){return(FALSE)}
   if(length(x) != 1){return(FALSE)}
-  isTRUE(x == floor(x)) & isTRUE(x > m)
+  is.finite(x) && isTRUE(x == floor(x)) && isTRUE(x > m)
 }
 
 #' get largest index in a vector that is not NA

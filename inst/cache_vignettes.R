@@ -5,7 +5,7 @@
 # cache_vignettes() # all registered vignettes, including long-running SBC
 #
 # Names: augmented_models, flocker_tutorial, nonlinear_models, sbc, sbc_multi,
-#        sbc_aug, sbc_twolevel, nmix_benchmark.
+#        sbc_aug, sbc_twolevel, sbc_nmix, nmix_benchmark.
 # HTML is rendered from the newly cached Rmd, not from the executable source.
 # Returns cached Rmd paths and, when requested, rendered HTML paths invisibly.
 cache_vignettes <- function(vignettes = NULL, render_html = FALSE, pkg_root = getwd()) {
@@ -17,6 +17,7 @@ cache_vignettes <- function(vignettes = NULL, render_html = FALSE, pkg_root = ge
     sbc_multi = "vignettes/articles/sbc_multi.Rmd.orig",
     sbc_aug = "vignettes/articles/sbc_aug.Rmd.orig",
     sbc_twolevel = "vignettes/articles/sbc_twolevel.Rmd.orig",
+    sbc_nmix = "vignettes/articles/sbc_nmix.Rmd.orig",
     nmix_benchmark = "vignettes/articles/nmix_benchmark.Rmd.orig"
   )
   if (is.null(vignettes)) vignettes <- names(sources)
