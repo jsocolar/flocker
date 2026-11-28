@@ -49,9 +49,7 @@ unit B has two visits and no detections:
 | 4 | B | 2 | 0 |
 | 5 | B | -99 | 0 |
 
-Any contiguous slice containing complete units is itself a valid likelihood
-input, with no global count or index rebasing required. Unit labels here are
-illustrative; the likelihood walks the blocks using their sizes.
+Unit labels here are illustrative; the likelihood walks the blocks using their sizes.
 
 Here's the `Stan` code that can unpack this data and compute the likelihood:
 
@@ -62,7 +60,7 @@ cat(flocker:::make_occupancy_single_lpmf())
 
 In addition to this custom `Stan` code, the main workhorses in `flocker` are functions to pack and unpack data and linear predictors from the shape of the observational data to the `flocker_data` format (and back). For further details, check out `flocker:::make_flocker_data_static` (for packing) and `flocker:::get_positions` (for unpacking).
 
-The formatted object has two parts. `flocker_data$data` is the dataframe consumed by `brms`, containing covariates, outcomes, and auxiliary columns. `flocker_data$metadata` records the original dimensions and names, reconstruction mappings, schema version, and whether the object was formatted for fitting or prediction. For visit-level families, `get_positions()` uses those mappings to restore the original observation layout; it does not infer that layout from the packed values.
+The formatted object has two parts. `flocker_data$data` is the dataframe consumed by `brms`, containing covariates, outcomes, and auxiliary columns. `flocker_data$metadata` records the original dimensions and names, reconstruction mappings, schema version, and whether the object was formatted for fitting or prediction. For visit-level families, `get_positions()` uses those mappings to restore the original observation layout.
 
 There is one useful exception to the visit-level representation. For ordinary single-season models without event covariates, `flocker` uses the `single_C` family: one row per unit, containing the number of detections and the number of visits for a binomial likelihood. This family uses `loop = TRUE` and supports within-chain threading. It has the same `$data`/`$metadata` container as the other families.
 
@@ -90,7 +88,7 @@ any unit in that row's group has a detection. The two-level likelihood calls
 the single-season likelihood on each group's rows conditional on group presence.
 
 ### The multi-season format details
-Multi-season models also have the property that series may contain closure-units with no visits (i.e. unvisited seasons) that nevertheless cannot be dropped from the likelihood, and may have unit covariates associated with them. For each retained unvisited season, we add one placeholder row with an observed-outcome sentinel of `-99` and `ff_Q = 0`. This represents an existing ecological unit, not an extra unit. The placeholder contributes no detection information, but the unit's occupancy state and any transition into it remain part of the likelihood. Leading and internal unvisited seasons are retained; trailing unvisited seasons are currently omitted.
+Multi-season models also have the property that series may contain closure-units with no visits (i.e. unvisited seasons) that nevertheless cannot be dropped from the likelihood, and may have unit covariates associated with them. For each retained unvisited season, we add one placeholder row with an observed-outcome sentinel of `-99` and `ff_Q = 0`. The placeholder contributes no detection information, but the unit's occupancy state remains part of the likelihood. Leading and internal unvisited seasons are retained; trailing unvisited seasons are currently omitted.
 
 Unit covariates on placeholder rows retain their supplied values. Missing detection covariates are replaced with the mean across all observed visits in all series for numeric covariates, or the reference level for factors. Supplied nonmissing detection covariates on placeholder rows are retained. The replacements are chosen before splitting the data into series, so a series' own covariate distribution does not determine its replacement values.
 
