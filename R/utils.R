@@ -119,9 +119,8 @@ flocker_version <- function() {
 #' @return integer vector assigning each unit to a level-two group
 #' @noRd
 get_unit_group <- function(data) {
-  n_group <- data$ff_n_group[1]
-  starts <- data$ff_group_start[seq_len(n_group)]
-  rep(seq_len(n_group), data$ff_n_unit[starts])
+  groups <- cumsum(data$ff_group_size > 0L)
+  groups[data$ff_unit_size > 0L]
 }
 
 #' Reserved names in flocker
@@ -246,9 +245,16 @@ validate_packed_schema <- function(x) {
     metadata <- get_flocker_metadata(x)
     type <- metadata$type
   }
-  if (!identical(metadata$schema_version, 2L)) {
+  required <- switch(type,
+    single = c("ff_unit_size", "ff_Q"),
+    multi = c("ff_series_size", "ff_unit_size", "ff_Q"),
+    twolevel_single = c("ff_group_size", "ff_unit_size", "ff_Q", "ff_group_Q"),
+    augmented = c("ff_group_size", "ff_unit_size", "ff_Q", "ff_group_Q"),
+    single_C = c("ff_n_suc", "ff_n_trial"))
+  if (!identical(metadata$schema_version, 2L) ||
+      !all(required %in% names(x$data))) {
     stop(paste0("Incompatible ", switch(type, single = "single-season", single_C = "rep-constant single-season", multi = "multiseason", twolevel_single = "two-level", augmented = "augmented"),
-                " packing schema. Pre-2.0 objects require a compatible 1.x installation or reformatting and refitting."))
+                " packing schema. Objects from an older packing schema require a compatible installation or reformatting and refitting."))
   }
   invisible(NULL)
 }

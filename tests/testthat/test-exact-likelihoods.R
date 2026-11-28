@@ -1,7 +1,7 @@
 single_rv_lpmf_from_flocker_data <- function(fd, psi, theta) {
   d <- fd$data
-  n_unit <- d$ff_n_unit[1]
-  unit_starts <- d$ff_unit_start[seq_len(n_unit)]
+  unit_starts <- which(d$ff_unit_size > 0L)
+  n_unit <- length(unit_starts)
   unit_ends <- c(unit_starts[-1] - 1L, nrow(d))
   ll <- 0
 
@@ -70,13 +70,13 @@ drop_draw <- function(x, draw = 1) {
 twolevel_lpmf_from_flocker_data <- function(fd, psi, theta, Omega) {
   d <- fd$data
   if (get_flocker_metadata(fd)$type %in% c("twolevel_single", "augmented")) {
-    starts <- d$ff_group_start[seq_len(d$ff_n_group[1])]
+    starts <- which(d$ff_group_size > 0L)
     ends <- c(starts[-1] - 1L, nrow(d))
     return(sum(vapply(seq_along(starts), function(g) {
       rows <- seq.int(starts[g], ends[g])
       block <- list(data = d[rows, , drop = FALSE])
       conditional <- exp(single_rv_lpmf_from_flocker_data(block,
-        psi[rows][block$data$ff_unit_start[seq_len(block$data$ff_n_unit[1])]], theta[rows]))
+        psi[rows][which(block$data$ff_unit_size > 0L)], theta[rows]))
       log(if (d$ff_group_Q[starts[g]] == 1) Omega[g] * conditional else
         1 - Omega[g] + Omega[g] * conditional)
     }, numeric(1))))
@@ -298,7 +298,7 @@ test_that("augmented likelihood matches exact marginal likelihood", {
   expect_equal(fd$data$theta[gp[, , 3]], theta, check.attributes = FALSE)
   expect_equal(
     twolevel_lpmf_from_flocker_data(
-      fd, psi, fd$data$theta, rep(Omega, fd$data$ff_n_group[1])
+      fd, psi, fd$data$theta, rep(Omega, sum(fd$data$ff_group_size > 0L))
     ),
     expected,
     tolerance = 1e-12

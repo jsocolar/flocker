@@ -9,10 +9,9 @@ test_that("make_flocker_data works correctly", {
   expect_equal(class(fd), c("list", "flocker_data"))
   expect_named(fd, c("data", "metadata"))
   expect_identical(fd$metadata$flocker_version, flocker_version())
-  expect_equal(names(fd$data), c("ff_y", "uc1", "species", "ec1", "ff_n_unit", "ff_unit_start", "ff_Q"))
+  expect_equal(names(fd$data), c("ff_y", "uc1", "species", "ec1", "ff_unit_size", "ff_Q"))
   expect_true(all(fd$data$ff_y %in% c(0, 1)))
-  expect_equal(fd$data$ff_n_unit, c(nrow(obs), rep(-99L, length(obs) - 1L)))
-  expect_equal(fd$data$ff_unit_start[seq_len(nrow(obs))], seq(1L, length(obs), by = 4L))
+  expect_equal(which(fd$data$ff_unit_size > 0L), seq(1L, length(obs), by = 4L))
 
   event_covs[[1]] <- matrix(seq_along(obs), nrow(obs))
   obs[2, 4] <- NA
@@ -22,8 +21,7 @@ test_that("make_flocker_data works correctly", {
   expect_equal(fd$data$ec1, expected_ids)
   expect_equal(fd$data$ff_y, as.integer(obs[expected_ids]))
   counts <- c(4L, 3L, rep(4L, nrow(obs) - 2L))
-  expect_equal(fd$data$ff_unit_start,
-               c(cumsum(c(1L, head(counts, -1L))), rep(-99L, sum(counts) - length(counts))))
+  expect_equal(fd$data$ff_unit_size[fd$metadata$unit_start], counts)
 
   obs[,4] <- NA
   expect_error(fd <- make_flocker_data(obs, quiet = TRUE),
@@ -119,7 +117,7 @@ test_that("make_flocker_data handles two-level single-season data", {
   expect_equal(as.character(fd$data$group[starts]), c("a", "b"))
   expect_equal(fd$data$group_x[starts], c(10, 20))
   expect_equal(fd$data$ff_group_Q[starts], c(0, 1))
-  expect_equal(fd$data$ff_n_unit[starts], c(2, 2))
+  expect_equal(as.vector(table(get_unit_group(fd$data))), c(2, 2))
   expect_equal(metadata$unit_order, c(2, 4, 1, 3))
   expect_equal(get_unit_group(fd$data), c(1, 1, 2, 2))
   expect_equal(fd$data$group_x[get_positions(fd, TRUE)], c(20, 10, 20, 10))
@@ -128,7 +126,7 @@ test_that("make_flocker_data handles two-level single-season data", {
     obs, unit_covs, event_covs, type = "twolevel_single",
     level2_group = "group", quiet = TRUE
   )
-  expect_equal(fd_minimal$data$ff_n_group[1], 2)
+  expect_equal(sum(fd_minimal$data$ff_group_size > 0L), 2)
   expect_equal(get_flocker_metadata(fd_minimal)$level2_covs, character(0))
   expect_equal(as.character(fd_minimal$data$group[fd_minimal$metadata$group_start]), c("a", "b"))
 

@@ -10,21 +10,18 @@ test_that("multiseason blocks nest series, units, and visits", {
   expect_named(fd, c("data", "metadata"))
   expect_identical(m$schema_version, 2L)
   expect_identical(m$data_role, "model_data")
-  expect_identical(names(fd$data), c("ff_y", "uc1", "w", "ff_n_series",
-                                    "ff_series_start", "ff_n_unit", "ff_unit_start", "ff_Q"))
-  expect_identical(fd$data$ff_n_series, c(3L, rep(-99L, nrow(fd$data) - 1)))
-  expect_identical(fd$data$ff_series_start[1:3], c(1L, 12L, 21L))
+  expect_identical(names(fd$data), c("ff_y", "uc1", "w", "ff_series_size", "ff_unit_size", "ff_Q"))
+  expect_identical(which(fd$data$ff_series_size > 0L), c(1L, 12L, 21L))
   expect_identical(m$series_start, c(1L, 12L, 21L))
-  expect_identical(fd$data$ff_n_unit[c(1, 12, 21)], c(5L, 4L, 5L))
-  expect_true(all(fd$data$ff_n_unit[-c(1, 12, 21)] == -99L))
+  expect_identical(fd$data$ff_series_size[m$series_start], c(11L, 9L, 11L))
   starts <- list(c(1L, 5L, 6L, 8L, 9L), c(1L, 4L, 5L, 6L),
                  c(1L, 3L, 7L, 10L, 11L))
   for (s in 1:3) {
     rows <- seq.int(m$series_start[s], c(11L, 20L, 31L)[s])
     block <- fd$data[rows, ]
-    units <- block$ff_n_unit[1]
-    expect_identical(block$ff_unit_start[seq_len(units)], starts[[s]])
-    expect_true(all(block$ff_unit_start[-seq_len(units)] == -99L))
+    units <- length(starts[[s]])
+    expect_identical(which(block$ff_unit_size > 0L), starts[[s]])
+    expect_equal(block$ff_unit_size[starts[[s]]], diff(c(starts[[s]], nrow(block) + 1L)))
     for (u in seq_len(units)) {
       unit_end <- if (u < units) starts[[s]][u + 1L] - 1L else nrow(block)
       y <- block$ff_y[seq.int(starts[[s]][u], unit_end)]
@@ -69,7 +66,7 @@ test_that("all four multiseason families use stable programs and aligned data", 
     expect_true(rstan::stanc(model_code = code)$status)
     sd <- do.call(flocker_standata, args)
     d <- args$flocker_data$data
-    for (i in 1:5) expect_equal(as.vector(sd[[paste0("vint", i)]]), d[[i + 3]])
+    for (i in 1:3) expect_equal(as.vector(sd[[paste0("vint", i)]]), d[[i + 3]])
     expect_equal(as.vector(sd$Y), d$ff_y)
     expect_equal(unname(sd$X_colo[, "uc1"]), d$uc1)
     args$flocker_data <- make_flocker_data(array(0, c(1, 2, 2)),
@@ -142,17 +139,17 @@ test_that("a one-season forward-backward calculation reduces to Bayes' rule", {
   expect_equal(forward_backward_algorithm(0, 0.4, 0.3, 0.2, 0.4), 1)
 })
 
-test_that("a series unit directory is unchanged when packed on its own", {
+test_that("a series unit layout is unchanged when packed on its own", {
   x <- make_ragged_multi_fixture()
   together <- format_ragged_multi_fixture()
-  starts <- together$data$ff_series_start[1:3]
+  starts <- which(together$data$ff_series_size > 0L)
   ends <- c(starts[-1] - 1L, nrow(together$data))
   for (s in 1:3) {
     alone <- suppressWarnings(make_flocker_data(
       x$obs[s, , , drop = FALSE],
       lapply(x$unit_covs, function(d) d[s, , drop = FALSE]),
       list(ec1 = x$event[s, , , drop = FALSE]), type = "multi", quiet = TRUE))
-    columns <- c("ff_y", "uc1", "ff_n_unit", "ff_unit_start", "ff_Q")
+    columns <- c("ff_y", "uc1", "ff_unit_size", "ff_Q")
     block <- together$data[seq.int(starts[s], ends[s]), columns]
     rownames(block) <- NULL
     expect_identical(block, alone$data[columns])

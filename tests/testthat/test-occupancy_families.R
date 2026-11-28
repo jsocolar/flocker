@@ -4,7 +4,7 @@ test_that("custom families are what they claim", {
   expect_is(result, "brmsfamily")
   expect_is(result, "family")
   expect_false(result$loop)
-  expect_identical(result$vars, c("vint1", "vint2", "vint3"))
+  expect_identical(result$vars, c("vint1", "vint2"))
   expect_equal(result$dpars, c("mu", "occ"))
   
   result <- occupancy_single_C()
@@ -20,7 +20,7 @@ test_that("custom families are what they claim", {
   expect_is(result, "brmsfamily")
   expect_is(result, "family")
   expect_false(result$loop)
-  expect_length(result$vars, 6)
+  expect_length(result$vars, 4)
   expect_equal(result$dpars, c("mu", "occ", "Omega"))
   
   result <- occupancy_augmented()
@@ -28,7 +28,7 @@ test_that("custom families are what they claim", {
   expect_is(result, "brmsfamily")
   expect_is(result, "family")
   expect_false(result$loop)
-  expect_length(result$vars, 6)
+  expect_length(result$vars, 4)
   expect_equal(result$dpars, c("mu", "occ", "Omega"))
   
   result <- occupancy_multi_colex()
@@ -36,7 +36,7 @@ test_that("custom families are what they claim", {
   expect_is(result, "brmsfamily")
   expect_is(result, "family")
   expect_false(result$loop)
-  expect_length(result$vars, 5)
+  expect_length(result$vars, 3)
   expect_equal(result$dpars, c("mu", "occ", "colo", "ex"))
   
   result <- occupancy_multi_colex_eq()
@@ -44,7 +44,7 @@ test_that("custom families are what they claim", {
   expect_is(result, "brmsfamily")
   expect_is(result, "family")
   expect_false(result$loop)
-  expect_length(result$vars, 5)
+  expect_length(result$vars, 3)
   expect_equal(result$dpars, c("mu", "colo", "ex"))
   
   result <- occupancy_multi_autologistic()
@@ -52,7 +52,7 @@ test_that("custom families are what they claim", {
   expect_is(result, "brmsfamily")
   expect_is(result, "family")
   expect_false(result$loop)
-  expect_length(result$vars, 5)
+  expect_length(result$vars, 3)
   expect_equal(result$dpars, c("mu", "occ", "colo", "autologistic"))
   
   result <- occupancy_multi_autologistic_eq()
@@ -60,7 +60,7 @@ test_that("custom families are what they claim", {
   expect_is(result, "brmsfamily")
   expect_is(result, "family")
   expect_false(result$loop)
-  expect_length(result$vars, 5)
+  expect_length(result$vars, 3)
   expect_equal(result$dpars, c("mu", "colo", "autologistic"))
   
   

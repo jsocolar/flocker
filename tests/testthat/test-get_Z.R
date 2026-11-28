@@ -215,7 +215,7 @@ test_that("generic two-level states remain in original unit order", {
 test_that("get_Z returns both levels for augmented models", {
   testthat::skip_on_cran()
 
-  n_group <- fixture_fit("aug")$data$ff_n_group[1]
+  n_group <- sum(fixture_fit("aug")$data$ff_group_size > 0L)
   known_present <- fixture_fit("aug")$data$ff_group_Q[
     get_flocker_metadata(fixture_fit("aug"))$group_start
   ]

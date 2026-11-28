@@ -199,23 +199,19 @@ Use domain-specific names for counts and offsets rather than abstract
 parent/child terminology. The exact columns remain a prototype decision; the
 principles above are settled.
 
-For the multiseason implementation, use two nested instances of the
-single-season block structure. `ff_n_series[1]` counts series, and the leading
-entries of `ff_series_start` index their first dataframe rows. Within each
-series block, `ff_n_unit` stores the number of retained units at its first row.
-The leading rows of that block store unit starts in `ff_unit_start`, relative
-to the block's first row. `ff_Q` repeats each unit's detection indicator on
-every row belonging to that unit. The next
-start (or the block length at the final unit) determines each unit's end. Pad
-unused count and start entries with `-99`; these five columns have fixed width
-regardless of visits or seasons.
+Occupancy likelihoods use self-contained block lengths. `ff_unit_size` gives
+its unit's row count at the first row of each unit, with `-99` elsewhere.
+For multiseason models, `ff_series_size` analogously gives each complete
+series' row count. `ff_Q` repeats each unit's detection indicator at every row.
+Likelihoods walk from local row 1, advancing by each block length. These three
+columns have fixed width regardless of visits or seasons.
 
-Each series block therefore contains its complete unit directory, outcomes,
-and covariates. Extracting its rows requires no rebasing of unit starts or
-lookup in another series's rows. The top-level series-start table remains
-global. This supports a future per-series likelihood or threaded evaluation
-without requiring either in this implementation. Reconstruction metadata may
-retain global unit-to-row mappings independently of the likelihood columns.
+Any contiguous slice of complete series contains everything needed to evaluate
+its likelihood, without rebasing indices or accessing a global directory.
+The same holds for complete units in one-level single-season models.
+Reconstruction metadata retains global mappings independently. This prepares
+for block-based brms threading without enabling threading in this change.
+The packed schema marker is 2 for these layouts and `single_C`.
 
 Retain leading and internal unvisited seasons using one placeholder row per
 unit, with `ff_y = -99` and `ff_Q = 0`. Its emission probability is one under
@@ -233,10 +229,9 @@ have Q equal to zero. Likelihoods read Q at unit starts; multiseason forward
 updates skip the unoccupied-state calculation when Q is one.
 
 The two-level single-season implementation uses the same packing helper, with
-`ff_n_group` and `ff_group_start` in place of the series columns. Add
+`ff_group_size` in place of `ff_series_size`. Add
 `ff_group_Q` on every row to indicate any detection in that row's group.
-Unit counts, relative starts, and unit Q
-remain local to the group exactly as in multiseason packing. Reject units
+Unit lengths and unit Q remain local to the group exactly as in multiseason packing. Reject units
 without visits. Repeat group covariates at every visit in their group.
 
 Conditional on group occupancy, call the existing single-season Stan likelihood

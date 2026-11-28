@@ -5,7 +5,7 @@ test_that("two-level groups contain standalone single-season datasets", {
   fd <- make_flocker_data(obs, unit, list(w = event), type = "twolevel_single",
                           level2_group = "g", quiet = TRUE)
   expect_named(fd, c("data", "metadata"))
-  expect_identical(fd$data$ff_group_start[1:2], c(1L, 7L))
+  expect_identical(which(fd$data$ff_group_size > 0L), c(1L, 7L))
   expect_identical(fd$data$ff_group_Q, c(rep(1L, 6), rep(0L, 3)))
   expect_equal(matrix(fd$data$ff_y[get_positions(fd)], 4), obs)
   for (g in 1:2) {
@@ -14,7 +14,7 @@ test_that("two-level groups contain standalone single-season datasets", {
     single <- make_flocker_data(obs[units, visits, drop = FALSE], unit[units, ],
       list(w = event[units, visits, drop = FALSE]), newdata_checks = TRUE, quiet = TRUE)
     rows <- if (g == 1) 1:6 else 7:9
-    cols <- c("ff_y", "x", "w", "ff_n_unit", "ff_unit_start", "ff_Q")
+    cols <- c("ff_y", "x", "w", "ff_unit_size", "ff_Q")
     block <- fd$data[rows, cols]
     rownames(block) <- NULL
     expect_equal(block, single$data[cols])
@@ -23,7 +23,7 @@ test_that("two-level groups contain standalone single-season datasets", {
   code <- do.call(flocker_stancode, args)
   expect_true(rstan::stanc(model_code = code)$status)
   sd <- do.call(flocker_standata, args)
-  cols <- c("ff_n_group", "ff_group_start", "ff_n_unit", "ff_unit_start", "ff_Q", "ff_group_Q")
+  cols <- c("ff_group_size", "ff_unit_size", "ff_Q", "ff_group_Q")
   for (i in seq_along(cols)) expect_equal(as.vector(sd[[paste0("vint", i)]]), fd$data[[cols[i]]])
   larger <- rbind(obs, c(0, 0, 1))
   args$flocker_data <- make_flocker_data(larger,
