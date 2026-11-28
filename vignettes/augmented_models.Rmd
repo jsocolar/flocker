@@ -56,7 +56,7 @@ Here, the random effect of species is specified using the special grouping keywo
 summary(fm)
 #>  Family: occupancy_augmented 
 #>   Links: mu = identity; occ = identity; Omega = identity 
-#> Formula: ff_y | vint(ff_n_unit, ff_n_rep, ff_Q, ff_n_group, ff_group_known_present, ff_n_unit_group, ff_group_index, ff_rep_index1, ff_rep_index2, ff_rep_index3, ff_rep_index4) ~ uc1 + ec1 + (1 + uc1 + ec1 | ff_species)
+#> Formula: ff_y | vint(ff_n_group, ff_group_start, ff_n_unit, ff_unit_start, ff_Q, ff_group_Q) ~ uc1 + ec1 + (1 + uc1 + ec1 | ff_species)
 #>          occ ~ (1 | ff_species)
 #>          Omega ~ 1
 #>    Data: data (Number of observations: 25600) 

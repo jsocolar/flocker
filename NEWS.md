@@ -1,3 +1,15 @@
+# flocker 2.0 (development)
+
+* Occupancy likelihoods now use local block lengths, allowing contiguous slices
+  of complete units, series, or second-level groups to be evaluated independently.
+  This prepares for block-based threading; threading is not enabled here.
+  The rep-constant `single_C` format is unchanged.
+
+* Anecdotal results suggest significant efficiency gains for multiseason and
+  data-augmented models under the new data format and likelihood implementations.
+  The full SBC workflow completed in approximately half its previous wall time;
+  this was not a controlled performance benchmark.
+
 # flocker 1.1-1
 
 * Fixed single-visit event formatting dropping the dimensions of its index table.

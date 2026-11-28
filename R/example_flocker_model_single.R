@@ -93,7 +93,13 @@
 #' This object is loaded lazily on first access.
 #'
 #' @details
-#' The object is a \code{brmsfit}. Depending on how it was created, it may
+#' The object has classes \code{flocker_fit} and \code{brmsfit}, and uses
+#' the current packed-data schema. It retains only four posterior draws to
+#' keep the package small. It is intended to demonstrate object structure and
+#' post-processing calls, not posterior inference or convergence diagnostics.
+#' Its formatted input is available as \code{\link{mfd_single}}.
+#'
+#' Depending on how it was created, it may
 #' contain internal references to optional packages such as
 #' \code{colorspace}, \code{lubridate}, or \code{terra}.
 #'

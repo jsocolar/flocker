@@ -67,7 +67,7 @@ data$v3 <- data$Z * rbinom(nrow(data), 1, det_prob)
 fd <- make_flocker_data(
   obs = as.matrix(data[,c("v1", "v2", "v3")]),
   unit_covs = data.frame(t = data[,c("t")]),
-  event_covs <- list(dummy = matrix(rnorm(n_visit*nrow(data)), ncol = 3))
+  event_covs = list(dummy = matrix(rnorm(n_visit*nrow(data)), ncol = 3))
 )
 
 ```
@@ -90,11 +90,11 @@ nonlinear we need to use `brms::set_nl()` rather than merely providing the
 `f_det` argument. When supplying a `brmsformula` to `f_det` (rather than the 
 typical one-sided detection formula), the following behaviors are triggered:
 
-* Several input checks are turned off.  For example, `flocker` no longer checks 
-to ensure that event covariates are absent from the occupancy formula. 
-`flocker` also no longer explicitly checks that formulas are provided for all of 
-the required distributional terms for a given family (detection, occupancy, 
-colonization, extinction, and autologistic terms, depending on the family).
+* Some formula checks are delegated to `brms`, including whether all required
+  distributional parameters have formulas. For rep-varying single-season
+  models, `flocker` still rejects event covariates used directly in the
+  occupancy formula. Brms time-series correlation terms are rejected in all
+  model formulas, including combined formulas.
 
 * All inputs to `f_occ`, `f_col`, `f_ex`, `f_auto` are silently ignored. It is 
 obligatory to pass the entire formula for all distributional parameters as a 
@@ -106,10 +106,11 @@ to pass the `Omega ~ 1` formula within the `brmsformula` (When passing the
 traditional one-sided formula to `f_det`, `flocker` includes the formula for 
 `Omega` internally and automatically).
 
-* Nonlinear formulas that involve data that are required to be positive might 
-fail! Internally, some irrelevant data positions get filled with `-99`, but 
-these positions might still get evaluated by the nonlinear formula, even though 
-they make no contribution to the likelihood.
+For rep-varying single-season models, unit covariates are repeated at each
+observed visit using their actual values. Auxiliary packing columns contain
+`-99` padding, but covariates do not acquire padding values from this packing.
+Consequently, brms centering and spline construction for unit covariates use
+their visit-expanded distributions.
 
 With all of that said, we can go ahead and fit this model!
 

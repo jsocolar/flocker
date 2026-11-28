@@ -37,6 +37,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
                    sample = FALSE,
                    new_data = NULL, allow_new_levels = FALSE, 
                    sample_new_levels = "uncertainty") {
+  validate_postprocessing_data(flocker_fit, new_data)
   # Input checking and processing
   assertthat::assert_that(
     is_one_logical(history_condition),
@@ -172,7 +173,7 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     init <- first_column_draw_matrix(lps2$linpred_occ)
     colo <- lps2$linpred_col
     ex <- 1 - boot::inv.logit(boot::logit(colo) + lps2$linpred_auto)
-    Z <- get_Z_dynamic(init, colo, ex, history_condition, sample, obs, lps1$linpred_det)
+    Z <- get_Z_dynamic(init, colo, ex, history_condition, sample, obs, det)
   } else if (lik_type == "multi_autologistic_eq") {
     if(history_condition){
       lps1 <- fitted_flocker(
@@ -194,8 +195,9 @@ get_Z <- function (flocker_fit, draw_ids = NULL, history_condition = TRUE,
     init_colo <- first_column_draw_matrix(colo)
     init_ex <- first_column_draw_matrix(ex)
     init <- init_colo / (init_colo + init_ex)
-    Z <- get_Z_dynamic(init, colo, ex, history_condition, sample, obs, lps1$linpred_det)
+    Z <- get_Z_dynamic(init, colo, ex, history_condition, sample, obs, det)
   }
+  if (is_multi) dimnames(Z) <- dimnames(colo)
   class(Z) <- c("postZ", class(Z))
   Z
 }
@@ -243,6 +245,8 @@ get_twolevel_states <- function(
     if(is.null(unit_dimnames)) {
       unit_dimnames <- vector("list", length(dim(states$unit)))
     }
+    metadata <- get_flocker_metadata(if (is.null(new_data)) flocker_fit else new_data)
+    unit_dimnames[1] <- list(metadata$original_dimnames[[1]])
     unit_dimnames[[2]] <- components$group_names
     dimnames(states$unit) <- unit_dimnames
   }
@@ -281,8 +285,10 @@ get_Z_single <- function(lps, sample, history_condition, obs = NULL){
     el_0 <- el_1 <- new_matrix(psi_all)
     
     for(i in seq_len(ncol(psi_all))){
-      el_0[ , i] <- emission_likelihood(0, obs, theta_all[,,i])
-      el_1[ , i] <- emission_likelihood(1, obs, theta_all[,,i])
+      det <- matrix(theta_all[, , i, drop = FALSE],
+                    nrow = nrow(obs), ncol = ncol(obs))
+      el_0[ , i] <- emission_likelihood(0, obs, det)
+      el_1[ , i] <- emission_likelihood(1, obs, det)
     }
     
     hc <- Z_from_emission(el_0, el_1, psi_all)
@@ -293,6 +299,8 @@ get_Z_single <- function(lps, sample, history_condition, obs = NULL){
       Z <- hc
     }
   }
+  dn <- dimnames(lps$linpred_occ)
+  dimnames(Z) <- if (length(dim(lps$linpred_occ)) == 3L) dn[c(1, 3)] else dn
   Z
 }
 
@@ -452,8 +460,10 @@ get_Z_dynamic <- function(
     assertthat::assert_that(isTRUE(nslice(obs) == ncol(colo)))
     for(i in 1:nsite){
       for(j in 1:ndraw){
-        el0 <- emission_likelihood(0, t(obs[i,,]), t(det[i,,,j]))
-        el1 <- emission_likelihood(1, t(obs[i,,]), t(det[i,,,j]))
+        obs_series <- t(matrix(obs[i, , , drop = FALSE], nrow = dim(obs)[2]))
+        det_series <- t(matrix(det[i, , , j, drop = FALSE], nrow = dim(obs)[2]))
+        el0 <- emission_likelihood(0, obs_series, det_series)
+        el1 <- emission_likelihood(1, obs_series, det_series)
         if(sample){
           out[i,,j] <- forward_backward_sampling(el0, el1, init[i,j], colo[i,,j], ex[i,,j])
         } else {
@@ -611,7 +621,7 @@ forward_algorithm <- function(el0, el1, init, colo, ex) {
   
   if(n > 1){
     # get transition probabilties matrix
-    trans <- matrix(c(1 - colo, colo, ex, 1 - ex), nrow = n)[2:n, ]
+    trans <- matrix(c(1 - colo, colo, ex, 1 - ex), nrow = n)[2:n, , drop = FALSE]
   
     # Iterate over the remaining timesteps
     for (t in 2:n) {
@@ -634,10 +644,11 @@ backward_algorithm <- function(el0, el1, colo, ex) {
   assertthat::assert_that(length(el1) == n)
   assertthat::assert_that(length(colo) == n)
   assertthat::assert_that(length(ex) == n)
-  assertthat::assert_that(n > 1)
+  assertthat::assert_that(n >= 1)
+  if (n == 1L) return(matrix(1, nrow = 1, ncol = 2))
   
   # get transition probabilties matrix
-  trans <- matrix(c(1 - colo, colo, ex, 1 - ex), nrow = n)[2:n, ]
+  trans <- matrix(c(1 - colo, colo, ex, 1 - ex), nrow = n)[2:n, , drop = FALSE]
   
   # Initialize the backward probabilities matrix
   backward_probs <- matrix(NA, nrow = n, ncol = 2)

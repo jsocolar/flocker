@@ -1,7 +1,7 @@
 ---
 title: "SBC for multi-season flocker models"
 author: "Jacob Socolar"
-date: "2026-10-12"
+date: "2026-11-10"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{SBC for multi-season flocker models}
@@ -301,19 +301,7 @@ colex_eq_backend <-
     )
 
 colex_eq_results <- compute_SBC(colex_eq_dataset, colex_eq_backend)
-```
 
-```
-##  - 843 (84%) fits had steps rejected. Maximum number of steps rejected was 4.
-```
-
-```
-## Not all diagnostics are OK.
-## You can learn more by inspecting $default_diagnostics, $backend_diagnostics 
-## and/or investigating $outputs/$messages/$warnings for detailed output from the backend.
-```
-
-``` r
 plot_ecdf(colex_eq_results)
 ```
 
@@ -591,11 +579,7 @@ auto_eq_results <- compute_SBC(auto_eq_dataset, auto_eq_backend)
 ```
 
 ```
-##  - 346 (35%) fits had steps rejected. Maximum number of steps rejected was 3.
-```
-
-```
-##  - 1 (0%) fits had tail ESS / maximum rank < 0.5. Minimum tail ESS / maximum rank was 0.45. This potentially skews the rank statistics.
+##  - 1 (0%) fits had tail ESS / maximum rank < 0.5. Minimum tail ESS / maximum rank was 0.36. This potentially skews the rank statistics.
 ##     If the fits look good otherwise, increasing `thin_ranks` (via recompute_SBC_statistics) 
 ##    or number of posterior draws (by refitting) might help.
 ```

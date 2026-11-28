@@ -1,7 +1,7 @@
 ---
 title: "SBC for single-season flocker models"
 author: "Jacob Socolar"
-date: "2026-10-12"
+date: "2026-11-10"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{SBC for single-season flocker models}
@@ -247,19 +247,7 @@ rep_varying_backend <-
     )
 
 rep_varying_results <- compute_SBC(rep_varying_dataset, rep_varying_backend)
-```
 
-```
-##  - 1 (0%) fits had maximum Rhat > 1.01. Maximum Rhat was 1.01.
-```
-
-```
-## Not all diagnostics are OK.
-## You can learn more by inspecting $default_diagnostics, $backend_diagnostics 
-## and/or investigating $outputs/$messages/$warnings for detailed output from the backend.
-```
-
-``` r
 plot_ecdf(rep_varying_results)
 ```
 

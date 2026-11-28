@@ -1,7 +1,7 @@
 ---
 title: "SBC for two-level flocker models"
 author: "Jacob Socolar"
-date: "2026-10-14"
+date: "2026-11-12"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{SBC for two-level flocker models}
